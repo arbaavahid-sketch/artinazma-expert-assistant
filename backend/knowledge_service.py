@@ -1,0 +1,219 @@
+import os
+import json
+import math
+from pathlib import Path
+from typing import List, Dict, Any
+
+import numpy as np
+from dotenv import load_dotenv
+from openai import OpenAI
+from pypdf import PdfReader
+
+load_dotenv()
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+
+STORAGE_DIR = Path("storage")
+VECTOR_STORE_PATH = STORAGE_DIR / "knowledge_vectors.json"
+
+STORAGE_DIR.mkdir(exist_ok=True)
+
+
+def read_text_from_file(file_path: str) -> str:
+    path = Path(file_path)
+    ext = path.suffix.lower()
+
+    if ext == ".pdf":
+        reader = PdfReader(file_path)
+        text = ""
+
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+
+        return text
+
+    if ext in [".txt", ".md"]:
+        return path.read_text(encoding="utf-8", errors="ignore")
+
+    return ""
+
+
+def chunk_text(text: str, chunk_size: int = 1200, overlap: int = 200) -> List[str]:
+    text = " ".join(text.split())
+
+    if not text:
+        return []
+
+    chunks = []
+    start = 0
+
+    while start < len(text):
+        end = start + chunk_size
+        chunk = text[start:end]
+
+        if len(chunk.strip()) > 100:
+            chunks.append(chunk.strip())
+
+        start += chunk_size - overlap
+
+    return chunks
+
+
+def create_embedding(text: str) -> List[float]:
+    response = client.embeddings.create(
+        model=EMBEDDING_MODEL,
+        input=text
+    )
+
+    return response.data[0].embedding
+
+
+def load_vector_store() -> List[Dict[str, Any]]:
+    if not VECTOR_STORE_PATH.exists():
+        return []
+
+    with open(VECTOR_STORE_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_vector_store(data: List[Dict[str, Any]]) -> None:
+    with open(VECTOR_STORE_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def cosine_similarity(a: List[float], b: List[float]) -> float:
+    vector_a = np.array(a)
+    vector_b = np.array(b)
+
+    denominator = np.linalg.norm(vector_a) * np.linalg.norm(vector_b)
+
+    if denominator == 0:
+        return 0.0
+
+    return float(np.dot(vector_a, vector_b) / denominator)
+
+
+def add_file_to_knowledge_base(file_path: str, title: str = "", category: str = "general") -> Dict[str, Any]:
+    text = read_text_from_file(file_path)
+
+    if not text.strip():
+        return {
+            "success": False,
+            "message": "متنی از فایل استخراج نشد. فعلاً PDF متنی، TXT و MD پشتیبانی می‌شوند."
+        }
+
+    chunks = chunk_text(text)
+
+    store = load_vector_store()
+
+    added_chunks = 0
+
+    for index, chunk in enumerate(chunks):
+        embedding = create_embedding(chunk)
+
+        store.append({
+            "title": title or Path(file_path).name,
+            "category": category,
+            "file_name": Path(file_path).name,
+            "chunk_index": index,
+            "content": chunk,
+            "embedding": embedding
+        })
+
+        added_chunks += 1
+
+    save_vector_store(store)
+
+    return {
+        "success": True,
+        "message": "فایل با موفقیت به بانک دانش اضافه شد.",
+        "file_name": Path(file_path).name,
+        "chunks_added": added_chunks
+    }
+
+
+def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    store = load_vector_store()
+
+    if not store:
+        return []
+
+    query_embedding = create_embedding(query)
+
+    results = []
+
+    for item in store:
+        score = cosine_similarity(query_embedding, item["embedding"])
+
+        results.append({
+            "score": score,
+            "title": item["title"],
+            "category": item["category"],
+            "file_name": item["file_name"],
+            "chunk_index": item["chunk_index"],
+            "content": item["content"]
+        })
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+
+    return results[:top_k]
+
+
+def get_knowledge_stats() -> Dict[str, Any]:
+    store = load_vector_store()
+
+    files = sorted(list(set(item["file_name"] for item in store)))
+    categories = sorted(list(set(item["category"] for item in store)))
+
+    return {
+        "total_chunks": len(store),
+        "total_files": len(files),
+        "files": files,
+        "categories": categories
+    }
+def add_text_to_knowledge_base(
+    title: str,
+    content: str,
+    category: str = "expert-faq",
+    file_name: str = "expert_faq.txt"
+) -> Dict[str, Any]:
+    if not content.strip():
+        return {
+            "success": False,
+            "message": "متنی برای افزودن به بانک دانش وجود ندارد."
+        }
+
+    chunks = chunk_text(content)
+
+    store = load_vector_store()
+
+    added_chunks = 0
+
+    for index, chunk in enumerate(chunks):
+        embedding = create_embedding(chunk)
+
+        store.append({
+            "title": title,
+            "category": category,
+            "file_name": file_name,
+            "chunk_index": index,
+            "content": chunk,
+            "embedding": embedding
+        })
+
+        added_chunks += 1
+
+    save_vector_store(store)
+
+    return {
+        "success": True,
+        "message": "متن با موفقیت به بانک دانش اضافه شد.",
+        "title": title,
+        "file_name": file_name,
+        "category": category,
+        "chunks_added": added_chunks
+    }
