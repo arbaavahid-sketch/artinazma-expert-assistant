@@ -1,4 +1,5 @@
 import os
+from typing import Optional, List, Dict
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -35,23 +36,49 @@ SYSTEM_PROMPT = """
    - سوالات تکمیلی از مشتری
 6. برای عیب‌یابی، چک‌لیست مرحله‌ای بده.
 7. برای تحلیل تست، نتیجه، روند، خطاهای احتمالی و تست‌های تکمیلی را مشخص کن.
+8. اگر گفت‌وگوی قبلی وجود دارد، آن را در پاسخ لحاظ کن.
 """
 
 
-def ask_expert_assistant(message: str, context: str = "") -> str:
+def ask_expert_assistant(
+    message: str,
+    context: str = "",
+    history: Optional[List[Dict[str, str]]] = None,
+    domain: str = "auto"
+) -> str:
+    history_text = ""
+
+    if history:
+        history_parts = []
+        for item in history[-8:]:
+            role = item.get("role", "")
+            content = item.get("content", "")
+            if role and content:
+                label = "کاربر" if role == "user" else "دستیار"
+                history_parts.append(f"{label}: {content}")
+
+        history_text = "\n".join(history_parts)
+
+    user_content = f"""
+    حوزه انتخاب‌شده یا تشخیص‌داده‌شده:
+    {domain}
+
+    گفت‌وگوی قبلی:
+    {history_text if history_text else "گفت‌وگوی قبلی وجود ندارد."}
+
+    سوال جدید کاربر:
+    {message}
+    """
+
     if context:
-        user_content = f"""
-        سوال کاربر:
-        {message}
+        user_content += f"""
 
         اطلاعات مرتبط از بانک دانش آرتین آزما:
         {context}
 
-        بر اساس اطلاعات بالا و دانش فنی خودت پاسخ بده.
+        بر اساس اطلاعات بالا، گفت‌وگوی قبلی و دانش فنی خودت پاسخ بده.
         اگر اطلاعات کافی نیست، دقیقاً بگو چه اطلاعاتی باید از مشتری گرفته شود.
         """
-    else:
-        user_content = message
 
     response = client.responses.create(
         model=MODEL,

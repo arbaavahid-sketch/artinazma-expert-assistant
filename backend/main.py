@@ -2,6 +2,7 @@ import os
 import shutil
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional, List
 from pydantic import BaseModel
 from typing import Optional
 from knowledge_service import (
@@ -33,8 +34,15 @@ app.add_middleware(
 )
 
 
+class ChatHistoryMessage(BaseModel):
+    role: str
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
+    history: Optional[List[ChatHistoryMessage]] = None
+    domain: Optional[str] = "auto"
 class QuestionReviewRequest(BaseModel):
     expert_status: str
     expert_note: str = ""
@@ -70,7 +78,24 @@ def chat(request: ChatRequest):
 
         context = "\n\n".join(context_parts)
 
-    answer = ask_expert_assistant(request.message, context=context)
+    auto_domain = detect_domain(request.message)
+    selected_domain = request.domain or "auto"
+    detected_domain = auto_domain if selected_domain == "auto" else selected_domain
+
+    history = [
+        {
+            "role": item.role,
+            "content": item.content
+        }
+        for item in (request.history or [])
+    ]
+
+    answer = ask_expert_assistant(
+        message=request.message,
+        context=context,
+        history=history,
+        domain=detected_domain
+    )
 
     sources = [
         {
@@ -81,8 +106,6 @@ def chat(request: ChatRequest):
         }
         for doc in related_docs
     ]
-
-    detected_domain = detect_domain(request.message)
 
     question_id = save_expert_question(
         question=request.message,
@@ -97,7 +120,6 @@ def chat(request: ChatRequest):
         "answer": answer,
         "sources": sources
     }
-
 
 @app.post("/analyze-file")
 async def analyze_file(file: UploadFile = File(...)):
