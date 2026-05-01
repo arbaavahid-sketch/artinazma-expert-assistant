@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import AppNav from "@/components/AppNav";
-
+import { apiUrl } from "@/lib/api";
 type Source = {
   title: string;
   file_name: string;
@@ -53,7 +53,7 @@ export default function QuestionDetailPage() {
     setAddKnowledgeMessage("");
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/questions/${questionId}`);
+      const res = await fetch(apiUrl(`/questions/${questionId}`))
       const data = await res.json();
 
       if (data.error) {
@@ -77,7 +77,7 @@ export default function QuestionDetailPage() {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/questions/${questionId}/review`,
+        apiUrl(`/questions/${questionId}/review`),
         {
           method: "PATCH",
           headers: {
@@ -112,7 +112,7 @@ export default function QuestionDetailPage() {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/questions/${questionId}/add-to-knowledge`,
+       apiUrl(`/questions/${questionId}/add-to-knowledge`),
         {
           method: "POST",
         }

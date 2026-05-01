@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AppNav from "@/components/AppNav";
-
+import { apiUrl } from "@/lib/api";
 type KnowledgeStats = {
   total_chunks: number;
   total_files: number;
@@ -20,7 +20,7 @@ export default function KnowledgePage() {
 
   async function loadKnowledgeStats() {
     try {
-      const res = await fetch("http://127.0.0.1:8000/knowledge/stats");
+      const res = await fetch(apiUrl("/knowledge/stats"))
       const data = await res.json();
       setStats(data);
     } catch {
@@ -44,7 +44,7 @@ export default function KnowledgePage() {
     formData.append("category", knowledgeCategory || "general");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/knowledge/upload", {
+      const res = await fetch(apiUrl("/knowledge/upload"), {
         method: "POST",
         body: formData,
       });

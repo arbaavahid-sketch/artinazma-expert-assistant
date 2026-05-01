@@ -1,5 +1,5 @@
 "use client";
-
+import { apiUrl } from "@/lib/api";
 import { useEffect, useState } from "react";
 import AppNav from "@/components/AppNav";
 import Link from "next/link";
@@ -34,11 +34,11 @@ export default function DashboardPage() {
 
   async function loadStats() {
     try {
-      const knowledgeRes = await fetch("http://127.0.0.1:8000/knowledge/stats");
+      const knowledgeRes = await fetch(apiUrl("/knowledge/stats"))
       const knowledgeData = await knowledgeRes.json();
       setKnowledgeStats(knowledgeData);
 
-      const questionRes = await fetch("http://127.0.0.1:8000/questions/stats");
+      const questionRes = await fetch(apiUrl("/questions/stats"))
       const questionData = await questionRes.json();
       setQuestionStats(questionData);
     } catch {

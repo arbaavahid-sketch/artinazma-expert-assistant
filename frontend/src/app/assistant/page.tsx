@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AppNav from "@/components/AppNav";
-
+import { apiUrl } from "@/lib/api";
 type Source = {
   title: string;
   file_name: string;
@@ -24,7 +24,7 @@ export default function AssistantPage() {
     setSources([]);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/chat", {
+      const res = await fetch(apiUrl("/chat"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

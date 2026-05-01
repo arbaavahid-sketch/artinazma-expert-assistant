@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AppNav from "@/components/AppNav";
-
+import { apiUrl } from "@/lib/api";
 export default function AnalyzePage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileAnalysis, setFileAnalysis] = useState("");
@@ -18,7 +18,7 @@ export default function AnalyzePage() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/analyze-file", {
+      const res = await fetch(apiUrl("/analyze-file"), {
         method: "POST",
         body: formData,
       });

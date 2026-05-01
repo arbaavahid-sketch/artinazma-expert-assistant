@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppNav from "@/components/AppNav";
-
+import { apiUrl } from "@/lib/api";
 type QuestionItem = {
   id: number;
   question: string;
@@ -35,7 +35,7 @@ export default function QuestionsPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/questions?limit=100");
+      const res = await fetch(apiUrl("/questions?limit=100"));
       const data = await res.json();
       setQuestions(data.questions || []);
     } catch {
