@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiUrl } from "@/lib/api";
 
 type Source = {
@@ -25,22 +26,59 @@ const quickPrompts = [
   "برای اندازه‌گیری جیوه در آب و خاک چه تجهیزاتی مناسب است؟",
 ];
 
-const tools = [
-  "افزودن فایل",
-  "تحلیل تست",
-  "جست‌وجوی دانش",
-  "عیب‌یابی تجهیزات",
-  "پیشنهاد دستگاه",
-  "پیشنهاد کاتالیست",
+type ToolAction =
+  | "add-knowledge"
+  | "analyze-file"
+  | "search-knowledge"
+  | "troubleshooting"
+  | "device-suggestion"
+  | "catalyst-suggestion";
+
+const tools: {
+  label: string;
+  description: string;
+  action: ToolAction;
+}[] = [
+  {
+    label: "افزودن فایل",
+    description: "افزودن کاتالوگ، PDF یا فایل آموزشی به بانک دانش",
+    action: "add-knowledge",
+  },
+  {
+    label: "تحلیل تست",
+    description: "رفتن به صفحه آپلود و تحلیل فایل تست",
+    action: "analyze-file",
+  },
+  {
+    label: "جست‌وجوی دانش",
+    description: "ساخت سوال برای جست‌وجو در بانک دانش آرتین آزما",
+    action: "search-knowledge",
+  },
+  {
+    label: "عیب‌یابی تجهیزات",
+    description: "ساخت قالب سوال برای خطا یا مشکل دستگاه",
+    action: "troubleshooting",
+  },
+  {
+    label: "پیشنهاد دستگاه",
+    description: "ساخت قالب سوال برای انتخاب تجهیز مناسب",
+    action: "device-suggestion",
+  },
+  {
+    label: "پیشنهاد کاتالیست",
+    description: "ساخت قالب سوال برای انتخاب یا بررسی کاتالیست",
+    action: "catalyst-suggestion",
+  },
 ];
 
 export default function AssistantPage() {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [domain, setDomain] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [showTools, setShowTools] = useState(false);
-
+  
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -126,7 +164,51 @@ export default function AssistantPage() {
     if (domain === "analysis") return "آنالیز و تست";
     return "تشخیص خودکار";
   }, [domain]);
+ function handleToolClick(action: ToolAction) {
+  setShowTools(false);
 
+  if (action === "add-knowledge") {
+    router.push("/knowledge");
+    return;
+  }
+
+  if (action === "analyze-file") {
+    router.push("/analyze");
+    return;
+  }
+
+  if (action === "search-knowledge") {
+    setDomain("auto");
+    setMessage(
+      "در بانک دانش آرتین آزما درباره این موضوع جست‌وجو کن و پاسخ تخصصی بده: "
+    );
+    return;
+  }
+
+  if (action === "troubleshooting") {
+    setDomain("troubleshooting");
+    setMessage(
+      "برای عیب‌یابی این مشکل دستگاه، علت‌های احتمالی و چک‌لیست مرحله‌ای بده: "
+    );
+    return;
+  }
+
+  if (action === "device-suggestion") {
+    setDomain("equipment");
+    setMessage(
+      "برای این کاربرد یا نوع نمونه، دستگاه/تجهیز مناسب آرتین آزما را پیشنهاد بده: "
+    );
+    return;
+  }
+
+  if (action === "catalyst-suggestion") {
+    setDomain("catalyst");
+    setMessage(
+      "برای این فرایند یا مشکل، کاتالیست مناسب یا تست‌های لازم برای بررسی کاتالیست را پیشنهاد بده: "
+    );
+    return;
+  }
+}
   return (
     <section className="flex h-full min-w-0 flex-col overflow-hidden bg-[#f7f7f8]">
       <div className="shrink-0 border-b border-slate-200 bg-[#f7f7f8]">
@@ -282,14 +364,19 @@ export default function AssistantPage() {
               <div className="absolute bottom-full right-0 z-20 mb-3 w-[260px] rounded-3xl border border-slate-200 bg-white p-3 shadow-xl">
                 <div className="space-y-1">
                   {tools.map((tool) => (
-                    <button
-                      key={tool}
-                      onClick={() => setShowTools(false)}
-                      className="block w-full rounded-2xl px-4 py-3 text-right text-sm text-slate-700 hover:bg-slate-50"
-                    >
-                      {tool}
-                    </button>
-                  ))}
+  <button
+    key={tool.action}
+    onClick={() => handleToolClick(tool.action)}
+    className="block w-full rounded-2xl px-4 py-3 text-right hover:bg-slate-50"
+  >
+    <div className="text-sm font-semibold text-slate-800">
+      {tool.label}
+    </div>
+    <div className="mt-1 text-xs leading-5 text-slate-500">
+      {tool.description}
+    </div>
+  </button>
+))}
                 </div>
               </div>
             )}
