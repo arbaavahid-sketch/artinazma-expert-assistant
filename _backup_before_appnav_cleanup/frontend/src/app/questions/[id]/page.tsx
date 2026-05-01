@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import AppNav from "@/components/AppNav";
 import { apiUrl } from "@/lib/api";
 type Source = {
   title: string;
@@ -139,6 +140,7 @@ export default function QuestionDetailPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
+      <AppNav />
 
       <section className="mx-auto max-w-6xl px-6 py-10">
         {loading ? (

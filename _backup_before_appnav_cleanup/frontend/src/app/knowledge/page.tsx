@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AppNav from "@/components/AppNav";
 import { apiUrl } from "@/lib/api";
 type KnowledgeStats = {
   total_chunks: number;
@@ -69,6 +70,7 @@ export default function KnowledgePage() {
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
+      <AppNav />
 
       <section className="mx-auto max-w-6xl px-6 py-10">
         <div className="grid gap-6 lg:grid-cols-2">

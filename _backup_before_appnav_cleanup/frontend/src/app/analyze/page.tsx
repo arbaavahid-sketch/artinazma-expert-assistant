@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AppNav from "@/components/AppNav";
 import { apiUrl } from "@/lib/api";
 export default function AnalyzePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -40,6 +41,7 @@ export default function AnalyzePage() {
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
+      <AppNav />
 
       <section className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-3xl bg-white p-6 shadow-sm">
