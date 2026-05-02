@@ -200,12 +200,14 @@ export default function AssistantPage() {
 
     setMessages([...previousMessages, userMessage, assistantMessage]);
   } catch {
-    const errorMessage: ChatMessage = {
-      role: "assistant",
-      content: "خطا در آپلود یا تحلیل فایل.",
-    };
-
-    setMessages([...previousMessages, userMessage, errorMessage]);
+    setMessages([
+      ...previousMessages,
+      userMessage,
+      {
+        role: "assistant",
+        content: "خطا در آپلود یا تحلیل فایل.",
+      },
+    ]);
   } finally {
     setLoading(false);
   }
@@ -256,12 +258,14 @@ async function uploadAndAnalyzeImage(file: File) {
 
     setMessages([...previousMessages, userMessage, assistantMessage]);
   } catch {
-    const errorMessage: ChatMessage = {
-      role: "assistant",
-      content: "خطا در آپلود یا تحلیل عکس.",
-    };
-
-    setMessages([...previousMessages, userMessage, errorMessage]);
+    setMessages([
+      ...previousMessages,
+      userMessage,
+      {
+        role: "assistant",
+        content: "خطا در آپلود یا تحلیل عکس.",
+      },
+    ]);
   } finally {
     setLoading(false);
   }
