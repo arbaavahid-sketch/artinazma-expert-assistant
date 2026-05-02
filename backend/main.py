@@ -122,39 +122,132 @@ def chat(request: ChatRequest):
     }
 
 @app.post("/analyze-file")
-async def analyze_file(file: UploadFile = File(...)):
+async def analyze_file(
+    file: UploadFile = File(...),
+    test_type: str = Form("general"),
+    user_note: str = Form("")
+):
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
 
-    file_path = os.path.join(upload_dir, file.filename)
+    safe_filename = file.filename.replace(" ", "_")
+    file_path = os.path.join(upload_dir, safe_filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    ext = file.filename.lower().split(".")[-1]
+    ext = safe_filename.lower().split(".")[-1]
+
+    test_type_labels = {
+        "general": "گزارش عمومی آزمایشگاهی",
+        "catalyst": "تست کاتالیست",
+        "chromatography": "کروماتوگرافی GC/HPLC",
+        "mercury": "آنالیز جیوه",
+        "sulfur": "آنالیز سولفور",
+        "metals": "آنالیز عنصری / فلزات",
+    }
+
+    selected_test_type = test_type_labels.get(test_type, "گزارش عمومی آزمایشگاهی")
+
+    analysis_guides = {
+        "general": """
+        تحلیل را به شکل عمومی آزمایشگاهی انجام بده:
+        - خلاصه گزارش
+        - نتایج مهم
+        - شاخص‌های غیرعادی
+        - تفسیر فنی
+        - پیشنهاد اقدام بعدی
+        - سوالات تکمیلی از مشتری
+        """,
+        "catalyst": """
+        تحلیل را مخصوص تست کاتالیست انجام بده:
+        - Conversion
+        - Selectivity
+        - Yield
+        - روند افت فعالیت یا Deactivation
+        - پایداری عملکرد
+        - اثر دما، فشار، زمان و خوراک
+        - علت‌های احتمالی افت عملکرد
+        - تست‌های تکمیلی پیشنهادی مثل BET, XRD, TPR, TPD, SEM, ICP
+        """,
+        "chromatography": """
+        تحلیل را مخصوص GC/HPLC انجام بده:
+        - رفتار پیک‌ها
+        - Retention Time
+        - Baseline
+        - Resolution
+        - Peak Area
+        - احتمال co-elution
+        - وضعیت کالیبراسیون
+        - مشکلات احتمالی ستون، دتکتور، تزریق یا گاز حامل
+        - چک‌لیست عیب‌یابی
+        """,
+        "mercury": """
+        تحلیل را مخصوص آنالیز جیوه انجام بده:
+        - نوع نمونه و ماتریس احتمالی
+        - سطح جیوه و معنی فنی آن
+        - احتمال آلودگی، memory effect یا خطای آماده‌سازی
+        - نیاز به blank, duplicate, spike recovery
+        - پیشنهاد روش یا دستگاه مناسب
+        """,
+        "sulfur": """
+        تحلیل را مخصوص آنالیز سولفور انجام بده:
+        - نوع ترکیبات گوگردی احتمالی
+        - Total Sulfur / H2S / Mercaptan / COS / CS2 در صورت وجود
+        - بررسی دقت و محدوده اندازه‌گیری
+        - تفسیر برای LPG, گاز طبیعی، سوخت یا نمونه صنعتی
+        - پیشنهاد روش و دتکتور مناسب
+        """,
+        "metals": """
+        تحلیل را مخصوص آنالیز عنصری و فلزات انجام بده:
+        - عناصر مهم
+        - غلظت‌های غیرعادی
+        - اثر ماتریس نمونه
+        - نیاز به digestion یا آماده‌سازی بهتر
+        - کنترل کیفیت شامل blank, standard, CRM, spike
+        - پیشنهاد روش‌های AAS, ICP, XRF یا روش مناسب دیگر
+        """,
+    }
+
+    guide = analysis_guides.get(test_type, analysis_guides["general"])
 
     if ext in ["xlsx", "xls", "csv"]:
         analysis = analyze_excel_or_csv(file_path)
 
         prompt = f"""
-        این داده تست آزمایشگاهی یا صنعتی را برای شرکت آرتین آزما تحلیل کن.
+        این فایل تست برای شرکت آرتین آزما تحلیل شود.
+
+        نوع تست انتخاب‌شده:
+        {selected_test_type}
+
+        توضیح کاربر:
+        {user_note if user_note else "توضیحی ارائه نشده است."}
 
         اطلاعات استخراج‌شده از فایل:
         {analysis}
 
-        خروجی را به این شکل بده:
-        1. خلاصه کلی
-        2. شاخص‌های مهم
-        3. روندها و نقاط غیرعادی
-        4. تفسیر تخصصی احتمالی
-        5. پیشنهاد تست‌های تکمیلی
-        6. سوالاتی که باید از مشتری پرسیده شود
+        راهنمای تحلیل تخصصی:
+        {guide}
+
+        خروجی را فارسی، تخصصی و کاربردی بده و دقیقاً با این ساختار بنویس:
+        1. خلاصه مدیریتی
+        2. نوع داده و برداشت اولیه
+        3. شاخص‌های مهم
+        4. روندها و نقاط غیرعادی
+        5. تفسیر تخصصی بر اساس نوع تست
+        6. علت‌های احتمالی
+        7. پیشنهاد اقدام بعدی
+        8. سوالات تکمیلی که باید از مشتری پرسیده شود
+
+        اگر داده کافی نیست، صریح بگو چه داده‌هایی لازم است.
         """
 
         ai_answer = ask_expert_assistant(prompt)
 
         return {
             "file_type": ext,
+            "test_type": test_type,
+            "test_type_label": selected_test_type,
             "raw_analysis": analysis,
             "ai_analysis": ai_answer
         }
@@ -163,23 +256,37 @@ async def analyze_file(file: UploadFile = File(...)):
         text = read_pdf_text(file_path)
 
         prompt = f"""
-        این گزارش PDF را برای شرکت آرتین آزما تحلیل کن.
+        این PDF تست یا گزارش آزمایشگاهی برای شرکت آرتین آزما تحلیل شود.
 
-        متن استخراج‌شده:
+        نوع تست انتخاب‌شده:
+        {selected_test_type}
+
+        توضیح کاربر:
+        {user_note if user_note else "توضیحی ارائه نشده است."}
+
+        متن استخراج‌شده از PDF:
         {text}
 
-        خروجی را به این شکل بده:
-        1. موضوع گزارش
-        2. نتایج مهم
-        3. مشکلات یا ابهام‌ها
-        4. تفسیر تخصصی
-        5. پیشنهاد اقدام بعدی
+        راهنمای تحلیل تخصصی:
+        {guide}
+
+        خروجی را فارسی، تخصصی و کاربردی بده و دقیقاً با این ساختار بنویس:
+        1. خلاصه مدیریتی
+        2. موضوع گزارش
+        3. نتایج مهم
+        4. ابهام‌ها یا داده‌های ناقص
+        5. تفسیر تخصصی بر اساس نوع تست
+        6. علت‌های احتمالی
+        7. پیشنهاد اقدام بعدی
+        8. سوالات تکمیلی از مشتری
         """
 
         ai_answer = ask_expert_assistant(prompt)
 
         return {
             "file_type": ext,
+            "test_type": test_type,
+            "test_type_label": selected_test_type,
             "extracted_text": text[:2000],
             "ai_analysis": ai_answer
         }
