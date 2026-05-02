@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl } from "@/lib/api";
-
+import { getOrCreateUserId } from "@/lib/user";
 type Source = {
   title: string;
   file_name: string;
@@ -130,7 +130,7 @@ const [chatImageNote, setChatImageNote] = useState("");
     if (!finalMessage.trim()) return;
 
     const previousMessages = messages;
-
+    const userId = getOrCreateUserId();
     const userMessage: ChatMessage = {
       role: "user",
       content: finalMessage,
@@ -148,13 +148,14 @@ const [chatImageNote, setChatImageNote] = useState("");
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: finalMessage,
-          domain,
-          history: previousMessages.map((item) => ({
-            role: item.role,
-            content: item.content,
-          })),
-        }),
+  message: finalMessage,
+  domain,
+  user_id: userId,
+  history: previousMessages.map((item) => ({
+    role: item.role,
+    content: item.content,
+  })),
+}),
       });
       
       const data = await res.json();

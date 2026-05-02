@@ -1,5 +1,6 @@
 import os
 import shutil
+
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
@@ -21,6 +22,9 @@ from db_service import (
     get_question_stats,
     get_question_by_id,
     update_question_review,
+    save_user_memory,
+    search_user_memories,
+    get_user_memory_stats,
     get_all_questions
 )
 app = FastAPI(title="ArtinAzma Expert Assistant API")
@@ -43,6 +47,11 @@ class ChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatHistoryMessage]] = None
     domain: Optional[str] = "auto"
+    user_id: Optional[str] = "anonymous"
+class MemorySearchRequest(BaseModel):
+    user_id: str
+    query: str = ""
+    limit: int = 50
 class QuestionReviewRequest(BaseModel):
     expert_status: str
     expert_note: str = ""
@@ -114,13 +123,28 @@ def chat(request: ChatRequest):
         detected_domain=detected_domain
     )
 
+    memory_id = None
+
+    if request.user_id and request.user_id != "anonymous":
+        memory_id = save_user_memory(
+            user_id=request.user_id,
+            question=request.message,
+            answer=answer,
+            detected_domain=detected_domain,
+            memory_type="chat",
+            metadata={
+                "question_id": question_id,
+                "sources": sources
+            }
+        )
+
     return {
         "question_id": question_id,
+        "memory_id": memory_id,
         "detected_domain": detected_domain,
         "answer": answer,
         "sources": sources
     }
-
 @app.post("/analyze-file")
 async def analyze_file(
     file: UploadFile = File(...),
@@ -505,3 +529,19 @@ async def analyze_image(
         return {
             "error": f"خطا در تحلیل تصویر: {str(e)}"
         }
+
+
+@app.post("/memory/search")
+def memory_search(request: MemorySearchRequest):
+    return {
+        "memories": search_user_memories(
+            user_id=request.user_id,
+            query=request.query,
+            limit=request.limit
+        )
+    }
+
+
+@app.get("/memory/stats/{user_id}")
+def memory_stats(user_id: str):
+    return get_user_memory_stats(user_id)

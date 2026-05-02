@@ -8,6 +8,7 @@ const navItems = [
   { href: "/", label: "خانه" },
   { href: "/assistant", label: "آرتین" },
   { href: "/analyze", label: "تحلیل تست" },
+  { href: "/memory", label: "حافظه من" },
 ];
 
 type ArtinShellProps = {
