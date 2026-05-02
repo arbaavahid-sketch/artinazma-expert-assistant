@@ -2,7 +2,8 @@ import os
 from typing import Optional, List, Dict
 from dotenv import load_dotenv
 from openai import OpenAI
-
+import base64
+from pathlib import Path
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))

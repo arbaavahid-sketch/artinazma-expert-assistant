@@ -45,10 +45,10 @@ const tools: {
     action: "analyze-file",
   },
   {
-    label: "آپلود عکس برای تحلیل",
-    description: "تحلیل عکس خطای دستگاه، نمودار یا کروماتوگرام",
-    action: "analyze-image",
-  },
+  label: "آپلود عکس برای تحلیل",
+  description: "تحلیل عکس خطای دستگاه، نمودار یا کروماتوگرام؛ فرمت‌های مجاز: JPG, PNG, WEBP",
+  action: "analyze-image",
+},
   {
     label: "جست‌وجوی تخصصی",
     description: "پرسیدن سوال تخصصی بر اساس دانش آرتین آزما",
