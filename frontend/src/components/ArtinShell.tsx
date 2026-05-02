@@ -37,13 +37,25 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           }`}
         >
           <div className="px-5 py-5">
-            <Link href="/" className="block">
-              <div className="text-xl font-bold">آرتین آزما</div>
-              <div className="mt-1 text-sm text-slate-500">
-                ArtinAzma Expert Assistant
-              </div>
-            </Link>
-          </div>
+  <Link href="/" className="block">
+    <div className="rounded-3xl bg-white p-4 shadow-sm">
+      <img
+        src="/images/artinazma-logo.png"
+        alt="آرتین آزما"
+        className="mx-auto h-auto max-h-20 w-full object-contain"
+      />
+    </div>
+
+    <div className="mt-3 text-center">
+      <div className="text-sm font-bold text-slate-900">
+        دستیار هوشمند آرتین آزما
+      </div>
+      <div className="mt-1 text-xs text-slate-500">
+        ArtinAzma Expert Assistant
+      </div>
+    </div>
+  </Link>
+</div>
 
           <div className="px-3">
             <Link
@@ -107,11 +119,21 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
           <div className="mt-auto border-t border-slate-200 px-5 py-5">
             <div className="rounded-2xl bg-white p-4">
-              <div className="text-sm font-bold">هوش مصنوعی فعال</div>
-              <div className="mt-1 text-xs text-slate-500">
-                آرتین، دستیار تخصصی آرتین آزما
-              </div>
-            </div>
+  <div className="flex items-center gap-3">
+    <img
+      src="/images/artin-avatar.png"
+      alt="آرتین"
+      className="h-12 w-12 rounded-2xl object-contain"
+    />
+
+    <div>
+      <div className="text-sm font-bold">هوش مصنوعی فعال</div>
+      <div className="mt-1 text-xs text-slate-500">
+        آرتین، دستیار تخصصی آرتین آزما
+      </div>
+    </div>
+  </div>
+</div>
           </div>
         </aside>
 

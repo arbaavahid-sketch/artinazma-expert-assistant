@@ -561,12 +561,20 @@ function cancelImageAnalysis() {
 )}
       <div className="shrink-0 border-b border-slate-200 bg-[#f7f7f8]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-5">
-          <div>
-            <h1 className="text-2xl font-bold">آرتین</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              دستیار تخصصی آرتین آزما برای پاسخ‌گویی، تحلیل تست و مشاوره فنی
-            </p>
-          </div>
+          <div className="flex items-center gap-4">
+  <img
+    src="/images/artin-avatar.png"
+    alt="آرتین"
+    className="h-14 w-14 rounded-2xl bg-white object-contain p-1 shadow-sm"
+  />
+
+  <div>
+    <h1 className="text-2xl font-bold">آرتین</h1>
+    <p className="mt-1 text-sm text-slate-500">
+      دستیار تخصصی آرتین آزما برای پاسخ‌گویی، تحلیل تست و مشاوره فنی
+    </p>
+  </div>
+</div>
 
           <div className="flex items-center gap-3">
             <select
