@@ -8,9 +8,6 @@ const navItems = [
   { href: "/", label: "خانه" },
   { href: "/assistant", label: "آرتین" },
   { href: "/analyze", label: "تحلیل تست" },
-  { href: "/knowledge", label: "بانک دانش" },
-  { href: "/questions", label: "سوالات" },
-  { href: "/dashboard", label: "داشبورد" },
 ];
 
 type ArtinShellProps = {
@@ -102,12 +99,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 آپلود و تحلیل فایل تست
               </Link>
 
-              <Link
-                href="/knowledge"
-                className="block rounded-xl bg-white px-4 py-3 text-sm leading-6 text-slate-700 hover:bg-slate-50"
-              >
-                افزودن فایل به بانک دانش
-              </Link>
+            
             </div>
           </div>
 

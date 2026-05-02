@@ -27,8 +27,8 @@ const quickPrompts = [
 ];
 
 type ToolAction =
-  | "add-knowledge"
   | "analyze-file"
+  | "analyze-image"
   | "search-knowledge"
   | "troubleshooting"
   | "device-suggestion"
@@ -40,18 +40,18 @@ const tools: {
   action: ToolAction;
 }[] = [
   {
-    label: "افزودن فایل",
-    description: "افزودن کاتالوگ، PDF یا فایل آموزشی به بانک دانش",
-    action: "add-knowledge",
-  },
-  {
-    label: "تحلیل تست",
-    description: "رفتن به صفحه آپلود و تحلیل فایل تست",
+    label: "آپلود فایل برای تحلیل",
+    description: "تحلیل Excel، CSV یا PDF گزارش تست",
     action: "analyze-file",
   },
   {
-    label: "جست‌وجوی دانش",
-    description: "ساخت سوال برای جست‌وجو در بانک دانش آرتین آزما",
+    label: "آپلود عکس برای تحلیل",
+    description: "تحلیل عکس خطای دستگاه، نمودار یا کروماتوگرام",
+    action: "analyze-image",
+  },
+  {
+    label: "جست‌وجوی تخصصی",
+    description: "پرسیدن سوال تخصصی بر اساس دانش آرتین آزما",
     action: "search-knowledge",
   },
   {
@@ -80,7 +80,7 @@ export default function AssistantPage() {
   const [showTools, setShowTools] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -164,19 +164,74 @@ export default function AssistantPage() {
     if (domain === "analysis") return "آنالیز و تست";
     return "تشخیص خودکار";
   }, [domain]);
+  async function uploadAndAnalyzeFile(file: File) {
+  setShowTools(false);
+
+  const userMessage: ChatMessage = {
+    role: "user",
+    content: `فایل برای تحلیل ارسال شد: ${file.name}`,
+  };
+
+  const previousMessages = messages;
+
+  setMessages([...previousMessages, userMessage]);
+  setLoading(true);
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch(apiUrl("/analyze-file"), {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    const assistantMessage: ChatMessage = {
+      role: "assistant",
+      content:
+        data.ai_analysis ||
+        data.error ||
+        "فایل دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
+      detected_domain: "file-analysis",
+    };
+
+    setMessages([...previousMessages, userMessage, assistantMessage]);
+  } catch {
+    const errorMessage: ChatMessage = {
+      role: "assistant",
+      content: "خطا در آپلود یا تحلیل فایل.",
+    };
+
+    setMessages([...previousMessages, userMessage, errorMessage]);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  uploadAndAnalyzeFile(file);
+
+  e.target.value = "";
+}
  function handleToolClick(action: ToolAction) {
   setShowTools(false);
 
-  if (action === "add-knowledge") {
-    router.push("/knowledge");
-    return;
-  }
-
   if (action === "analyze-file") {
-    router.push("/analyze");
-    return;
-  }
-
+  fileInputRef.current?.click();
+  return;
+}
+  if (action === "analyze-image") {
+  setMessage(
+    "می‌خواهم یک عکس از خطای دستگاه، نمودار، کروماتوگرام یا نتیجه تست ارسال کنم و تحلیل تخصصی بگیرم."
+  );
+  return;
+}
   if (action === "search-knowledge") {
     setDomain("auto");
     setMessage(
@@ -211,6 +266,13 @@ export default function AssistantPage() {
 }
   return (
     <section className="flex h-full min-w-0 flex-col overflow-hidden bg-[#f7f7f8]">
+      <input
+  ref={fileInputRef}
+  type="file"
+  accept=".xlsx,.xls,.csv,.pdf"
+  onChange={handleFileChange}
+  className="hidden"
+/>
       <div className="shrink-0 border-b border-slate-200 bg-[#f7f7f8]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-5">
           <div>
