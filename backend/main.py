@@ -445,25 +445,63 @@ def question_add_to_knowledge(question_id: int):
 
     return result
 @app.post("/analyze-image")
-async def analyze_image(file: UploadFile = File(...)):
-    upload_dir = "uploads"
-    os.makedirs(upload_dir, exist_ok=True)
+async def analyze_image(
+    file: UploadFile = File(...),
+    image_type: str = Form("general"),
+    user_note: str = Form("")
+):
+    try:
+        upload_dir = "uploads"
+        os.makedirs(upload_dir, exist_ok=True)
 
-    file_path = os.path.join(upload_dir, file.filename)
+        safe_filename = file.filename.replace(" ", "_")
+        file_path = os.path.join(upload_dir, safe_filename)
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    ext = file.filename.lower().split(".")[-1]
+        ext = safe_filename.lower().split(".")[-1]
 
-    if ext not in ["jpg", "jpeg", "png", "webp"]:
-        return {
-            "error": "فعلاً فقط تصاویر JPG, PNG و WEBP پشتیبانی می‌شوند."
+        if ext not in ["jpg", "jpeg", "png", "webp"]:
+            return {
+                "error": f"فرمت تصویر .{ext} فعلاً پشتیبانی نمی‌شود. لطفاً تصویر را به JPG، PNG یا WEBP تبدیل کنید."
+            }
+
+        image_type_labels = {
+            "general": "تصویر عمومی",
+            "device-error": "خطای دستگاه",
+            "chromatogram": "کروماتوگرام",
+            "chart": "نمودار تست",
+            "software-screen": "صفحه نرم‌افزار دستگاه",
+            "lab-report": "گزارش تصویری آزمایشگاهی",
         }
 
-    ai_answer = analyze_image_with_ai(file_path)
+        selected_image_type = image_type_labels.get(image_type, "تصویر عمومی")
 
-    return {
-        "file_type": ext,
-        "ai_analysis": ai_answer
-    }
+        combined_note = f"""
+        نوع تصویر انتخاب‌شده:
+        {selected_image_type}
+
+        توضیح کاربر:
+        {user_note if user_note else "توضیحی ارائه نشده است."}
+
+        بر اساس نوع تصویر، تحلیل را دقیق‌تر انجام بده.
+        اگر تصویر خطای دستگاه است، علت‌های احتمالی و چک‌لیست عیب‌یابی بده.
+        اگر کروماتوگرام است، پیک‌ها، baseline، retention time و مشکلات احتمالی را بررسی کن.
+        اگر نمودار تست است، روند، نقاط غیرعادی و تفسیر فنی بده.
+        اگر صفحه نرم‌افزار است، پیام‌ها، وضعیت دستگاه و اقدام بعدی را توضیح بده.
+        """
+
+        ai_answer = analyze_image_with_ai(file_path, user_note=combined_note)
+
+        return {
+            "file_type": ext,
+            "image_type": image_type,
+            "image_type_label": selected_image_type,
+            "ai_analysis": ai_answer
+        }
+
+    except Exception as e:
+        return {
+            "error": f"خطا در تحلیل تصویر: {str(e)}"
+        }

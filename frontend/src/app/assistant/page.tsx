@@ -78,6 +78,14 @@ const testTypes = [
   { value: "sulfur", label: "آنالیز سولفور" },
   { value: "metals", label: "آنالیز عنصری / فلزات" },
 ];
+const imageTypes = [
+  { value: "general", label: "تصویر عمومی" },
+  { value: "device-error", label: "خطای دستگاه" },
+  { value: "chromatogram", label: "کروماتوگرام" },
+  { value: "chart", label: "نمودار تست" },
+  { value: "software-screen", label: "صفحه نرم‌افزار دستگاه" },
+  { value: "lab-report", label: "گزارش تصویری آزمایشگاهی" },
+];
 export default function AssistantPage() {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -89,9 +97,14 @@ export default function AssistantPage() {
  const [showFileOptions, setShowFileOptions] = useState(false);
  const [chatTestType, setChatTestType] = useState("general");
  const [chatUserNote, setChatUserNote] = useState("");
+ const [pendingImage, setPendingImage] = useState<File | null>(null);
+const [showImageOptions, setShowImageOptions] = useState(false);
+const [chatImageType, setChatImageType] = useState("general");
+const [chatImageNote, setChatImageNote] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -190,6 +203,8 @@ export default function AssistantPage() {
 
   const formData = new FormData();
 formData.append("file", file);
+formData.append("image_type", chatImageType);
+formData.append("user_note", chatImageNote);
 formData.append("test_type", chatTestType);
 formData.append("user_note", chatUserNote);
 
@@ -291,7 +306,10 @@ function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
 
   if (!file) return;
 
-  uploadAndAnalyzeImage(file);
+  setPendingImage(file);
+  setShowImageOptions(true);
+  setChatImageType("general");
+  setChatImageNote("");
 
   e.target.value = "";
 }
@@ -308,6 +326,20 @@ function cancelFileAnalysis() {
   setPendingFile(null);
   setChatUserNote("");
   setChatTestType("general");
+}
+function confirmImageAnalysis() {
+  if (!pendingImage) return;
+
+  setShowImageOptions(false);
+  uploadAndAnalyzeImage(pendingImage);
+  setPendingImage(null);
+}
+
+function cancelImageAnalysis() {
+  setShowImageOptions(false);
+  setPendingImage(null);
+  setChatImageNote("");
+  setChatImageType("general");
 }
  function handleToolClick(action: ToolAction) {
   setShowTools(false);
@@ -420,6 +452,66 @@ function cancelFileAnalysis() {
         >
           انصراف
         </button>
+      </div>
+    </div>
+  </div>
+)}
+{showImageOptions && pendingImage && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div className="w-full max-w-xl rounded-[32px] bg-white p-6 shadow-xl">
+      <h2 className="text-2xl font-bold text-slate-900">
+        تنظیمات تحلیل عکس
+      </h2>
+
+      <p className="mt-3 text-sm leading-7 text-slate-600">
+        عکس انتخاب‌شده: <span className="font-bold">{pendingImage.name}</span>
+      </p>
+
+      <label className="mb-2 mt-5 block text-sm font-bold">
+        نوع تصویر
+      </label>
+
+      <select
+        value={chatImageType}
+        onChange={(e) => setChatImageType(e.target.value)}
+        className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+      >
+        {imageTypes.map((item) => (
+          <option key={item.value} value={item.value}>
+            {item.label}
+          </option>
+        ))}
+      </select>
+
+      <label className="mb-2 mt-5 block text-sm font-bold">
+        توضیح اختیاری درباره تصویر
+      </label>
+
+      <textarea
+        value={chatImageNote}
+        onChange={(e) => setChatImageNote(e.target.value)}
+        className="h-28 w-full rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none focus:border-blue-600"
+        placeholder="مثلاً: این عکس مربوط به ارور دستگاه GC است، یا کروماتوگرام نمونه LPG است، یا نمودار افت فعالیت کاتالیست است..."
+      />
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={confirmImageAnalysis}
+          className="flex-1 rounded-2xl bg-blue-700 px-5 py-4 font-medium text-white"
+        >
+          شروع تحلیل عکس
+        </button>
+
+        <button
+          onClick={cancelImageAnalysis}
+          className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-medium text-slate-700"
+        >
+          انصراف
+        </button>
+      </div>
+
+      <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+        فرمت‌های مجاز: JPG, PNG, WEBP
       </div>
     </div>
   </div>
