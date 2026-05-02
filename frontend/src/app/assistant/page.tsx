@@ -70,7 +70,14 @@ const tools: {
     action: "catalyst-suggestion",
   },
 ];
-
+const testTypes = [
+  { value: "general", label: "گزارش عمومی آزمایشگاهی" },
+  { value: "catalyst", label: "تست کاتالیست" },
+  { value: "chromatography", label: "کروماتوگرافی GC/HPLC" },
+  { value: "mercury", label: "آنالیز جیوه" },
+  { value: "sulfur", label: "آنالیز سولفور" },
+  { value: "metals", label: "آنالیز عنصری / فلزات" },
+];
 export default function AssistantPage() {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -78,7 +85,10 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [showTools, setShowTools] = useState(false);
-  
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+ const [showFileOptions, setShowFileOptions] = useState(false);
+ const [chatTestType, setChatTestType] = useState("general");
+ const [chatUserNote, setChatUserNote] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -118,7 +128,7 @@ export default function AssistantPage() {
           })),
         }),
       });
-
+      
       const data = await res.json();
 
       const assistantMessage: ChatMessage = {
@@ -179,7 +189,9 @@ export default function AssistantPage() {
   setLoading(true);
 
   const formData = new FormData();
-  formData.append("file", file);
+formData.append("file", file);
+formData.append("test_type", chatTestType);
+formData.append("user_note", chatUserNote);
 
   try {
     const res = await fetch(apiUrl("/analyze-file"), {
@@ -218,7 +230,10 @@ function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
 
   if (!file) return;
 
-  uploadAndAnalyzeFile(file);
+  setPendingFile(file);
+  setShowFileOptions(true);
+  setChatTestType("general");
+  setChatUserNote("");
 
   e.target.value = "";
 }
@@ -280,6 +295,20 @@ function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
 
   e.target.value = "";
 }
+function confirmFileAnalysis() {
+  if (!pendingFile) return;
+
+  setShowFileOptions(false);
+  uploadAndAnalyzeFile(pendingFile);
+  setPendingFile(null);
+}
+
+function cancelFileAnalysis() {
+  setShowFileOptions(false);
+  setPendingFile(null);
+  setChatUserNote("");
+  setChatTestType("general");
+}
  function handleToolClick(action: ToolAction) {
   setShowTools(false);
 
@@ -339,6 +368,62 @@ function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
   onChange={handleImageChange}
   className="hidden"
 />
+      {showFileOptions && pendingFile && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div className="w-full max-w-xl rounded-[32px] bg-white p-6 shadow-xl">
+      <h2 className="text-2xl font-bold text-slate-900">
+        تنظیمات تحلیل فایل
+      </h2>
+
+      <p className="mt-3 text-sm leading-7 text-slate-600">
+        فایل انتخاب‌شده: <span className="font-bold">{pendingFile.name}</span>
+      </p>
+
+      <label className="mb-2 mt-5 block text-sm font-bold">
+        نوع تست یا گزارش
+      </label>
+
+      <select
+        value={chatTestType}
+        onChange={(e) => setChatTestType(e.target.value)}
+        className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+      >
+        {testTypes.map((item) => (
+          <option key={item.value} value={item.value}>
+            {item.label}
+          </option>
+        ))}
+      </select>
+
+      <label className="mb-2 mt-5 block text-sm font-bold">
+        توضیح اختیاری درباره نمونه یا شرایط تست
+      </label>
+
+      <textarea
+        value={chatUserNote}
+        onChange={(e) => setChatUserNote(e.target.value)}
+        className="h-28 w-full rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none focus:border-blue-600"
+        placeholder="مثلاً: نمونه LPG است، baseline نوسان دارد، تست کاتالیست در دمای 350 درجه انجام شده..."
+      />
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={confirmFileAnalysis}
+          className="flex-1 rounded-2xl bg-blue-700 px-5 py-4 font-medium text-white"
+        >
+          شروع تحلیل
+        </button>
+
+        <button
+          onClick={cancelFileAnalysis}
+          className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-medium text-slate-700"
+        >
+          انصراف
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       <div className="shrink-0 border-b border-slate-200 bg-[#f7f7f8]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-5">
           <div>
