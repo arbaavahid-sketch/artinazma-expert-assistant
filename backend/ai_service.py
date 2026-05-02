@@ -95,3 +95,70 @@ def ask_expert_assistant(
     )
 
     return response.output_text
+    import base64
+from pathlib import Path
+
+
+def analyze_image_with_ai(file_path: str, user_note: str = "") -> str:
+    path = Path(file_path)
+    image_bytes = path.read_bytes()
+    encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+
+    suffix = path.suffix.lower()
+
+    if suffix in [".jpg", ".jpeg"]:
+        mime_type = "image/jpeg"
+    elif suffix == ".png":
+        mime_type = "image/png"
+    elif suffix == ".webp":
+        mime_type = "image/webp"
+    else:
+        mime_type = "image/png"
+
+    prompt = f"""
+    این تصویر توسط کاربر برای تحلیل تخصصی به آرتین، دستیار فنی آرتین آزما، ارسال شده است.
+
+    توضیح کاربر:
+    {user_note if user_note else "توضیحی ارائه نشده است."}
+
+    تصویر ممکن است شامل یکی از موارد زیر باشد:
+    - خطای دستگاه آزمایشگاهی
+    - نمودار تست
+    - کروماتوگرام
+    - گزارش تصویری
+    - صفحه نرم‌افزار دستگاه
+    - نتیجه تست کاتالیست یا تجهیزات
+
+    خروجی را فارسی و ساختاریافته بده:
+    1. تصویر احتمالاً مربوط به چیست؟
+    2. چه اطلاعات مهمی از تصویر قابل مشاهده است؟
+    3. تحلیل فنی اولیه
+    4. علت‌های احتمالی مشکل یا الگو
+    5. پیشنهاد اقدام بعدی
+    6. چه اطلاعات تکمیلی باید از کاربر گرفته شود؟
+    """
+
+    response = client.responses.create(
+        model=MODEL,
+        input=[
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": prompt,
+                    },
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:{mime_type};base64,{encoded_image}",
+                    },
+                ],
+            },
+        ],
+    )
+
+    return response.output_text

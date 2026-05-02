@@ -11,7 +11,7 @@ from knowledge_service import (
     get_knowledge_stats,
     add_text_to_knowledge_base
 )
-from ai_service import ask_expert_assistant
+from ai_service import ask_expert_assistant, analyze_image_with_ai
 from file_analyzer import analyze_excel_or_csv, read_pdf_text
 from db_service import (
     init_db,
@@ -337,3 +337,26 @@ def question_add_to_knowledge(question_id: int):
     )
 
     return result
+@app.post("/analyze-image")
+async def analyze_image(file: UploadFile = File(...)):
+    upload_dir = "uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+
+    file_path = os.path.join(upload_dir, file.filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    ext = file.filename.lower().split(".")[-1]
+
+    if ext not in ["jpg", "jpeg", "png", "webp"]:
+        return {
+            "error": "فعلاً فقط تصاویر JPG, PNG و WEBP پشتیبانی می‌شوند."
+        }
+
+    ai_answer = analyze_image_with_ai(file_path)
+
+    return {
+        "file_type": ext,
+        "ai_analysis": ai_answer
+    }

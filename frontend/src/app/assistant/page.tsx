@@ -81,6 +81,7 @@ export default function AssistantPage() {
   
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -219,6 +220,62 @@ function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
 
   e.target.value = "";
 }
+
+async function uploadAndAnalyzeImage(file: File) {
+  setShowTools(false);
+
+  const userMessage: ChatMessage = {
+    role: "user",
+    content: `عکس برای تحلیل ارسال شد: ${file.name}`,
+  };
+
+  const previousMessages = messages;
+
+  setMessages([...previousMessages, userMessage]);
+  setLoading(true);
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch(apiUrl("/analyze-image"), {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    const assistantMessage: ChatMessage = {
+      role: "assistant",
+      content:
+        data.ai_analysis ||
+        data.error ||
+        "عکس دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
+      detected_domain: "image-analysis",
+    };
+
+    setMessages([...previousMessages, userMessage, assistantMessage]);
+  } catch {
+    const errorMessage: ChatMessage = {
+      role: "assistant",
+      content: "خطا در آپلود یا تحلیل عکس.",
+    };
+
+    setMessages([...previousMessages, userMessage, errorMessage]);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  uploadAndAnalyzeImage(file);
+
+  e.target.value = "";
+}
  function handleToolClick(action: ToolAction) {
   setShowTools(false);
 
@@ -227,9 +284,7 @@ function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
   return;
 }
   if (action === "analyze-image") {
-  setMessage(
-    "می‌خواهم یک عکس از خطای دستگاه، نمودار، کروماتوگرام یا نتیجه تست ارسال کنم و تحلیل تخصصی بگیرم."
-  );
+  imageInputRef.current?.click();
   return;
 }
   if (action === "search-knowledge") {
@@ -271,6 +326,13 @@ function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
   type="file"
   accept=".xlsx,.xls,.csv,.pdf"
   onChange={handleFileChange}
+  className="hidden"
+/>
+<input
+  ref={imageInputRef}
+  type="file"
+  accept=".jpg,.jpeg,.png,.webp"
+  onChange={handleImageChange}
   className="hidden"
 />
       <div className="shrink-0 border-b border-slate-200 bg-[#f7f7f8]">
