@@ -28,7 +28,7 @@ export default function AdminPage() {
   </a>
 </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Link
             href="/admin/knowledge"
             className="rounded-3xl bg-purple-700 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -48,7 +48,15 @@ export default function AdminPage() {
               مشاهده، بررسی، اصلاح و تایید پاسخ‌های آرتین.
             </div>
           </Link>
-
+          <Link
+  href="/admin/requests"
+  className="rounded-3xl bg-emerald-700 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+>
+  <div className="text-lg font-bold">درخواست‌های مشتریان</div>
+  <div className="mt-2 text-sm leading-7 opacity-90">
+    مشاهده و پیگیری درخواست‌های مشاوره، تجهیزات، کاتالیست و استعلام قیمت.
+  </div>
+</Link>
           <Link
             href="/admin/dashboard"
             className="rounded-3xl bg-slate-800 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"

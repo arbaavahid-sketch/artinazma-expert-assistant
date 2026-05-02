@@ -25,6 +25,10 @@ from db_service import (
     save_user_memory,
     search_user_memories,
     get_user_memory_stats,
+    save_customer_request,
+    get_customer_requests,
+    update_customer_request_status,
+    get_customer_request_stats,
     get_all_questions
 )
 app = FastAPI(title="ArtinAzma Expert Assistant API")
@@ -56,7 +60,18 @@ class QuestionReviewRequest(BaseModel):
     expert_status: str
     expert_note: str = ""
     reviewed_answer: str = ""
+class CustomerRequestCreate(BaseModel):
+    full_name: str
+    company: str = ""
+    phone: str
+    email: str = ""
+    request_type: str = "consultation"
+    subject: str = ""
+    message: str
 
+
+class CustomerRequestStatusUpdate(BaseModel):
+    status: str
 @app.get("/")
 def home():
     return {
@@ -545,3 +560,51 @@ def memory_search(request: MemorySearchRequest):
 @app.get("/memory/stats/{user_id}")
 def memory_stats(user_id: str):
     return get_user_memory_stats(user_id)
+@app.post("/customer-requests")
+def create_customer_request(request: CustomerRequestCreate):
+    request_id = save_customer_request(
+        full_name=request.full_name,
+        company=request.company,
+        phone=request.phone,
+        email=request.email,
+        request_type=request.request_type,
+        subject=request.subject,
+        message=request.message
+    )
+
+    return {
+        "success": True,
+        "request_id": request_id,
+        "message": "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما با شما تماس خواهند گرفت."
+    }
+
+
+@app.get("/customer-requests")
+def customer_requests(limit: int = 100):
+    return {
+        "requests": get_customer_requests(limit=limit)
+    }
+
+
+@app.patch("/customer-requests/{request_id}/status")
+def customer_request_status(request_id: int, request: CustomerRequestStatusUpdate):
+    updated = update_customer_request_status(
+        request_id=request_id,
+        status=request.status
+    )
+
+    if not updated:
+        return {
+            "success": False,
+            "message": "درخواست موردنظر پیدا نشد."
+        }
+
+    return {
+        "success": True,
+        "message": "وضعیت درخواست بروزرسانی شد."
+    }
+
+
+@app.get("/customer-requests/stats")
+def customer_requests_stats():
+    return get_customer_request_stats()

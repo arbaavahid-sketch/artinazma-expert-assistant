@@ -40,7 +40,9 @@ type ToolAction =
   | "search-knowledge"
   | "troubleshooting"
   | "device-suggestion"
+  | "customer-request"
   | "catalyst-suggestion";
+  
 
 const tools: {
   label: string;
@@ -77,6 +79,11 @@ const tools: {
     description: "ساخت قالب سوال برای انتخاب یا بررسی کاتالیست",
     action: "catalyst-suggestion",
   },
+  {
+  label: "ثبت درخواست مشاوره",
+  description: "ارسال اطلاعات تماس برای پیگیری توسط کارشناس آرتین آزما",
+  action: "customer-request",
+},
 ];
 const testTypes = [
   { value: "general", label: "گزارش عمومی آزمایشگاهی" },
@@ -400,7 +407,10 @@ function cancelImageAnalysis() {
     );
     return;
   }
-
+  if (action === "customer-request") {
+  router.push("/customer-request");
+  return;
+}
   if (action === "device-suggestion") {
     setDomain("equipment");
     setMessage(

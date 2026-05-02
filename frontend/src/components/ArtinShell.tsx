@@ -9,6 +9,7 @@ const navItems = [
   { href: "/assistant", label: "آرتین" },
   { href: "/analyze", label: "تحلیل تست" },
   { href: "/memory", label: "حافظه من" },
+  { href: "/customer-request", label: "درخواست مشاوره" },
 ];
 
 type ArtinShellProps = {
@@ -114,7 +115,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           </div>
         </aside>
 
-        <section className="relative h-full min-w-0 flex-1 overflow-hidden">
+        <section className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           <button
             onClick={() => setSidebarOpen(true)}
             className="fixed right-4 top-4 z-20 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm md:hidden"
