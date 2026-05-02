@@ -17,6 +17,14 @@ type ChatMessage = {
   sources?: Source[];
   detected_domain?: string;
   question_id?: number;
+  attachment?: {
+  name: string;
+  kind: "file" | "image";
+  analysisType?: string;
+  note?: string;
+  status?: "uploaded" | "analyzing" | "done" | "error";
+  previewUrl?: string;
+};
 };
 
 const quickPrompts = [
@@ -86,6 +94,13 @@ const imageTypes = [
   { value: "software-screen", label: "صفحه نرم‌افزار دستگاه" },
   { value: "lab-report", label: "گزارش تصویری آزمایشگاهی" },
 ];
+function getTestTypeLabel(value: string) {
+  return testTypes.find((item) => item.value === value)?.label || "گزارش عمومی آزمایشگاهی";
+}
+
+function getImageTypeLabel(value: string) {
+  return imageTypes.find((item) => item.value === value)?.label || "تصویر عمومی";
+}
 export default function AssistantPage() {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -192,9 +207,16 @@ const [chatImageNote, setChatImageNote] = useState("");
   setShowTools(false);
 
   const userMessage: ChatMessage = {
-    role: "user",
-    content: `فایل برای تحلیل ارسال شد: ${file.name}`,
-  };
+  role: "user",
+  content: "فایل برای تحلیل ارسال شد.",
+  attachment: {
+    name: file.name,
+    kind: "file",
+    analysisType: getTestTypeLabel(chatTestType),
+    note: chatUserNote,
+    status: "analyzing",
+  },
+};
 
   const previousMessages = messages;
 
@@ -256,10 +278,20 @@ function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
 async function uploadAndAnalyzeImage(file: File) {
   setShowTools(false);
 
-  const userMessage: ChatMessage = {
-    role: "user",
-    content: `عکس برای تحلیل ارسال شد: ${file.name}`,
-  };
+  const previewUrl = URL.createObjectURL(file);
+
+const userMessage: ChatMessage = {
+  role: "user",
+  content: "عکس برای تحلیل ارسال شد.",
+  attachment: {
+    name: file.name,
+    kind: "image",
+    analysisType: getImageTypeLabel(chatImageType),
+    note: chatImageNote,
+    status: "analyzing",
+    previewUrl,
+  },
+};
 
   const previousMessages = messages;
 
@@ -598,7 +630,50 @@ function cancelImageAnalysis() {
                     <div className="whitespace-pre-wrap text-[15px]">
                       {item.content}
                     </div>
+                    {item.attachment && (
+  <div
+    className={`mt-4 rounded-2xl p-4 text-sm leading-7 ${
+      item.role === "user"
+        ? "bg-white/15 text-white"
+        : "bg-slate-50 text-slate-700"
+    }`}
+  >
+    <div className="font-bold">
+      {item.attachment.kind === "image" ? "تصویر پیوست‌شده" : "فایل پیوست‌شده"}
+    </div>
+   {item.attachment.kind === "image" && item.attachment.previewUrl && (
+  <div className="mb-3 overflow-hidden rounded-2xl bg-black/10">
+    <img
+      src={item.attachment.previewUrl}
+      alt={item.attachment.name}
+      className="max-h-72 w-full object-contain"
+    />
+  </div>
+)}
+    <div className="mt-2">
+      نام: {item.attachment.name}
+    </div>
 
+    {item.attachment.analysisType && (
+      <div>
+        نوع تحلیل: {item.attachment.analysisType}
+      </div>
+    )}
+
+    {item.attachment.note && (
+      <div>
+        توضیح کاربر: {item.attachment.note}
+      </div>
+    )}
+
+    <div>
+      وضعیت:{" "}
+      {loading && item.attachment.status === "analyzing"
+        ? "در حال تحلیل"
+        : "ارسال شد"}
+    </div>
+  </div>
+)}
                     {item.role === "assistant" && (
                       <div className="mt-4 space-y-3">
                         {item.detected_domain && (
