@@ -21,7 +21,7 @@ export default function AdminPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           <Link
-            href="/knowledge"
+            href="/admin/knowledge"
             className="rounded-3xl bg-purple-700 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
           >
             <div className="text-lg font-bold">بانک دانش</div>
@@ -31,7 +31,7 @@ export default function AdminPage() {
           </Link>
 
           <Link
-            href="/questions"
+            href="/admin/questions"
             className="rounded-3xl bg-blue-700 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
           >
             <div className="text-lg font-bold">سوالات کاربران</div>
@@ -41,7 +41,7 @@ export default function AdminPage() {
           </Link>
 
           <Link
-            href="/dashboard"
+            href="/admin/dashboard"
             className="rounded-3xl bg-slate-800 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
           >
             <div className="text-lg font-bold">داشبورد</div>
