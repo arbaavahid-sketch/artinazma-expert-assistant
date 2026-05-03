@@ -145,7 +145,28 @@ function getDomainLabel(domain: string) {
   if (domain === "analysis") return "آنالیز و تست";
   return "تشخیص خودکار";
 }
+function cleanMarkdownText(text: string) {
+  return text
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/^\s*---+\s*$/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .trim();
+}
 
+function hasPersianText(text: string) {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+function getTextDirection(text: string) {
+  return hasPersianText(text) ? "rtl" : "ltr";
+}
+
+function getTextFont(text: string) {
+  return hasPersianText(text)
+    ? "var(--font-persian)"
+    : "var(--font-english)";
+}
 export default function AssistantPage() {
   const router = useRouter();
 
@@ -170,15 +191,52 @@ export default function AssistantPage() {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  if (!messagesEndRef.current) return;
+
+  messagesEndRef.current.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest",
+  });
+}, [messages.length, loading]);
 
   const domainLabel = useMemo(() => getDomainLabel(domain), [domain]);
 
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
   }
+ function typeAssistantMessage(
+  previousMessages: ChatMessage[],
+  userMessage: ChatMessage,
+  assistantMessage: ChatMessage
+) {
+  const fullText = assistantMessage.content || "";
+  let index = 0;
 
+  const emptyAssistantMessage: ChatMessage = {
+    ...assistantMessage,
+    content: "",
+  };
+
+  setMessages([...previousMessages, userMessage, emptyAssistantMessage]);
+
+  const interval = window.setInterval(() => {
+    index += 8;
+
+    setMessages([
+      ...previousMessages,
+      userMessage,
+      {
+        ...assistantMessage,
+        content: fullText.slice(0, index),
+      },
+    ]);
+
+    if (index >= fullText.length) {
+      window.clearInterval(interval);
+      setMessages([...previousMessages, userMessage, assistantMessage]);
+    }
+  }, 18);
+}
   async function sendMessage(customMessage?: string) {
     const finalMessage = customMessage || message;
 
@@ -224,7 +282,7 @@ export default function AssistantPage() {
         question_id: data.question_id,
       };
 
-      setMessages([...previousMessages, userMessage, assistantMessage]);
+      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
         ...previousMessages,
@@ -294,7 +352,7 @@ export default function AssistantPage() {
         detected_domain: "file-analysis",
       };
 
-      setMessages([...previousMessages, userMessage, assistantMessage]);
+      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
         ...previousMessages,
@@ -476,7 +534,7 @@ export default function AssistantPage() {
   }
 
   return (
-    <section className="flex h-full min-w-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,#eaf4ff,transparent_38%),#f7f7f8]">
+    <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,#eaf4ff,transparent_38%),#f7f7f8]">
       <input
         ref={fileInputRef}
         type="file"
@@ -536,10 +594,10 @@ export default function AssistantPage() {
             <div className="relative">
               <div className="absolute -inset-1 rounded-3xl bg-blue-200 blur-lg" />
               <img
-                src="/images/artin-avatar.png"
-                alt="آرتین"
-                className="relative h-14 w-14 rounded-3xl bg-white object-contain p-1 shadow-sm"
-              />
+  src="/images/artin-avatar.png"
+  alt="آرتین"
+  className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
+/>
             </div>
 
             <div>
@@ -583,45 +641,45 @@ export default function AssistantPage() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-6xl px-6 pb-8 pt-8">
+        <div className="mx-auto w-full max-w-6xl px-6 pb-4 pt-5">
           {messages.length === 0 ? (
-            <div className="mx-auto flex min-h-[calc(100vh-320px)] max-w-4xl flex-col items-center justify-center text-center">
+            <div className="mx-auto flex min-h-[320px] max-w-4xl flex-col items-center justify-center text-center">
               <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-[36px] bg-white p-4 shadow-sm">
                 <img
                   src="/images/artin-avatar.png"
                   alt="آرتین"
-                  className="h-full w-full object-contain"
+                  className="h-full w-full rounded-full object-cover"
                 />
               </div>
 
-              <h2 className="text-5xl font-black text-slate-900">
-                چطور می‌توانم کمک کنم؟
+              <h2 className="text-4xl font-black leading-[1.4] text-slate-900">
+              چطور می‌توانم کمک کنم؟
               </h2>
 
-              <p className="mt-5 max-w-2xl leading-8 text-slate-600">
+              <p className="mt-3 max-w-2xl leading-8 text-slate-600">
                 سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا برای
                 پیگیری تخصصی درخواست مشاوره ثبت کنید.
               </p>
 
-              <div className="mt-8 grid w-full gap-3 md:grid-cols-2">
+              <div className="mt-6 grid w-full max-w-3xl gap-3 md:grid-cols-2">
                 {quickPrompts.map((prompt) => (
                   <button
                     key={prompt.text}
                     onClick={() => sendMessage(prompt.text)}
                     disabled={loading}
-                    className="group rounded-[28px] border border-slate-200 bg-white p-5 text-right shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md disabled:opacity-50"
+                    className="group rounded-3xl border border-slate-200 bg-white px-5 py-4 text-right shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-md disabled:opacity-50"
                   >
                     <div className="text-sm font-black text-slate-900">
                       {prompt.title}
                     </div>
-                    <div className="mt-2 text-sm leading-7 text-slate-600 group-hover:text-slate-800">
+                    <div className="mt-1 text-sm leading-6 text-slate-600 group-hover:text-slate-800">
                       {prompt.text}
                     </div>
                   </button>
                 ))}
               </div>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm">
                 حوزه فعال: <span className="font-bold">{domainLabel}</span>
               </div>
             </div>
@@ -638,22 +696,22 @@ export default function AssistantPage() {
               ))}
 
               {loading && (
-                <div className="flex justify-start">
-                  <div className="flex max-w-[80%] items-center gap-3 rounded-[28px] bg-white px-5 py-4 text-slate-600 shadow-sm">
-                    <img
-                      src="/images/artin-avatar.png"
-                      alt="آرتین"
-                      className="h-9 w-9 rounded-2xl bg-slate-50 object-contain"
-                    />
-                    <span>آرتین در حال تحلیل و آماده‌سازی پاسخ است...</span>
-                    <span className="flex gap-1">
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:120ms]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:240ms]" />
-                    </span>
-                  </div>
-                </div>
-              )}
+  <div className="flex justify-start">
+    <div className="flex max-w-[80%] flex-row-reverse items-center gap-3 rounded-[28px] bg-white px-5 py-4 text-slate-600 shadow-sm">
+      <img
+        src="/images/artin-avatar.png"
+        alt="آرتین"
+        className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
+      />
+      <span className="font-persian">آرتین در حال تحلیل و آماده‌سازی پاسخ است...</span>
+      <span className="flex gap-1">
+        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:120ms]" />
+        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:240ms]" />
+      </span>
+    </div>
+  </div>
+)}
 
               <div ref={messagesEndRef} />
             </div>
@@ -662,10 +720,10 @@ export default function AssistantPage() {
       </div>
 
       <footer className="shrink-0 border-t border-slate-200/70 bg-white/75 backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-6xl px-6 py-4">
+        <div className="mx-auto w-full max-w-6xl px-6 py-3">
           <div className="relative mx-auto max-w-4xl">
             {showTools && (
-              <div className="absolute bottom-full right-0 z-20 mb-3 w-[330px] rounded-[28px] border border-slate-200 bg-white p-3 shadow-2xl">
+              <div className="absolute bottom-full left-0 right-auto z-20 mb-3 max-h-[420px] w-[330px] max-w-[calc(100vw-48px)] overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-3 shadow-2xl md:left-auto md:right-0">
                 <div className="space-y-1">
                   {tools.map((tool) => (
                     <button
@@ -700,7 +758,9 @@ export default function AssistantPage() {
                 </button>
 
                 <textarea
-                  className="max-h-40 min-h-[52px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[16px] leading-8 outline-none"
+                  dir="auto"
+                  style={{ fontFamily: getTextFont(message || "فارسی") }}
+                  className="max-h-40 min-h-[52px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[18px] leading-8 outline-none"
                   placeholder="از آرتین بپرسید..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -717,7 +777,7 @@ export default function AssistantPage() {
               </div>
             </div>
 
-            <p className="mt-3 text-center text-xs leading-6 text-slate-500">
+            <p className="mt-2 text-center text-xs leading-5 text-slate-500">
               آرتین پاسخ را بر اساس بانک دانش و تحلیل فنی ارائه می‌کند؛ برای
               تصمیم‌های مهم، امکان ثبت درخواست مشاوره وجود دارد.
             </p>
@@ -832,121 +892,144 @@ function MessageBubble({
   onRequest: () => void;
 }) {
   const isUser = item.role === "user";
+  const displayContent = isUser ? item.content : cleanMarkdownText(item.content);
+  const direction = getTextDirection(displayContent);
+  const fontFamily = getTextFont(displayContent);
 
   return (
-    <div className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
-      {!isUser && (
-        <img
-          src="/images/artin-avatar.png"
-          alt="آرتین"
-          className="mt-1 h-10 w-10 shrink-0 rounded-2xl bg-white object-contain p-1 shadow-sm"
-        />
-      )}
-
+    <div
+      className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
+      dir="ltr"
+    >
       <div
-        className={`max-w-[86%] rounded-[30px] px-5 py-4 leading-8 shadow-sm ${
-          isUser
-            ? "bg-blue-700 text-white"
-            : "border border-slate-100 bg-white text-slate-900"
+        className={`flex max-w-[88%] gap-3 ${
+          isUser ? "flex-row-reverse" : "flex-row-reverse"
         }`}
       >
-        <div className="whitespace-pre-wrap text-[15px]">{item.content}</div>
+        {!isUser && (
+          <img
+            src="/images/artin-avatar.png"
+            alt="آرتین"
+            className="mt-1 h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover p-1 shadow-sm"
+          />
+        )}
 
-        {item.attachment && (
+        <div
+          className={`rounded-[30px] px-6 py-5 shadow-sm ${
+            isUser
+              ? "bg-blue-700 text-white"
+              : "border border-slate-100 bg-white text-slate-900"
+          }`}
+        >
           <div
-            className={`mt-4 rounded-3xl p-4 text-sm leading-7 ${
-              isUser ? "bg-white/15 text-white" : "bg-slate-50 text-slate-700"
+            dir={direction}
+            style={{ fontFamily }}
+            className={`whitespace-pre-wrap ${
+              direction === "rtl"
+                ? "chat-answer text-right"
+                : "chat-answer-en text-left"
             }`}
           >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="font-black">
-                {item.attachment.kind === "image"
-                  ? "تصویر پیوست‌شده"
-                  : "فایل پیوست‌شده"}
-              </div>
-
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
-                {loading && item.attachment.status === "analyzing"
-                  ? "در حال تحلیل"
-                  : "ارسال شد"}
-              </span>
-            </div>
-
-            {item.attachment.kind === "image" && item.attachment.previewUrl && (
-              <div className="mb-3 overflow-hidden rounded-2xl bg-black/10">
-                <img
-                  src={item.attachment.previewUrl}
-                  alt={item.attachment.name}
-                  className="max-h-80 w-full object-contain"
-                />
-              </div>
-            )}
-
-            <div>نام: {item.attachment.name}</div>
-
-            {item.attachment.analysisType && (
-              <div>نوع تحلیل: {item.attachment.analysisType}</div>
-            )}
-
-            {item.attachment.note && (
-              <div>توضیح کاربر: {item.attachment.note}</div>
-            )}
+            {displayContent}
           </div>
-        )}
 
-        {!isUser && (
-          <div className="mt-4 space-y-3">
-            {item.detected_domain && (
-              <div className="rounded-2xl bg-slate-50 px-4 py-2 text-sm text-slate-600">
-                حوزه پاسخ: {item.detected_domain}
-              </div>
-            )}
-
-            {item.sources && item.sources.length > 0 && (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div className="mb-3 text-sm font-black">
-                  منابع استفاده‌شده
+          {item.attachment && (
+            <div
+              className={`mt-4 rounded-3xl p-4 text-sm leading-7 ${
+                isUser ? "bg-white/15 text-white" : "bg-slate-50 text-slate-700"
+              }`}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="font-black">
+                  {item.attachment.kind === "image"
+                    ? "تصویر پیوست‌شده"
+                    : "فایل پیوست‌شده"}
                 </div>
 
-                <div className="space-y-2">
-                  {item.sources.map((source, sourceIndex) => (
-                    <div
-                      key={sourceIndex}
-                      className="rounded-2xl bg-white p-3 text-sm"
-                    >
-                      <div className="font-bold">{source.title}</div>
-                      <div className="mt-1 text-slate-600">
-                        فایل: {source.file_name}
-                      </div>
-                      <div className="text-slate-600">
-                        دسته‌بندی: {source.category}
-                      </div>
-                      <div className="text-slate-500">
-                        امتیاز ارتباط: {source.score.toFixed(3)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
+                  {loading && item.attachment.status === "analyzing"
+                    ? "در حال تحلیل"
+                    : "ارسال شد"}
+                </span>
               </div>
-            )}
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              <button
-                onClick={() => onCopy(item.content)}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-              >
-                کپی پاسخ
-              </button>
+              {item.attachment.kind === "image" &&
+                item.attachment.previewUrl && (
+                  <div className="mb-3 overflow-hidden rounded-2xl bg-black/10">
+                    <img
+                      src={item.attachment.previewUrl}
+                      alt={item.attachment.name}
+                      className="max-h-80 w-full object-contain"
+                    />
+                  </div>
+                )}
 
-              <button
-                onClick={onRequest}
-                className="rounded-2xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
-              >
-                ثبت درخواست مشاوره
-              </button>
+              <div>نام: {item.attachment.name}</div>
+
+              {item.attachment.analysisType && (
+                <div>نوع تحلیل: {item.attachment.analysisType}</div>
+              )}
+
+              {item.attachment.note && (
+                <div>توضیح کاربر: {item.attachment.note}</div>
+              )}
             </div>
-          </div>
-        )}
+          )}
+
+          {!isUser && (
+            <div className="mt-4 space-y-3">
+              {item.detected_domain && (
+                <div className="rounded-2xl bg-slate-50 px-4 py-2 text-sm text-slate-600">
+                  حوزه پاسخ: {item.detected_domain}
+                </div>
+              )}
+
+              {item.sources && item.sources.length > 0 && (
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 text-sm font-black">
+                    منابع استفاده‌شده
+                  </div>
+
+                  <div className="space-y-2">
+                    {item.sources.map((source, sourceIndex) => (
+                      <div
+                        key={sourceIndex}
+                        className="rounded-2xl bg-white p-3 text-sm"
+                      >
+                        <div className="font-bold">{source.title}</div>
+                        <div className="mt-1 text-slate-600">
+                          فایل: {source.file_name}
+                        </div>
+                        <div className="text-slate-600">
+                          دسته‌بندی: {source.category}
+                        </div>
+                        <div className="text-slate-500">
+                          امتیاز ارتباط: {source.score.toFixed(3)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  onClick={() => onCopy(displayContent)}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  کپی پاسخ
+                </button>
+
+                <button
+                  onClick={onRequest}
+                  className="rounded-2xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+                >
+                  ثبت درخواست مشاوره
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

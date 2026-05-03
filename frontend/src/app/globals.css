@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f7f8;
+  --foreground: #111827;
+
+  --font-persian: "Vazirmatn", "IRANSans", "Yekan", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-english: "Times New Roman", Times, serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-persian);
+  --font-mono: var(--font-english);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-persian);
+  font-size: 16px;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.font-persian {
+  font-family: var(--font-persian);
+}
+
+.font-english {
+  font-family: var(--font-english);
+}
+
+.chat-answer {
+  font-family: var(--font-persian);
+  font-size: 17px;
+  line-height: 2.15;
+  letter-spacing: -0.01em;
+}
+
+.chat-answer-en {
+  font-family: var(--font-english);
+  font-size: 18px;
+  line-height: 1.9;
 }
