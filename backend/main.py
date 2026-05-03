@@ -39,6 +39,8 @@ from db_service import (
     save_chat_message,
     get_customer_chat_sessions,
     get_chat_messages,
+    update_chat_session_title,
+    delete_chat_session,
     get_all_questions
 )
 app = FastAPI(title="ArtinAzma Expert Assistant API")
@@ -96,7 +98,9 @@ class CustomerLoginRequest(BaseModel):
 class CustomerSessionCreateRequest(BaseModel):
     customer_id: int
     title: str = "گفتگوی جدید"
-
+class CustomerSessionUpdateRequest(BaseModel):
+    customer_id: int
+    title: str
 
 class CustomerChatMessageCreateRequest(BaseModel):
     customer_id: int
@@ -877,4 +881,60 @@ def customer_chat_message_create(request: CustomerChatMessageCreateRequest):
     return {
         "success": True,
         "message_id": message_id
+    }
+@app.patch("/customers/chat-sessions/{session_id}")
+def customer_chat_session_update(
+    session_id: int,
+    request: CustomerSessionUpdateRequest
+):
+    customer = get_customer_by_id(request.customer_id)
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد."
+        }
+
+    updated = update_chat_session_title(
+        session_id=session_id,
+        customer_id=request.customer_id,
+        title=request.title
+    )
+
+    if not updated:
+        return {
+            "success": False,
+            "message": "گفتگوی موردنظر پیدا نشد."
+        }
+
+    return {
+        "success": True,
+        "message": "نام گفتگو تغییر کرد."
+    }
+
+
+@app.delete("/customers/{customer_id}/chat-sessions/{session_id}")
+def customer_chat_session_delete(customer_id: int, session_id: int):
+    customer = get_customer_by_id(customer_id)
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد."
+        }
+
+    deleted = delete_chat_session(
+        session_id=session_id,
+        customer_id=customer_id
+    )
+
+    if not deleted:
+        return {
+            "success": False,
+            "message": "گفتگوی موردنظر پیدا نشد."
+        }
+
+    return {
+        "success": True,
+        "message": "گفتگو حذف شد."
     }

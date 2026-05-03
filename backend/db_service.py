@@ -990,3 +990,77 @@ def get_chat_messages(session_id: int, customer_id: int) -> List[Dict[str, Any]]
         }
         for row in rows
     ]
+def update_chat_session_title(
+    session_id: int,
+    customer_id: int,
+    title: str
+) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE chat_sessions
+        SET title = ?, updated_at = ?
+        WHERE id = ? AND customer_id = ?
+        """,
+        (
+            title.strip() or "گفتگوی جدید",
+            datetime.now().isoformat(timespec="seconds"),
+            session_id,
+            customer_id
+        )
+    )
+
+    updated = cursor.rowcount > 0
+
+    conn.commit()
+    conn.close()
+
+    return updated
+
+
+def delete_chat_session(
+    session_id: int,
+    customer_id: int
+) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM chat_sessions
+        WHERE id = ? AND customer_id = ?
+        """,
+        (session_id, customer_id)
+    )
+
+    session = cursor.fetchone()
+
+    if not session:
+        conn.close()
+        return False
+
+    cursor.execute(
+        """
+        DELETE FROM chat_messages
+        WHERE session_id = ?
+        """,
+        (session_id,)
+    )
+
+    cursor.execute(
+        """
+        DELETE FROM chat_sessions
+        WHERE id = ? AND customer_id = ?
+        """,
+        (session_id, customer_id)
+    )
+
+    deleted = cursor.rowcount > 0
+
+    conn.commit()
+    conn.close()
+
+    return deleted

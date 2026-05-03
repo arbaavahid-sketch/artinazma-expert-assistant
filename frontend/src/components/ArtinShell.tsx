@@ -21,6 +21,9 @@ import {
   Settings,
   Sparkles,
   SquarePen,
+  Ellipsis,
+Pencil,
+Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 type SidebarItem = {
@@ -78,6 +81,90 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [customerSessions, setCustomerSessions] = useState<ChatSession[]>([]);
+  
+  const [renamingSessionId, setRenamingSessionId] = useState<number | null>(null);
+  const [renameTitle, setRenameTitle] = useState("");
+  async function refreshCustomerSessions() {
+  try {
+    const raw = localStorage.getItem("artin_customer");
+
+    if (!raw) {
+      setCustomer(null);
+      setCustomerSessions([]);
+      return;
+    }
+
+    const savedCustomer = JSON.parse(raw) as Customer;
+
+    setCustomer(savedCustomer);
+
+    const res = await fetch(
+      apiUrl(`/customers/${savedCustomer.id}/chat-sessions`),
+      {
+        cache: "no-store",
+      }
+    );
+
+    const data = await res.json();
+
+    setCustomerSessions(data.sessions || []);
+  } catch {
+    setCustomer(null);
+    setCustomerSessions([]);
+  }
+}
+
+async function renameChatSession(sessionId: number) {
+  if (!customer || !renameTitle.trim()) return;
+
+  try {
+    const res = await fetch(apiUrl(`/customers/chat-sessions/${sessionId}`), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customer_id: customer.id,
+        title: renameTitle,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      setRenamingSessionId(null);
+      setRenameTitle("");
+      await refreshCustomerSessions();
+    }
+  } catch {}
+}
+
+async function deleteCustomerChatSession(sessionId: number) {
+  if (!customer) return;
+
+  const confirmed = window.confirm("این گفتگو حذف شود؟");
+
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(
+      apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+      await refreshCustomerSessions();
+
+      if (activeSessionId === String(sessionId)) {
+        window.location.href = "/assistant";
+      }
+    }
+  } catch {}
+}
   useEffect(() => {
     async function checkAdminStatus() {
       try {
@@ -95,37 +182,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     checkAdminStatus();
   }, [pathname]);
     useEffect(() => {
-  async function loadCustomerSessions() {
-    try {
-      const raw = localStorage.getItem("artin_customer");
-
-      if (!raw) {
-        setCustomer(null);
-        setCustomerSessions([]);
-        return;
-      }
-
-      const savedCustomer = JSON.parse(raw) as Customer;
-
-      setCustomer(savedCustomer);
-
-      const res = await fetch(
-        apiUrl(`/customers/${savedCustomer.id}/chat-sessions`),
-        {
-          cache: "no-store",
-        }
-      );
-
-      const data = await res.json();
-
-      setCustomerSessions(data.sessions || []);
-    } catch {
-      setCustomer(null);
-      setCustomerSessions([]);
-    }
-  }
-
-  loadCustomerSessions();
+  refreshCustomerSessions();
 }, [pathname, activeSessionId]);
   return (
     <main className="h-screen overflow-hidden bg-[#f7f7f8] text-slate-900">
@@ -257,23 +314,91 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     </div>
 
     <div className="space-y-1">
-      {customerSessions.slice(0, 10).map((session) => {
+      {customerSessions.slice(0, 12).map((session) => {
         const isActiveSession = String(session.id) === activeSessionId;
 
         return (
-          <Link
-            key={session.id}
-            href={`/assistant?session_id=${session.id}`}
-            onClick={() => setMobileSidebarOpen(false)}
-            title={session.title}
-            className={`block truncate rounded-2xl px-4 py-3 text-sm transition ${
-              isActiveSession
-                ? "bg-white font-bold text-blue-700 shadow-sm shadow-slate-200/70"
-                : "text-slate-600 hover:bg-white hover:text-slate-900"
-            }`}
-          >
-            {session.title || "گفتگوی جدید"}
-          </Link>
+          <div key={session.id}>
+            {renamingSessionId === session.id ? (
+              <div className="rounded-2xl bg-white p-2 shadow-sm shadow-slate-200/70">
+                <input
+                  value={renameTitle}
+                  onChange={(e) => setRenameTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      renameChatSession(session.id);
+                    }
+
+                    if (e.key === "Escape") {
+                      setRenamingSessionId(null);
+                      setRenameTitle("");
+                    }
+                  }}
+                  autoFocus
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                />
+
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => renameChatSession(session.id)}
+                    className="flex-1 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white"
+                  >
+                    ذخیره
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setRenamingSessionId(null);
+                      setRenameTitle("");
+                    }}
+                    className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600"
+                  >
+                    انصراف
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`group flex items-center rounded-2xl transition ${
+                  isActiveSession
+                    ? "bg-white text-blue-700 shadow-sm shadow-slate-200/70"
+                    : "text-slate-600 hover:bg-white hover:text-slate-900"
+                }`}
+              >
+                <Link
+                  href={`/assistant?session_id=${session.id}`}
+                  onClick={() => setMobileSidebarOpen(false)}
+                  title={session.title}
+                  className={`min-w-0 flex-1 truncate py-3 pr-4 text-sm ${
+                    isActiveSession ? "font-bold" : ""
+                  }`}
+                >
+                  {session.title || "گفتگوی جدید"}
+                </Link>
+
+                <div className="flex shrink-0 items-center gap-1 pl-2 opacity-0 transition group-hover:opacity-100">
+                  <button
+                    onClick={() => {
+                      setRenamingSessionId(session.id);
+                      setRenameTitle(session.title || "گفتگوی جدید");
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"
+                    title="تغییر نام"
+                  >
+                    <Pencil size={15} strokeWidth={2} />
+                  </button>
+
+                  <button
+                    onClick={() => deleteCustomerChatSession(session.id)}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                    title="حذف گفتگو"
+                  >
+                    <Trash2 size={15} strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         );
       })}
     </div>
