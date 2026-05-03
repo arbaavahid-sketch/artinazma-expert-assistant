@@ -1,6 +1,6 @@
 import os
 import shutil
-
+from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
@@ -81,8 +81,12 @@ def home():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
+  try:
     related_docs = search_knowledge_base(request.message, top_k=5)
-
+    search_mode = "ai_vector"
+  except Exception:
+    related_docs = local_search_knowledge_base(request.message, top_k=5)
+    search_mode = "local_text"
     context = ""
 
     if related_docs:
@@ -114,12 +118,17 @@ def chat(request: ChatRequest):
         for item in (request.history or [])
     ]
 
-    answer = ask_expert_assistant(
+    try:
+       answer = ask_expert_assistant(
         message=request.message,
         context=context,
         history=history,
         domain=detected_domain
     )
+       answer_mode = "ai"
+    except Exception:
+       answer = build_local_answer(request.message, related_docs)
+       answer_mode = "local"
 
     sources = [
         {
@@ -154,12 +163,14 @@ def chat(request: ChatRequest):
         )
 
     return {
-        "question_id": question_id,
-        "memory_id": memory_id,
-        "detected_domain": detected_domain,
-        "answer": answer,
-        "sources": sources
-    }
+    "question_id": question_id,
+    "memory_id": memory_id,
+    "detected_domain": detected_domain,
+    "answer": answer,
+    "sources": sources,
+    "search_mode": search_mode,
+    "answer_mode": answer_mode
+}
 @app.post("/analyze-file")
 async def analyze_file(
     file: UploadFile = File(...),
