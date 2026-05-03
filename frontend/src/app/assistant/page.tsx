@@ -4,6 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
+import {
+  Paperclip,
+  Wrench,
+  Settings,
+  FlaskConical,
+  UserRound,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type Source = {
   title: string;
@@ -29,9 +37,7 @@ type ChatMessage = {
 };
 
 type ToolAction =
-  | "analyze-file"
-  | "analyze-image"
-  | "search-knowledge"
+  | "upload"
   | "troubleshooting"
   | "device-suggestion"
   | "catalyst-suggestion"
@@ -63,22 +69,10 @@ const tools: {
   icon: string;
 }[] = [
   {
-    label: "آپلود فایل برای تحلیل",
-    description: "تحلیل Excel، CSV یا PDF گزارش تست",
-    action: "analyze-file",
-    icon: "📄",
-  },
-  {
-    label: "آپلود عکس برای تحلیل",
-    description: "تحلیل عکس خطا، نمودار یا کروماتوگرام",
-    action: "analyze-image",
-    icon: "🖼️",
-  },
-  {
-    label: "جست‌وجوی تخصصی",
-    description: "پرسش بر اساس دانش فنی آرتین آزما",
-    action: "search-knowledge",
-    icon: "🔎",
+    label: "آپلود فایل یا عکس",
+    description: "تحلیل PDF، Excel، CSV، عکس خطا یا کروماتوگرام",
+    action: "upload",
+    icon: "📎",
   },
   {
     label: "عیب‌یابی تجهیزات",
@@ -105,7 +99,42 @@ const tools: {
     icon: "👤",
   },
 ];
+function getToolIcon(action: ToolAction): LucideIcon {
+  if (action === "upload") return Paperclip;
+  if (action === "troubleshooting") return Wrench;
+  if (action === "device-suggestion") return Settings;
+  if (action === "catalyst-suggestion") return FlaskConical;
+  return UserRound;
+}
+function ToolMenu({
+  onSelect,
+}: {
+  onSelect: (action: ToolAction) => void;
+}) {
+  return (
+    <div className="w-[245px] overflow-hidden rounded-[18px] border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-300/40">
+      {tools.map((tool, index) => {
+        const Icon = getToolIcon(tool.action);
 
+        return (
+          <button
+            key={tool.action}
+            onClick={() => onSelect(tool.action)}
+            className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-right text-[13px] font-medium text-slate-800 transition hover:bg-slate-50 ${
+              index === 0 || index === 3 ? "border-b border-slate-100" : ""
+            }`}
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-700">
+              <Icon size={17} strokeWidth={1.9} />
+            </span>
+
+            <span className="flex-1">{tool.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 const testTypes = [
   { value: "general", label: "گزارش عمومی آزمایشگاهی" },
   { value: "catalyst", label: "تست کاتالیست" },
@@ -189,7 +218,7 @@ export default function AssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
-
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const domainLabel = useMemo(() => getDomainLabel(domain), [domain]);
 
   async function copyText(text: string) {
@@ -463,7 +492,28 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
 
     e.target.value = "";
   }
+  function handleUploadChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
 
+  if (!file) return;
+
+  const fileName = file.name.toLowerCase();
+  const ext = fileName.split(".").pop() || "";
+
+  if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
+    setPendingImage(file);
+    setShowImageOptions(true);
+    setChatImageType("general");
+    setChatImageNote("");
+  } else {
+    setPendingFile(file);
+    setShowFileOptions(true);
+    setChatTestType("general");
+    setChatUserNote("");
+  }
+
+  e.target.value = "";
+}
   function confirmFileAnalysis() {
     if (!pendingFile) return;
 
@@ -496,30 +546,16 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
 
   function handleToolClick(action: ToolAction) {
     setShowTools(false);
-
-    if (action === "analyze-file") {
-      fileInputRef.current?.click();
-      return;
-    }
-
-    if (action === "analyze-image") {
-      imageInputRef.current?.click();
-      return;
-    }
-
+    if (action === "upload") {
+  uploadInputRef.current?.click();
+  return;
+}    
     if (action === "customer-request") {
       router.push("/customer-request");
       return;
     }
 
-    if (action === "search-knowledge") {
-      setDomain("auto");
-      setMessage(
-        "در بانک دانش آرتین آزما درباره این موضوع جست‌وجو کن و پاسخ تخصصی بده: "
-      );
-      return;
-    }
-
+    
     if (action === "troubleshooting") {
       setDomain("troubleshooting");
       setMessage(
@@ -560,7 +596,13 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
         onChange={handleImageChange}
         className="hidden"
       />
-
+      <input
+         ref={uploadInputRef}
+         type="file"
+         accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp"
+         onChange={handleUploadChange}
+         className="hidden"
+      />
       {showFileOptions && pendingFile && (
         <UploadModal
           title="تنظیمات تحلیل فایل"
@@ -664,31 +706,10 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
 
     <div className="relative mt-8 w-full max-w-3xl">
       {showTools && (
-        <div className="absolute bottom-full right-0 z-20 mb-3 max-h-[420px] w-[330px] max-w-[calc(100vw-48px)] overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-3 shadow-2xl">
-          <div className="space-y-1">
-            {tools.map((tool) => (
-              <button
-                key={tool.action}
-                onClick={() => handleToolClick(tool.action)}
-                className="flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-right hover:bg-slate-50"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg">
-                  {tool.icon}
-                </span>
-
-                <span>
-                  <span className="block text-sm font-bold text-slate-800">
-                    {tool.label}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">
-                    {tool.description}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+  <div className="absolute top-full right-0 z-50 mt-2">
+    <ToolMenu onSelect={handleToolClick} />
+  </div>
+)}
 
       <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -722,18 +743,11 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
 
     <div className="mt-5 flex flex-wrap justify-center gap-3">
       <button
-        onClick={() => handleToolClick("analyze-file")}
-        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
-      >
-        تحلیل فایل تست
-      </button>
-
-      <button
-        onClick={() => handleToolClick("analyze-image")}
-        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
-      >
-        تحلیل عکس یا خطا
-      </button>
+  onClick={() => handleToolClick("upload")}
+  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+>
+  آپلود فایل یا عکس
+</button>
 
       <button
         onClick={() => handleToolClick("customer-request")}
@@ -784,30 +798,10 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
         <div className="mx-auto w-full max-w-6xl px-6 py-3">
           <div className="relative mx-auto max-w-4xl">
             {showTools && (
-              <div className="absolute bottom-full left-0 right-auto z-20 mb-3 max-h-[420px] w-[330px] max-w-[calc(100vw-48px)] overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-3 shadow-2xl md:left-auto md:right-0">
-                <div className="space-y-1">
-                  {tools.map((tool) => (
-                    <button
-                      key={tool.action}
-                      onClick={() => handleToolClick(tool.action)}
-                      className="flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-right hover:bg-slate-50"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg">
-                        {tool.icon}
-                      </span>
-                      <span>
-                        <span className="block text-sm font-black text-slate-800">
-                          {tool.label}
-                        </span>
-                        <span className="mt-1 block text-xs leading-5 text-slate-500">
-                          {tool.description}
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+  <div className="absolute bottom-full left-0 right-auto z-50 mb-2 md:left-auto md:right-0">
+    <ToolMenu onSelect={handleToolClick} />
+  </div>
+)}
 
             <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
               <div className="flex items-end gap-3 px-3 py-3">
