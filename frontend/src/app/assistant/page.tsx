@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { apiUrl } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
@@ -35,7 +35,26 @@ type ChatMessage = {
     previewUrl?: string;
   };
 };
+type Customer = {
+  id: number;
+  full_name: string;
+  email: string;
+  company?: string;
+  phone?: string;
+};
 
+type SavedChatMessage = {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  metadata?: {
+    sources?: Source[];
+    detected_domain?: string;
+    question_id?: number;
+    attachment?: ChatMessage["attachment"];
+  };
+  created_at: string;
+};
 type ToolAction =
   | "upload"
   | "troubleshooting"
@@ -198,13 +217,16 @@ function getTextFont(text: string) {
 }
 export default function AssistantPage() {
   const router = useRouter();
-
+  const searchParams = useSearchParams();
+  const sessionIdParam = searchParams.get("session_id");
   const [message, setMessage] = useState("");
   const [domain, setDomain] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [showTools, setShowTools] = useState(false);
-
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+  const [loadingSavedSession, setLoadingSavedSession] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showFileOptions, setShowFileOptions] = useState(false);
   const [chatTestType, setChatTestType] = useState("general");
@@ -224,6 +246,136 @@ export default function AssistantPage() {
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
   }
+  function makeSessionTitle(text: string) {
+  const clean = text.replace(/\s+/g, " ").trim();
+
+  if (!clean) return "گفتگوی جدید";
+
+  return clean.length > 42 ? `${clean.slice(0, 42)}...` : clean;
+}
+
+function getSavedCustomer(): Customer | null {
+  try {
+    const raw = localStorage.getItem("artin_customer");
+
+    if (!raw) return null;
+
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function createCustomerChatSession(title: string) {
+  if (!customer) return null;
+
+  try {
+    const res = await fetch(apiUrl("/customers/chat-sessions"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customer_id: customer.id,
+        title: makeSessionTitle(title),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success || !data.session_id) return null;
+
+    const newSessionId = Number(data.session_id);
+
+    setActiveSessionId(newSessionId);
+
+    window.history.replaceState(null, "", `/assistant?session_id=${newSessionId}`);
+
+    return newSessionId;
+  } catch {
+    return null;
+  }
+}
+
+async function ensureCustomerSession(titleSource: string) {
+  if (!customer) return null;
+
+  if (activeSessionId) return activeSessionId;
+
+  return createCustomerChatSession(titleSource);
+}
+
+async function saveCustomerChatMessage(
+  sessionId: number | null,
+  role: "user" | "assistant",
+  content: string,
+  metadata: Record<string, unknown> = {}
+) {
+  if (!customer || !sessionId || !content.trim()) return;
+
+  try {
+    await fetch(apiUrl("/customers/chat-messages"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customer_id: customer.id,
+        session_id: sessionId,
+        role,
+        content,
+        metadata,
+      }),
+    });
+  } catch {
+    // ذخیره گفتگو نباید باعث خراب شدن چت اصلی شود
+  }
+}
+
+async function loadSavedChatSession(customerId: number, sessionId: number) {
+  setLoadingSavedSession(true);
+
+  try {
+    const res = await fetch(
+      apiUrl(`/customers/${customerId}/chat-sessions/${sessionId}/messages`)
+    );
+
+    const data = await res.json();
+
+    const savedMessages: ChatMessage[] = (data.messages || []).map(
+      (item: SavedChatMessage) => ({
+        role: item.role === "user" ? "user" : "assistant",
+        content: item.content,
+        sources: item.metadata?.sources || [],
+        detected_domain: item.metadata?.detected_domain,
+        question_id: item.metadata?.question_id,
+        attachment: item.metadata?.attachment,
+      })
+    );
+
+    setMessages(savedMessages);
+    setActiveSessionId(sessionId);
+  } catch {
+    setMessages([]);
+  } finally {
+    setLoadingSavedSession(false);
+  }
+}
+useEffect(() => {
+  const savedCustomer = getSavedCustomer();
+
+  setCustomer(savedCustomer);
+
+  if (!savedCustomer) return;
+
+  if (sessionIdParam) {
+    const sessionId = Number(sessionIdParam);
+
+    if (!Number.isNaN(sessionId)) {
+      loadSavedChatSession(savedCustomer.id, sessionId);
+    }
+  }
+}, [sessionIdParam]);
  function typeAssistantMessage(
   previousMessages: ChatMessage[],
   userMessage: ChatMessage,
@@ -269,7 +421,11 @@ export default function AssistantPage() {
       role: "user",
       content: finalMessage,
     };
+   const customerSessionId = await ensureCustomerSession(finalMessage);
 
+await saveCustomerChatMessage(customerSessionId, "user", finalMessage, {
+  domain,
+});
     setMessages([...previousMessages, userMessage]);
     setMessage("");
     setLoading(true);
@@ -315,7 +471,16 @@ const assistantMessage: ChatMessage = {
   detected_domain: data.detected_domain,
   question_id: data.question_id,
 };
-
+await saveCustomerChatMessage(
+  customerSessionId,
+  "assistant",
+  assistantMessage.content,
+  {
+    sources: assistantMessage.sources || [],
+    detected_domain: assistantMessage.detected_domain,
+    question_id: assistantMessage.question_id,
+  }
+);
 typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch (error) {
   console.error("CHAT ERROR:", error);
@@ -338,10 +503,12 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
   }
 
   function clearChat() {
-    setMessages([]);
-    setMessage("");
-    setShowTools(false);
-  }
+  setMessages([]);
+  setMessage("");
+  setShowTools(false);
+  setActiveSessionId(null);
+  router.replace("/assistant");
+}
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -693,6 +860,11 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
+        {loadingSavedSession && (
+  <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-blue-50 p-4 text-center text-sm font-bold text-blue-700">
+    در حال بارگذاری گفتگوی ذخیره‌شده...
+  </div>
+)}
         <div className="mx-auto w-full max-w-6xl px-6 pb-6 pt-6">
           {messages.length === 0 ? (
   <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
