@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import {
   Bot,
@@ -28,7 +28,19 @@ type SidebarItem = {
   label: string;
   Icon: LucideIcon;
 };
+type Customer = {
+  id: number;
+  full_name: string;
+  email: string;
+};
 
+type ChatSession = {
+  id: number;
+  title: string;
+  created_at: string;
+  updated_at: string;
+};
+import { apiUrl } from "@/lib/api";
 const navItems: SidebarItem[] = [
   { href: "/assistant", label: "خانه", Icon: Home },
   { href: "/", label: "آرتین", Icon: Sparkles },
@@ -57,13 +69,15 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
 
 export default function ArtinShell({ children }: ArtinShellProps) {
   const pathname = usePathname();
-
+  const searchParams = useSearchParams();
+  const activeSessionId = searchParams.get("session_id");
   const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customerSessions, setCustomerSessions] = useState<ChatSession[]>([]);
   useEffect(() => {
     async function checkAdminStatus() {
       try {
@@ -80,7 +94,39 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
     checkAdminStatus();
   }, [pathname]);
+    useEffect(() => {
+  async function loadCustomerSessions() {
+    try {
+      const raw = localStorage.getItem("artin_customer");
 
+      if (!raw) {
+        setCustomer(null);
+        setCustomerSessions([]);
+        return;
+      }
+
+      const savedCustomer = JSON.parse(raw) as Customer;
+
+      setCustomer(savedCustomer);
+
+      const res = await fetch(
+        apiUrl(`/customers/${savedCustomer.id}/chat-sessions`),
+        {
+          cache: "no-store",
+        }
+      );
+
+      const data = await res.json();
+
+      setCustomerSessions(data.sessions || []);
+    } catch {
+      setCustomer(null);
+      setCustomerSessions([]);
+    }
+  }
+
+  loadCustomerSessions();
+}, [pathname, activeSessionId]);
   return (
     <main className="h-screen overflow-hidden bg-[#f7f7f8] text-slate-900">
       <div className="flex h-full overflow-hidden">
@@ -204,7 +250,35 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 </Link>
               );
             })}
+            {!sidebarCollapsed && customer && customerSessions.length > 0 && (
+  <div className="mt-6">
+    <div className="mb-2 px-3 text-xs font-bold text-slate-500">
+      گفتگوهای من
+    </div>
 
+    <div className="space-y-1">
+      {customerSessions.slice(0, 10).map((session) => {
+        const isActiveSession = String(session.id) === activeSessionId;
+
+        return (
+          <Link
+            key={session.id}
+            href={`/assistant?session_id=${session.id}`}
+            onClick={() => setMobileSidebarOpen(false)}
+            title={session.title}
+            className={`block truncate rounded-2xl px-4 py-3 text-sm transition ${
+              isActiveSession
+                ? "bg-white font-bold text-blue-700 shadow-sm shadow-slate-200/70"
+                : "text-slate-600 hover:bg-white hover:text-slate-900"
+            }`}
+          >
+            {session.title || "گفتگوی جدید"}
+          </Link>
+        );
+      })}
+    </div>
+  </div>
+)}
             {isAdminArea && (
               <div className="mt-6">
                 {!sidebarCollapsed && (
