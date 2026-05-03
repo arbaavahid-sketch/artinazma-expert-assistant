@@ -169,11 +169,45 @@ def get_knowledge_stats() -> Dict[str, Any]:
     files = sorted(list(set(item["file_name"] for item in store)))
     categories = sorted(list(set(item["category"] for item in store)))
 
+    file_map = {}
+
+    for item in store:
+        file_name = item.get("file_name", "unknown")
+
+        if file_name not in file_map:
+            file_map[file_name] = {
+                "file_name": file_name,
+                "title": item.get("title", file_name),
+                "category": item.get("category", "general"),
+                "categories": set(),
+                "chunks": 0,
+            }
+
+        file_map[file_name]["chunks"] += 1
+        file_map[file_name]["categories"].add(item.get("category", "general"))
+
+        if item.get("title"):
+            file_map[file_name]["title"] = item.get("title")
+
+    file_details = []
+
+    for file_name, data in file_map.items():
+        file_details.append({
+            "file_name": data["file_name"],
+            "title": data["title"],
+            "category": data["category"],
+            "categories": sorted(list(data["categories"])),
+            "chunks": data["chunks"],
+        })
+
+    file_details.sort(key=lambda item: item["file_name"])
+
     return {
         "total_chunks": len(store),
         "total_files": len(files),
         "files": files,
-        "categories": categories
+        "categories": categories,
+        "file_details": file_details,
     }
 def add_text_to_knowledge_base(
     title: str,

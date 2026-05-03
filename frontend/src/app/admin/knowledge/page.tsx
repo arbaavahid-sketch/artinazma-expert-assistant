@@ -1,13 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiUrl } from "@/lib/api";
+
+type KnowledgeFileDetail = {
+  file_name: string;
+  title: string;
+  category: string;
+  categories: string[];
+  chunks: number;
+};
+
 type KnowledgeStats = {
   total_chunks: number;
   total_files: number;
   files: string[];
   categories: string[];
+  file_details?: KnowledgeFileDetail[];
 };
+
+function getCategoryLabel(category: string) {
+  if (category === "general") return "عمومی";
+  if (category === "catalyst") return "کاتالیست";
+  if (category === "equipment") return "تجهیزات";
+  if (category === "chromatography") return "کروماتوگرافی";
+  if (category === "mercury-analysis") return "آنالیز جیوه";
+  if (category === "sulfur-analysis") return "آنالیز سولفور";
+  if (category === "troubleshooting") return "عیب‌یابی";
+  if (category === "application-note") return "اپلیکیشن نوت";
+  if (category === "ASTM Standards") return "استانداردهای ASTM";
+  if (category === "expert-faq") return "FAQ تاییدشده";
+  return category || "بدون دسته‌بندی";
+}
 
 export default function KnowledgePage() {
   const [knowledgeFile, setKnowledgeFile] = useState<File | null>(null);
@@ -17,9 +41,12 @@ export default function KnowledgePage() {
   const [stats, setStats] = useState<KnowledgeStats | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [searchText, setSearchText] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
   async function loadKnowledgeStats() {
     try {
-      const res = await fetch(apiUrl("/knowledge/stats"))
+      const res = await fetch(apiUrl("/knowledge/stats"));
       const data = await res.json();
       setStats(data);
     } catch {
@@ -67,108 +94,283 @@ export default function KnowledgePage() {
     }
   }
 
+  const fileDetails = useMemo(() => {
+    return stats?.file_details || [];
+  }, [stats]);
+
+  const filteredFiles = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+
+    return fileDetails.filter((item) => {
+      const matchesSearch =
+        !query ||
+        item.file_name.toLowerCase().includes(query) ||
+        item.title.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query);
+
+      const matchesCategory =
+        selectedCategory === "all" ||
+        item.category === selectedCategory ||
+        item.categories?.includes(selectedCategory);
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [fileDetails, searchText, selectedCategory]);
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
+      <section className="mx-auto max-w-7xl px-6 py-10">
+        <div className="mb-6 rounded-[32px] bg-white p-8 shadow-sm">
+          <div className="mb-2 text-sm font-bold text-blue-700">
+            مدیریت بانک دانش آرتین
+          </div>
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <h1 className="mb-2 text-2xl font-bold">افزودن فایل به بانک دانش</h1>
-            <p className="mb-6 text-slate-600">
-              کاتالوگ، اپلیکیشن‌نوت، فایل آموزشی، راهنمای دستگاه یا FAQ را وارد
-              کنید تا دستیار بتواند بر اساس دانش اختصاصی آرتین آزما پاسخ بدهد.
-            </p>
+          <h1 className="text-3xl font-bold text-slate-900">
+            بانک دانش اختصاصی آرتین آزما
+          </h1>
 
-            <input
-              type="file"
-              accept=".pdf,.txt,.md"
-              onChange={(e) => setKnowledgeFile(e.target.files?.[0] || null)}
-              className="w-full rounded-2xl border border-slate-300 bg-white p-4"
-            />
+          <p className="mt-4 max-w-4xl leading-8 text-slate-600">
+            در این بخش می‌توانید فایل‌های آموزشی، کاتالوگ‌ها، استانداردها،
+            اپلیکیشن‌نوت‌ها و FAQهای تاییدشده را وارد بانک دانش کنید و وضعیت
+            فایل‌های ثبت‌شده را بررسی کنید.
+          </p>
+        </div>
 
-            <input
-              type="text"
-              placeholder="عنوان فایل، مثلاً کاتالوگ دستگاه آنالیز جیوه"
-              value={knowledgeTitle}
-              onChange={(e) => setKnowledgeTitle(e.target.value)}
-              className="mt-4 w-full rounded-2xl border border-slate-300 p-4 outline-none focus:border-blue-500"
-            />
+        <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+          <div className="space-y-6">
+            <div className="rounded-3xl bg-white p-6 shadow-sm">
+              <h2 className="mb-2 text-xl font-bold">
+                افزودن فایل به بانک دانش
+              </h2>
 
-            <select
-              value={knowledgeCategory}
-              onChange={(e) => setKnowledgeCategory(e.target.value)}
-              className="mt-4 w-full rounded-2xl border border-slate-300 p-4 outline-none focus:border-blue-500"
-            >
-              <option value="general">عمومی</option>
-              <option value="catalyst">کاتالیست</option>
-              <option value="equipment">تجهیزات</option>
-              <option value="chromatography">کروماتوگرافی</option>
-              <option value="mercury-analysis">آنالیز جیوه</option>
-              <option value="sulfur-analysis">آنالیز سولفور</option>
-              <option value="troubleshooting">عیب‌یابی</option>
-              <option value="application-note">اپلیکیشن نوت</option>
-            </select>
+              <p className="mb-6 text-sm leading-7 text-slate-600">
+                فایل PDF، TXT یا MD را وارد کنید تا آرتین بتواند در پاسخ‌های
+                بعدی از محتوای آن استفاده کند.
+              </p>
 
-            <button
-              onClick={uploadKnowledgeFile}
-              disabled={loading || !knowledgeFile}
-              className="mt-4 rounded-2xl bg-purple-700 px-5 py-3 font-medium text-white disabled:opacity-50"
-            >
-              {loading ? "در حال افزودن..." : "افزودن به بانک دانش"}
-            </button>
+              <label className="mb-2 block text-sm font-bold">
+                انتخاب فایل
+              </label>
 
-            {knowledgeResult && (
-              <div className="mt-6 whitespace-pre-wrap rounded-2xl bg-slate-50 p-5 leading-8">
-                {knowledgeResult}
-              </div>
-            )}
+              <input
+                type="file"
+                accept=".pdf,.txt,.md"
+                onChange={(e) => setKnowledgeFile(e.target.files?.[0] || null)}
+                className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm"
+              />
+
+              {knowledgeFile && (
+                <div className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+                  فایل انتخاب‌شده:{" "}
+                  <span className="font-bold">{knowledgeFile.name}</span>
+                </div>
+              )}
+
+              <label className="mb-2 mt-4 block text-sm font-bold">
+                عنوان فایل
+              </label>
+
+              <input
+                type="text"
+                placeholder="مثلاً: استاندارد ASTM D1151"
+                value={knowledgeTitle}
+                onChange={(e) => setKnowledgeTitle(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 p-4 text-sm outline-none focus:border-blue-500"
+              />
+
+              <label className="mb-2 mt-4 block text-sm font-bold">
+                دسته‌بندی
+              </label>
+
+              <select
+                value={knowledgeCategory}
+                onChange={(e) => setKnowledgeCategory(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 p-4 text-sm outline-none focus:border-blue-500"
+              >
+                <option value="general">عمومی</option>
+                <option value="ASTM Standards">استانداردهای ASTM</option>
+                <option value="catalyst">کاتالیست</option>
+                <option value="equipment">تجهیزات</option>
+                <option value="chromatography">کروماتوگرافی</option>
+                <option value="mercury-analysis">آنالیز جیوه</option>
+                <option value="sulfur-analysis">آنالیز سولفور</option>
+                <option value="troubleshooting">عیب‌یابی</option>
+                <option value="application-note">اپلیکیشن نوت</option>
+              </select>
+
+              <button
+                onClick={uploadKnowledgeFile}
+                disabled={loading || !knowledgeFile}
+                className="mt-5 w-full rounded-2xl bg-purple-700 px-5 py-4 font-bold text-white disabled:opacity-50"
+              >
+                {loading ? "در حال افزودن..." : "افزودن به بانک دانش"}
+              </button>
+
+              {knowledgeResult && (
+                <div className="mt-6 whitespace-pre-wrap rounded-2xl bg-slate-50 p-5 text-sm leading-8">
+                  {knowledgeResult}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-3xl bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-bold">خلاصه وضعیت</h2>
+
+              {stats ? (
+                <div className="grid gap-3">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="text-sm text-slate-500">تعداد فایل‌ها</div>
+                    <div className="mt-2 text-3xl font-black">
+                      {stats.total_files}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="text-sm text-slate-500">
+                      تعداد بخش‌های متنی
+                    </div>
+                    <div className="mt-2 text-3xl font-black">
+                      {stats.total_chunks}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="mb-3 text-sm font-bold text-slate-600">
+                      دسته‌بندی‌ها
+                    </div>
+
+                    {stats.categories.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {stats.categories.map((category) => (
+                          <span
+                            key={category}
+                            className="rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-700"
+                          >
+                            {getCategoryLabel(category)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500">
+                        هنوز دسته‌بندی ثبت نشده است.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-slate-500">
+                  اطلاعات بانک دانش دریافت نشد.
+                </p>
+              )}
+
+              <button
+                onClick={loadKnowledgeStats}
+                className="mt-5 w-full rounded-2xl bg-slate-800 px-4 py-3 text-sm font-bold text-white"
+              >
+                بروزرسانی وضعیت
+              </button>
+            </div>
           </div>
 
           <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-bold">وضعیت بانک دانش</h2>
+            <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  فایل‌های ثبت‌شده در بانک دانش
+                </h2>
 
-            {stats ? (
-              <div className="space-y-4 text-sm">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  تعداد فایل‌ها:{" "}
-                  <span className="font-bold">{stats.total_files}</span>
-                </div>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  در این بخش می‌توانید فایل‌های واردشده، دسته‌بندی و تعداد
+                  chunkهای هر فایل را ببینید.
+                </p>
+              </div>
 
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  تعداد بخش‌های متنی:{" "}
-                  <span className="font-bold">{stats.total_chunks}</span>
-                </div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                نمایش:{" "}
+                <span className="font-bold">{filteredFiles.length}</span> از{" "}
+                <span className="font-bold">{fileDetails.length}</span> فایل
+              </div>
+            </div>
 
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <div className="mb-2 font-bold">دسته‌بندی‌ها</div>
-                  {stats.categories.length > 0
-                    ? stats.categories.join("، ")
-                    : "هنوز دسته‌بندی ثبت نشده"}
-                </div>
+            <div className="mb-5 grid gap-3 md:grid-cols-[1fr_240px]">
+              <input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="جست‌وجو بر اساس نام فایل، عنوان یا دسته‌بندی..."
+                className="rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-500"
+              />
 
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <div className="mb-2 font-bold">فایل‌ها</div>
-                  {stats.files.length > 0 ? (
-                    <ul className="list-inside list-disc space-y-1">
-                      {stats.files.map((file) => (
-                        <li key={file}>{file}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    "هنوز فایلی ثبت نشده"
-                  )}
-                </div>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-500"
+              >
+                <option value="all">همه دسته‌بندی‌ها</option>
+                {stats?.categories.map((category) => (
+                  <option key={category} value={category}>
+                    {getCategoryLabel(category)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {filteredFiles.length > 0 ? (
+              <div className="max-h-[720px] overflow-y-auto rounded-3xl border border-slate-200">
+                <table className="w-full border-collapse text-right text-sm">
+                  <thead className="sticky top-0 bg-slate-50">
+                    <tr className="border-b border-slate-200 text-slate-600">
+                      <th className="p-4 font-bold">فایل</th>
+                      <th className="p-4 font-bold">دسته‌بندی</th>
+                      <th className="p-4 font-bold">Chunk</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {filteredFiles.map((item) => (
+                      <tr
+                        key={item.file_name}
+                        className="border-b border-slate-100 hover:bg-slate-50"
+                      >
+                        <td className="p-4 align-top">
+                          <div className="font-bold text-slate-900">
+                            {item.title || item.file_name}
+                          </div>
+                          <div className="mt-1 break-all text-xs leading-6 text-slate-500">
+                            {item.file_name}
+                          </div>
+                        </td>
+
+                        <td className="p-4 align-top">
+                          <div className="flex flex-wrap gap-2">
+                            {(item.categories?.length
+                              ? item.categories
+                              : [item.category]
+                            ).map((category) => (
+                              <span
+                                key={category}
+                                className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700"
+                              >
+                                {getCategoryLabel(category)}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+
+                        <td className="p-4 align-top">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                            {item.chunks}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
-              <p className="text-slate-500">اطلاعات بانک دانش دریافت نشد.</p>
+              <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
+                فایلی با این فیلتر پیدا نشد.
+              </div>
             )}
-
-            <button
-              onClick={loadKnowledgeStats}
-              className="mt-4 rounded-2xl bg-slate-800 px-4 py-3 text-sm font-medium text-white"
-            >
-              بروزرسانی وضعیت
-            </button>
           </div>
         </div>
       </section>
