@@ -12,7 +12,7 @@ export default function AdminLogoutPage() {
         method: "POST",
       });
 
-      router.replace("/");
+      router.replace("/admin-login");
       router.refresh();
     }
 

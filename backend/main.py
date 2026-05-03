@@ -32,6 +32,13 @@ from db_service import (
     get_customer_requests,
     update_customer_request_status,
     get_customer_request_stats,
+    create_customer,
+    authenticate_customer,
+    get_customer_by_id,
+    create_chat_session,
+    save_chat_message,
+    get_customer_chat_sessions,
+    get_chat_messages,
     get_all_questions
 )
 app = FastAPI(title="ArtinAzma Expert Assistant API")
@@ -71,10 +78,32 @@ class CustomerRequestCreate(BaseModel):
     request_type: str = "consultation"
     subject: str = ""
     message: str
-
-
 class CustomerRequestStatusUpdate(BaseModel):
     status: str
+class CustomerRegisterRequest(BaseModel):
+    full_name: str
+    email: str
+    password: str
+    company: str = ""
+    phone: str = ""
+
+
+class CustomerLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class CustomerSessionCreateRequest(BaseModel):
+    customer_id: int
+    title: str = "گفتگوی جدید"
+
+
+class CustomerChatMessageCreateRequest(BaseModel):
+    customer_id: int
+    session_id: int
+    role: str
+    content: str
+    metadata: dict = {}
 @app.get("/")
 def home():
     return {
@@ -693,4 +722,159 @@ def system_status(check_ai: bool = False):
         "openai_error": ai_error,
         "local_fallback_enabled": True,
         "knowledge_stats": knowledge_stats_data,
+    }
+@app.post("/customers/register")
+def customer_register(request: CustomerRegisterRequest):
+    if not request.full_name.strip():
+        return {
+            "success": False,
+            "message": "نام و نام خانوادگی الزامی است."
+        }
+
+    if not request.email.strip():
+        return {
+            "success": False,
+            "message": "ایمیل الزامی است."
+        }
+
+    if len(request.password) < 6:
+        return {
+            "success": False,
+            "message": "رمز عبور باید حداقل ۶ کاراکتر باشد."
+        }
+
+    result = create_customer(
+        full_name=request.full_name,
+        email=request.email,
+        password=request.password,
+        company=request.company,
+        phone=request.phone
+    )
+
+    if not result.get("success"):
+        return result
+
+    customer = get_customer_by_id(result["customer_id"])
+
+    return {
+        "success": True,
+        "message": "ثبت‌نام با موفقیت انجام شد.",
+        "customer": customer
+    }
+
+
+@app.post("/customers/login")
+def customer_login(request: CustomerLoginRequest):
+    customer = authenticate_customer(
+        email=request.email,
+        password=request.password
+    )
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "ایمیل یا رمز عبور اشتباه است."
+        }
+
+    return {
+        "success": True,
+        "message": "ورود با موفقیت انجام شد.",
+        "customer": customer
+    }
+
+
+@app.get("/customers/{customer_id}")
+def customer_profile(customer_id: int):
+    customer = get_customer_by_id(customer_id)
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد."
+        }
+
+    return {
+        "success": True,
+        "customer": customer
+    }
+
+
+@app.get("/customers/{customer_id}/chat-sessions")
+def customer_chat_sessions(customer_id: int):
+    customer = get_customer_by_id(customer_id)
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد.",
+            "sessions": []
+        }
+
+    return {
+        "success": True,
+        "sessions": get_customer_chat_sessions(customer_id)
+    }
+
+
+@app.post("/customers/chat-sessions")
+def customer_chat_session_create(request: CustomerSessionCreateRequest):
+    customer = get_customer_by_id(request.customer_id)
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد."
+        }
+
+    session_id = create_chat_session(
+        customer_id=request.customer_id,
+        title=request.title.strip() or "گفتگوی جدید"
+    )
+
+    return {
+        "success": True,
+        "session_id": session_id
+    }
+
+
+@app.get("/customers/{customer_id}/chat-sessions/{session_id}/messages")
+def customer_chat_session_messages(customer_id: int, session_id: int):
+    customer = get_customer_by_id(customer_id)
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد.",
+            "messages": []
+        }
+
+    return {
+        "success": True,
+        "messages": get_chat_messages(
+            session_id=session_id,
+            customer_id=customer_id
+        )
+    }
+
+
+@app.post("/customers/chat-messages")
+def customer_chat_message_create(request: CustomerChatMessageCreateRequest):
+    customer = get_customer_by_id(request.customer_id)
+
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد."
+        }
+
+    message_id = save_chat_message(
+        session_id=request.session_id,
+        role=request.role,
+        content=request.content,
+        metadata=request.metadata
+    )
+
+    return {
+        "success": True,
+        "message_id": message_id
     }

@@ -78,6 +78,46 @@ def init_db():
     )
     cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            company TEXT DEFAULT '',
+            phone TEXT DEFAULT '',
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT,
+            FOREIGN KEY(customer_id) REFERENCES customers(id)
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            metadata_json TEXT DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(session_id) REFERENCES chat_sessions(id)
+        )
+        """
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS customer_requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             full_name TEXT NOT NULL,
@@ -690,3 +730,263 @@ def get_customer_request_stats() -> Dict[str, Any]:
             for row in type_rows
         ]
     }
+import hashlib
+import secrets
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    password_hash = hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
+    return f"{salt}:{password_hash}"
+
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    try:
+        salt, password_hash = stored_hash.split(":", 1)
+        check_hash = hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
+        return secrets.compare_digest(check_hash, password_hash)
+    except Exception:
+        return False
+
+
+def create_customer(
+    full_name: str,
+    email: str,
+    password: str,
+    company: str = "",
+    phone: str = ""
+) -> Dict[str, Any]:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO customers
+            (full_name, email, password_hash, company, phone, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                full_name,
+                email.lower().strip(),
+                hash_password(password),
+                company,
+                phone,
+                datetime.now().isoformat(timespec="seconds")
+            )
+        )
+
+        customer_id = cursor.lastrowid
+        conn.commit()
+
+        return {
+            "success": True,
+            "customer_id": customer_id
+        }
+
+    except sqlite3.IntegrityError:
+        return {
+            "success": False,
+            "message": "این ایمیل قبلاً ثبت شده است."
+        }
+
+    finally:
+        conn.close()
+
+
+def authenticate_customer(email: str, password: str) -> Dict[str, Any] | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, full_name, email, password_hash, company, phone, created_at
+        FROM customers
+        WHERE email = ?
+        """,
+        (email.lower().strip(),)
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    if not verify_password(password, row["password_hash"]):
+        return None
+
+    return {
+        "id": row["id"],
+        "full_name": row["full_name"],
+        "email": row["email"],
+        "company": row["company"] or "",
+        "phone": row["phone"] or "",
+        "created_at": row["created_at"],
+    }
+
+
+def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, full_name, email, company, phone, created_at
+        FROM customers
+        WHERE id = ?
+        """,
+        (customer_id,)
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row["id"],
+        "full_name": row["full_name"],
+        "email": row["email"],
+        "company": row["company"] or "",
+        "phone": row["phone"] or "",
+        "created_at": row["created_at"],
+    }
+
+
+def create_chat_session(customer_id: int, title: str) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    cursor.execute(
+        """
+        INSERT INTO chat_sessions
+        (customer_id, title, created_at, updated_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (customer_id, title, now, now)
+    )
+
+    session_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    return session_id
+
+
+def save_chat_message(
+    session_id: int,
+    role: str,
+    content: str,
+    metadata: Dict[str, Any] | None = None
+) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO chat_messages
+        (session_id, role, content, metadata_json, created_at)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            session_id,
+            role,
+            content,
+            json.dumps(metadata or {}, ensure_ascii=False),
+            datetime.now().isoformat(timespec="seconds")
+        )
+    )
+
+    message_id = cursor.lastrowid
+
+    cursor.execute(
+        """
+        UPDATE chat_sessions
+        SET updated_at = ?
+        WHERE id = ?
+        """,
+        (datetime.now().isoformat(timespec="seconds"), session_id)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return message_id
+
+
+def get_customer_chat_sessions(customer_id: int, limit: int = 50) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, title, created_at, updated_at
+        FROM chat_sessions
+        WHERE customer_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC
+        LIMIT ?
+        """,
+        (customer_id, limit)
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": row["id"],
+            "title": row["title"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
+        for row in rows
+    ]
+
+
+def get_chat_messages(session_id: int, customer_id: int) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT s.id
+        FROM chat_sessions s
+        WHERE s.id = ? AND s.customer_id = ?
+        """,
+        (session_id, customer_id)
+    )
+
+    session = cursor.fetchone()
+
+    if not session:
+        conn.close()
+        return []
+
+    cursor.execute(
+        """
+        SELECT id, role, content, metadata_json, created_at
+        FROM chat_messages
+        WHERE session_id = ?
+        ORDER BY id ASC
+        """,
+        (session_id,)
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": row["id"],
+            "role": row["role"],
+            "content": row["content"],
+            "metadata": json.loads(row["metadata_json"] or "{}"),
+            "created_at": row["created_at"],
+        }
+        for row in rows
+    ]
