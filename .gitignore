@@ -49,3 +49,6 @@ Thumbs.db
 # --------------------
 *.pem
 *.key
+backend/knowledge_files/
+backend/storage/
+backend/uploads/
