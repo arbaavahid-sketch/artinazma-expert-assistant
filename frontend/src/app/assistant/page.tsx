@@ -190,15 +190,6 @@ export default function AssistantPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-  if (!messagesEndRef.current) return;
-
-  messagesEndRef.current.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest",
-  });
-}, [messages.length, loading]);
-
   const domainLabel = useMemo(() => getDomainLabel(domain), [domain]);
 
   async function copyText(text: string) {
@@ -257,42 +248,62 @@ export default function AssistantPage() {
 
     try {
       const res = await fetch(apiUrl("/chat"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: finalMessage,
-          domain,
-          user_id: userId,
-          history: previousMessages.map((item) => ({
-            role: item.role,
-            content: item.content,
-          })),
-        }),
-      });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    message: finalMessage,
+    domain,
+    user_id: userId,
+    history: previousMessages.map((item) => ({
+      role: item.role,
+      content: item.content,
+    })),
+  }),
+});
 
-      const data = await res.json();
+const rawText = await res.text();
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: data.answer || "پاسخی دریافت نشد.",
-        sources: data.sources || [],
-        detected_domain: data.detected_domain,
-        question_id: data.question_id,
-      };
+console.log("CHAT RAW RESPONSE:", rawText);
 
-      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
-    } catch {
-      setMessages([
-        ...previousMessages,
-        userMessage,
-        {
-          role: "assistant",
-          content: "خطا در اتصال به سرور. لطفاً Backend را بررسی کنید.",
-        },
-      ]);
-    } finally {
+if (!res.ok) {
+  throw new Error(`Backend error ${res.status}: ${rawText}`);
+}
+
+let data;
+
+try {
+  data = JSON.parse(rawText);
+} catch {
+  throw new Error("Backend پاسخ JSON معتبر برنگرداند.");
+}
+
+const assistantMessage: ChatMessage = {
+  role: "assistant",
+  content: data.answer || "پاسخی دریافت نشد.",
+  sources: data.sources || [],
+  detected_domain: data.detected_domain,
+  question_id: data.question_id,
+};
+
+typeAssistantMessage(previousMessages, userMessage, assistantMessage);
+    } catch (error) {
+  console.error("CHAT ERROR:", error);
+
+  setMessages([
+    ...previousMessages,
+    userMessage,
+    {
+      role: "assistant",
+      content:
+        error instanceof Error
+          ? `خطا در پردازش پاسخ: ${error.message}`
+          : "خطا در اتصال یا پردازش پاسخ.",
+    },
+  ]);
+}
+ finally {
       setLoading(false);
     }
   }
@@ -1032,34 +1043,6 @@ function MessageBubble({
               {item.detected_domain && (
                 <div className="rounded-2xl bg-slate-50 px-4 py-2 text-sm text-slate-600">
                   حوزه پاسخ: {item.detected_domain}
-                </div>
-              )}
-
-              {item.sources && item.sources.length > 0 && (
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="mb-3 text-sm font-black">
-                    منابع استفاده‌شده
-                  </div>
-
-                  <div className="space-y-2">
-                    {item.sources.map((source, sourceIndex) => (
-                      <div
-                        key={sourceIndex}
-                        className="rounded-2xl bg-white p-3 text-sm"
-                      >
-                        <div className="font-bold">{source.title}</div>
-                        <div className="mt-1 text-slate-600">
-                          فایل: {source.file_name}
-                        </div>
-                        <div className="text-slate-600">
-                          دسته‌بندی: {source.category}
-                        </div>
-                        <div className="text-slate-500">
-                          امتیاز ارتباط: {source.score.toFixed(3)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
 
