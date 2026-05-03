@@ -81,12 +81,14 @@ def home():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-  try:
-    related_docs = search_knowledge_base(request.message, top_k=5)
-    search_mode = "ai_vector"
-  except Exception:
-    related_docs = local_search_knowledge_base(request.message, top_k=5)
-    search_mode = "local_text"
+    try:
+        related_docs = search_knowledge_base(request.message, top_k=5)
+        search_mode = "ai_vector"
+    except Exception as e:
+        print("AI vector search failed, using local search:", e)
+        related_docs = local_search_knowledge_base(request.message, top_k=12)
+        search_mode = "local_text"
+
     context = ""
 
     if related_docs:
@@ -119,23 +121,24 @@ def chat(request: ChatRequest):
     ]
 
     try:
-       answer = ask_expert_assistant(
-        message=request.message,
-        context=context,
-        history=history,
-        domain=detected_domain
-    )
-       answer_mode = "ai"
-    except Exception:
-       answer = build_local_answer(request.message, related_docs)
-       answer_mode = "local"
+        answer = ask_expert_assistant(
+            message=request.message,
+            context=context,
+            history=history,
+            domain=detected_domain
+        )
+        answer_mode = "ai"
+    except Exception as e:
+        print("AI answer failed, using local answer:", e)
+        answer = build_local_answer(request.message, related_docs)
+        answer_mode = "local"
 
     sources = [
         {
             "title": doc["title"],
             "file_name": doc["file_name"],
             "category": doc["category"],
-            "score": doc["score"]
+            "score": float(doc.get("score", 0))
         }
         for doc in related_docs
     ]
@@ -158,19 +161,21 @@ def chat(request: ChatRequest):
             memory_type="chat",
             metadata={
                 "question_id": question_id,
-                "sources": sources
+                "sources": sources,
+                "search_mode": search_mode,
+                "answer_mode": answer_mode
             }
         )
 
     return {
-    "question_id": question_id,
-    "memory_id": memory_id,
-    "detected_domain": detected_domain,
-    "answer": answer,
-    "sources": sources,
-    "search_mode": search_mode,
-    "answer_mode": answer_mode
-}
+        "question_id": question_id,
+        "memory_id": memory_id,
+        "detected_domain": detected_domain,
+        "answer": answer,
+        "sources": sources,
+        "search_mode": search_mode,
+        "answer_mode": answer_mode
+    }
 @app.post("/analyze-file")
 async def analyze_file(
     file: UploadFile = File(...),
