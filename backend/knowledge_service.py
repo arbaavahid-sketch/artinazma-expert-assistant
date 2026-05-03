@@ -81,8 +81,22 @@ def load_vector_store() -> List[Dict[str, Any]]:
 
 
 def save_vector_store(data: List[Dict[str, Any]]) -> None:
-    with open(VECTOR_STORE_PATH, "w", encoding="utf-8") as f:
+    temp_path = VECTOR_STORE_PATH.with_suffix(".json.tmp")
+    backup_path = VECTOR_STORE_PATH.with_suffix(".json.bak")
+
+    if VECTOR_STORE_PATH.exists():
+        try:
+            backup_path.write_text(
+                VECTOR_STORE_PATH.read_text(encoding="utf-8", errors="ignore"),
+                encoding="utf-8"
+            )
+        except Exception:
+            pass
+
+    with open(temp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+    os.replace(temp_path, VECTOR_STORE_PATH)
 
 def knowledge_file_exists(file_name: str) -> bool:
     store = load_vector_store()

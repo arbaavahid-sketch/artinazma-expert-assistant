@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, UploadFile, File, Form
@@ -400,17 +401,34 @@ def knowledge_file_delete(file_name: str):
 
 @app.post("/knowledge/search")
 def knowledge_search(request: ChatRequest):
-    results = search_knowledge_base(request.message, top_k=5)
+    query = request.message
+
+    has_astm_code = bool(
+        re.search(r"\bD\s*\d{3,5}\b", query, flags=re.IGNORECASE)
+    )
+
+    if has_astm_code:
+        local_results = local_search_knowledge_base(query, top_k=10)
+
+        if local_results:
+            results = local_results
+        else:
+            results = search_knowledge_base(query, top_k=10)
+    else:
+        try:
+            results = search_knowledge_base(query, top_k=10)
+        except Exception:
+            results = local_search_knowledge_base(query, top_k=10)
 
     return {
-        "query": request.message,
+        "query": query,
         "results": [
             {
                 "title": item["title"],
                 "file_name": item["file_name"],
                 "category": item["category"],
-                "score": item["score"],
-                "content": item["content"][:700]
+                "score": float(item.get("score", 0)),
+                "content": item["content"][:900]
             }
             for item in results
         ]

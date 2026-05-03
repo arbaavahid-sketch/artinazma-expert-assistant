@@ -18,7 +18,20 @@ type KnowledgeStats = {
   categories: string[];
   file_details?: KnowledgeFileDetail[];
 };
-
+type KnowledgeSearchResult = {
+  title: string;
+  file_name: string;
+  category: string;
+  score: number;
+  content: string;
+};
+type GroupedKnowledgeSearchResult = {
+  title: string;
+  file_name: string;
+  category: string;
+  bestScore: number;
+  chunks: KnowledgeSearchResult[];
+};
 function getCategoryLabel(category: string) {
   if (category === "general") return "عمومی";
   if (category === "catalyst") return "کاتالیست";
@@ -44,7 +57,10 @@ export default function KnowledgePage() {
   const [deletingFile, setDeletingFile] = useState("");
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-
+  const [testQuery, setTestQuery] = useState("");
+  const [testResults, setTestResults] = useState<KnowledgeSearchResult[]>([]);
+  const [testingSearch, setTestingSearch] = useState(false);
+  const [testMessage, setTestMessage] = useState("");
   async function loadKnowledgeStats() {
     try {
       const res = await fetch(apiUrl("/knowledge/stats"));
@@ -95,6 +111,39 @@ export default function KnowledgePage() {
       setLoading(false);
     }
   }
+  async function testKnowledgeSearch() {
+  if (!testQuery.trim()) return;
+
+  setTestingSearch(true);
+  setTestMessage("");
+  setTestResults([]);
+
+  try {
+    const res = await fetch(apiUrl("/knowledge/search"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: testQuery,
+        domain: "auto",
+        history: [],
+      }),
+    });
+
+    const data = await res.json();
+
+    setTestResults(data.results || []);
+
+    if (!data.results || data.results.length === 0) {
+      setTestMessage("نتیجه‌ای از بانک دانش پیدا نشد.");
+    }
+  } catch {
+    setTestMessage("خطا در جست‌وجوی بانک دانش.");
+  } finally {
+    setTestingSearch(false);
+  }
+}
   async function deleteKnowledgeFile(fileName: string) {
   const confirmed = window.confirm(
     `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`
@@ -151,7 +200,30 @@ export default function KnowledgePage() {
       return matchesSearch && matchesCategory;
     });
   }, [fileDetails, searchText, selectedCategory]);
+ const groupedTestResults = useMemo<GroupedKnowledgeSearchResult[]>(() => {
+  const map = new Map<string, GroupedKnowledgeSearchResult>();
 
+  for (const item of testResults) {
+    const key = item.file_name;
+
+    if (!map.has(key)) {
+      map.set(key, {
+        title: item.title,
+        file_name: item.file_name,
+        category: item.category,
+        bestScore: Number(item.score || 0),
+        chunks: [],
+      });
+    }
+
+    const group = map.get(key)!;
+
+    group.bestScore = Math.max(group.bestScore, Number(item.score || 0));
+    group.chunks.push(item);
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.bestScore - a.bestScore);
+}, [testResults]);
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <section className="mx-auto max-w-7xl px-6 py-10">
@@ -270,7 +342,86 @@ export default function KnowledgePage() {
                       {stats.total_files}
                     </div>
                   </div>
+                  <div className="rounded-3xl bg-white p-6 shadow-sm">
+  <h2 className="mb-2 text-xl font-bold">تست جست‌وجوی بانک دانش</h2>
 
+  <p className="mb-5 text-sm leading-7 text-slate-600">
+    یک عبارت یا کد استاندارد وارد کنید تا ببینید بانک دانش چه بخش‌هایی را پیدا می‌کند.
+  </p>
+
+  <textarea
+    value={testQuery}
+    onChange={(e) => setTestQuery(e.target.value)}
+    className="h-28 w-full rounded-2xl border border-slate-300 p-4 text-sm leading-7 outline-none focus:border-blue-500"
+    placeholder="مثلاً: ASTM D 1151 یا آنالیز سولفور در LPG"
+  />
+
+  <button
+    onClick={testKnowledgeSearch}
+    disabled={testingSearch || !testQuery.trim()}
+    className="mt-4 w-full rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white disabled:opacity-50"
+  >
+    {testingSearch ? "در حال جست‌وجو..." : "جست‌وجو در بانک دانش"}
+  </button>
+
+  {testMessage && (
+    <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
+      {testMessage}
+    </div>
+  )}
+
+  {groupedTestResults.length > 0 && (
+  <div className="mt-5 space-y-4">
+    {groupedTestResults.map((group) => (
+      <div
+        key={group.file_name}
+        className="rounded-3xl border border-slate-200 bg-slate-50 p-4"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-lg font-black text-slate-900">
+              {group.title}
+            </div>
+
+            <div className="mt-1 text-xs leading-6 text-slate-500">
+              فایل: {group.file_name}
+            </div>
+
+            <div className="text-xs leading-6 text-slate-500">
+              دسته‌بندی: {getCategoryLabel(group.category)}
+            </div>
+
+            <div className="mt-2 text-xs font-bold text-slate-600">
+              تعداد بخش‌های مرتبط پیدا شده: {group.chunks.length}
+            </div>
+          </div>
+
+          <span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+            {Number(group.bestScore || 0).toFixed(3)}
+          </span>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {group.chunks.slice(0, 3).map((chunk, index) => (
+            <div
+              key={`${group.file_name}-${index}`}
+              className="rounded-2xl bg-white p-4 text-sm leading-7 text-slate-700"
+            >
+              <div className="mb-2 text-xs font-bold text-slate-400">
+                بخش مرتبط {index + 1}
+              </div>
+
+              <div className="max-h-40 overflow-y-auto">
+                {chunk.content}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+</div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <div className="text-sm text-slate-500">
                       تعداد بخش‌های متنی
