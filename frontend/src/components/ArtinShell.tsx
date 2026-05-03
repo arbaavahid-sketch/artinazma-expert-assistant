@@ -271,33 +271,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             )}
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-4 py-4">
-            <div className="rounded-2xl bg-white p-3 shadow-sm shadow-slate-200/70">
-              <div
-                className={`flex items-center ${
-                  sidebarCollapsed ? "justify-center" : "gap-3"
-                }`}
-              >
-                <img
-                  src="/images/artin-avatar.png"
-                  alt="آرتین"
-                  className="h-12 w-12 rounded-full border border-slate-200 bg-white object-cover shadow-sm"
-                />
-
-                {!sidebarCollapsed && (
-                  <div>
-                    <div className="flex items-center gap-2 text-sm font-bold">
-  <Bot size={17} strokeWidth={1.9} className="text-blue-700" />
-  هوش مصنوعی فعال
-</div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      آرتین، دستیار تخصصی آرتین آزما
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          
         </aside>
 
         <section className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden">

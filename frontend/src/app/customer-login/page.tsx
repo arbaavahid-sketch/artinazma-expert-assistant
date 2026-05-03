@@ -112,22 +112,23 @@ export default function CustomerLoginPage() {
           </div>
         </div>
 
-        <div className="rounded-[36px] bg-slate-50 p-8">
-          <img
-            src="/images/artin-avatar.png"
-            alt="آرتین"
-            className="mx-auto h-32 w-32 rounded-full bg-white object-cover p-2 shadow-sm"
-          />
+        <div className="flex items-center justify-center rounded-[36px] bg-slate-50 p-8">
+  <div className="w-full max-w-md rounded-[28px] bg-white p-5 shadow-sm shadow-slate-200/70">
+    <div className="flex items-center justify-center gap-4">
+      <img
+        src="/images/artin-avatar.png"
+        alt="آرتین"
+        className="h-20 w-20 shrink-0 rounded-full border border-slate-200 bg-white object-cover shadow-sm"
+      />
 
-          <h2 className="mt-6 text-center text-2xl font-black">
-            حافظه گفتگوهای شما
-          </h2>
-
-          <p className="mt-4 text-center leading-8 text-slate-600">
-            بعد از ورود، سوال‌هایی که از آرتین می‌پرسید ذخیره می‌شود و می‌توانید
-            مثل چت‌های قبلی دوباره به آن‌ها برگردید.
-          </p>
+      <div className="min-w-0">
+        <div className="whitespace-nowrap text-base font-black text-slate-750 md:text-lg">
+          آرتین، دستیار تخصصی شما
         </div>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
     </section>
   );
