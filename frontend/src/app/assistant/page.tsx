@@ -534,8 +534,7 @@ export default function AssistantPage() {
   }
 
   return (
-    <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,#eaf4ff,transparent_38%),#f7f7f8]">
-      <input
+     <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff]">      <input
         ref={fileInputRef}
         type="file"
         accept=".xlsx,.xls,.csv,.pdf"
@@ -641,50 +640,100 @@ export default function AssistantPage() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-6xl px-6 pb-4 pt-5">
+        <div className="mx-auto w-full max-w-6xl px-6 pb-6 pt-6">
           {messages.length === 0 ? (
-            <div className="mx-auto flex min-h-[320px] max-w-4xl flex-col items-center justify-center text-center">
-              <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-[36px] bg-white p-4 shadow-sm">
-                <img
-                  src="/images/artin-avatar.png"
-                  alt="آرتین"
-                  className="h-full w-full rounded-full object-cover"
-                />
-              </div>
+  <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
+    <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+      امروز چه کمکی از آرتین می‌خواهید؟
+    </h2>
 
-              <h2 className="text-4xl font-black leading-[1.4] text-slate-900">
-              چطور می‌توانم کمک کنم؟
-              </h2>
+    <p className="mt-4 max-w-2xl text-base leading-8 text-slate-500">
+      سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا درخواست مشاوره ثبت کنید.
+    </p>
 
-              <p className="mt-3 max-w-2xl leading-8 text-slate-600">
-                سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا برای
-                پیگیری تخصصی درخواست مشاوره ثبت کنید.
-              </p>
+    <div className="relative mt-8 w-full max-w-3xl">
+      {showTools && (
+        <div className="absolute bottom-full right-0 z-20 mb-3 max-h-[420px] w-[330px] max-w-[calc(100vw-48px)] overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-3 shadow-2xl">
+          <div className="space-y-1">
+            {tools.map((tool) => (
+              <button
+                key={tool.action}
+                onClick={() => handleToolClick(tool.action)}
+                className="flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-right hover:bg-slate-50"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-lg">
+                  {tool.icon}
+                </span>
 
-              <div className="mt-6 grid w-full max-w-3xl gap-3 md:grid-cols-2">
-                {quickPrompts.map((prompt) => (
-                  <button
-                    key={prompt.text}
-                    onClick={() => sendMessage(prompt.text)}
-                    disabled={loading}
-                    className="group rounded-3xl border border-slate-200 bg-white px-5 py-4 text-right shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-md disabled:opacity-50"
-                  >
-                    <div className="text-sm font-black text-slate-900">
-                      {prompt.title}
-                    </div>
-                    <div className="mt-1 text-sm leading-6 text-slate-600 group-hover:text-slate-800">
-                      {prompt.text}
-                    </div>
-                  </button>
-                ))}
-              </div>
+                <span>
+                  <span className="block text-sm font-bold text-slate-800">
+                    {tool.label}
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">
+                    {tool.description}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm">
-                حوزه فعال: <span className="font-bold">{domainLabel}</span>
-              </div>
-            </div>
-          ) : (
-            <div className="mx-auto w-full max-w-5xl space-y-6">
+      <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button
+            onClick={() => setShowTools((prev) => !prev)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-2xl text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+          >
+            +
+          </button>
+
+          <textarea
+            dir="auto"
+            style={{ fontFamily: getTextFont(message || "فارسی") }}
+            className="max-h-32 min-h-[46px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[17px] leading-7 outline-none"
+            placeholder="از آرتین بپرسید..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+
+          <button
+            onClick={() => sendMessage()}
+            disabled={loading || !message.trim()}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xl text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-300"
+          >
+            ↑
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-5 flex flex-wrap justify-center gap-3">
+      <button
+        onClick={() => handleToolClick("analyze-file")}
+        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+      >
+        تحلیل فایل تست
+      </button>
+
+      <button
+        onClick={() => handleToolClick("analyze-image")}
+        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+      >
+        تحلیل عکس یا خطا
+      </button>
+
+      <button
+        onClick={() => handleToolClick("customer-request")}
+        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+      >
+        درخواست مشاوره
+      </button>
+    </div>
+  </div>
+) : (
+            <div className="mx-auto w-full max-w-5xl space-y-7 pb-4">
               {messages.map((item, index) => (
                 <MessageBubble
                   key={index}
@@ -718,8 +767,9 @@ export default function AssistantPage() {
           )}
         </div>
       </div>
-
+      {messages.length > 0 && (
       <footer className="shrink-0 border-t border-slate-200/70 bg-white/75 backdrop-blur-xl">
+        
         <div className="mx-auto w-full max-w-6xl px-6 py-3">
           <div className="relative mx-auto max-w-4xl">
             {showTools && (
@@ -784,6 +834,7 @@ export default function AssistantPage() {
           </div>
         </div>
       </footer>
+      )}
     </section>
   );
 }
