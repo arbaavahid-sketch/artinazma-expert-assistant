@@ -130,11 +130,12 @@ function ToolMenu({
 }: {
   onSelect: (action: ToolAction) => void;
 }) {
+  
   return (
     <div className="w-[245px] overflow-hidden rounded-[18px] border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-300/40">
       {tools.map((tool, index) => {
         const Icon = getToolIcon(tool.action);
-
+   
         return (
           <button
             key={tool.action}
@@ -231,12 +232,11 @@ export default function AssistantPage() {
   const [showFileOptions, setShowFileOptions] = useState(false);
   const [chatTestType, setChatTestType] = useState("general");
   const [chatUserNote, setChatUserNote] = useState("");
-
   const [pendingImage, setPendingImage] = useState<File | null>(null);
   const [showImageOptions, setShowImageOptions] = useState(false);
   const [chatImageType, setChatImageType] = useState("general");
   const [chatImageNote, setChatImageNote] = useState("");
-
+  const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -361,12 +361,17 @@ async function loadSavedChatSession(customerId: number, sessionId: number) {
     setLoadingSavedSession(false);
   }
 }
+
 useEffect(() => {
   const savedCustomer = getSavedCustomer();
 
-  setCustomer(savedCustomer);
+  if (!savedCustomer) {
+    router.replace("/customer-login");
+    return;
+  }
 
-  if (!savedCustomer) return;
+  setCustomer(savedCustomer);
+  setCheckingCustomerLogin(false);
 
   if (sessionIdParam) {
     const sessionId = Number(sessionIdParam);
@@ -375,7 +380,7 @@ useEffect(() => {
       loadSavedChatSession(savedCustomer.id, sessionId);
     }
   }
-}, [sessionIdParam]);
+}, [router, sessionIdParam]);
  function typeAssistantMessage(
   previousMessages: ChatMessage[],
   userMessage: ChatMessage,
@@ -746,7 +751,21 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
       );
     }
   }
+   if (checkingCustomerLogin) {
+  return (
+    <section className="flex h-full items-center justify-center bg-white px-6">
+      <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="text-lg font-bold text-slate-900">
+          در حال بررسی ورود مشتری...
+        </div>
 
+        <div className="mt-3 text-sm text-slate-500">
+          برای استفاده از آرتین باید وارد حساب کاربری شوید.
+        </div>
+      </div>
+    </section>
+  );
+}
   return (
      <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff]">      <input
         ref={fileInputRef}
@@ -1047,6 +1066,7 @@ function UploadModal({
   onCancel: () => void;
   footer?: string;
 }) {
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
       <div className="w-full max-w-xl rounded-[36px] bg-white p-6 shadow-2xl">
