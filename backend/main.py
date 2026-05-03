@@ -10,6 +10,8 @@ from knowledge_service import (
     add_file_to_knowledge_base,
     search_knowledge_base,
     get_knowledge_stats,
+    delete_knowledge_file,
+    knowledge_file_exists,
     add_text_to_knowledge_base
 )
 from ai_service import ask_expert_assistant, analyze_image_with_ai
@@ -353,7 +355,8 @@ async def analyze_file(
 async def upload_knowledge_file(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
-    category: Optional[str] = Form("general")
+    category: Optional[str] = Form("general"),
+    replace_existing: bool = Form(False)
 ):
     upload_dir = "knowledge_files"
     os.makedirs(upload_dir, exist_ok=True)
@@ -364,10 +367,11 @@ async def upload_knowledge_file(
         shutil.copyfileobj(file.file, buffer)
 
     result = add_file_to_knowledge_base(
-        file_path=file_path,
-        title=title or file.filename,
-        category=category or "general"
-    )
+    file_path=file_path,
+    title=title or file.filename,
+    category=category or "general",
+    replace_existing=replace_existing
+)
 
     return result
     upload_dir = "knowledge_files"
@@ -390,7 +394,9 @@ async def upload_knowledge_file(
 @app.get("/knowledge/stats")
 def knowledge_stats():
     return get_knowledge_stats()
-
+@app.delete("/knowledge/files/{file_name}")
+def knowledge_file_delete(file_name: str):
+    return delete_knowledge_file(file_name)
 
 @app.post("/knowledge/search")
 def knowledge_search(request: ChatRequest):

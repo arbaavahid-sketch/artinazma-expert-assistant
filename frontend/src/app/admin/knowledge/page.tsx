@@ -40,7 +40,8 @@ export default function KnowledgePage() {
   const [knowledgeResult, setKnowledgeResult] = useState("");
   const [stats, setStats] = useState<KnowledgeStats | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [replaceExisting, setReplaceExisting] = useState(false);
+  const [deletingFile, setDeletingFile] = useState("");
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -68,7 +69,7 @@ export default function KnowledgePage() {
     formData.append("file", knowledgeFile);
     formData.append("title", knowledgeTitle || knowledgeFile.name);
     formData.append("category", knowledgeCategory || "general");
-
+    formData.append("replace_existing", replaceExisting ? "true" : "false");
     try {
       const res = await fetch(apiUrl("/knowledge/upload"), {
         method: "POST",
@@ -83,6 +84,7 @@ export default function KnowledgePage() {
         );
         setKnowledgeFile(null);
         setKnowledgeTitle("");
+        setReplaceExisting(false);
         await loadKnowledgeStats();
       } else {
         setKnowledgeResult(data.message || "خطا در افزودن فایل به بانک دانش.");
@@ -93,7 +95,40 @@ export default function KnowledgePage() {
       setLoading(false);
     }
   }
+  async function deleteKnowledgeFile(fileName: string) {
+  const confirmed = window.confirm(
+    `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`
+  );
 
+  if (!confirmed) return;
+
+  setDeletingFile(fileName);
+  setKnowledgeResult("");
+
+  try {
+    const res = await fetch(
+      apiUrl(`/knowledge/files/${encodeURIComponent(fileName)}`),
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+      setKnowledgeResult(
+        `فایل از بانک دانش حذف شد.\nنام فایل: ${data.file_name}\nتعداد chunk حذف‌شده: ${data.removed_chunks}`
+      );
+      await loadKnowledgeStats();
+    } else {
+      setKnowledgeResult(data.message || "خطا در حذف فایل از بانک دانش.");
+    }
+  } catch {
+    setKnowledgeResult("خطا در اتصال به سرور برای حذف فایل.");
+  } finally {
+    setDeletingFile("");
+  }
+}
   const fileDetails = useMemo(() => {
     return stats?.file_details || [];
   }, [stats]);
@@ -197,7 +232,18 @@ export default function KnowledgePage() {
                 <option value="troubleshooting">عیب‌یابی</option>
                 <option value="application-note">اپلیکیشن نوت</option>
               </select>
+               <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+  <input
+    type="checkbox"
+    checked={replaceExisting}
+    onChange={(e) => setReplaceExisting(e.target.checked)}
+    className="mt-1"
+  />
 
+  <span>
+    اگر فایل تکراری بود، نسخه قبلی از بانک دانش حذف شود و همین فایل جدید جایگزین شود.
+  </span>
+</label>
               <button
                 onClick={uploadKnowledgeFile}
                 disabled={loading || !knowledgeFile}
@@ -319,9 +365,10 @@ export default function KnowledgePage() {
                 <table className="w-full border-collapse text-right text-sm">
                   <thead className="sticky top-0 bg-slate-50">
                     <tr className="border-b border-slate-200 text-slate-600">
-                      <th className="p-4 font-bold">فایل</th>
-                      <th className="p-4 font-bold">دسته‌بندی</th>
-                      <th className="p-4 font-bold">Chunk</th>
+                        <th className="p-4 font-bold">فایل</th>
+                        <th className="p-4 font-bold">دسته‌بندی</th>
+                        <th className="p-4 font-bold">Chunk</th>
+                        <th className="p-4 font-bold">عملیات</th>
                     </tr>
                   </thead>
 
@@ -361,6 +408,15 @@ export default function KnowledgePage() {
                             {item.chunks}
                           </span>
                         </td>
+                        <td className="p-4 align-top">
+  <button
+    onClick={() => deleteKnowledgeFile(item.file_name)}
+    disabled={deletingFile === item.file_name}
+    className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-100 disabled:opacity-50"
+  >
+    {deletingFile === item.file_name ? "در حال حذف..." : "حذف"}
+  </button>
+</td>
                       </tr>
                     ))}
                   </tbody>

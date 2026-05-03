@@ -84,7 +84,63 @@ def save_vector_store(data: List[Dict[str, Any]]) -> None:
     with open(VECTOR_STORE_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+def knowledge_file_exists(file_name: str) -> bool:
+    store = load_vector_store()
 
+    return any(
+        item.get("file_name") == file_name
+        for item in store
+    )
+
+
+def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
+    store = load_vector_store()
+
+    before_count = len(store)
+
+    new_store = [
+        item
+        for item in store
+        if item.get("file_name") != file_name
+    ]
+
+    removed_chunks = before_count - len(new_store)
+
+    if removed_chunks == 0:
+        return {
+            "success": False,
+            "message": "فایلی با این نام در بانک دانش پیدا نشد.",
+            "file_name": file_name,
+            "removed_chunks": 0
+        }
+
+    save_vector_store(new_store)
+
+    return {
+        "success": True,
+        "message": "فایل با موفقیت از بانک دانش حذف شد.",
+        "file_name": file_name,
+        "removed_chunks": removed_chunks
+    }
+
+
+def replace_knowledge_file_if_exists(file_name: str) -> int:
+    store = load_vector_store()
+
+    before_count = len(store)
+
+    new_store = [
+        item
+        for item in store
+        if item.get("file_name") != file_name
+    ]
+
+    removed_chunks = before_count - len(new_store)
+
+    if removed_chunks > 0:
+        save_vector_store(new_store)
+
+    return removed_chunks
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     vector_a = np.array(a)
     vector_b = np.array(b)
@@ -97,7 +153,27 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
     return float(np.dot(vector_a, vector_b) / denominator)
 
 
-def add_file_to_knowledge_base(file_path: str, title: str = "", category: str = "general") -> Dict[str, Any]:
+def add_file_to_knowledge_base(
+    file_path: str,
+    title: str = "",
+    category: str = "general",
+    replace_existing: bool = False
+) -> Dict[str, Any]:
+    file_name = Path(file_path).name
+
+    if knowledge_file_exists(file_name):
+        if not replace_existing:
+            return {
+                "success": False,
+                "duplicate": True,
+                "message": "این فایل قبلاً در بانک دانش ثبت شده است. اگر می‌خواهید نسخه قبلی حذف و فایل جدید جایگزین شود، گزینه جایگزینی فایل تکراری را فعال کنید.",
+                "file_name": file_name
+            }
+
+        removed_chunks = replace_knowledge_file_if_exists(file_name)
+    else:
+        removed_chunks = 0
+
     text = read_text_from_file(file_path)
 
     if not text.strip():
@@ -116,9 +192,9 @@ def add_file_to_knowledge_base(file_path: str, title: str = "", category: str = 
         embedding = create_embedding(chunk)
 
         store.append({
-            "title": title or Path(file_path).name,
+            "title": title or file_name,
             "category": category,
-            "file_name": Path(file_path).name,
+            "file_name": file_name,
             "chunk_index": index,
             "content": chunk,
             "embedding": embedding
@@ -131,10 +207,11 @@ def add_file_to_knowledge_base(file_path: str, title: str = "", category: str = 
     return {
         "success": True,
         "message": "فایل با موفقیت به بانک دانش اضافه شد.",
-        "file_name": Path(file_path).name,
-        "chunks_added": added_chunks
+        "file_name": file_name,
+        "chunks_added": added_chunks,
+        "replaced": replace_existing,
+        "removed_old_chunks": removed_chunks
     }
-
 
 def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     store = load_vector_store()

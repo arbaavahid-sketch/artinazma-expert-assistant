@@ -1,5 +1,5 @@
 import os
-from knowledge_service import add_file_to_knowledge_base
+from knowledge_service import add_file_to_knowledge_base, knowledge_file_exists
 
 FOLDER_PATH = "knowledge_files/astm"
 CATEGORY = "ASTM Standards"
@@ -14,7 +14,9 @@ def main():
         for file_name in os.listdir(FOLDER_PATH)
         if file_name.lower().endswith(".pdf")
     ]
+
     files = files[:200]
+
     if not files:
         print("No PDF files found.")
         return
@@ -23,6 +25,10 @@ def main():
 
     for index, file_name in enumerate(files, start=1):
         file_path = os.path.join(FOLDER_PATH, file_name)
+
+        if knowledge_file_exists(file_name):
+            print(f"Skipped duplicate: {file_name}")
+            continue
 
         title = os.path.splitext(file_name)[0]
 
