@@ -28,7 +28,7 @@ export default function AdminPage() {
   </a>
 </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <Link
             href="/admin/knowledge"
             className="rounded-3xl bg-purple-700 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -64,6 +64,15 @@ export default function AdminPage() {
             <div className="text-lg font-bold">داشبورد</div>
             <div className="mt-2 text-sm leading-7 opacity-90">
               بررسی آمار سوالات، فایل‌ها و حوزه‌های پرتکرار.
+            </div>
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="rounded-3xl bg-zinc-700 p-6 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+>
+            <div className="text-lg font-bold">تنظیمات سیستم</div>
+            <div className="mt-2 text-sm leading-7 opacity-90">
+              بررسی وضعیت OpenAI، fallback محلی، بانک دانش و اتصال Backend.
             </div>
           </Link>
         </div>

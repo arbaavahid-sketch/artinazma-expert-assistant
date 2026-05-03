@@ -624,3 +624,49 @@ def customer_request_status(request_id: int, request: CustomerRequestStatusUpdat
 @app.get("/customer-requests/stats")
 def customer_requests_stats():
     return get_customer_request_stats()
+@app.get("/system/status")
+def system_status(check_ai: bool = False):
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+
+    knowledge_stats_data = get_knowledge_stats()
+
+    openai_configured = bool(
+        openai_key
+        and openai_key != "test_offline_mode"
+        and not openai_key.startswith("x-")
+    )
+
+    ai_status = "not_checked"
+    ai_error = ""
+
+    if check_ai:
+        if not openai_configured:
+            ai_status = "not_configured"
+            ai_error = "OPENAI_API_KEY تنظیم نشده یا عمداً برای حالت آفلاین غیرفعال شده است."
+        else:
+            try:
+                test_answer = ask_expert_assistant(
+                    message="فقط کلمه OK را برگردان.",
+                    context="",
+                    history=[],
+                    domain="health-check"
+                )
+
+                if test_answer:
+                    ai_status = "connected"
+                else:
+                    ai_status = "unknown"
+                    ai_error = "پاسخ خالی از سرویس AI دریافت شد."
+
+            except Exception as e:
+                ai_status = "failed"
+                ai_error = str(e)
+
+    return {
+        "backend_status": "running",
+        "openai_configured": openai_configured,
+        "openai_status": ai_status,
+        "openai_error": ai_error,
+        "local_fallback_enabled": True,
+        "knowledge_stats": knowledge_stats_data,
+    }
