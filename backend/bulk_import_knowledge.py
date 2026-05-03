@@ -15,7 +15,7 @@ def main():
         if file_name.lower().endswith(".pdf")
     ]
 
-    files = files[:200]
+    
 
     if not files:
         print("No PDF files found.")
