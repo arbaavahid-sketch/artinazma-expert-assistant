@@ -52,6 +52,16 @@ type SavedChatMessage = {
     detected_domain?: string;
     question_id?: number;
     attachment?: ChatMessage["attachment"];
+
+    file_name?: string;
+    file_url?: string;
+    file_type?: string;
+
+    test_type?: string;
+    test_type_label?: string;
+
+    image_type?: string;
+    image_type_label?: string;
   };
   created_at: string;
 };
@@ -349,7 +359,16 @@ async function loadSavedChatSession(customerId: number, sessionId: number) {
         sources: item.metadata?.sources || [],
         detected_domain: item.metadata?.detected_domain,
         question_id: item.metadata?.question_id,
-        attachment: item.metadata?.attachment,
+        attachment: item.metadata?.attachment
+  ? {
+      ...item.metadata.attachment,
+      previewUrl:
+        item.metadata.attachment.previewUrl ||
+        (item.metadata.file_url
+          ? apiUrl(item.metadata.file_url as string)
+          : undefined),
+    }
+  : undefined,
       })
     );
 
@@ -446,10 +465,25 @@ await saveCustomerChatMessage(customerSessionId, "user", finalMessage, {
     message: finalMessage,
     domain,
     user_id: userId,
-    history: previousMessages.map((item) => ({
-      role: item.role,
-      content: item.content,
-    })),
+    history: previousMessages.map((item) => {
+  let content = item.content;
+
+  if (item.attachment) {
+    content += `
+
+اطلاعات فایل/عکس قبلی:
+نام: ${item.attachment.name}
+نوع: ${item.attachment.kind}
+دسته‌بندی تحلیل: ${item.attachment.analysisType || ""}
+توضیح کاربر: ${item.attachment.note || ""}
+`;
+  }
+
+  return {
+    role: item.role,
+    content,
+  };
+}),
   }),
 });
 
@@ -538,7 +572,16 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     };
 
     const previousMessages = messages;
+    const customerSessionId = await ensureCustomerSession(`تحلیل فایل ${file.name}`);
 
+await saveCustomerChatMessage(
+  customerSessionId,
+  "user",
+  `فایل برای تحلیل ارسال شد: ${file.name}`,
+  {
+    attachment: userMessage.attachment,
+  }
+);
     setMessages([...previousMessages, userMessage]);
     setLoading(true);
 
@@ -563,7 +606,19 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
           "فایل دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
         detected_domain: "file-analysis",
       };
-
+      await saveCustomerChatMessage(
+  customerSessionId,
+  "assistant",
+  assistantMessage.content,
+  {
+    detected_domain: "file-analysis",
+    file_name: data.file_name,
+    file_url: data.file_url,
+    file_type: data.file_type,
+    test_type: data.test_type,
+    test_type_label: data.test_type_label,
+  }
+);
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
@@ -611,7 +666,16 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     };
 
     const previousMessages = messages;
+    const customerSessionId = await ensureCustomerSession(`تحلیل عکس ${file.name}`);
 
+await saveCustomerChatMessage(
+  customerSessionId,
+  "user",
+  `عکس برای تحلیل ارسال شد: ${file.name}`,
+  {
+    attachment: userMessage.attachment,
+  }
+);
     setMessages([...previousMessages, userMessage]);
     setLoading(true);
 
@@ -636,8 +700,20 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
           "عکس دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
         detected_domain: "image-analysis",
       };
-
-      setMessages([...previousMessages, userMessage, assistantMessage]);
+      await saveCustomerChatMessage(
+  customerSessionId,
+  "assistant",
+  assistantMessage.content,
+  {
+    detected_domain: "image-analysis",
+    file_name: data.file_name,
+    file_url: data.file_url,
+    file_type: data.file_type,
+    image_type: data.image_type,
+    image_type_label: data.image_type_label,
+  }
+);
+      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
         ...previousMessages,

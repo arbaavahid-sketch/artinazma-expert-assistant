@@ -1,5 +1,6 @@
 import os
 import re
+from fastapi.staticfiles import StaticFiles
 import shutil
 from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, UploadFile, File, Form
@@ -44,6 +45,8 @@ from db_service import (
     get_all_questions
 )
 app = FastAPI(title="ArtinAzma Expert Assistant API")
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 init_db()
 app.add_middleware(
     CORSMiddleware,
@@ -223,7 +226,8 @@ async def analyze_file(
 
     safe_filename = file.filename.replace(" ", "_")
     file_path = os.path.join(upload_dir, safe_filename)
-
+    file_url = f"/uploads/{safe_filename}"
+    file_url = f"/uploads/{safe_filename}"
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
@@ -340,6 +344,8 @@ async def analyze_file(
             "test_type": test_type,
             "test_type_label": selected_test_type,
             "raw_analysis": analysis,
+            "file_url": file_url,
+            "file_name": safe_filename,
             "ai_analysis": ai_answer
         }
 
@@ -379,6 +385,8 @@ async def analyze_file(
             "test_type": test_type,
             "test_type_label": selected_test_type,
             "extracted_text": text[:2000],
+            "file_url": file_url,
+            "file_name": safe_filename,
             "ai_analysis": ai_answer
         }
 
@@ -568,7 +576,7 @@ async def analyze_image(
 
         safe_filename = file.filename.replace(" ", "_")
         file_path = os.path.join(upload_dir, safe_filename)
-
+        file_url = f"/uploads/{safe_filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
@@ -607,11 +615,13 @@ async def analyze_image(
         ai_answer = analyze_image_with_ai(file_path, user_note=combined_note)
 
         return {
-            "file_type": ext,
-            "image_type": image_type,
-            "image_type_label": selected_image_type,
-            "ai_analysis": ai_answer
-        }
+    "file_type": ext,
+    "file_name": safe_filename,
+    "file_url": file_url,
+    "image_type": image_type,
+    "image_type_label": selected_image_type,
+    "ai_analysis": ai_answer
+}
 
     except Exception as e:
         return {
