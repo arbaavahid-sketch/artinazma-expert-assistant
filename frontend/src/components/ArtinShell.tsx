@@ -2,58 +2,84 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import {
+  Bot,
+  ChartBar,
+  CircleUserRound,
+  Database,
+  FlaskConical,
+  Home,
+  Inbox,
+  LayoutDashboard,
+  LogOut,
+  MessageCircleQuestion,
+  MessagesSquare,
+  PanelRightClose,
+  PanelRightOpen,
+  PhoneCall,
+  Settings,
+  Sparkles,
+  SquarePen,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+type SidebarItem = {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+};
 
-const navItems = [
-  { href: "/", label: "خانه", icon: "⌂" },
-  { href: "/assistant", label: "آرتین", icon: "✦" },
-  { href: "/analyze", label: "تحلیل تست", icon: "▣" },
-  { href: "/customer-request", label: "درخواست مشاوره", icon: "☎" },
+const navItems: SidebarItem[] = [
+  { href: "/assistant", label: "خانه", Icon: Home },
+  { href: "/", label: "آرتین", Icon: Sparkles },
+  { href: "/analyze", label: "تحلیل تست", Icon: FlaskConical },
+  { href: "/customer-request", label: "درخواست مشاوره", Icon: PhoneCall },
+  { href: "/customer-dashboard", label: "حساب من", Icon: CircleUserRound },
 ];
 
+const adminItems: SidebarItem[] = [
+  { href: "/admin", label: "پنل ادمین", Icon: LayoutDashboard },
+  { href: "/admin/knowledge", label: "بانک دانش", Icon: Database },
+  { href: "/admin/questions", label: "سوالات کاربران", Icon: MessagesSquare },
+  { href: "/admin/requests", label: "درخواست‌ها", Icon: Inbox },
+  { href: "/admin/dashboard", label: "داشبورد", Icon: ChartBar },
+  { href: "/admin/settings", label: "تنظیمات سیستم", Icon: Settings },
+];
 type ArtinShellProps = {
   children: ReactNode;
 };
 
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="text-slate-700"
-    >
-      <rect
-        x="3"
-        y="4"
-        width="18"
-        height="16"
-        rx="4"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d={collapsed ? "M9 8V16" : "M15 8V16"}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d={collapsed ? "M13 10L16 12L13 14" : "M11 10L8 12L11 14"}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  const Icon = collapsed ? PanelRightOpen : PanelRightClose;
+
+  return <Icon size={21} strokeWidth={1.8} className="text-slate-700" />;
 }
 
 export default function ArtinShell({ children }: ArtinShellProps) {
   const pathname = usePathname();
+
+  const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkAdminStatus() {
+      try {
+        const res = await fetch("/api/admin-status", {
+          cache: "no-store",
+        });
+
+        const data = await res.json();
+        setIsAdmin(Boolean(data.is_admin));
+      } catch {
+        setIsAdmin(false);
+      }
+    }
+
+    checkAdminStatus();
+  }, [pathname]);
 
   return (
     <main className="h-screen overflow-hidden bg-[#f7f7f8] text-slate-900">
@@ -67,13 +93,22 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         )}
 
         <aside
-          className={`fixed inset-y-0 right-0 z-40 flex w-[300px] flex-col border-l border-slate-200 bg-[#f3f4f6] transition-all duration-300 md:static md:translate-x-0 ${
+          className={`fixed inset-y-0 right-0 z-40 flex flex-col border-l border-slate-200 bg-[#f3f4f6] transition-all duration-300 md:static md:translate-x-0 ${
             mobileSidebarOpen
               ? "translate-x-0"
               : "translate-x-full md:translate-x-0"
-          } ${sidebarCollapsed ? "md:w-[88px]" : "md:w-[300px]"}`}
+          } ${sidebarCollapsed ? "w-[88px] md:w-[88px]" : "w-[300px] md:w-[300px]"}`}
         >
-          <div className="shrink-0 px-4 py-4">
+          <div className="relative shrink-0 px-4 pb-4 pt-14">
+            <button
+              onClick={() => setSidebarCollapsed((prev) => !prev)}
+              className="absolute left-4 top-4 hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-blue-50 md:flex"
+              title={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
+              aria-label={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
+            >
+              <SidebarToggleIcon collapsed={sidebarCollapsed} />
+            </button>
+
             {!sidebarCollapsed ? (
               <Link href="/" className="block">
                 <div className="rounded-[30px] bg-white p-4 shadow-sm shadow-slate-200/70">
@@ -109,17 +144,6 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           </div>
 
           <div className="shrink-0 px-3">
-            <button
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className={`mb-4 hidden w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm shadow-slate-200/70 transition hover:bg-blue-50 hover:text-blue-700 md:flex ${
-                sidebarCollapsed ? "px-2" : ""
-              }`}
-              title={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
-            >
-              <SidebarToggleIcon collapsed={sidebarCollapsed} />
-              {!sidebarCollapsed && <span>جمع کردن منو</span>}
-            </button>
-
             <Link
               href="/assistant"
               onClick={() => setMobileSidebarOpen(false)}
@@ -128,7 +152,14 @@ export default function ArtinShell({ children }: ArtinShellProps) {
               }`}
               title="گفتگوی جدید با آرتین"
             >
-              {sidebarCollapsed ? "✦" : "گفتگوی جدید با آرتین"}
+              {sidebarCollapsed ? (
+  <SquarePen size={22} strokeWidth={1.9} />
+) : (
+  <span className="flex items-center justify-center gap-2">
+    <SquarePen size={18} strokeWidth={1.9} />
+    گفتگوی جدید با آرتین
+  </span>
+)}
             </Link>
           </div>
 
@@ -143,7 +174,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
               const isActive =
                 item.href === "/"
                   ? pathname === "/"
-                  : pathname.startsWith(item.href);
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
               return (
                 <Link
@@ -159,43 +190,83 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                       : "text-slate-700 hover:bg-white"
                   }`}
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base">
-                    {item.icon}
-                  </span>
+                  <span
+  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
+    isActive
+      ? "bg-blue-50 text-blue-700"
+      : "bg-white text-slate-500 group-hover:text-blue-700"
+  }`}
+>
+  <item.Icon size={19} strokeWidth={1.9} />
+</span>
 
                   {!sidebarCollapsed && <span>{item.label}</span>}
                 </Link>
               );
             })}
 
-            {!sidebarCollapsed && (
+            {isAdminArea && (
               <div className="mt-6">
-                <div className="mb-2 px-3 text-xs font-bold text-slate-500">
-                  دسترسی سریع
-                </div>
+                {!sidebarCollapsed && (
+                  <div className="mb-2 px-3 text-xs font-bold text-slate-500">
+                    مدیریت
+                  </div>
+                )}
 
-                <div className="space-y-2">
-                  <Link
-                    href="/assistant"
-                    className="block rounded-xl bg-white px-4 py-3 text-sm leading-6 text-slate-700 hover:bg-slate-50"
-                  >
-                    پرسش تخصصی از آرتین
-                  </Link>
+                {isAdmin && (
+                  <>
+                    {adminItems.map((item) => {
+                      const isActive =
+                        item.href === "/admin"
+                          ? pathname === "/admin"
+                          : pathname === item.href ||
+                            pathname.startsWith(`${item.href}/`);
 
-                  <Link
-                    href="/analyze"
-                    className="block rounded-xl bg-white px-4 py-3 text-sm leading-6 text-slate-700 hover:bg-slate-50"
-                  >
-                    آپلود و تحلیل فایل تست
-                  </Link>
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileSidebarOpen(false)}
+                          title={item.label}
+                          className={`group mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
+                            sidebarCollapsed ? "justify-center px-2" : ""
+                          } ${
+                            isActive
+                              ? "bg-white font-bold text-purple-700 shadow-sm shadow-slate-200/70"
+                              : "text-slate-700 hover:bg-white"
+                          }`}
+                        >
+                          <span
+  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
+    isActive
+      ? "bg-purple-50 text-purple-700"
+      : "bg-white text-slate-500 group-hover:text-purple-700"
+  }`}
+>
+  <item.Icon size={19} strokeWidth={1.9} />
+</span>
 
-                  <Link
-                    href="/customer-request"
-                    className="block rounded-xl bg-white px-4 py-3 text-sm leading-6 text-slate-700 hover:bg-slate-50"
-                  >
-                    ثبت درخواست مشاوره
-                  </Link>
-                </div>
+                          {!sidebarCollapsed && <span>{item.label}</span>}
+                        </Link>
+                      );
+                    })}
+
+                    <Link
+                      href="/admin-logout"
+                      onClick={() => setMobileSidebarOpen(false)}
+                      title="خروج از ادمین"
+                      className={`group mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
+                        sidebarCollapsed ? "justify-center px-2" : ""
+                      }`}
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-700">
+  <LogOut size={19} strokeWidth={1.9} />
+</span>
+
+                      {!sidebarCollapsed && <span>خروج از ادمین</span>}
+                    </Link>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -215,7 +286,10 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
                 {!sidebarCollapsed && (
                   <div>
-                    <div className="text-sm font-bold">هوش مصنوعی فعال</div>
+                    <div className="flex items-center gap-2 text-sm font-bold">
+  <Bot size={17} strokeWidth={1.9} className="text-blue-700" />
+  هوش مصنوعی فعال
+</div>
                     <div className="mt-1 text-xs text-slate-500">
                       آرتین، دستیار تخصصی آرتین آزما
                     </div>
