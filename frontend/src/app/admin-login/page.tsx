@@ -3,9 +3,6 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
-const ADMIN_PASSWORD =
-  process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "artin-admin";
-
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -14,19 +11,41 @@ export default function AdminLoginPage() {
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function login() {
+  async function login() {
     setError("");
 
-    if (password !== ADMIN_PASSWORD) {
-      setError("رمز ادمین اشتباه است.");
+    if (!password.trim()) {
+      setError("لطفاً رمز ادمین را وارد کنید.");
       return;
     }
 
-    document.cookie =
-      "artin_admin=ok; path=/; max-age=86400; SameSite=Lax";
+    setLoading(true);
 
-    router.push(nextPath);
+    try {
+      const res = await fetch("/api/admin-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.message || "ورود ناموفق بود.");
+        return;
+      }
+
+      router.push(nextPath);
+      router.refresh();
+    } catch {
+      setError("خطا در اتصال به سیستم ورود ادمین.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -43,9 +62,7 @@ export default function AdminLoginPage() {
             پنل داخلی آرتین آزما
           </div>
 
-          <h1 className="text-2xl font-bold text-slate-900">
-            ورود ادمین
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">ورود ادمین</h1>
 
           <p className="mt-3 leading-7 text-slate-600">
             برای دسترسی به بانک دانش، سوالات کاربران و داشبورد، رمز ادمین را
@@ -72,14 +89,14 @@ export default function AdminLoginPage() {
 
         <button
           onClick={login}
-          className="mt-5 w-full rounded-2xl bg-blue-700 px-5 py-4 font-medium text-white"
+          disabled={loading}
+          className="mt-5 w-full rounded-2xl bg-blue-700 px-5 py-4 font-medium text-white disabled:opacity-50"
         >
-          ورود به پنل ادمین
+          {loading ? "در حال ورود..." : "ورود به پنل ادمین"}
         </button>
 
         <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-          رمز پیش‌فرض فعلی:
-          <span className="font-bold"> artin-admin</span>
+          رمز ادمین از تنظیمات امن سرور خوانده می‌شود.
         </div>
       </div>
     </section>
