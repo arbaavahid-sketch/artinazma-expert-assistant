@@ -276,7 +276,9 @@ function getSavedCustomer(): Customer | null {
 }
 
 async function createCustomerChatSession(title: string) {
-  if (!customer) return null;
+  const activeCustomer = customer || getSavedCustomer();
+
+  if (!activeCustomer) return null;
 
   try {
     const res = await fetch(apiUrl("/customers/chat-sessions"), {
@@ -285,7 +287,7 @@ async function createCustomerChatSession(title: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        customer_id: customer.id,
+        customer_id: activeCustomer.id,
         title: makeSessionTitle(title),
       }),
     });
@@ -296,6 +298,7 @@ async function createCustomerChatSession(title: string) {
 
     const newSessionId = Number(data.session_id);
 
+    setCustomer(activeCustomer);
     setActiveSessionId(newSessionId);
 
     window.history.replaceState(null, "", `/assistant?session_id=${newSessionId}`);
@@ -307,7 +310,13 @@ async function createCustomerChatSession(title: string) {
 }
 
 async function ensureCustomerSession(titleSource: string) {
-  if (!customer) return null;
+  const activeCustomer = customer || getSavedCustomer();
+
+  if (!activeCustomer) return null;
+
+  if (!customer) {
+    setCustomer(activeCustomer);
+  }
 
   if (activeSessionId) return activeSessionId;
 
@@ -320,7 +329,9 @@ async function saveCustomerChatMessage(
   content: string,
   metadata: Record<string, unknown> = {}
 ) {
-  if (!customer || !sessionId || !content.trim()) return;
+  const activeCustomer = customer || getSavedCustomer();
+
+  if (!activeCustomer || !sessionId || !content.trim()) return;
 
   try {
     await fetch(apiUrl("/customers/chat-messages"), {
@@ -329,7 +340,7 @@ async function saveCustomerChatMessage(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        customer_id: customer.id,
+        customer_id: activeCustomer.id,
         session_id: sessionId,
         role,
         content,
