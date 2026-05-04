@@ -228,6 +228,47 @@ function getTextFont(text: string) {
     ? "var(--font-persian)"
     : "var(--font-english)";
 }
+function shouldShowRelatedDeviceCards(userText: string, selectedDomain: string) {
+  const text = userText.toLowerCase();
+
+  if (selectedDomain === "equipment") return true;
+
+  const intentKeywords = [
+    "دستگاه",
+    "تجهیز",
+    "تجهیزات",
+    "آنالایزر",
+    "مدل",
+    "برند",
+    "عکس",
+    "تصویر",
+    "کاتالوگ",
+    "پیشنهاد دستگاه",
+    "چه دستگاهی",
+    "چه تجهیزی",
+    "دستگاه مناسب",
+    "تجهیز مناسب",
+    "خرید",
+    "استعلام",
+    "قیمت",
+    "موجودی",
+    "device",
+    "equipment",
+    "instrument",
+    "analyzer",
+    "model",
+    "brand",
+    "image",
+    "photo",
+    "picture",
+    "catalog",
+    "price",
+    "quotation",
+    "availability",
+  ];
+
+  return intentKeywords.some((keyword) => text.includes(keyword));
+}
 function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[] }) {
   if (!devices || devices.length === 0) return null;
 
@@ -560,10 +601,9 @@ try {
   throw new Error("Backend پاسخ JSON معتبر برنگرداند.");
 }
 
-const relatedDevices = findRelatedDevices(
-  `${finalMessage}\n${data.answer || ""}`,
-  2
-);
+const relatedDevices = shouldShowRelatedDeviceCards(finalMessage, domain)
+  ? findRelatedDevices(`${finalMessage}\n${data.answer || ""}`, 2)
+  : [];
 
 const assistantMessage: ChatMessage = {
   role: "assistant",
@@ -662,12 +702,15 @@ await saveCustomerChatMessage(
 
       const data = await res.json();
 
-      const relatedDevices = findRelatedDevices(
-  `${file.name}\n${chatUserNote}\n${
-    data.ai_analysis || data.error || ""
-  }`,
-  2
-);
+      const relatedDevices = shouldShowRelatedDeviceCards(
+  `${file.name}\n${chatUserNote}`,
+  domain
+)
+  ? findRelatedDevices(
+      `${file.name}\n${chatUserNote}\n${data.ai_analysis || data.error || ""}`,
+      2
+    )
+  : [];
 
 const assistantMessage: ChatMessage = {
   role: "assistant",
@@ -694,7 +737,7 @@ await saveCustomerChatMessage(
   }
 );
 
-typeAssistantMessage(previousMessages, userMessage, assistantMessage);
+
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
@@ -768,12 +811,15 @@ await saveCustomerChatMessage(
 
       const data = await res.json();
 
-      const relatedDevices = findRelatedDevices(
-  `${file.name}\n${chatImageNote}\n${
-    data.ai_analysis || data.error || ""
-  }`,
-  2
-);
+      const relatedDevices = shouldShowRelatedDeviceCards(
+  `${file.name}\n${chatImageNote}`,
+  domain
+)
+  ? findRelatedDevices(
+      `${file.name}\n${chatImageNote}\n${data.ai_analysis || data.error || ""}`,
+      2
+    )
+  : [];
 
 const assistantMessage: ChatMessage = {
   role: "assistant",
