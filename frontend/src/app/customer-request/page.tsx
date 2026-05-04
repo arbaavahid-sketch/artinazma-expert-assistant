@@ -1,16 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import {
+  Building2,
+  CheckCircle2,
+  ClipboardList,
+  Mail,
+  MessageSquareText,
+  Phone,
+  Send,
+  UserRound,
+} from "lucide-react";
 
 const requestTypes = [
   { value: "consultation", label: "مشاوره فنی" },
   { value: "equipment", label: "انتخاب یا خرید تجهیزات" },
-  { value: "catalyst", label: "کاتالیست" },
-  { value: "test-analysis", label: "تحلیل تست یا گزارش" },
-  { value: "troubleshooting", label: "عیب‌یابی دستگاه" },
-  { value: "price-inquiry", label: "استعلام قیمت" },
+  { value: "chemical", label: "مواد شیمیایی / افزودنی‌ها" },
+  { value: "catalyst", label: "کاتالیست / جاذب / مواد فرایندی" },
+  { value: "test-analysis", label: "تحلیل تست، گزارش یا داده آزمایشگاهی" },
+  { value: "troubleshooting", label: "عیب‌یابی دستگاه یا روش آزمون" },
+  { value: "price-inquiry", label: "استعلام قیمت یا موجودی" },
 ];
+
+type SavedCustomer = {
+  id: number;
+  full_name?: string;
+  email?: string;
+  company?: string;
+  phone?: string;
+};
+
+function getRequestTypeLabel(value: string) {
+  return requestTypes.find((item) => item.value === value)?.label || "مشاوره فنی";
+}
 
 export default function CustomerRequestPage() {
   const [fullName, setFullName] = useState("");
@@ -23,12 +46,30 @@ export default function CustomerRequestPage() {
 
   const [loading, setLoading] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
+  const [resultType, setResultType] = useState<"success" | "error" | "">("");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("artin_customer");
+
+      if (!raw) return;
+
+      const customer = JSON.parse(raw) as SavedCustomer;
+
+      setFullName(customer.full_name || "");
+      setEmail(customer.email || "");
+      setCompany(customer.company || "");
+      setPhone(customer.phone || "");
+    } catch {}
+  }, []);
 
   async function submitRequest() {
     setResultMessage("");
+    setResultType("");
 
     if (!fullName.trim() || !phone.trim() || !message.trim()) {
-      setResultMessage("لطفاً نام، شماره تماس و متن درخواست را وارد کنید.");
+      setResultType("error");
+      setResultMessage("لطفاً نام، شماره تماس و توضیحات درخواست را وارد کنید.");
       return;
     }
 
@@ -46,7 +87,7 @@ export default function CustomerRequestPage() {
           phone,
           email,
           request_type: requestType,
-          subject,
+          subject: subject || getRequestTypeLabel(requestType),
           message,
         }),
       });
@@ -54,104 +95,161 @@ export default function CustomerRequestPage() {
       const data = await res.json();
 
       if (data.success) {
-        setResultMessage(data.message || "درخواست شما با موفقیت ثبت شد.");
+        setResultType("success");
+        setResultMessage(
+          data.message ||
+            "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما در اولین فرصت پیگیری خواهند کرد."
+        );
 
-        setFullName("");
-        setCompany("");
-        setPhone("");
-        setEmail("");
         setRequestType("consultation");
         setSubject("");
         setMessage("");
       } else {
+        setResultType("error");
         setResultMessage(data.message || "خطا در ثبت درخواست.");
       }
     } catch {
-      setResultMessage("خطا در اتصال به سرور.");
+      setResultType("error");
+      setResultMessage("خطا در اتصال به سرور. لطفاً دوباره تلاش کنید.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-10">
-      <div className="rounded-[32px] bg-white p-8 shadow-sm">
-        <div className="mb-8">
-          <div className="mb-3 text-sm font-bold text-blue-700">
-            ارتباط با کارشناس آرتین آزما
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
+          <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+                  <ClipboardList size={17} />
+                  ارتباط با کارشناس آرتین آزما
+                </div>
+
+                <h1 className="text-3xl font-black text-slate-900">
+                  ثبت درخواست مشاوره یا پیگیری تخصصی
+                </h1>
+
+                <p className="mt-4 max-w-3xl leading-8 text-slate-600">
+                  اگر برای انتخاب دستگاه، مواد شیمیایی، کاتالیست، تحلیل تست،
+                  عیب‌یابی یا استعلام قیمت نیاز به بررسی دقیق‌تر دارید، اطلاعات
+                  زیر را ثبت کنید تا کارشناسان آرتین آزما پیگیری کنند.
+                </p>
+              </div>
+
+              <div className="rounded-[28px] bg-white p-5 shadow-sm">
+                <div className="text-sm font-bold text-slate-500">
+                  ایمیل رسمی شرکت
+                </div>
+                <div className="mt-2 font-black text-slate-900">
+                  info@artinazma.net
+                </div>
+              </div>
+            </div>
           </div>
-
-          <h1 className="text-3xl font-bold text-slate-900">
-            ثبت درخواست مشاوره یا تماس
-          </h1>
-
-          <p className="mt-4 max-w-3xl leading-8 text-slate-600">
-            اگر بعد از گفتگو با آرتین نیاز به بررسی تخصصی‌تر، استعلام قیمت،
-            پیشنهاد دستگاه، بررسی کاتالیست یا تحلیل تست دارید، فرم زیر را تکمیل
-            کنید تا کارشناسان آرتین آزما پیگیری کنند.
-          </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-bold">
-                  نام و نام خانوادگی *
-                </label>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none focus:border-blue-600"
-                  placeholder="مثلاً: وحید ..."
-                />
+          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-700 text-white">
+                <MessageSquareText size={24} strokeWidth={1.8} />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold">
-                  شرکت / سازمان
-                </label>
-                <input
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none focus:border-blue-600"
-                  placeholder="نام شرکت"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-bold">
-                  شماره تماس *
-                </label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none focus:border-blue-600"
-                  placeholder="شماره موبایل یا تلفن"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-bold">
-                  ایمیل
-                </label>
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none focus:border-blue-600"
-                  placeholder="email@example.com"
-                />
+                <h2 className="text-xl font-black text-slate-900">
+                  فرم درخواست
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  موارد ستاره‌دار برای ثبت درخواست الزامی هستند.
+                </p>
               </div>
             </div>
 
-            <label className="mb-2 mt-5 block text-sm font-bold">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  نام و نام خانوادگی *
+                </label>
+                <div className="relative">
+                  <UserRound
+                    size={18}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    placeholder="نام کامل"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  شرکت / سازمان
+                </label>
+                <div className="relative">
+                  <Building2
+                    size={18}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    placeholder="نام شرکت"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  شماره تماس *
+                </label>
+                <div className="relative">
+                  <Phone
+                    size={18}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    placeholder="شماره موبایل یا تلفن"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  ایمیل
+                </label>
+                <div className="relative">
+                  <Mail
+                    size={18}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    placeholder="email@example.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
               نوع درخواست
             </label>
 
             <select
               value={requestType}
               onChange={(e) => setRequestType(e.target.value)}
-              className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none focus:border-blue-600"
+              className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-blue-600"
             >
               {requestTypes.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -160,61 +258,107 @@ export default function CustomerRequestPage() {
               ))}
             </select>
 
-            <label className="mb-2 mt-5 block text-sm font-bold">
+            <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
               موضوع درخواست
             </label>
 
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none focus:border-blue-600"
+              className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-blue-600"
               placeholder="مثلاً: انتخاب دستگاه برای آنالیز سولفور در LPG"
             />
 
-            <label className="mb-2 mt-5 block text-sm font-bold">
+            <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
               توضیحات درخواست *
             </label>
 
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="h-44 w-full rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none focus:border-blue-600"
-              placeholder="نیاز، نوع نمونه، مشکل، فایل تست یا اطلاعات فنی را توضیح دهید..."
+              className="h-44 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none transition focus:border-blue-600"
+              placeholder="نوع نمونه، کاربرد، مشکل، مدل دستگاه، محدوده اندازه‌گیری، فایل تست یا هر اطلاعات فنی مهم را وارد کنید..."
             />
 
             <button
               onClick={submitRequest}
               disabled={loading}
-              className="mt-5 w-full rounded-2xl bg-blue-700 px-5 py-4 font-medium text-white disabled:opacity-50"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
             >
-              {loading ? "در حال ثبت..." : "ثبت درخواست"}
+              <Send size={18} />
+              {loading ? "در حال ثبت درخواست..." : "ثبت درخواست"}
             </button>
 
             {resultMessage && (
-              <div className="mt-5 rounded-2xl bg-white p-4 leading-8 text-slate-700">
-                {resultMessage}
+              <div
+                className={`mt-5 rounded-2xl p-4 leading-8 ${
+                  resultType === "success"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-red-50 text-red-700"
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  {resultType === "success" && (
+                    <CheckCircle2 className="mt-1 shrink-0" size={18} />
+                  )}
+                  <span>{resultMessage}</span>
+                </div>
               </div>
             )}
           </div>
 
           <aside className="space-y-4">
-            <div className="rounded-3xl bg-blue-50 p-5 text-blue-950">
-              <div className="mb-2 font-bold">چه زمانی درخواست ثبت کنم؟</div>
-              <p className="text-sm leading-7">
-                وقتی نیاز به پیشنهاد دقیق دستگاه، بررسی کاتالیست، تحلیل تست،
-                استعلام قیمت یا عیب‌یابی تخصصی دارید.
+            <div className="rounded-[32px] border border-blue-100 bg-blue-50 p-6 text-blue-950">
+              <div className="mb-3 text-lg font-black">
+                چه زمانی درخواست ثبت کنم؟
+              </div>
+              <p className="text-sm leading-8">
+                وقتی نیاز به پیشنهاد دقیق دستگاه، انتخاب ماده یا کاتالیست،
+                بررسی گزارش تست، عیب‌یابی دستگاه، استعلام قیمت یا پیگیری
+                کارشناسی دارید.
               </p>
             </div>
 
-            <div className="rounded-3xl bg-slate-50 p-5 text-slate-700">
-              <div className="mb-2 font-bold">اطلاعات مفید برای کارشناس</div>
-              <ul className="list-inside list-disc space-y-2 text-sm leading-7">
-                <li>نوع نمونه یا فرایند</li>
-                <li>محدوده اندازه‌گیری</li>
-                <li>مدل دستگاه یا تجهیز</li>
-                <li>مشکل یا خطای مشاهده‌شده</li>
-                <li>هدف از آنالیز یا تست</li>
-              </ul>
+            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-3 text-lg font-black text-slate-900">
+                اطلاعات مفید برای کارشناس
+              </div>
+
+              <div className="space-y-3 text-sm leading-7 text-slate-600">
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  نوع نمونه یا فرایند
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  محدوده اندازه‌گیری یا حساسیت موردنیاز
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  مدل دستگاه، برند یا روش آزمون
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  مشکل، خطا یا هدف نهایی از تست
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-3 text-lg font-black text-slate-900">
+                راه ارتباط مستقیم
+              </div>
+
+              <div className="space-y-3 text-sm leading-7 text-slate-600">
+                <div>
+                  <span className="font-bold text-slate-900">تلفن:</span>{" "}
+                  02191008898
+                </div>
+                <div>
+                  <span className="font-bold text-slate-900">واتساپ:</span>{" "}
+                  09906060910
+                </div>
+                <div>
+                  <span className="font-bold text-slate-900">ایمیل:</span>{" "}
+                  info@artinazma.net
+                </div>
+              </div>
             </div>
           </aside>
         </div>
