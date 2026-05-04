@@ -1,17 +1,20 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const nextPath = searchParams.get("next") || "/admin";
-
+  const [nextPath, setNextPath] = useState("/admin");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setNextPath(params.get("next") || "/admin");
+  }, []);
 
   async function login() {
     setError("");
