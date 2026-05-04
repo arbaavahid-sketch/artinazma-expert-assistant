@@ -12,7 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
+import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
 type Source = {
   title: string;
   file_name: string;
@@ -26,6 +26,7 @@ type ChatMessage = {
   sources?: Source[];
   detected_domain?: string;
   question_id?: number;
+  relatedDevices?: DeviceAsset[];
   attachment?: {
     name: string;
     kind: "file" | "image";
@@ -51,6 +52,7 @@ type SavedChatMessage = {
     sources?: Source[];
     detected_domain?: string;
     question_id?: number;
+    relatedDevices?: DeviceAsset[];
     attachment?: ChatMessage["attachment"];
 
     file_name?: string;
@@ -226,6 +228,47 @@ function getTextFont(text: string) {
     ? "var(--font-persian)"
     : "var(--font-english)";
 }
+function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[] }) {
+  if (!devices || devices.length === 0) return null;
+
+  return (
+    <div className="mt-4 grid gap-3 md:grid-cols-2">
+      {devices.map((device) => (
+        <div
+          key={device.id}
+          className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="flex gap-4 p-4">
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-100">
+              <img
+                src={device.image}
+                alt={device.title}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-sm font-black text-slate-900">
+                {device.title}
+              </div>
+
+              <div className="mt-2 text-xs leading-6 text-slate-500">
+                {device.subtitle}
+              </div>
+
+              <div className="mt-3 rounded-full bg-blue-50 px-3 py-1 text-center text-xs font-bold text-blue-700">
+                دستگاه مرتبط پیشنهادی
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 export default function AssistantPage() {
   const router = useRouter();
   const [sessionIdParam, setSessionIdParam] = useState<string | null>(null);
@@ -369,6 +412,7 @@ async function loadSavedChatSession(customerId: number, sessionId: number) {
         sources: item.metadata?.sources || [],
         detected_domain: item.metadata?.detected_domain,
         question_id: item.metadata?.question_id,
+        relatedDevices: item.metadata?.relatedDevices || [],
         attachment: item.metadata?.attachment
   ? {
       ...item.metadata.attachment,
@@ -516,12 +560,18 @@ try {
   throw new Error("Backend پاسخ JSON معتبر برنگرداند.");
 }
 
+const relatedDevices = findRelatedDevices(
+  `${finalMessage}\n${data.answer || ""}`,
+  2
+);
+
 const assistantMessage: ChatMessage = {
   role: "assistant",
   content: data.answer || "پاسخی دریافت نشد.",
   sources: data.sources || [],
   detected_domain: data.detected_domain,
   question_id: data.question_id,
+  relatedDevices,
 };
 await saveCustomerChatMessage(
   customerSessionId,
@@ -531,6 +581,7 @@ await saveCustomerChatMessage(
     sources: assistantMessage.sources || [],
     detected_domain: assistantMessage.detected_domain,
     question_id: assistantMessage.question_id,
+    relatedDevices,
   }
 );
 typeAssistantMessage(previousMessages, userMessage, assistantMessage);
@@ -611,15 +662,24 @@ await saveCustomerChatMessage(
 
       const data = await res.json();
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content:
-          data.ai_analysis ||
-          data.error ||
-          "فایل دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
-        detected_domain: "file-analysis",
-      };
-      await saveCustomerChatMessage(
+      const relatedDevices = findRelatedDevices(
+  `${file.name}\n${chatUserNote}\n${
+    data.ai_analysis || data.error || ""
+  }`,
+  2
+);
+
+const assistantMessage: ChatMessage = {
+  role: "assistant",
+  content:
+    data.ai_analysis ||
+    data.error ||
+    "فایل دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
+  detected_domain: "file-analysis",
+  relatedDevices,
+};
+
+await saveCustomerChatMessage(
   customerSessionId,
   "assistant",
   assistantMessage.content,
@@ -630,8 +690,11 @@ await saveCustomerChatMessage(
     file_type: data.file_type,
     test_type: data.test_type,
     test_type_label: data.test_type_label,
+    relatedDevices,
   }
 );
+
+typeAssistantMessage(previousMessages, userMessage, assistantMessage);
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
@@ -646,7 +709,7 @@ await saveCustomerChatMessage(
       setLoading(false);
     }
   }
-
+  
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
@@ -705,15 +768,24 @@ await saveCustomerChatMessage(
 
       const data = await res.json();
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content:
-          data.ai_analysis ||
-          data.error ||
-          "عکس دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
-        detected_domain: "image-analysis",
-      };
-      await saveCustomerChatMessage(
+      const relatedDevices = findRelatedDevices(
+  `${file.name}\n${chatImageNote}\n${
+    data.ai_analysis || data.error || ""
+  }`,
+  2
+);
+
+const assistantMessage: ChatMessage = {
+  role: "assistant",
+  content:
+    data.ai_analysis ||
+    data.error ||
+    "عکس دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
+  detected_domain: "image-analysis",
+  relatedDevices,
+};
+
+await saveCustomerChatMessage(
   customerSessionId,
   "assistant",
   assistantMessage.content,
@@ -724,9 +796,11 @@ await saveCustomerChatMessage(
     file_type: data.file_type,
     image_type: data.image_type,
     image_type_label: data.image_type_label,
+    relatedDevices,
   }
 );
-      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
+
+typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
         ...previousMessages,
@@ -740,7 +814,7 @@ await saveCustomerChatMessage(
       setLoading(false);
     }
   }
-
+  
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
@@ -1312,7 +1386,9 @@ function MessageBubble({
               )}
             </div>
           )}
-
+           {!isUser && (
+  <RelatedDeviceCards devices={item.relatedDevices} />
+)}
           {!isUser && (
             <div className="mt-4 space-y-3">
               {item.detected_domain && (
