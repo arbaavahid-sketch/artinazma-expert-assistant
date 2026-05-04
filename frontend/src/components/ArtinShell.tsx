@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import {
-  Bot,
   ChartBar,
   CircleUserRound,
   Database,
@@ -13,14 +12,12 @@ import {
   Inbox,
   LayoutDashboard,
   LogOut,
-  MessageCircleQuestion,
   MessagesSquare,
   PanelRightClose,
   PanelRightOpen,
   PhoneCall,
   Settings,
   Sparkles,
-  Ellipsis,
 Pencil,
 Trash2,
 } from "lucide-react";
