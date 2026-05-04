@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { apiUrl } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
@@ -228,8 +228,7 @@ function getTextFont(text: string) {
 }
 export default function AssistantPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const sessionIdParam = searchParams.get("session_id");
+  const [sessionIdParam, setSessionIdParam] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [domain, setDomain] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -380,7 +379,10 @@ async function loadSavedChatSession(customerId: number, sessionId: number) {
     setLoadingSavedSession(false);
   }
 }
-
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setSessionIdParam(params.get("session_id"));
+}, []);
 useEffect(() => {
   const savedCustomer = getSavedCustomer();
 

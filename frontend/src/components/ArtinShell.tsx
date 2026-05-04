@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import {
   Bot,
@@ -72,10 +72,9 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
 
 export default function ArtinShell({ children }: ArtinShellProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeSessionId = searchParams.get("session_id");
+  
   const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
-
+const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -181,6 +180,10 @@ async function deleteCustomerChatSession(sessionId: number) {
 
     checkAdminStatus();
   }, [pathname]);
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  setActiveSessionId(params.get("session_id"));
+}, [pathname]);
     useEffect(() => {
   refreshCustomerSessions();
 }, [pathname, activeSessionId]);
