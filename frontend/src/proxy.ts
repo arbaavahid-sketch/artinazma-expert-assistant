@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (!pathname.startsWith("/admin")) {
+  const isAdminRoute =
+    pathname === "/admin" || pathname.startsWith("/admin/");
+
+  if (!isAdminRoute) {
     return NextResponse.next();
   }
 
@@ -15,7 +18,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const loginUrl = new URL("/admin-login", request.url);
+  const loginUrl = request.nextUrl.clone();
+  loginUrl.pathname = "/admin-login";
   loginUrl.searchParams.set("next", pathname);
 
   return NextResponse.redirect(loginUrl);
