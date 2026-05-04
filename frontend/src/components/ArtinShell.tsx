@@ -20,7 +20,6 @@ import {
   PhoneCall,
   Settings,
   Sparkles,
-  SquarePen,
   Ellipsis,
 Pencil,
 Trash2,
@@ -205,10 +204,10 @@ async function deleteCustomerChatSession(sessionId: number) {
               : "translate-x-full md:translate-x-0"
           } ${sidebarCollapsed ? "w-[88px] md:w-[88px]" : "w-[300px] md:w-[300px]"}`}
         >
-          <div className="relative shrink-0 px-4 pb-4 pt-14">
+                    <div className="relative shrink-0 px-4 pb-7 pt-14">
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="absolute left-4 top-4 hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-blue-50 md:flex"
+              className="absolute left-4 top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-blue-50 md:flex"
               title={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
               aria-label={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
             >
@@ -217,11 +216,11 @@ async function deleteCustomerChatSession(sessionId: number) {
 
             {!sidebarCollapsed ? (
               <Link href="/" className="block">
-                <div className="rounded-[30px] bg-white p-4 shadow-sm shadow-slate-200/70">
+                <div className="mx-auto w-[78%]">
                   <img
                     src="/images/artinazma-logo.png"
                     alt="آرتین آزما"
-                    className="mx-auto h-auto max-h-20 w-full object-contain"
+                    className="mx-auto h-auto max-h-14 w-full object-contain"
                   />
                 </div>
 
@@ -237,7 +236,7 @@ async function deleteCustomerChatSession(sessionId: number) {
             ) : (
               <Link
                 href="/"
-                className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-sm"
+                className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden"
                 title="آرتین آزما"
               >
                 <img
@@ -249,27 +248,7 @@ async function deleteCustomerChatSession(sessionId: number) {
             )}
           </div>
 
-          <div className="shrink-0 px-3">
-            <Link
-              href="/assistant"
-              onClick={() => setMobileSidebarOpen(false)}
-              className={`mb-4 block rounded-2xl bg-white px-4 py-4 text-center text-sm font-bold text-slate-900 shadow-sm shadow-slate-200/70 transition hover:bg-slate-50 ${
-                sidebarCollapsed ? "px-2 text-lg" : ""
-              }`}
-              title="گفتگوی جدید با آرتین"
-            >
-              {sidebarCollapsed ? (
-  <SquarePen size={22} strokeWidth={1.9} />
-) : (
-  <span className="flex items-center justify-center gap-2">
-    <SquarePen size={18} strokeWidth={1.9} />
-    گفتگوی جدید با آرتین
-  </span>
-)}
-            </Link>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2">
             {!sidebarCollapsed && (
               <div className="mb-2 px-3 text-xs font-bold text-slate-500">
                 بخش‌ها
@@ -280,7 +259,8 @@ async function deleteCustomerChatSession(sessionId: number) {
               const isActive =
                 item.href === "/"
                   ? pathname === "/"
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
 
               return (
                 <Link
@@ -288,7 +268,7 @@ async function deleteCustomerChatSession(sessionId: number) {
                   href={item.href}
                   onClick={() => setMobileSidebarOpen(false)}
                   title={item.label}
-                  className={`mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
+                  className={`group mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
                     sidebarCollapsed ? "justify-center px-2" : ""
                   } ${
                     isActive
@@ -297,116 +277,122 @@ async function deleteCustomerChatSession(sessionId: number) {
                   }`}
                 >
                   <span
-  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
-    isActive
-      ? "bg-blue-50 text-blue-700"
-      : "bg-white text-slate-500 group-hover:text-blue-700"
-  }`}
->
-  <item.Icon size={19} strokeWidth={1.9} />
-</span>
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
+                      isActive
+                        ? "bg-blue-50 text-blue-700"
+                        : "bg-white text-slate-500 group-hover:text-blue-700"
+                    }`}
+                  >
+                    <item.Icon size={19} strokeWidth={1.9} />
+                  </span>
 
                   {!sidebarCollapsed && <span>{item.label}</span>}
                 </Link>
               );
             })}
+
             {!sidebarCollapsed && customer && customerSessions.length > 0 && (
-  <div className="mt-6">
-    <div className="mb-2 px-3 text-xs font-bold text-slate-500">
-      گفتگوهای من
-    </div>
-
-    <div className="space-y-1">
-      {customerSessions.slice(0, 12).map((session) => {
-        const isActiveSession = String(session.id) === activeSessionId;
-
-        return (
-          <div key={session.id}>
-            {renamingSessionId === session.id ? (
-              <div className="rounded-2xl bg-white p-2 shadow-sm shadow-slate-200/70">
-                <input
-                  value={renameTitle}
-                  onChange={(e) => setRenameTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      renameChatSession(session.id);
-                    }
-
-                    if (e.key === "Escape") {
-                      setRenamingSessionId(null);
-                      setRenameTitle("");
-                    }
-                  }}
-                  autoFocus
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500"
-                />
-
-                <div className="mt-2 flex gap-2">
-                  <button
-                    onClick={() => renameChatSession(session.id)}
-                    className="flex-1 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white"
-                  >
-                    ذخیره
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setRenamingSessionId(null);
-                      setRenameTitle("");
-                    }}
-                    className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600"
-                  >
-                    انصراف
-                  </button>
+              <div className="mt-6">
+                <div className="mb-2 px-3 text-xs font-bold text-slate-500">
+                  گفتگوهای من
                 </div>
-              </div>
-            ) : (
-              <div
-                className={`group flex items-center rounded-2xl transition ${
-                  isActiveSession
-                    ? "bg-white text-blue-700 shadow-sm shadow-slate-200/70"
-                    : "text-slate-600 hover:bg-white hover:text-slate-900"
-                }`}
-              >
-                <Link
-                  href={`/assistant?session_id=${session.id}`}
-                  onClick={() => setMobileSidebarOpen(false)}
-                  title={session.title}
-                  className={`min-w-0 flex-1 truncate py-3 pr-4 text-sm ${
-                    isActiveSession ? "font-bold" : ""
-                  }`}
-                >
-                  {session.title || "گفتگوی جدید"}
-                </Link>
 
-                <div className="flex shrink-0 items-center gap-1 pl-2 opacity-0 transition group-hover:opacity-100">
-                  <button
-                    onClick={() => {
-                      setRenamingSessionId(session.id);
-                      setRenameTitle(session.title || "گفتگوی جدید");
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"
-                    title="تغییر نام"
-                  >
-                    <Pencil size={15} strokeWidth={2} />
-                  </button>
+                <div className="space-y-1">
+                  {customerSessions.slice(0, 12).map((session) => {
+                    const isActiveSession =
+                      String(session.id) === activeSessionId;
 
-                  <button
-                    onClick={() => deleteCustomerChatSession(session.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                    title="حذف گفتگو"
-                  >
-                    <Trash2 size={15} strokeWidth={2} />
-                  </button>
+                    return (
+                      <div key={session.id}>
+                        {renamingSessionId === session.id ? (
+                          <div className="rounded-2xl bg-white p-2 shadow-sm shadow-slate-200/70">
+                            <input
+                              value={renameTitle}
+                              onChange={(e) => setRenameTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  renameChatSession(session.id);
+                                }
+
+                                if (e.key === "Escape") {
+                                  setRenamingSessionId(null);
+                                  setRenameTitle("");
+                                }
+                              }}
+                              autoFocus
+                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                            />
+
+                            <div className="mt-2 flex gap-2">
+                              <button
+                                onClick={() => renameChatSession(session.id)}
+                                className="flex-1 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white"
+                              >
+                                ذخیره
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setRenamingSessionId(null);
+                                  setRenameTitle("");
+                                }}
+                                className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600"
+                              >
+                                انصراف
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={`group flex items-center rounded-2xl transition ${
+                              isActiveSession
+                                ? "bg-white text-blue-700 shadow-sm shadow-slate-200/70"
+                                : "text-slate-600 hover:bg-white hover:text-slate-900"
+                            }`}
+                          >
+                            <Link
+                              href={`/assistant?session_id=${session.id}`}
+                              onClick={() => setMobileSidebarOpen(false)}
+                              title={session.title}
+                              className={`min-w-0 flex-1 truncate py-3 pr-4 text-sm ${
+                                isActiveSession ? "font-bold" : ""
+                              }`}
+                            >
+                              {session.title || "گفتگوی جدید"}
+                            </Link>
+
+                            <div className="flex shrink-0 items-center gap-1 pl-2 opacity-0 transition group-hover:opacity-100">
+                              <button
+                                onClick={() => {
+                                  setRenamingSessionId(session.id);
+                                  setRenameTitle(
+                                    session.title || "گفتگوی جدید"
+                                  );
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"
+                                title="تغییر نام"
+                              >
+                                <Pencil size={15} strokeWidth={2} />
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  deleteCustomerChatSession(session.id)
+                                }
+                                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                                title="حذف گفتگو"
+                              >
+                                <Trash2 size={15} strokeWidth={2} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
             {isAdminArea && (
               <div className="mt-6">
                 {!sidebarCollapsed && (
