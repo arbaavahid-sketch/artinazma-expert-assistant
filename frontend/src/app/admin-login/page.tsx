@@ -2,6 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  Database,
+  KeyRound,
+  LayoutDashboard,
+  LockKeyhole,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -58,48 +67,97 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <section className="flex h-full items-center justify-center px-6 py-10">
-      <div className="w-full max-w-md rounded-[32px] bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <div className="mb-3 text-sm font-bold text-blue-700">
-            پنل داخلی آرتین آزما
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+      <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center">
+        <div className="grid w-full overflow-hidden rounded-[40px] border border-slate-200 bg-white shadow-sm lg:grid-cols-[1fr_420px]">
+          <div className="p-8 lg:p-12">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
+              <ShieldCheck size={17} />
+              پنل داخلی آرتین آزما
+            </div>
+
+            <h1 className="text-3xl font-black leading-[1.5] text-slate-900 md:text-4xl">
+              ورود ادمین
+            </h1>
+
+            <p className="mt-4 max-w-2xl leading-8 text-slate-600">
+              برای دسترسی به داشبورد، بانک دانش، سوالات کاربران و درخواست‌های
+              مشتریان، رمز ادمین را وارد کنید.
+            </p>
+
+            <div className="mt-8">
+              <label className="mb-2 block text-sm font-bold text-slate-700">
+                رمز ادمین
+              </label>
+
+              <div className="relative">
+                <LockKeyhole
+                  size={18}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
+                  placeholder="رمز را وارد کنید"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="mt-5 rounded-2xl bg-red-50 p-4 text-sm leading-7 text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              onClick={login}
+              disabled={loading}
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-4 font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
+            >
+              {loading ? "در حال ورود..." : "ورود به پنل ادمین"}
+              <ArrowLeft size={18} />
+            </button>
+
+            
           </div>
 
-          <h1 className="text-2xl font-bold text-slate-900">ورود ادمین</h1>
+          <div className="flex items-center justify-center bg-gradient-to-b from-purple-50 via-white to-slate-50 p-8">
+            <div className="w-full max-w-md rounded-[32px] bg-white p-6 shadow-sm">
+              <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[34px] bg-purple-50 text-purple-700">
+                <KeyRound size={42} strokeWidth={1.7} />
+              </div>
 
-          <p className="mt-3 leading-7 text-slate-600">
-            برای دسترسی به بانک دانش، سوالات کاربران و داشبورد، رمز ادمین را
-            وارد کنید.
-          </p>
-        </div>
+              <div className="text-center text-xl font-black text-slate-900">
+                مدیریت داخلی آرتین
+              </div>
 
-        <label className="mb-2 block text-sm font-bold">رمز ادمین</label>
+              <p className="mt-3 text-center leading-8 text-slate-600">
+                این بخش مخصوص مدیریت بانک دانش، بررسی پاسخ‌ها و پیگیری درخواست‌های
+                مشتریان است.
+              </p>
 
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none focus:border-blue-600"
-          placeholder="رمز را وارد کنید"
-        />
+              <div className="mt-5 grid gap-3 text-sm">
+                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
+                  <LayoutDashboard size={18} className="text-purple-700" />
+                  داشبورد مدیریتی
+                </div>
 
-        {error && (
-          <div className="mt-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700">
-            {error}
+                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
+                  <Database size={18} className="text-purple-700" />
+                  مدیریت بانک دانش
+                </div>
+
+                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
+                  <Sparkles size={18} className="text-purple-700" />
+                  پایش کیفیت پاسخ‌های آرتین
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-
-        <button
-          onClick={login}
-          disabled={loading}
-          className="mt-5 w-full rounded-2xl bg-blue-700 px-5 py-4 font-medium text-white disabled:opacity-50"
-        >
-          {loading ? "در حال ورود..." : "ورود به پنل ادمین"}
-        </button>
-
-        <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-          رمز ادمین از تنظیمات امن سرور خوانده می‌شود.
         </div>
       </div>
     </section>
