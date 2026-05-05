@@ -160,6 +160,16 @@ async function deleteCustomerChatSession(sessionId: number) {
     }
   } catch {}
 }
+function logoutCustomer() {
+  localStorage.removeItem("artin_customer");
+  document.cookie = "artin_customer_auth=; path=/; max-age=0";
+
+  setCustomer(null);
+  setCustomerSessions([]);
+  setMobileSidebarOpen(false);
+
+  window.location.href = "/customer-login";
+}
   useEffect(() => {
     async function checkAdminStatus() {
       try {
@@ -388,6 +398,29 @@ async function deleteCustomerChatSession(sessionId: number) {
                     );
                   })}
                 </div>
+              </div>
+            )}
+                        {customer && (
+              <div className="mt-6">
+                {!sidebarCollapsed && (
+                  <div className="mb-2 px-3 text-xs font-bold text-slate-500">
+                    حساب مشتری
+                  </div>
+                )}
+
+                <button
+                  onClick={logoutCustomer}
+                  title="خروج از حساب مشتری"
+                  className={`group mb-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm text-red-700 transition hover:bg-red-50 ${
+                    sidebarCollapsed ? "justify-center px-2" : ""
+                  }`}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-700">
+                    <LogOut size={19} strokeWidth={1.9} />
+                  </span>
+
+                  {!sidebarCollapsed && <span>خروج از حساب مشتری</span>}
+                </button>
               </div>
             )}
             {isAdminArea && (
