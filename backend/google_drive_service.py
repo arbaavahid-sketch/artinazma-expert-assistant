@@ -26,7 +26,8 @@ STORAGE_DIR.mkdir(exist_ok=True)
 SYNC_STATE_PATH = STORAGE_DIR / "google_drive_sync_state.json"
 
 GOOGLE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
-
+GOOGLE_API_RETRIES = 3
+DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 SUPPORTED_BINARY_EXTENSIONS = {
     ".pdf",
     ".txt",
@@ -240,7 +241,7 @@ def list_folder_items(service, folder_id: str) -> List[Dict[str, Any]]:
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
             )
-            .execute()
+                        .execute(num_retries=GOOGLE_API_RETRIES)
         )
 
         items.extend(response.get("files", []))
@@ -256,23 +257,30 @@ def download_binary_file(service, file_id: str, output_path: Path) -> None:
     request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
 
     with output_path.open("wb") as f:
-        downloader = MediaIoBaseDownload(f, request)
+        downloader = MediaIoBaseDownload(
+            f,
+            request,
+            chunksize=DOWNLOAD_CHUNK_SIZE
+        )
         done = False
 
         while not done:
-            _, done = downloader.next_chunk()
+            _, done = downloader.next_chunk(num_retries=GOOGLE_API_RETRIES)
 
 
 def export_google_file(service, file_id: str, export_mime: str, output_path: Path) -> None:
     request = service.files().export_media(fileId=file_id, mimeType=export_mime)
 
     with output_path.open("wb") as f:
-        downloader = MediaIoBaseDownload(f, request)
+        downloader = MediaIoBaseDownload(
+            f,
+            request,
+            chunksize=DOWNLOAD_CHUNK_SIZE
+        )
         done = False
 
         while not done:
-            _, done = downloader.next_chunk()
-
+            _, done = downloader.next_chunk(num_retries=GOOGLE_API_RETRIES)
 
 def prepare_drive_file(service, item: Dict[str, Any]) -> Dict[str, Any]:
     file_id = item["id"]

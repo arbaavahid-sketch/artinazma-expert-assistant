@@ -148,14 +148,27 @@ def home():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-    try:
-        related_docs = search_knowledge_base(request.message, top_k=5)
-        search_mode = "ai_vector"
-    except Exception as e:
-        print("AI vector search failed, using local search:", e)
-        related_docs = local_search_knowledge_base(request.message, top_k=12)
-        search_mode = "local_text"
+    
+    has_astm_code = bool(
+        re.search(r"\bD\s*\d{3,5}\b", request.message, flags=re.IGNORECASE)
+    )
 
+    local_docs = local_search_knowledge_base(request.message, top_k=12)
+
+    if has_astm_code and local_docs:
+        related_docs = local_docs[:8]
+        search_mode = "local_astm"
+    elif local_docs and float(local_docs[0].get("score", 0)) >= 3:
+        related_docs = local_docs[:8]
+        search_mode = "local_fast"
+    else:
+        try:
+            related_docs = search_knowledge_base(request.message, top_k=5)
+            search_mode = "ai_vector"
+        except Exception as e:
+            print("AI vector search failed, using local search:", e)
+            related_docs = local_docs[:8]
+            search_mode = "local_fallback"
     context = ""
 
     if related_docs:
