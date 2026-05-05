@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
+import { apiUrl } from "@/lib/api";
 import {
   ChartBar,
   CircleUserRound,
@@ -18,15 +19,17 @@ import {
   PhoneCall,
   Settings,
   Sparkles,
-Pencil,
-Trash2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
 type SidebarItem = {
   href: string;
   label: string;
   Icon: LucideIcon;
 };
+
 type Customer = {
   id: number;
   full_name: string;
@@ -39,7 +42,11 @@ type ChatSession = {
   created_at: string;
   updated_at: string;
 };
-import { apiUrl } from "@/lib/api";
+
+type ArtinShellProps = {
+  children: ReactNode;
+};
+
 const navItems: SidebarItem[] = [
   { href: "/assistant", label: "خانه", Icon: Home },
   { href: "/", label: "آرتین", Icon: Sparkles },
@@ -56,9 +63,6 @@ const adminItems: SidebarItem[] = [
   { href: "/admin/dashboard", label: "داشبورد", Icon: ChartBar },
   { href: "/admin/settings", label: "تنظیمات سیستم", Icon: Settings },
 ];
-type ArtinShellProps = {
-  children: ReactNode;
-};
 
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
   const Icon = collapsed ? PanelRightOpen : PanelRightClose;
@@ -68,108 +72,113 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
 
 export default function ArtinShell({ children }: ArtinShellProps) {
   const pathname = usePathname();
-  
+
   const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
-const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [customerSessions, setCustomerSessions] = useState<ChatSession[]>([]);
-  
-  const [renamingSessionId, setRenamingSessionId] = useState<number | null>(null);
+  const [renamingSessionId, setRenamingSessionId] = useState<number | null>(
+    null
+  );
   const [renameTitle, setRenameTitle] = useState("");
-  async function refreshCustomerSessions() {
-  try {
-    const raw = localStorage.getItem("artin_customer");
 
-    if (!raw) {
+  async function refreshCustomerSessions() {
+    try {
+      const raw = localStorage.getItem("artin_customer");
+
+      if (!raw) {
+        setCustomer(null);
+        setCustomerSessions([]);
+        return;
+      }
+
+      const savedCustomer = JSON.parse(raw) as Customer;
+
+      setCustomer(savedCustomer);
+
+      const res = await fetch(
+        apiUrl(`/customers/${savedCustomer.id}/chat-sessions`),
+        {
+          cache: "no-store",
+        }
+      );
+
+      const data = await res.json();
+
+      setCustomerSessions(data.sessions || []);
+    } catch {
       setCustomer(null);
       setCustomerSessions([]);
-      return;
     }
+  }
 
-    const savedCustomer = JSON.parse(raw) as Customer;
+  async function renameChatSession(sessionId: number) {
+    if (!customer || !renameTitle.trim()) return;
 
-    setCustomer(savedCustomer);
+    try {
+      const res = await fetch(apiUrl(`/customers/chat-sessions/${sessionId}`), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customer_id: customer.id,
+          title: renameTitle,
+        }),
+      });
 
-    const res = await fetch(
-      apiUrl(`/customers/${savedCustomer.id}/chat-sessions`),
-      {
-        cache: "no-store",
+      const data = await res.json();
+
+      if (data.success) {
+        setRenamingSessionId(null);
+        setRenameTitle("");
+        await refreshCustomerSessions();
       }
-    );
+    } catch {}
+  }
 
-    const data = await res.json();
+  async function deleteCustomerChatSession(sessionId: number) {
+    if (!customer) return;
 
-    setCustomerSessions(data.sessions || []);
-  } catch {
+    const confirmed = window.confirm("این گفتگو حذف شود؟");
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(
+        apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        await refreshCustomerSessions();
+
+        if (activeSessionId === String(sessionId)) {
+          window.location.href = "/assistant";
+        }
+      }
+    } catch {}
+  }
+
+  function logoutCustomer() {
+    localStorage.removeItem("artin_customer");
+    document.cookie = "artin_customer_auth=; path=/; max-age=0";
+
     setCustomer(null);
     setCustomerSessions([]);
+    setMobileSidebarOpen(false);
+
+    window.location.href = "/customer-login";
   }
-}
 
-async function renameChatSession(sessionId: number) {
-  if (!customer || !renameTitle.trim()) return;
-
-  try {
-    const res = await fetch(apiUrl(`/customers/chat-sessions/${sessionId}`), {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        customer_id: customer.id,
-        title: renameTitle,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      setRenamingSessionId(null);
-      setRenameTitle("");
-      await refreshCustomerSessions();
-    }
-  } catch {}
-}
-
-async function deleteCustomerChatSession(sessionId: number) {
-  if (!customer) return;
-
-  const confirmed = window.confirm("این گفتگو حذف شود؟");
-
-  if (!confirmed) return;
-
-  try {
-    const res = await fetch(
-      apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
-      {
-        method: "DELETE",
-      }
-    );
-
-    const data = await res.json();
-
-    if (data.success) {
-      await refreshCustomerSessions();
-
-      if (activeSessionId === String(sessionId)) {
-        window.location.href = "/assistant";
-      }
-    }
-  } catch {}
-}
-function logoutCustomer() {
-  localStorage.removeItem("artin_customer");
-  document.cookie = "artin_customer_auth=; path=/; max-age=0";
-
-  setCustomer(null);
-  setCustomerSessions([]);
-  setMobileSidebarOpen(false);
-
-  window.location.href = "/customer-login";
-}
   useEffect(() => {
     async function checkAdminStatus() {
       try {
@@ -186,13 +195,16 @@ function logoutCustomer() {
 
     checkAdminStatus();
   }, [pathname]);
+
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  setActiveSessionId(params.get("session_id"));
-}, [pathname]);
-    useEffect(() => {
-  refreshCustomerSessions();
-}, [pathname, activeSessionId]);
+    const params = new URLSearchParams(window.location.search);
+    setActiveSessionId(params.get("session_id"));
+  }, [pathname]);
+
+  useEffect(() => {
+    refreshCustomerSessions();
+  }, [pathname, activeSessionId]);
+
   return (
     <main className="h-screen overflow-hidden bg-[#f7f7f8] text-slate-900">
       <div className="flex h-full overflow-hidden">
@@ -209,9 +221,11 @@ function logoutCustomer() {
             mobileSidebarOpen
               ? "translate-x-0"
               : "translate-x-full md:translate-x-0"
-          } ${sidebarCollapsed ? "w-[88px] md:w-[88px]" : "w-[300px] md:w-[300px]"}`}
+          } ${
+            sidebarCollapsed ? "w-[88px] md:w-[88px]" : "w-[300px] md:w-[300px]"
+          }`}
         >
-                    <div className="relative shrink-0 px-4 pb-7 pt-14">
+          <div className="relative shrink-0 px-4 pb-7 pt-14">
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
               className="absolute left-4 top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-blue-50 md:flex"
@@ -400,7 +414,8 @@ function logoutCustomer() {
                 </div>
               </div>
             )}
-                        {customer && (
+
+            {customer && (
               <div className="mt-6">
                 {!sidebarCollapsed && (
                   <div className="mb-2 px-3 text-xs font-bold text-slate-500">
@@ -423,6 +438,7 @@ function logoutCustomer() {
                 </button>
               </div>
             )}
+
             {isAdminArea && (
               <div className="mt-6">
                 {!sidebarCollapsed && (
@@ -455,14 +471,14 @@ function logoutCustomer() {
                           }`}
                         >
                           <span
-  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
-    isActive
-      ? "bg-purple-50 text-purple-700"
-      : "bg-white text-slate-500 group-hover:text-purple-700"
-  }`}
->
-  <item.Icon size={19} strokeWidth={1.9} />
-</span>
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
+                              isActive
+                                ? "bg-purple-50 text-purple-700"
+                                : "bg-white text-slate-500 group-hover:text-purple-700"
+                            }`}
+                          >
+                            <item.Icon size={19} strokeWidth={1.9} />
+                          </span>
 
                           {!sidebarCollapsed && <span>{item.label}</span>}
                         </Link>
@@ -478,8 +494,8 @@ function logoutCustomer() {
                       }`}
                     >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-700">
-  <LogOut size={19} strokeWidth={1.9} />
-</span>
+                        <LogOut size={19} strokeWidth={1.9} />
+                      </span>
 
                       {!sidebarCollapsed && <span>خروج از ادمین</span>}
                     </Link>
@@ -488,8 +504,6 @@ function logoutCustomer() {
               </div>
             )}
           </div>
-
-          
         </aside>
 
         <section className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
