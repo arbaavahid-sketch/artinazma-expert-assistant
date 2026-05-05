@@ -51,6 +51,16 @@ const domains = [
   "سوخت، LPG و گاز طبیعی",
 ];
 
+const heroHighlights = [
+  {
+    title: "پاسخ ساختاریافته",
+    subtitle: "راهنمای مرحله‌به‌مرحله فنی",
+  },
+  {
+    title: "تحلیل پرونده تست",
+    subtitle: "مناسب فایل‌های آزمایشگاهی",
+  },
+];
 export default function Home() {
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
@@ -129,6 +139,17 @@ export default function Home() {
                   دستیار تخصصی شما برای سوالات فنی، تحلیل تست، انتخاب تجهیزات و
                   ارتباط با کارشناسان آرتین آزما.
                 </p>
+                 <div className="mt-4 grid grid-cols-1 gap-2 text-center sm:grid-cols-2">
+                  {heroHighlights.map((item) => (
+                    <div
+                      key={item.title}
+                      className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm"
+                    >
+                      <div className="text-sm font-black text-slate-900 sm:text-base">{item.title}</div>
+                      <div className="mt-1 text-[11px] font-semibold text-slate-500 sm:text-xs">{item.subtitle}</div>
+                    </div>
+                  ))}
+                </div>
                 <div className="mt-4 grid grid-cols-2 gap-2 text-center">
                   <div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm">
                     <div className="text-xl font-black text-slate-900">24/7</div>
