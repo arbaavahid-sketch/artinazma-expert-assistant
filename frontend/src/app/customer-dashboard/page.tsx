@@ -421,12 +421,25 @@ async function deleteAllSessions() {
                 </p>
               </div>
 
-              <Link
-                href="/assistant"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-white"
-              >
-                شروع گفتگوی تازه
-              </Link>
+              <div className="flex flex-wrap gap-2">
+  {sessions.length > 0 && (
+    <button
+      onClick={deleteAllSessions}
+      disabled={clearingAllSessions}
+      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+    >
+      <Trash2 size={16} />
+      {clearingAllSessions ? "در حال حذف..." : "حذف همه گفتگوها"}
+    </button>
+  )}
+
+  <Link
+    href="/assistant"
+    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-white"
+  >
+    شروع گفتگوی تازه
+  </Link>
+</div>
             </div>
             {sessionMessage && (
   <div className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
@@ -495,25 +508,13 @@ async function deleteAllSessions() {
                   شود.
                 </p>
 
-                <div className="flex flex-wrap gap-2">
-  {sessions.length > 0 && (
-    <button
-      onClick={deleteAllSessions}
-      disabled={clearingAllSessions}
-      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
-    >
-      <Trash2 size={16} />
-      {clearingAllSessions ? "در حال حذف..." : "حذف همه گفتگوها"}
-    </button>
-  )}
+                <Link
+  href="/assistant"
+  className="mt-6 inline-flex rounded-2xl bg-blue-700 px-6 py-3 font-bold text-white"
+>
+  شروع گفتگو با آرتین
+</Link>
 
-  <Link
-    href="/assistant"
-    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-white"
-  >
-    شروع گفتگوی تازه
-  </Link>
-</div>
               </div>
             )}
           </div>
