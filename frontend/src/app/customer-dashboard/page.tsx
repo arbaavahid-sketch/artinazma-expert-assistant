@@ -75,9 +75,10 @@ export default function CustomerDashboardPage() {
   }, []);
 
   function logout() {
-    localStorage.removeItem("artin_customer");
-    window.location.href = "/customer-login";
-  }
+  localStorage.removeItem("artin_customer");
+  document.cookie = "artin_customer_auth=; path=/; max-age=0";
+  window.location.href = "/customer-login";
+}
 
   if (!customer) {
     return (
