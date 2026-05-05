@@ -46,7 +46,17 @@ type GroupedKnowledgeSearchResult = {
   bestScore: number;
   chunks: KnowledgeSearchResult[];
 };
-
+type DriveSyncResult = {
+  success: boolean;
+  title: string;
+  file_name?: string;
+  category?: string;
+  chunks_added?: number;
+  message?: string;
+  reason?: string;
+  mime_type?: string;
+  source_type?: string;
+};
 const categoryOptions = [
   { value: "general", label: "عمومی" },
   { value: "ASTM Standards", label: "استانداردهای ASTM" },
@@ -75,6 +85,7 @@ export default function KnowledgePage() {
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [syncingDrive, setSyncingDrive] = useState(false);
   const [driveSyncMessage, setDriveSyncMessage] = useState("");
+  const [driveSyncResults, setDriveSyncResults] = useState<DriveSyncResult[]>([]);
   const [knowledgeResult, setKnowledgeResult] = useState("");
   const [knowledgeResultType, setKnowledgeResultType] = useState<
     "success" | "error" | ""
@@ -200,7 +211,7 @@ export default function KnowledgePage() {
         max_files: 200,
       }),
     });
-
+    
     const data = await res.json();
 
     if (!data.success) {
@@ -209,8 +220,10 @@ export default function KnowledgePage() {
     }
 
     setDriveSyncMessage(
-      `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`
-    );
+  `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`
+);
+
+setDriveSyncResults(data.results || []);
 
     await loadKnowledgeStats();
   } catch {
@@ -400,6 +413,94 @@ export default function KnowledgePage() {
          {driveSyncMessage && (
   <div className="mb-6 rounded-[28px] border border-blue-100 bg-blue-50 p-5 text-sm leading-8 text-blue-700">
     {driveSyncMessage}
+  </div>
+)}
+{driveSyncResults.length > 0 && (
+  <div className="mb-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <div>
+        <h2 className="text-xl font-black text-slate-900">
+          گزارش همگام‌سازی Google Drive
+        </h2>
+        <p className="mt-2 text-sm leading-7 text-slate-500">
+          فایل‌های اضافه‌شده و فایل‌های ردشده در آخرین همگام‌سازی.
+        </p>
+      </div>
+
+      <button
+        onClick={() => setDriveSyncResults([])}
+        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-white"
+      >
+        پاک کردن گزارش
+      </button>
+    </div>
+
+    <div className="max-h-[420px] overflow-y-auto rounded-3xl border border-slate-200">
+      <table className="w-full border-collapse text-right text-sm">
+        <thead className="sticky top-0 bg-slate-50">
+          <tr className="border-b border-slate-200 text-slate-600">
+            <th className="p-4 font-bold">وضعیت</th>
+            <th className="p-4 font-bold">فایل</th>
+            <th className="p-4 font-bold">دسته‌بندی</th>
+            <th className="p-4 font-bold">Chunk</th>
+            <th className="p-4 font-bold">توضیح</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {driveSyncResults.map((item, index) => (
+            <tr
+              key={`${item.title}-${index}`}
+              className="border-b border-slate-100 hover:bg-slate-50"
+            >
+              <td className="p-4 align-top">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    item.success
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-red-50 text-red-700"
+                  }`}
+                >
+                  {item.success ? "اضافه شد" : "رد شد"}
+                </span>
+              </td>
+
+              <td className="p-4 align-top">
+                <div className="font-bold text-slate-900">
+                  {item.title || "بدون عنوان"}
+                </div>
+
+                {item.file_name && (
+                  <div className="mt-1 break-all text-xs leading-6 text-slate-500">
+                    {item.file_name}
+                  </div>
+                )}
+              </td>
+
+              <td className="p-4 align-top">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                  {getCategoryLabel(item.category || "general")}
+                </span>
+              </td>
+
+              <td className="p-4 align-top">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                  {item.chunks_added || 0}
+                </span>
+              </td>
+
+              <td className="p-4 align-top text-xs leading-6 text-slate-500">
+                {item.message ||
+                  item.reason ||
+                  item.mime_type ||
+                  item.source_type ||
+                  "-"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
 )}
         <div className="grid gap-6 xl:grid-cols-[420px_1fr]">

@@ -86,6 +86,7 @@ class ChatHistoryMessage(BaseModel):
 class GoogleDriveSyncRequest(BaseModel):
     root_folder_id: str = ""
     max_files: int = 200
+    force_resync: bool = False
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatHistoryMessage]] = None
@@ -429,6 +430,7 @@ async def upload_knowledge_file(
 ):
     upload_dir = "knowledge_files"
     os.makedirs(upload_dir, exist_ok=True)
+
     safe_filename = make_safe_filename(file.filename)
     file_path = os.path.join(upload_dir, safe_filename)
 
@@ -436,11 +438,15 @@ async def upload_knowledge_file(
         shutil.copyfileobj(file.file, buffer)
 
     result = add_file_to_knowledge_base(
-    file_path=file_path,
-    title=title or safe_filename,
-    category=category or "general",
-    replace_existing=replace_existing
-)
+        file_path=file_path,
+        title=title or safe_filename,
+        category=category or "general",
+        replace_existing=replace_existing
+    )
+
+    return result
+
+
 @app.post("/knowledge/sync-google-drive")
 def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
     folder_id = request.root_folder_id.strip() or os.getenv(
@@ -457,39 +463,19 @@ def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
     try:
         return sync_google_drive_folder(
             root_folder_id=folder_id,
-            max_files=request.max_files
+            max_files=request.max_files,
+            force_resync=request.force_resync
         )
     except Exception as e:
         return {
             "success": False,
             "message": f"خطا در همگام‌سازی Google Drive: {str(e)}"
         }
+
+
 @app.get("/knowledge/stats")
 def knowledge_stats():
     return get_knowledge_stats()
-@app.post("/knowledge/sync-google-drive")
-def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
-    folder_id = request.root_folder_id.strip() or os.getenv(
-        "GOOGLE_DRIVE_ROOT_FOLDER_ID",
-        ""
-    ).strip()
-
-    if not folder_id:
-        return {
-            "success": False,
-            "message": "GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است."
-        }
-
-    try:
-        return sync_google_drive_folder(
-            root_folder_id=folder_id,
-            max_files=request.max_files
-        )
-    except Exception as e:
-        return {
-            "success": False,
-            "message": f"خطا در همگام‌سازی Google Drive: {str(e)}"
-        }
 @app.delete("/knowledge/files/{file_name}")
 def knowledge_file_delete(file_name: str):
     return delete_knowledge_file(file_name)
