@@ -1108,3 +1108,32 @@ def delete_chat_session(
     conn.close()
 
     return deleted
+def delete_all_customer_chat_sessions(customer_id: int) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM chat_messages
+        WHERE session_id IN (
+            SELECT id FROM chat_sessions
+            WHERE customer_id = ?
+        )
+        """,
+        (customer_id,)
+    )
+
+    cursor.execute(
+        """
+        DELETE FROM chat_sessions
+        WHERE customer_id = ?
+        """,
+        (customer_id,)
+    )
+
+    deleted_sessions = cursor.rowcount
+
+    conn.commit()
+    conn.close()
+
+    return deleted_sessions

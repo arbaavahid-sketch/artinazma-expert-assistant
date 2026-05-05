@@ -15,6 +15,7 @@ import {
   Pencil,
   Save,
   X,
+  Trash2,
 } from "lucide-react";
 
 type Customer = {
@@ -55,6 +56,9 @@ export default function CustomerDashboardPage() {
   const [profilePhone, setProfilePhone] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
+  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
+  const [clearingAllSessions, setClearingAllSessions] = useState(false);
+  const [sessionMessage, setSessionMessage] = useState("");
   async function loadSessions(customerId: number) {
     try {
       const res = await fetch(apiUrl(`/customers/${customerId}/chat-sessions`), {
@@ -135,6 +139,72 @@ function cancelProfileEdit() {
   setProfilePhone(customer.phone || "");
   setProfileMessage("");
   setEditingProfile(false);
+}
+async function deleteOneSession(sessionId: number) {
+  if (!customer) return;
+
+  const confirmed = window.confirm("این گفتگو حذف شود؟");
+
+  if (!confirmed) return;
+
+  setSessionMessage("");
+  setDeletingSessionId(sessionId);
+
+  try {
+    const res = await fetch(
+      apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      setSessionMessage(data.message || "خطا در حذف گفتگو.");
+      return;
+    }
+
+    setSessions((prev) => prev.filter((item) => item.id !== sessionId));
+    setSessionMessage("گفتگو با موفقیت حذف شد.");
+  } catch {
+    setSessionMessage("خطا در اتصال به سرور.");
+  } finally {
+    setDeletingSessionId(null);
+  }
+}
+
+async function deleteAllSessions() {
+  if (!customer) return;
+
+  const confirmed = window.confirm(
+    "همه گفتگوهای شما حذف شود؟ این عملیات قابل بازگشت نیست."
+  );
+
+  if (!confirmed) return;
+
+  setSessionMessage("");
+  setClearingAllSessions(true);
+
+  try {
+    const res = await fetch(apiUrl(`/customers/${customer.id}/chat-sessions`), {
+      method: "DELETE",
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      setSessionMessage(data.message || "خطا در حذف گفتگوها.");
+      return;
+    }
+
+    setSessions([]);
+    setSessionMessage("همه گفتگوها با موفقیت حذف شدند.");
+  } catch {
+    setSessionMessage("خطا در اتصال به سرور.");
+  } finally {
+    setClearingAllSessions(false);
+  }
 }
   function logout() {
   localStorage.removeItem("artin_customer");
@@ -358,7 +428,11 @@ function cancelProfileEdit() {
                 شروع گفتگوی تازه
               </Link>
             </div>
-
+            {sessionMessage && (
+  <div className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
+    {sessionMessage}
+  </div>
+)}
             {loading ? (
               <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
                 در حال دریافت گفتگوها...
@@ -384,9 +458,24 @@ function cancelProfileEdit() {
                         </div>
                       </div>
 
-                      <div className="shrink-0 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-blue-700">
-                        ادامه گفتگو
-                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+  <span className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-blue-700">
+    ادامه گفتگو
+  </span>
+
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      deleteOneSession(session.id);
+    }}
+    disabled={deletingSessionId === session.id}
+    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+    title="حذف گفتگو"
+  >
+    <Trash2 size={16} />
+  </button>
+</div>
                     </div>
                   </Link>
                 ))}
@@ -406,12 +495,25 @@ function cancelProfileEdit() {
                   شود.
                 </p>
 
-                <Link
-                  href="/assistant"
-                  className="mt-6 inline-flex rounded-2xl bg-blue-700 px-6 py-3 font-bold text-white"
-                >
-                  شروع گفتگو با آرتین
-                </Link>
+                <div className="flex flex-wrap gap-2">
+  {sessions.length > 0 && (
+    <button
+      onClick={deleteAllSessions}
+      disabled={clearingAllSessions}
+      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+    >
+      <Trash2 size={16} />
+      {clearingAllSessions ? "در حال حذف..." : "حذف همه گفتگوها"}
+    </button>
+  )}
+
+  <Link
+    href="/assistant"
+    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-white"
+  >
+    شروع گفتگوی تازه
+  </Link>
+</div>
               </div>
             )}
           </div>

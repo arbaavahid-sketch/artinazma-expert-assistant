@@ -31,6 +31,7 @@ from db_service import (
     search_user_memories,
     get_user_memory_stats,
     save_customer_request,
+    delete_all_customer_chat_sessions,
     get_customer_requests,
     update_customer_request_status,
     get_customer_request_stats,
@@ -445,7 +446,24 @@ def knowledge_stats():
 @app.delete("/knowledge/files/{file_name}")
 def knowledge_file_delete(file_name: str):
     return delete_knowledge_file(file_name)
+@app.delete("/customers/{customer_id}/chat-sessions")
+def customer_chat_sessions_delete_all(customer_id: int):
+    customer = get_customer_by_id(customer_id)
 
+    if not customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد.",
+            "deleted_sessions": 0
+        }
+
+    deleted_sessions = delete_all_customer_chat_sessions(customer_id)
+
+    return {
+        "success": True,
+        "message": "همه گفتگوهای مشتری حذف شدند.",
+        "deleted_sessions": deleted_sessions
+    }
 @app.post("/knowledge/search")
 def knowledge_search(request: ChatRequest):
     query = request.message
