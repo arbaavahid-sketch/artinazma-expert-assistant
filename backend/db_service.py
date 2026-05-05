@@ -862,7 +862,43 @@ def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
         "created_at": row["created_at"],
     }
 
+def update_customer_profile(
+    customer_id: int,
+    full_name: str,
+    company: str = "",
+    phone: str = ""
+) -> Dict[str, Any] | None:
+    if not full_name.strip():
+        return None
 
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE customers
+        SET full_name = ?,
+            company = ?,
+            phone = ?
+        WHERE id = ?
+        """,
+        (
+            full_name.strip(),
+            company.strip(),
+            phone.strip(),
+            customer_id
+        )
+    )
+
+    updated = cursor.rowcount > 0
+
+    conn.commit()
+    conn.close()
+
+    if not updated:
+        return None
+
+    return get_customer_by_id(customer_id)
 def create_chat_session(customer_id: int, title: str) -> int:
     conn = get_connection()
     cursor = conn.cursor()

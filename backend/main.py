@@ -2,6 +2,7 @@ import os
 import re
 from fastapi.staticfiles import StaticFiles
 import shutil
+
 from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +37,7 @@ from db_service import (
     create_customer,
     authenticate_customer,
     get_customer_by_id,
+    update_customer_profile,
     create_chat_session,
     save_chat_message,
     get_customer_chat_sessions,
@@ -115,7 +117,10 @@ class CustomerRegisterRequest(BaseModel):
 class CustomerLoginRequest(BaseModel):
     email: str
     password: str
-
+class CustomerProfileUpdateRequest(BaseModel):
+    full_name: str
+    company: str = ""
+    phone: str = ""
 
 class CustomerSessionCreateRequest(BaseModel):
     customer_id: int
@@ -813,7 +818,26 @@ def customer_profile(customer_id: int):
         "customer": customer
     }
 
+@app.patch("/customers/{customer_id}")
+def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequest):
+    updated_customer = update_customer_profile(
+        customer_id=customer_id,
+        full_name=request.full_name,
+        company=request.company,
+        phone=request.phone
+    )
 
+    if not updated_customer:
+        return {
+            "success": False,
+            "message": "مشتری پیدا نشد یا نام وارد نشده است."
+        }
+
+    return {
+        "success": True,
+        "message": "اطلاعات حساب با موفقیت بروزرسانی شد.",
+        "customer": updated_customer
+    }
 @app.get("/customers/{customer_id}/chat-sessions")
 def customer_chat_sessions(customer_id: int):
     customer = get_customer_by_id(customer_id)

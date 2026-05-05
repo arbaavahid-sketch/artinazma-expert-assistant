@@ -12,6 +12,9 @@ import {
   MessageSquareText,
   Plus,
   Clock3,
+  Pencil,
+  Save,
+  X,
 } from "lucide-react";
 
 type Customer = {
@@ -46,7 +49,12 @@ export default function CustomerDashboardPage() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileFullName, setProfileFullName] = useState("");
+  const [profileCompany, setProfileCompany] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
   async function loadSessions(customerId: number) {
     try {
       const res = await fetch(apiUrl(`/customers/${customerId}/chat-sessions`), {
@@ -71,9 +79,63 @@ export default function CustomerDashboardPage() {
     const parsed = JSON.parse(raw) as Customer;
 
     setCustomer(parsed);
-    loadSessions(parsed.id).finally(() => setLoading(false));
+setProfileFullName(parsed.full_name || "");
+setProfileCompany(parsed.company || "");
+setProfilePhone(parsed.phone || "");
+loadSessions(parsed.id).finally(() => setLoading(false));
   }, []);
+ async function saveProfile() {
+  if (!customer) return;
 
+  setProfileMessage("");
+
+  if (!profileFullName.trim()) {
+    setProfileMessage("نام و نام خانوادگی الزامی است.");
+    return;
+  }
+
+  setSavingProfile(true);
+
+  try {
+    const res = await fetch(apiUrl(`/customers/${customer.id}`), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        full_name: profileFullName,
+        company: profileCompany,
+        phone: profilePhone,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      setProfileMessage(data.message || "خطا در بروزرسانی اطلاعات حساب.");
+      return;
+    }
+
+    setCustomer(data.customer);
+    localStorage.setItem("artin_customer", JSON.stringify(data.customer));
+    setEditingProfile(false);
+    setProfileMessage("اطلاعات حساب با موفقیت بروزرسانی شد.");
+  } catch {
+    setProfileMessage("خطا در اتصال به سرور.");
+  } finally {
+    setSavingProfile(false);
+  }
+}
+
+function cancelProfileEdit() {
+  if (!customer) return;
+
+  setProfileFullName(customer.full_name || "");
+  setProfileCompany(customer.company || "");
+  setProfilePhone(customer.phone || "");
+  setProfileMessage("");
+  setEditingProfile(false);
+}
   function logout() {
   localStorage.removeItem("artin_customer");
   document.cookie = "artin_customer_auth=; path=/; max-age=0";
@@ -146,55 +208,114 @@ export default function CustomerDashboardPage() {
         <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
           <aside className="space-y-6">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-black text-slate-900">
-                اطلاعات حساب
-              </h2>
+  <div className="mb-5 flex items-center justify-between gap-3">
+    <h2 className="text-xl font-black text-slate-900">
+      اطلاعات حساب
+    </h2>
 
-              <div className="mt-5 space-y-3">
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                  <Mail className="mt-1 shrink-0 text-blue-700" size={18} />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-500">
-                      ایمیل
-                    </div>
-                    <div className="mt-1 break-words text-sm font-bold text-slate-900">
-                      {customer.email}
-                    </div>
-                  </div>
-                </div>
+    {!editingProfile ? (
+      <button
+        onClick={() => setEditingProfile(true)}
+        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-white"
+      >
+        <Pencil size={15} />
+        ویرایش
+      </button>
+    ) : (
+      <button
+        onClick={cancelProfileEdit}
+        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+      >
+        <X size={15} />
+        انصراف
+      </button>
+    )}
+  </div>
 
-                {customer.phone && (
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                    <Phone className="mt-1 shrink-0 text-blue-700" size={18} />
-                    <div>
-                      <div className="text-xs font-bold text-slate-500">
-                        شماره تماس
-                      </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
-                        {customer.phone}
-                      </div>
-                    </div>
-                  </div>
-                )}
+  {!editingProfile ? (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+        <Mail className="mt-1 shrink-0 text-blue-700" size={18} />
+        <div className="min-w-0">
+          <div className="text-xs font-bold text-slate-500">ایمیل</div>
+          <div className="mt-1 break-words text-sm font-bold text-slate-900">
+            {customer.email}
+          </div>
+        </div>
+      </div>
 
-                {customer.company && (
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                    <Building2
-                      className="mt-1 shrink-0 text-blue-700"
-                      size={18}
-                    />
-                    <div>
-                      <div className="text-xs font-bold text-slate-500">
-                        شرکت
-                      </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
-                        {customer.company}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+        <Phone className="mt-1 shrink-0 text-blue-700" size={18} />
+        <div>
+          <div className="text-xs font-bold text-slate-500">شماره تماس</div>
+          <div className="mt-1 text-sm font-bold text-slate-900">
+            {customer.phone || "ثبت نشده"}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+        <Building2 className="mt-1 shrink-0 text-blue-700" size={18} />
+        <div>
+          <div className="text-xs font-bold text-slate-500">شرکت</div>
+          <div className="mt-1 text-sm font-bold text-slate-900">
+            {customer.company || "ثبت نشده"}
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-bold text-slate-700">
+          نام و نام خانوادگی
+        </label>
+        <input
+          value={profileFullName}
+          onChange={(e) => setProfileFullName(e.target.value)}
+          className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-bold text-slate-700">
+          شرکت / سازمان
+        </label>
+        <input
+          value={profileCompany}
+          onChange={(e) => setProfileCompany(e.target.value)}
+          className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-bold text-slate-700">
+          شماره تماس
+        </label>
+        <input
+          value={profilePhone}
+          onChange={(e) => setProfilePhone(e.target.value)}
+          className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+        />
+      </div>
+
+      <button
+        onClick={saveProfile}
+        disabled={savingProfile}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50"
+      >
+        <Save size={17} />
+        {savingProfile ? "در حال ذخیره..." : "ذخیره تغییرات"}
+      </button>
+    </div>
+  )}
+
+  {profileMessage && (
+    <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
+      {profileMessage}
+    </div>
+  )}
+</div>
 
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
