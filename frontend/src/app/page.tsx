@@ -85,14 +85,16 @@ export default function Home() {
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
-                {domains.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700"
-                  >
-                    {item}
-                  </span>
-                ))}
+                <ul className="contents" aria-label="حوزه‌های تخصصی">
+                  {domains.map((item) => (
+                    <li
+                      key={item}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
