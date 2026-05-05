@@ -1,4 +1,6 @@
 import json
+import hashlib
+import secrets
 import sqlite3
 from pathlib import Path
 from datetime import datetime
@@ -7,7 +9,8 @@ from typing import Any, Dict, List
 
 STORAGE_DIR = Path("storage")
 DB_PATH = STORAGE_DIR / "app.db"
-
+VALID_EXPERT_STATUSES = {"pending", "approved", "needs_edit", "rejected"}
+VALID_REQUEST_STATUSES = {"new", "in_progress", "done", "closed"}
 STORAGE_DIR.mkdir(exist_ok=True)
 
 
@@ -391,6 +394,9 @@ def update_question_review(
     expert_note: str,
     reviewed_answer: str
 ) -> bool:
+    if expert_status not in VALID_EXPERT_STATUSES:
+        expert_status = "pending"
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -657,6 +663,9 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
 
 
 def update_customer_request_status(request_id: int, status: str) -> bool:
+    if status not in VALID_REQUEST_STATUSES:
+        status = "new"
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -730,8 +739,7 @@ def get_customer_request_stats() -> Dict[str, Any]:
             for row in type_rows
         ]
     }
-import hashlib
-import secrets
+
 
 
 def hash_password(password: str) -> str:
