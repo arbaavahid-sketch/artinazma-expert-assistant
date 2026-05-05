@@ -8,7 +8,7 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 from pydantic import BaseModel
-
+from google_drive_service import sync_google_drive_folder
 from knowledge_service import (
     add_file_to_knowledge_base,
     search_knowledge_base,
@@ -83,7 +83,9 @@ class ChatHistoryMessage(BaseModel):
     role: str
     content: str
 
-
+class GoogleDriveSyncRequest(BaseModel):
+    root_folder_id: str = ""
+    max_files: int = 200
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatHistoryMessage]] = None
@@ -439,10 +441,55 @@ async def upload_knowledge_file(
     category=category or "general",
     replace_existing=replace_existing
 )
+@app.post("/knowledge/sync-google-drive")
+def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
+    folder_id = request.root_folder_id.strip() or os.getenv(
+        "GOOGLE_DRIVE_ROOT_FOLDER_ID",
+        ""
+    ).strip()
 
+    if not folder_id:
+        return {
+            "success": False,
+            "message": "GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است."
+        }
+
+    try:
+        return sync_google_drive_folder(
+            root_folder_id=folder_id,
+            max_files=request.max_files
+        )
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"خطا در همگام‌سازی Google Drive: {str(e)}"
+        }
 @app.get("/knowledge/stats")
 def knowledge_stats():
     return get_knowledge_stats()
+@app.post("/knowledge/sync-google-drive")
+def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
+    folder_id = request.root_folder_id.strip() or os.getenv(
+        "GOOGLE_DRIVE_ROOT_FOLDER_ID",
+        ""
+    ).strip()
+
+    if not folder_id:
+        return {
+            "success": False,
+            "message": "GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است."
+        }
+
+    try:
+        return sync_google_drive_folder(
+            root_folder_id=folder_id,
+            max_files=request.max_files
+        )
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"خطا در همگام‌سازی Google Drive: {str(e)}"
+        }
 @app.delete("/knowledge/files/{file_name}")
 def knowledge_file_delete(file_name: str):
     return delete_knowledge_file(file_name)

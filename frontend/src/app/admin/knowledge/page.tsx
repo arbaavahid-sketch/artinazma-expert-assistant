@@ -73,7 +73,8 @@ export default function KnowledgePage() {
   const [knowledgeTitle, setKnowledgeTitle] = useState("");
   const [knowledgeCategory, setKnowledgeCategory] = useState("general");
   const [replaceExisting, setReplaceExisting] = useState(false);
-
+  const [syncingDrive, setSyncingDrive] = useState(false);
+  const [driveSyncMessage, setDriveSyncMessage] = useState("");
   const [knowledgeResult, setKnowledgeResult] = useState("");
   const [knowledgeResultType, setKnowledgeResultType] = useState<
     "success" | "error" | ""
@@ -185,7 +186,39 @@ export default function KnowledgePage() {
       setTestingSearch(false);
     }
   }
+ async function syncGoogleDrive() {
+  setSyncingDrive(true);
+  setDriveSyncMessage("");
 
+  try {
+    const res = await fetch(apiUrl("/knowledge/sync-google-drive"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        max_files: 200,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      setDriveSyncMessage(data.message || "خطا در همگام‌سازی Google Drive.");
+      return;
+    }
+
+    setDriveSyncMessage(
+      `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`
+    );
+
+    await loadKnowledgeStats();
+  } catch {
+    setDriveSyncMessage("خطا در اتصال به سرور برای همگام‌سازی Google Drive.");
+  } finally {
+    setSyncingDrive(false);
+  }
+}
   async function deleteKnowledgeFile(fileName: string) {
     const confirmed = window.confirm(
       `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`
@@ -301,13 +334,24 @@ export default function KnowledgePage() {
                 </p>
               </div>
 
-              <button
-                onClick={loadKnowledgeStats}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                <RefreshCw size={18} />
-                بروزرسانی وضعیت
-              </button>
+              <div className="flex flex-wrap gap-3">
+  <button
+    onClick={syncGoogleDrive}
+    disabled={syncingDrive}
+    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+  >
+    <RefreshCw size={18} className={syncingDrive ? "animate-spin" : ""} />
+    {syncingDrive ? "در حال همگام‌سازی..." : "همگام‌سازی Google Drive"}
+  </button>
+
+  <button
+    onClick={loadKnowledgeStats}
+    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+  >
+    <RefreshCw size={18} />
+    بروزرسانی وضعیت
+  </button>
+</div>
             </div>
           </div>
         </div>
@@ -353,7 +397,11 @@ export default function KnowledgePage() {
             <span>{knowledgeResult}</span>
           </div>
         )}
-
+         {driveSyncMessage && (
+  <div className="mb-6 rounded-[28px] border border-blue-100 bg-blue-50 p-5 text-sm leading-8 text-blue-700">
+    {driveSyncMessage}
+  </div>
+)}
         <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
           <aside className="space-y-6">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
