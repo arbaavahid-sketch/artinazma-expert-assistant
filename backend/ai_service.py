@@ -5,16 +5,42 @@ from openai import OpenAI
 import base64
 import re
 from pathlib import Path
+
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+
+
 def detect_user_language(text: str) -> str:
-    if re.search(r"[\u0600-\u06FF]", text):
+    if re.search(r"[\u0600-\u06FF]", text or ""):
         return "fa"
+
     return "en"
 
+
+def clean_ai_answer(text: str) -> str:
+    if not text:
+        return ""
+
+    replacements = {
+        "هوش مصنوعی سایت": "آرتین",
+        "چت‌بات": "دستیار تخصصی",
+        "AI assistant of Artin Azma Mehr": "technical assistant and consultant of Artin Azma Mehr",
+        "artificial intelligence assistant": "technical assistant",
+    }
+
+    cleaned = text
+
+    for old, new in replacements.items():
+        cleaned = cleaned.replace(old, new)
+
+    cleaned = re.sub(r"^#{1,6}\s*", "", cleaned, flags=re.MULTILINE)
+    cleaned = re.sub(r"\n\s*---+\s*\n", "\n", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+
+    return cleaned.strip()
 SYSTEM_PROMPT = """
 تو «آرتین» هستی؛ دستیار تخصصی و مشاور فنی شرکت آرتین آزما مهر.
 
@@ -209,9 +235,8 @@ def ask_expert_assistant(
         ],
     )
 
-    return response.output_text
-    import base64
-from pathlib import Path
+    return clean_ai_answer(response.output_text)
+   
 
 
 def analyze_image_with_ai(file_path: str, user_note: str = "") -> str:
@@ -231,8 +256,7 @@ def analyze_image_with_ai(file_path: str, user_note: str = "") -> str:
         mime_type = "image/png"
 
     prompt = f"""
-This image was uploaded by a user for technical analysis by Artin, the AI assistant of Artin Azma Mehr.
-
+This image was uploaded by a user for technical analysis by Artin, the technical assistant and consultant of Artin Azma Mehr.
 User note:
 {user_note if user_note else "No user note was provided."}
 
@@ -249,8 +273,11 @@ The image may show:
 
 Analyze the image like a technical expert.
 
-If the user wrote in Persian, answer in Persian.
-If the user wrote in English, answer in English.
+Language rule:
+- If the user's note contains Persian text, answer fully in Persian.
+- If the user's note contains English text, answer in English.
+- If there is no user note, answer in Persian by default.
+- Brand names, device models, chemical formulas, and technical abbreviations may remain in English.
 
 Do not overclaim. If the image is unclear, say what is unclear and what additional photo or data is needed.
 
@@ -298,4 +325,4 @@ Avoid unnecessary symbols and Markdown headings like ###.
         ],
     )
 
-    return response.output_text
+    return clean_ai_answer(response.output_text)
