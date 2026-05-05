@@ -7,7 +7,7 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 from pydantic import BaseModel
-from typing import Optional
+
 from knowledge_service import (
     add_file_to_knowledge_base,
     search_knowledge_base,
@@ -66,7 +66,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+def make_safe_filename(filename: str) -> str:
+    base_name = os.path.basename(filename or "uploaded_file")
+    safe_name = base_name.replace(" ", "_")
+    safe_name = re.sub(r"[^A-Za-z0-9_\-.\u0600-\u06FF]", "_", safe_name)
 
+    if not safe_name or safe_name in [".", ".."]:
+        safe_name = "uploaded_file"
+
+    return safe_name
 
 class ChatHistoryMessage(BaseModel):
     role: str
@@ -235,10 +243,10 @@ async def analyze_file(
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
 
-    safe_filename = file.filename.replace(" ", "_")
+    safe_filename = make_safe_filename(file.filename)
     file_path = os.path.join(upload_dir, safe_filename)
     file_url = f"/uploads/{safe_filename}"
-    file_url = f"/uploads/{safe_filename}"
+    
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
@@ -413,36 +421,18 @@ async def upload_knowledge_file(
 ):
     upload_dir = "knowledge_files"
     os.makedirs(upload_dir, exist_ok=True)
-
-    file_path = os.path.join(upload_dir, file.filename)
+    safe_filename = make_safe_filename(file.filename)
+    file_path = os.path.join(upload_dir, safe_filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     result = add_file_to_knowledge_base(
     file_path=file_path,
-    title=title or file.filename,
+    title=title or safe_filename,
     category=category or "general",
     replace_existing=replace_existing
 )
-
-    return result
-    upload_dir = "knowledge_files"
-    os.makedirs(upload_dir, exist_ok=True)
-
-    file_path = os.path.join(upload_dir, file.filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    result = add_file_to_knowledge_base(
-        file_path=file_path,
-        title=title or file.filename,
-        category=category or "general"
-    )
-
-    return result
-
 
 @app.get("/knowledge/stats")
 def knowledge_stats():
@@ -585,7 +575,7 @@ async def analyze_image(
         upload_dir = "uploads"
         os.makedirs(upload_dir, exist_ok=True)
 
-        safe_filename = file.filename.replace(" ", "_")
+        safe_filename = make_safe_filename(file.filename)
         file_path = os.path.join(upload_dir, safe_filename)
         file_url = f"/uploads/{safe_filename}"
         with open(file_path, "wb") as buffer:
