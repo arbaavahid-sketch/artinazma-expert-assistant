@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   Beaker,
@@ -110,9 +111,12 @@ export default function Home() {
 
               <div className="text-center">
                 <div className="mx-auto mb-5 flex h-48 w-48 items-center justify-center rounded-[44px] bg-white p-6 shadow-sm">
-                  <img
+                  <Image
                     src="/images/artin-avatar.png"
                     alt="آرتین"
+                    width={192}
+                    height={192}
+                    priority
                     className="h-full w-full object-contain"
                   />
                 </div>
@@ -125,6 +129,16 @@ export default function Home() {
                   دستیار تخصصی شما برای سوالات فنی، تحلیل تست، انتخاب تجهیزات و
                   ارتباط با کارشناسان آرتین آزما.
                 </p>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                  <div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm">
+                    <div className="text-xl font-black text-slate-900">24/7</div>
+                    <div className="text-[11px] font-semibold text-slate-500">پاسخ‌گویی آنلاین</div>
+                  </div>
+                  <div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm">
+                    <div className="text-xl font-black text-slate-900">+200</div>
+                    <div className="text-[11px] font-semibold text-slate-500">سناریوی فنی آماده</div>
+                  </div>
+                </div>
 
                 <div className="mt-5 grid gap-3 text-right">
                   <div className="flex items-center gap-2 rounded-2xl bg-white p-3 text-sm font-bold text-slate-700 shadow-sm">
