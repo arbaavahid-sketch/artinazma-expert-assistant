@@ -5,10 +5,15 @@ from openai import OpenAI
 import base64
 import re
 from pathlib import Path
-
+import io
+from PIL import Image, ImageOps
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    timeout=float(os.getenv("OPENAI_TIMEOUT", "120")),
+    max_retries=2,
+)
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 
@@ -344,91 +349,67 @@ def ask_expert_assistant(
 
     return clean_ai_answer(response.output_text)
 
+def prepare_image_for_ai(file_path: str) -> tuple[str, str]:
+    """
+    تصویر را کوچک و فشرده می‌کند تا درخواست Vision timeout نشود.
+    خروجی: base64 و mime_type
+    """
+    with Image.open(file_path) as image:
+        image = ImageOps.exif_transpose(image)
+
+        if image.mode not in ["RGB", "L"]:
+            image = image.convert("RGB")
+
+        # حداکثر اندازه تصویر برای تحلیل
+        image.thumbnail((1280, 1280))
+
+        buffer = io.BytesIO()
+        image.save(buffer, format="JPEG", quality=75, optimize=True)
+
+        encoded_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return encoded_image, "image/jpeg"
+
+
 def analyze_image_with_ai(file_path: str, user_note: str = "", web_context: str = "") -> str:
-    path = Path(file_path)
-    image_bytes = path.read_bytes()
-    encoded_image = base64.b64encode(image_bytes).decode("utf-8")
-
-    suffix = path.suffix.lower()
-
-    if suffix in [".jpg", ".jpeg"]:
-        mime_type = "image/jpeg"
-    elif suffix == ".png":
-        mime_type = "image/png"
-    elif suffix == ".webp":
-        mime_type = "image/webp"
-    else:
-        mime_type = "image/png"
+    encoded_image, mime_type = prepare_image_for_ai(file_path)
 
     prompt = f"""
-This image was uploaded by a user for technical analysis by Artin, the technical assistant and consultant of Artin Azma Mehr.
-User note:
-{user_note if user_note else "No user note was provided."}
+    این تصویر برای تحلیل فنی توسط آرتین، دستیار تخصصی آرتین آزما مهر، ارسال شده است.
 
-The image may show:
-- Laboratory equipment
-- Device error screen
-- Software screen
-- Chromatogram
-- Analytical chart
-- Laboratory report
-- Catalyst test result
-- Instrument setup
-- Product, chemical, catalyst, adsorbent, or additive
+    توضیح کاربر:
+    {user_note if user_note else "توضیحی ارائه نشده است."}
 
-Analyze the image like a technical expert.
+    اگر تصویر مربوط به رسید، پرینت دستگاه، گزارش آزمایش، صفحه نرم‌افزار، کروماتوگرام، نمودار یا خطای دستگاه است:
+    - متن‌های قابل مشاهده را بخوان.
+    - نوع داده یا تست را تشخیص بده.
+    - مقادیر مهم را استخراج کن.
+    - تفسیر فنی بده.
+    - اگر داده ناقص است، دقیق بگو چه چیزی لازم است.
 
-Language rule:
-- If the user's note contains Persian text, answer fully in Persian.
-- If the user's note contains English text, answer in English.
-- If there is no user note, answer in Persian by default.
-- Brand names, device models, chemical formulas, and technical abbreviations may remain in English.
+    اگر تصویر مربوط به دستگاه یا نتیجه آزمایش است، تحلیل را کاربردی و مرحله‌ای بده.
 
-Do not overclaim. If the image is unclear, say what is unclear and what additional photo or data is needed.
+    ساختار پاسخ:
+    1. تصویر احتمالاً مربوط به چیست؟
+    2. اطلاعات قابل مشاهده
+    3. برداشت فنی اولیه
+    4. نکات مهم یا ابهام‌ها
+    5. پیشنهاد اقدام بعدی
 
-Use this structure when appropriate:
-1. تصویر احتمالاً مربوط به چیست؟
-2. اطلاعات قابل مشاهده
-3. تحلیل فنی اولیه
-4. علت‌های احتمالی یا برداشت تخصصی
-5. اقدام پیشنهادی
-6. اطلاعات تکمیلی موردنیاز
+    پاسخ را فارسی، دقیق و حرفه‌ای بنویس.
+    از حدس بی‌پایه پرهیز کن.
+    """
 
-If the image contains a device error:
-- Read visible error text if possible.
-- Explain possible causes.
-- Provide a safe troubleshooting checklist.
-- Do not recommend unsafe hardware intervention unless done by trained service personnel.
-
-If the image contains a chromatogram or chart:
-- Comment on baseline, peaks, noise, drift, abnormal trends, retention time, or visible patterns.
-- Mention limitations if numeric data is not readable.
-
-Avoid unnecessary symbols and Markdown headings like ###.
-"""
     if web_context:
         prompt += f"""
 
+        زمینه تکمیلی:
+        {web_context}
+        """
 
-       External web research context:
-       {web_context}
-
-       Web research rules:
-       - Use web research only to complete or verify the answer when internal knowledge is missing or insufficient.
-       - Prioritize official manufacturer pages, official datasheets, standards organizations, technical manuals, academic or government sources.
-       - Do not treat random reseller pages, blogs, or marketplace pages as authoritative technical sources.
-       - If internal knowledge and web results conflict, clearly avoid overclaiming and say confirmation from official datasheet or company expert is needed.
-       - Do not invent specifications, sample types, methods, detector type, price, availability, certificates, or product links.
-       - Do not show a long source list or raw URLs in the final answer unless the user explicitly asks for links.
-       - If the web context is not enough for a reliable answer, say what exact data is still needed.
-       """
     response = client.responses.create(
         model=MODEL,
         input=[
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT,
-            },
             {
                 "role": "user",
                 "content": [
@@ -441,8 +422,9 @@ Avoid unnecessary symbols and Markdown headings like ###.
                         "image_url": f"data:{mime_type};base64,{encoded_image}",
                     },
                 ],
-            },
+            }
         ],
+        max_output_tokens=1200,
     )
 
     return clean_ai_answer(response.output_text)
