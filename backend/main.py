@@ -2,7 +2,10 @@ import os
 import re
 from fastapi.staticfiles import StaticFiles
 import shutil
-
+from site_resource_service import (
+    find_artinazma_resources,
+    append_artinazma_resources_to_answer
+)
 from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -303,7 +306,19 @@ def chat(request: ChatRequest):
         print("AI answer failed, using local answer:", e)
         answer = build_local_answer(request.message, related_docs)
         answer_mode = "local"
+        artinazma_resources = find_artinazma_resources(
+        message=request.message,
+        max_results=2
+        )
 
+        resource_links = artinazma_resources.get("links", [])
+        resource_images = artinazma_resources.get("images", [])
+
+        answer = append_artinazma_resources_to_answer(
+        answer=answer,
+        links=resource_links
+        )
+    
     sources = [
         {
             "title": doc.get("title", ""),
@@ -340,15 +355,17 @@ def chat(request: ChatRequest):
         )
 
     return {
-        "question_id": question_id,
-        "memory_id": memory_id,
-        "detected_domain": detected_domain,
-        "answer": answer,
-        "sources": sources,
-        "search_mode": search_mode,
-        "web_search_used": allow_web_search,
-        "answer_mode": answer_mode
-    }
+    "question_id": question_id,
+    "memory_id": memory_id,
+    "detected_domain": detected_domain,
+    "answer": answer,
+    "sources": sources,
+    "resource_links": resource_links,
+    "resource_images": resource_images,
+    "search_mode": search_mode,
+    "web_search_used": allow_web_search,
+    "answer_mode": answer_mode
+}
 @app.post("/analyze-file")
 async def analyze_file(
     file: UploadFile = File(...),

@@ -27,6 +27,8 @@ type ChatMessage = {
   detected_domain?: string;
   question_id?: number;
   relatedDevices?: DeviceAsset[];
+  resource_links?: ResourceLink[];
+  resource_images?: ResourceImage[];
   attachment?: {
     name: string;
     kind: "file" | "image";
@@ -43,28 +45,42 @@ type Customer = {
   company?: string;
   phone?: string;
 };
+type ResourceLink = {
+  title: string;
+  url: string;
+  source?: string;
+  score?: number;
+};
 
+type ResourceImage = {
+  title: string;
+  url: string;
+  page_url?: string;
+  source?: string;
+};
 type SavedChatMessage = {
   id: number;
   role: "user" | "assistant";
   content: string;
   metadata?: {
-    sources?: Source[];
-    detected_domain?: string;
-    question_id?: number;
-    relatedDevices?: DeviceAsset[];
-    attachment?: ChatMessage["attachment"];
+  sources?: Source[];
+  detected_domain?: string;
+  question_id?: number;
+  relatedDevices?: DeviceAsset[];
+  resource_links?: ResourceLink[];
+  resource_images?: ResourceImage[];
+  attachment?: ChatMessage["attachment"];
 
-    file_name?: string;
-    file_url?: string;
-    file_type?: string;
+  file_name?: string;
+  file_url?: string;
+  file_type?: string;
 
-    test_type?: string;
-    test_type_label?: string;
+  test_type?: string;
+  test_type_label?: string;
 
-    image_type?: string;
-    image_type_label?: string;
-  };
+  image_type?: string;
+  image_type_label?: string;
+};
   created_at: string;
 };
 type ToolAction =
@@ -269,6 +285,73 @@ function shouldShowRelatedDeviceCards(userText: string, selectedDomain: string) 
 
   return intentKeywords.some((keyword) => text.includes(keyword));
 }
+function ArtinazmaResourceCards({
+  links,
+  images,
+}: {
+  links?: ResourceLink[];
+  images?: ResourceImage[];
+}) {
+  const hasLinks = links && links.length > 0;
+  const hasImages = images && images.length > 0;
+
+  if (!hasLinks && !hasImages) return null;
+
+  return (
+    <div className="mt-4 space-y-3">
+      {hasImages && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {images.map((image) => (
+            <a
+              key={image.url}
+              href={image.page_url || image.url}
+              target="_blank"
+              rel="noreferrer"
+              className="block overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
+            >
+              <div className="aspect-[4/3] bg-slate-100">
+                <img
+                  src={image.url}
+                  alt={image.title}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+
+              <div className="p-3 text-sm font-bold text-slate-800">
+                {image.title}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+
+      {hasLinks && (
+        <div className="rounded-[18px] border border-blue-100 bg-blue-50 p-3">
+          <div className="mb-2 text-xs font-black text-blue-800">
+            صفحه مرتبط در سایت آرتین آزما
+          </div>
+
+          <div className="space-y-1">
+            {links.map((link) => (
+              <a
+                key={link.url}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="block text-sm font-bold text-blue-700 hover:text-blue-900"
+              >
+                {link.title}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[] }) {
   if (!devices || devices.length === 0) return null;
 
@@ -454,6 +537,8 @@ async function loadSavedChatSession(customerId: number, sessionId: number) {
         detected_domain: item.metadata?.detected_domain,
         question_id: item.metadata?.question_id,
         relatedDevices: item.metadata?.relatedDevices || [],
+        resource_links: item.metadata?.resource_links || [],
+        resource_images: item.metadata?.resource_images || [],
         attachment: item.metadata?.attachment
   ? {
       ...item.metadata.attachment,
@@ -606,9 +691,7 @@ try {
   throw new Error("پاسخ سرور معتبر نبود.");
 }
 
-const relatedDevices = shouldShowRelatedDeviceCards(finalMessage, domain)
-  ? findRelatedDevices(`${finalMessage}\n${data.answer || ""}`, 2)
-  : [];
+const relatedDevices: DeviceAsset[] = [];
 
 const assistantMessage: ChatMessage = {
   role: "assistant",
@@ -617,7 +700,10 @@ const assistantMessage: ChatMessage = {
   detected_domain: data.detected_domain,
   question_id: data.question_id,
   relatedDevices,
+  resource_links: data.resource_links || [],
+  resource_images: data.resource_images || [],
 };
+
 await saveCustomerChatMessage(
   customerSessionId,
   "assistant",
@@ -627,8 +713,11 @@ await saveCustomerChatMessage(
     detected_domain: assistantMessage.detected_domain,
     question_id: assistantMessage.question_id,
     relatedDevices,
+    resource_links: assistantMessage.resource_links || [],
+    resource_images: assistantMessage.resource_images || [],
   }
 );
+
 typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch (error) {
   console.error("CHAT ERROR:", error);
@@ -1435,8 +1524,12 @@ function MessageBubble({
               )}
             </div>
           )}
-           {!isUser && (
-  <RelatedDeviceCards devices={item.relatedDevices} />
+           
+{!isUser && (
+  <ArtinazmaResourceCards
+    links={item.resource_links}
+    images={item.resource_images}
+  />
 )}
           {!isUser && (
             <div className="mt-4 space-y-3">
