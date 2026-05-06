@@ -48,6 +48,7 @@ type GroupedKnowledgeSearchResult = {
 };
 type DriveSyncResult = {
   success: boolean;
+  status?: "added" | "unchanged" | "skipped";
   title: string;
   file_name?: string;
   category?: string;
@@ -86,6 +87,8 @@ export default function KnowledgePage() {
   const [syncingDrive, setSyncingDrive] = useState(false);
   const [driveSyncMessage, setDriveSyncMessage] = useState("");
   const [driveSyncResults, setDriveSyncResults] = useState<DriveSyncResult[]>([]);
+  const [driveMaxFiles, setDriveMaxFiles] = useState(20);
+  const [forceDriveResync, setForceDriveResync] = useState(false);
   const [knowledgeResult, setKnowledgeResult] = useState("");
   const [knowledgeResultType, setKnowledgeResultType] = useState<
     "success" | "error" | ""
@@ -200,6 +203,7 @@ export default function KnowledgePage() {
  async function syncGoogleDrive() {
   setSyncingDrive(true);
   setDriveSyncMessage("");
+  setDriveSyncResults([]);
 
   try {
     const res = await fetch(apiUrl("/knowledge/sync-google-drive"), {
@@ -208,8 +212,9 @@ export default function KnowledgePage() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        max_files: 200,
-      }),
+  max_files: driveMaxFiles,
+  force_resync: forceDriveResync,
+}),
     });
     
     const data = await res.json();
@@ -220,7 +225,7 @@ export default function KnowledgePage() {
     }
 
     setDriveSyncMessage(
-  `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`
+  `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`
 );
 
 setDriveSyncResults(data.results || []);
@@ -347,7 +352,30 @@ setDriveSyncResults(data.results || []);
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+  <select
+    value={driveMaxFiles}
+    onChange={(e) => setDriveMaxFiles(Number(e.target.value))}
+    disabled={syncingDrive}
+    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none disabled:opacity-50"
+  >
+    <option value={10}>۱۰ فایل</option>
+    <option value={20}>۲۰ فایل</option>
+    <option value={50}>۵۰ فایل</option>
+    <option value={100}>۱۰۰ فایل</option>
+    <option value={200}>۲۰۰ فایل</option>
+  </select>
+
+  <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
+    <input
+      type="checkbox"
+      checked={forceDriveResync}
+      disabled={syncingDrive}
+      onChange={(e) => setForceDriveResync(e.target.checked)}
+    />
+    بازسازی کامل
+  </label>
+
   <button
     onClick={syncGoogleDrive}
     disabled={syncingDrive}
@@ -423,7 +451,7 @@ setDriveSyncResults(data.results || []);
           گزارش همگام‌سازی Google Drive
         </h2>
         <p className="mt-2 text-sm leading-7 text-slate-500">
-          فایل‌های اضافه‌شده و فایل‌های ردشده در آخرین همگام‌سازی.
+         فایل‌های اضافه‌شده، بدون تغییر و ردشده در آخرین همگام‌سازی.
         </p>
       </div>
 
@@ -456,12 +484,18 @@ setDriveSyncResults(data.results || []);
               <td className="p-4 align-top">
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-bold ${
-                    item.success
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-red-50 text-red-700"
-                  }`}
+  item.status === "unchanged"
+    ? "bg-amber-50 text-amber-700"
+    : item.success
+      ? "bg-emerald-50 text-emerald-700"
+      : "bg-red-50 text-red-700"
+}`}
                 >
-                  {item.success ? "اضافه شد" : "رد شد"}
+                  {item.status === "unchanged"
+  ? "بدون تغییر"
+  : item.success
+    ? "اضافه شد"
+    : "رد شد"}
                 </span>
               </td>
 
