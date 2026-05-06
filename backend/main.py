@@ -2,7 +2,7 @@ import os
 import re
 from fastapi.staticfiles import StaticFiles
 import shutil
-
+from intent_service import detect_question_intent
 from artinazma_index_service import rebuild_artinazma_index, load_index
 from site_resource_service import find_artinazma_resources
 from local_search_service import local_search_knowledge_base, build_local_answer
@@ -206,7 +206,14 @@ def chat(request: ChatRequest):
     )
 
     specific_model_question = is_specific_product_or_model_question(request.message)
+    intent_data = detect_question_intent(
+    message=request.message,
+    domain=request.domain or "auto"
+    )
 
+    question_intent = intent_data["intent"]
+    question_intent_label = intent_data["label"]
+    intent_instruction = intent_data["instruction"]
     local_docs = local_search_knowledge_base(request.message, top_k=12)
 
     best_score = 0.0
@@ -316,7 +323,15 @@ def chat(request: ChatRequest):
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
+    intent_context = f"""
+تشخیص نوع درخواست کاربر:
+{question_intent_label}
 
+دستور اختصاصی برای نوع این درخواست:
+{intent_instruction}
+"""
+
+    context = f"{context}\n\n{intent_context}".strip()
     auto_domain = detect_domain(request.message)
     selected_domain = request.domain or "auto"
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
@@ -328,7 +343,15 @@ def chat(request: ChatRequest):
         }
         for item in (request.history or [])
     ]
+    intent_context = f"""
+تشخیص نوع درخواست کاربر:
+{question_intent_label}
 
+دستور اختصاصی برای نوع این درخواست:
+{intent_instruction}
+"""
+
+    context = f"{context}\n\n{intent_context}".strip()
     try:
         answer = ask_expert_assistant(
             message=request.message,
@@ -377,6 +400,8 @@ def chat(request: ChatRequest):
                 "answer_mode": answer_mode,
                 "resource_links": resource_links,
                 "resource_images": resource_images,
+                "question_intent": question_intent,
+                "question_intent_label": question_intent_label,
             }
         )
 
@@ -390,6 +415,8 @@ def chat(request: ChatRequest):
         "resource_images": resource_images,
         "search_mode": search_mode,
         "web_search_used": allow_web_search,
+        "question_intent": question_intent,
+        "question_intent_label": question_intent_label,
         "answer_mode": answer_mode
     }
 @app.post("/analyze-file")
