@@ -1440,12 +1440,7 @@ function MessageBubble({
 )}
           {!isUser && (
             <div className="mt-4 space-y-3">
-              {item.detected_domain && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-2 text-sm text-slate-600">
-                  حوزه پاسخ: {item.detected_domain}
-                </div>
-              )}
-
+              
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   onClick={() => onCopy(displayContent)}

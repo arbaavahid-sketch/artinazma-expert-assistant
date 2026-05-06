@@ -130,15 +130,10 @@ def extract_relevant_sentences(text: str, query: str, max_sentences: int = 8) ->
 def build_local_answer(query: str, results: List[Dict[str, Any]]) -> str:
     if not results:
         return (
-            "در بانک دانش محلی آرتین آزما اطلاعات مرتبط کافی پیدا نشد.\n\n"
-            "در حالت محلی، اپ فقط می‌تواند داخل فایل‌هایی جست‌وجو کند که قبلاً به بانک دانش اضافه شده‌اند. "
-            "اگر فایل مربوط به این موضوع هنوز وارد نشده باشد، پاسخ کامل قابل تولید نیست."
+            "برای این موضوع اطلاعات کافی در منابع فعلی در دسترس نیست.\n\n"
+            "برای پاسخ دقیق‌تر، لطفاً مدل کامل دستگاه، برند، نوع نمونه، کاربرد موردنظر "
+            "یا کاتالوگ/دیتاشیت مرتبط را ارسال کنید."
         )
-
-    best_result = results[0]
-    best_file = best_result["file_name"]
-    best_title = best_result["title"]
-    best_category = best_result["category"]
 
     more_chunks = get_more_chunks_from_best_file(results, max_chunks=8)
 
@@ -155,50 +150,21 @@ def build_local_answer(query: str, results: List[Dict[str, Any]]) -> str:
     )
 
     answer_parts = [
-        "پاسخ بر اساس بانک دانش محلی آرتین آزما",
-        "",
-        "وضعیت پاسخ:",
-        "در این حالت اتصال به سرویس AI برقرار نیست؛ بنابراین پاسخ زیر بر اساس متن‌های بازیابی‌شده از فایل‌های داخلی بانک دانش ساخته شده است.",
-        "",
-        "بهترین منبع پیدا شده:",
-        f"عنوان: {best_title}",
-        f"فایل: {best_file}",
-        f"دسته‌بندی: {best_category}",
-        "",
-        "جمع‌بندی محلی:",
+        "جمع‌بندی اولیه:",
     ]
 
     if relevant_sentences:
-        for sentence in relevant_sentences[:5]:
+        for sentence in relevant_sentences[:6]:
             answer_parts.append(f"• {sentence}")
     else:
         answer_parts.append(
-            "متن مرتبط پیدا شد، اما جمله‌های واضح و قابل خلاصه‌سازی کافی استخراج نشد. بخش‌های مرتبط در ادامه آمده‌اند."
+            "اطلاعات مرتبطی پیدا شد، اما متن موجود برای یک جمع‌بندی دقیق و کامل کافی نیست."
         )
 
     answer_parts.extend([
         "",
-        "بخش‌های مهم بازیابی‌شده از منبع:",
-    ])
-
-    for index, item in enumerate(results[:5], start=1):
-        content = item["content"][:1200]
-
-        answer_parts.append(
-            f"""
-{index}. منبع: {item['title']}
-فایل: {item['file_name']}
-بخش: {item.get('chunk_index', 0)}
-امتیاز ارتباط: {item.get('score', 0)}
-
-{content}
-"""
-        )
-
-    answer_parts.extend([
-        "",
-        "توضیح:",
-        "برای پاسخ تحلیلی‌تر و خلاصه‌سازی دقیق‌تر، اتصال به مدل AI لازم است. اما در حالت قطع بودن OpenAI، این پاسخ از متن‌های واقعی موجود در بانک دانش محلی استخراج شده است."
+        "نکته مهم:",
+        "برای اعلام مشخصات قطعی، روش اندازه‌گیری، نوع نمونه قابل پذیرش، محدودیت‌ها یا کاربرد نهایی، بهتر است دیتاشیت، کاتالوگ یا مدل کامل بررسی شود."
     ])
 
     return "\n".join(answer_parts)

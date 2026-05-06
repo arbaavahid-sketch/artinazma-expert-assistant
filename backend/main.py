@@ -148,7 +148,6 @@ def home():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-    
     has_astm_code = bool(
         re.search(r"\bD\s*\d{3,5}\b", request.message, flags=re.IGNORECASE)
     )
@@ -169,6 +168,51 @@ def chat(request: ChatRequest):
             print("AI vector search failed, using local search:", e)
             related_docs = local_docs[:8]
             search_mode = "local_fallback"
+
+    best_score = 0.0
+
+    if related_docs:
+        try:
+            best_score = float(related_docs[0].get("score", 0) or 0)
+        except Exception:
+            best_score = 0.0
+
+    user_message_lower = (request.message or "").lower()
+
+    specific_model_question = bool(
+        re.search(r"[A-Za-z][A-Za-z0-9\-]{2,}", request.message or "")
+    ) and any(
+        keyword in user_message_lower
+        for keyword in [
+            "مدل",
+            "دستگاه",
+            "مشخصات",
+            "دیتاشیت",
+            "کاتالوگ",
+            "چیست",
+            "درباره",
+            "در مورد",
+            "model",
+            "device",
+            "datasheet",
+            "specification",
+            "manual",
+            "catalog",
+        ]
+    )
+
+    allow_web_search = False
+
+    if not related_docs:
+        allow_web_search = True
+    elif search_mode in ["ai_vector", "local_fallback"] and best_score < 0.35:
+        allow_web_search = True
+    elif specific_model_question and best_score < 8:
+        allow_web_search = True
+
+    if allow_web_search:
+        search_mode = f"{search_mode}+openai_web"
+
     context = ""
 
     if related_docs:
@@ -177,7 +221,8 @@ def chat(request: ChatRequest):
         for doc in related_docs:
             context_parts.append(
                 f"""
-                منبع: {doc['title']}
+                منبع داخلی:
+                عنوان: {doc['title']}
                 فایل: {doc['file_name']}
                 دسته‌بندی: {doc['category']}
                 امتیاز ارتباط: {doc['score']}
@@ -205,7 +250,8 @@ def chat(request: ChatRequest):
             message=request.message,
             context=context,
             history=history,
-            domain=detected_domain
+            domain=detected_domain,
+            allow_web_search=allow_web_search
         )
         answer_mode = "ai"
     except Exception as e:
@@ -243,6 +289,7 @@ def chat(request: ChatRequest):
                 "question_id": question_id,
                 "sources": sources,
                 "search_mode": search_mode,
+                "web_search_used": allow_web_search,
                 "answer_mode": answer_mode
             }
         )
@@ -254,6 +301,7 @@ def chat(request: ChatRequest):
         "answer": answer,
         "sources": sources,
         "search_mode": search_mode,
+        "web_search_used": allow_web_search,
         "answer_mode": answer_mode
     }
 @app.post("/analyze-file")
