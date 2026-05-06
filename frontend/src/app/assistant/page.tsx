@@ -1,5 +1,5 @@
 "use client";
-
+import ReactMarkdown from "react-markdown";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl } from "@/lib/api";
@@ -1471,17 +1471,35 @@ function MessageBubble({
           }`}
         >
           <div
-            dir={direction}
-            style={{ fontFamily }}
-            className={`whitespace-pre-wrap ${
-              direction === "rtl"
-                ? "chat-answer text-right"
-                : "chat-answer-en text-left"
-            }`}
+  dir={direction}
+  style={{ fontFamily }}
+  className={`whitespace-pre-wrap ${
+    direction === "rtl"
+      ? "chat-answer text-right"
+      : "chat-answer-en text-left"
+  }`}
+>
+  {isUser ? (
+    displayContent
+  ) : (
+    <ReactMarkdown
+      components={{
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
           >
-            {displayContent}
-          </div>
-
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {displayContent}
+    </ReactMarkdown>
+  )}
+</div>
           {item.attachment && (
             <div
               className={`mt-4 rounded-3xl p-4 text-sm leading-7 ${
