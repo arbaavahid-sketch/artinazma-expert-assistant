@@ -78,7 +78,58 @@ def make_safe_filename(filename: str) -> str:
         safe_name = "uploaded_file"
 
     return safe_name
+def is_specific_product_or_model_question(message: str) -> bool:
+    text = (message or "").lower()
 
+    has_latin_model = bool(
+        re.search(r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?", message or "")
+    )
+
+    model_keywords = [
+        "مدل",
+        "دستگاه",
+        "مشخصات",
+        "دیتاشیت",
+        "کاتالوگ",
+        "چیست",
+        "درباره",
+        "در مورد",
+        "توضیح",
+        "معرفی",
+        "model",
+        "device",
+        "instrument",
+        "datasheet",
+        "specification",
+        "manual",
+        "catalog",
+        "about",
+    ]
+
+    return has_latin_model and any(keyword in text for keyword in model_keywords)
+
+
+def context_has_exact_model_match(message: str, docs: list) -> bool:
+    model_tokens = re.findall(
+        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?",
+        message or ""
+    )
+
+    if not model_tokens:
+        return False
+
+    searchable_context = " ".join(
+        f"{doc.get('title', '')} {doc.get('file_name', '')} {doc.get('content', '')}"
+        for doc in docs
+    ).lower()
+
+    for token in model_tokens:
+        clean_token = token.strip().lower()
+
+        if clean_token and clean_token in searchable_context:
+            return True
+
+    return False
 class ChatHistoryMessage(BaseModel):
     role: str
     content: str
@@ -152,24 +203,40 @@ def chat(request: ChatRequest):
         re.search(r"\bD\s*\d{3,5}\b", request.message, flags=re.IGNORECASE)
     )
 
+    specific_model_question = is_specific_product_or_model_question(request.message)
+
     local_docs = local_search_knowledge_base(request.message, top_k=12)
+
+    best_score = 0.0
+    related_docs = []
+    search_mode = "unknown"
 
     if has_astm_code and local_docs:
         related_docs = local_docs[:8]
         search_mode = "local_astm"
-    elif local_docs and float(local_docs[0].get("score", 0)) >= 3:
-        related_docs = local_docs[:8]
-        search_mode = "local_fast"
-    else:
-        try:
-            related_docs = search_knowledge_base(request.message, top_k=5)
-            search_mode = "ai_vector"
-        except Exception as e:
-            print("AI vector search failed, using local search:", e)
-            related_docs = local_docs[:8]
-            search_mode = "local_fallback"
 
-    best_score = 0.0
+    elif specific_model_question:
+        exact_local_match = context_has_exact_model_match(request.message, local_docs)
+
+        if exact_local_match and local_docs and float(local_docs[0].get("score", 0) or 0) >= 8:
+            related_docs = local_docs[:8]
+            search_mode = "local_exact_model"
+        else:
+            related_docs = []
+            search_mode = "no_exact_model_context"
+
+    else:
+        if local_docs and float(local_docs[0].get("score", 0) or 0) >= 10:
+            related_docs = local_docs[:8]
+            search_mode = "local_fast"
+        else:
+            try:
+                related_docs = search_knowledge_base(request.message, top_k=5)
+                search_mode = "ai_vector"
+            except Exception as e:
+                print("AI vector search failed, using local search:", e)
+                related_docs = local_docs[:8]
+                search_mode = "local_fallback"
 
     if related_docs:
         try:
@@ -177,33 +244,11 @@ def chat(request: ChatRequest):
         except Exception:
             best_score = 0.0
 
-    user_message_lower = (request.message or "").lower()
-
-    specific_model_question = bool(
-        re.search(r"[A-Za-z][A-Za-z0-9\-]{2,}", request.message or "")
-    ) and any(
-        keyword in user_message_lower
-        for keyword in [
-            "مدل",
-            "دستگاه",
-            "مشخصات",
-            "دیتاشیت",
-            "کاتالوگ",
-            "چیست",
-            "درباره",
-            "در مورد",
-            "model",
-            "device",
-            "datasheet",
-            "specification",
-            "manual",
-            "catalog",
-        ]
-    )
-
     allow_web_search = False
 
-    if not related_docs:
+    if specific_model_question and search_mode == "no_exact_model_context":
+        allow_web_search = True
+    elif not related_docs:
         allow_web_search = True
     elif search_mode in ["ai_vector", "local_fallback"] and best_score < 0.35:
         allow_web_search = True
@@ -222,12 +267,12 @@ def chat(request: ChatRequest):
             context_parts.append(
                 f"""
                 منبع داخلی:
-                عنوان: {doc['title']}
-                فایل: {doc['file_name']}
-                دسته‌بندی: {doc['category']}
-                امتیاز ارتباط: {doc['score']}
+                عنوان: {doc.get('title', '')}
+                فایل: {doc.get('file_name', '')}
+                دسته‌بندی: {doc.get('category', '')}
+                امتیاز ارتباط: {doc.get('score', '')}
                 متن:
-                {doc['content']}
+                {doc.get('content', '')}
                 """
             )
 
@@ -261,10 +306,10 @@ def chat(request: ChatRequest):
 
     sources = [
         {
-            "title": doc["title"],
-            "file_name": doc["file_name"],
-            "category": doc["category"],
-            "score": float(doc.get("score", 0))
+            "title": doc.get("title", ""),
+            "file_name": doc.get("file_name", ""),
+            "category": doc.get("category", ""),
+            "score": float(doc.get("score", 0) or 0)
         }
         for doc in related_docs
     ]
