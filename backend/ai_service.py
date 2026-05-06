@@ -54,30 +54,33 @@ def clean_ai_answer(text: str) -> str:
     cleaned = re.sub(r"&utm_medium=[^)\\s]+", "", cleaned)
     cleaned = re.sub(r"\?utm_campaign=[^)\\s]+", "", cleaned)
     cleaned = re.sub(r"&utm_campaign=[^)\\s]+", "", cleaned)
-
+    
     # حذف خط‌های خالی زیاد
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
-    return cleaned.strip()
+    # حذف جمله‌های ناقص درباره لینک، وقتی لینکی در متن وجود ندارد
+    has_markdown_link = bool(re.search(r"\[[^\]]+\]\(https?://[^)]+\)", cleaned))
+    has_raw_url = bool(re.search(r"https?://\S+", cleaned))
 
-    if not text:
-        return ""
-
-    replacements = {
-        "هوش مصنوعی سایت": "آرتین",
-        "چت‌بات": "دستیار تخصصی",
-        "AI assistant of Artin Azma Mehr": "technical assistant and consultant of Artin Azma Mehr",
-        "artificial intelligence assistant": "technical assistant",
-    }
-
-    cleaned = text
-
-    for old, new in replacements.items():
-        cleaned = cleaned.replace(old, new)
-
-    cleaned = re.sub(r"^#{1,6}\s*", "", cleaned, flags=re.MULTILINE)
-    cleaned = re.sub(r"\n\s*---+\s*\n", "\n", cleaned)
-    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    if not has_markdown_link and not has_raw_url:
+        cleaned = re.sub(
+            r"\n?\s*برای اطلاعات بیشتر،?\s*می‌توانید به صفحه رسمی محصول مراجعه کنید\.?\s*$",
+            "",
+            cleaned,
+            flags=re.MULTILINE,
+        )
+        cleaned = re.sub(
+            r"\n?\s*برای اطلاعات بیشتر،?\s*به صفحه رسمی محصول مراجعه کنید\.?\s*$",
+            "",
+            cleaned,
+            flags=re.MULTILINE,
+        )
+        cleaned = re.sub(
+            r"\n?\s*برای اطلاعات دقیق‌تر.*?نسخه کامل استاندارد ضروری است\.?\s*$",
+            "",
+            cleaned,
+            flags=re.MULTILINE,
+        )
 
     return cleaned.strip()
 SYSTEM_PROMPT = """

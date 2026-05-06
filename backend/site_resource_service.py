@@ -3,23 +3,37 @@ import re
 import time
 from typing import Dict, List, Optional
 from urllib.parse import urljoin, urlparse
-
+from artinazma_index_service import search_artinazma_index, rebuild_artinazma_index
 import requests
 from bs4 import BeautifulSoup
 
-
+from artinazma_index_service import search_artinazma_index, load_index
 ARTINAZMA_BASE_URL = os.getenv(
     "ARTINAZMA_BASE_URL",
     "https://artinazma.net"
 ).rstrip("/")
 
-SEARCH_TIMEOUT = float(os.getenv("ARTINAZMA_SEARCH_TIMEOUT", "8"))
+SEARCH_TIMEOUT = float(os.getenv("ARTINAZMA_SEARCH_TIMEOUT", "20"))
 MIN_SCORE = int(os.getenv("ARTINAZMA_MIN_RESOURCE_SCORE", "5"))
 CACHE_TTL_SECONDS = int(os.getenv("ARTINAZMA_RESOURCE_CACHE_TTL", "1800"))
 
 _cache: Dict[str, Dict] = {}
 
-
+MANUAL_ARTINAZMA_RESOURCES = [
+    {
+        "keywords": [
+            "spectroscan se",
+            "spectroscan",
+            "spectron",
+            "آنالایزر گوگرد",
+            "گوگرد",
+            "sulfur analyzer",
+        ],
+        "title": "Spectroscan SE",
+        "url": "https://artinazma.net/",
+        "image_url": "",
+    },
+]
 PRODUCT_INTENT_KEYWORDS = [
     # فارسی
     "دستگاه",
@@ -94,7 +108,41 @@ STOP_WORDS_FA = {
     "تصویر",
 }
 
+def find_manual_resource(message: str) -> Dict[str, List[Dict]]:
+    text = normalize_text(message)
 
+    links = []
+    images = []
+
+    for item in MANUAL_ARTINAZMA_RESOURCES:
+        matched = any(
+            normalize_text(keyword) in text
+            for keyword in item.get("keywords", [])
+        )
+
+        if not matched:
+            continue
+
+        links.append({
+            "title": item["title"],
+            "url": item["url"],
+            "source": "artinazma.net",
+            "score": 100,
+        })
+
+        if item.get("image_url"):
+            images.append({
+                "title": item["title"],
+                "url": item["image_url"],
+                "page_url": item["url"],
+                "source": "artinazma.net",
+            })
+
+    return {
+        "links": links,
+        "images": images,
+        "resources_found": bool(links),
+    }
 def is_product_or_material_question(message: str) -> bool:
     text = (message or "").lower()
 
@@ -190,7 +238,7 @@ def build_search_queries(message: str) -> List[str]:
             seen.add(key)
             unique_queries.append(query)
 
-    return unique_queries[:5]
+    return unique_queries[:2]
 
 
 def search_wordpress_api(query: str) -> List[Dict]:
@@ -402,6 +450,21 @@ def find_artinazma_resources(message: str, max_results: int = 2) -> Dict[str, Li
             "resources_found": False,
         }
 
+    index_result = search_artinazma_index(message, max_results=max_results)
+
+    if index_result.get("resources_found"):
+        return index_result
+
+    index_data = load_index()
+    index_items = index_data.get("items", [])
+
+    if index_items:
+        return {
+            "links": [],
+            "images": [],
+            "resources_found": False,
+        }
+
     cache_key = normalize_text(message)
 
     cached = _cache.get(cache_key)
@@ -411,7 +474,6 @@ def find_artinazma_resources(message: str, max_results: int = 2) -> Dict[str, Li
     queries = build_search_queries(message)
 
     candidates: Dict[str, Dict] = {}
-
     for query in queries:
         for item in search_wordpress_api(query):
             candidates[item["url"]] = {

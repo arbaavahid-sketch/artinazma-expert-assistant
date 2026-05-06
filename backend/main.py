@@ -2,6 +2,8 @@ import os
 import re
 from fastapi.staticfiles import StaticFiles
 import shutil
+
+from artinazma_index_service import rebuild_artinazma_index, load_index
 from site_resource_service import find_artinazma_resources
 from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, UploadFile, File, Form
@@ -278,6 +280,37 @@ def chat(request: ChatRequest):
 
         context = "\n\n".join(context_parts)
 
+    resource_links = []
+    resource_images = []
+    artinazma_context = ""
+
+    try:
+        artinazma_resources = find_artinazma_resources(
+            message=request.message,
+            max_results=2
+        )
+
+        resource_links = artinazma_resources.get("links", [])
+        resource_images = artinazma_resources.get("images", [])
+
+        if resource_links:
+            artinazma_context = "\n\nصفحه مرتبط در سایت آرتین آزما پیدا شد:\n"
+
+            for link in resource_links:
+                artinazma_context += f"- عنوان: {link.get('title', '')}\n"
+                artinazma_context += f"  لینک: {link.get('url', '')}\n"
+
+            search_mode = f"{search_mode}+artinazma_site"
+
+    except Exception as e:
+        print("ArtinAzma resource search failed:", e)
+        resource_links = []
+        resource_images = []
+        artinazma_context = ""
+
+    if artinazma_context:
+        context = f"{context}\n\n{artinazma_context}".strip()
+
     auto_domain = detect_domain(request.message)
     selected_domain = request.domain or "auto"
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
@@ -303,23 +336,6 @@ def chat(request: ChatRequest):
         print("AI answer failed, using local answer:", e)
         answer = build_local_answer(request.message, related_docs)
         answer_mode = "local"
-
-    resource_links = []
-    resource_images = []
-
-    try:
-        artinazma_resources = find_artinazma_resources(
-            message=request.message,
-            max_results=2
-        )
-
-        resource_links = artinazma_resources.get("links", [])
-        resource_images = artinazma_resources.get("images", [])
-
-    except Exception as e:
-        print("ArtinAzma resource search failed:", e)
-        resource_links = []
-        resource_images = []
 
     sources = [
         {
@@ -1150,4 +1166,18 @@ def customer_chat_session_delete(customer_id: int, session_id: int):
     return {
         "success": True,
         "message": "گفتگو حذف شد."
+    }
+@app.post("/knowledge/index-artinazma-site")
+def index_artinazma_site(force: bool = False):
+    return rebuild_artinazma_index(force=force)
+
+
+@app.get("/knowledge/artinazma-site-index")
+def artinazma_site_index_status():
+    index_data = load_index()
+
+    return {
+        "count": len(index_data.get("items", [])),
+        "created_at": index_data.get("created_at", 0),
+        "base_url": index_data.get("base_url", ""),
     }
