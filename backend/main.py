@@ -3,6 +3,7 @@ import re
 from fastapi.staticfiles import StaticFiles
 import shutil
 from standard_service import get_context_for_app
+from answer_quality_service import build_answer_quality_context
 from intent_service import detect_question_intent
 from artinazma_index_service import rebuild_artinazma_index, load_index
 from site_resource_service import find_artinazma_resources
@@ -337,32 +338,49 @@ def chat(request: ChatRequest):
         for item in (request.history or [])
     ]
     intent_context = f"""
-تشخیص نوع درخواست کاربر:
-{question_intent_label}
+    تشخیص نوع درخواست کاربر:
+    {question_intent_label}
 
-دستور اختصاصی برای نوع این درخواست:
-{intent_instruction}
-"""
+    دستور اختصاصی برای نوع این درخواست:
+    {intent_instruction}
+    """
 
     context = f"{context}\n\n{intent_context}".strip()
+
     standard_context = ""
 
     try:
-     standard_context = get_context_for_app(request.message)
+        standard_context = get_context_for_app(request.message)
     except Exception as e:
-       print("Standard engine failed:", e)
-    standard_context = ""
+        print("Standard engine failed:", e)
 
     if standard_context:
-     context = f"{context}\n\n{standard_context}".strip()
+       context = f"{context}\n\n{standard_context}".strip()
+
+    quality_context = ""
+
+    try:
+       quality_context = build_answer_quality_context(
+           message=request.message,
+           intent=question_intent,
+           intent_label=question_intent_label,
+           domain=detected_domain,
+       )
+    except Exception as e:
+        print("Answer quality engine failed:", e)
+        quality_context = ""
+        
+    if quality_context:
+        context = f"{context}\n\n{quality_context}".strip()
+
     try:
         answer = ask_expert_assistant(
-            message=request.message,
-            context=context,
-            history=history,
-            domain=detected_domain,
-            allow_web_search=allow_web_search
-        )
+          message=request.message,
+          context=context,
+          history=history,
+          domain=detected_domain,
+          allow_web_search=allow_web_search
+       )
         answer_mode = "ai"
     except Exception as e:
         print("AI answer failed, using local answer:", e)
