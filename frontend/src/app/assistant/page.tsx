@@ -587,10 +587,15 @@ await saveCustomerChatMessage(customerSessionId, "user", finalMessage, {
 
 const rawText = await res.text();
 
-console.log("CHAT RAW RESPONSE:", rawText);
-
 if (!res.ok) {
-  throw new Error(`Backend error ${res.status}: ${rawText}`);
+  let serverMessage = "خطا در دریافت پاسخ از سرور.";
+
+  try {
+    const errorData = JSON.parse(rawText);
+    serverMessage = errorData.message || errorData.error || serverMessage;
+  } catch {}
+
+  throw new Error(serverMessage);
 }
 
 let data;
@@ -598,7 +603,7 @@ let data;
 try {
   data = JSON.parse(rawText);
 } catch {
-  throw new Error("Backend پاسخ JSON معتبر برنگرداند.");
+  throw new Error("پاسخ سرور معتبر نبود.");
 }
 
 const relatedDevices = shouldShowRelatedDeviceCards(finalMessage, domain)
@@ -634,9 +639,7 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     {
       role: "assistant",
       content:
-        error instanceof Error
-          ? `خطا در پردازش پاسخ: ${error.message}`
-          : "خطا در اتصال یا پردازش پاسخ.",
+  "در حال حاضر ارتباط با سرویس پاسخ‌گویی دچار اختلال شده است. لطفاً چند لحظه بعد دوباره تلاش کنید.",
     },
   ]);
 }

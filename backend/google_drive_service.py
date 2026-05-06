@@ -3,7 +3,8 @@ import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
+import httplib2
+import google_auth_httplib2
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -26,8 +27,9 @@ STORAGE_DIR.mkdir(exist_ok=True)
 SYNC_STATE_PATH = STORAGE_DIR / "google_drive_sync_state.json"
 
 GOOGLE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
-GOOGLE_API_RETRIES = 3
-DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+GOOGLE_API_RETRIES = 5
+GOOGLE_HTTP_TIMEOUT = int(os.getenv("GOOGLE_HTTP_TIMEOUT", "90"))
+DOWNLOAD_CHUNK_SIZE = 256 * 1024
 SUPPORTED_BINARY_EXTENSIONS = {
     ".pdf",
     ".txt",
@@ -223,7 +225,19 @@ def get_drive_credentials():
 
 def get_drive_service():
     credentials = get_drive_credentials()
-    return build("drive", "v3", credentials=credentials, cache_discovery=False)
+
+    http = httplib2.Http(timeout=GOOGLE_HTTP_TIMEOUT)
+    authorized_http = google_auth_httplib2.AuthorizedHttp(
+        credentials,
+        http=http
+    )
+
+    return build(
+        "drive",
+        "v3",
+        http=authorized_http,
+        cache_discovery=False
+    )
 
 
 def list_folder_items(service, folder_id: str) -> List[Dict[str, Any]]:
@@ -341,7 +355,18 @@ def walk_drive_folder(
         sync_state = {"files": {}}
 
     results: List[Dict[str, Any]] = []
-    items = list_folder_items(service, folder_id)
+    try:
+        items = list_folder_items(service, folder_id)
+    except Exception as e:
+        return [
+            {
+                "success": False,
+                "status": "skipped",
+                "title": f"Folder {folder_id}",
+                "category": current_category,
+                "reason": f"خطا در خواندن فولدر Google Drive: {str(e)}",
+            }
+        ]
 
     for item in items:
         if state["processed_files"] >= max_files:
@@ -378,6 +403,7 @@ def walk_drive_folder(
         file_id = item.get("id", "")
         modified_time = item.get("modifiedTime", "")
         output_info = get_drive_output_info(item)
+
 
         if not output_info.get("supported"):
             results.append({
@@ -420,7 +446,18 @@ def walk_drive_folder(
         ):
             delete_knowledge_file(previous["file_name"])
 
-        prepared = prepare_drive_file(service, item)
+        try:
+            prepared = prepare_drive_file(service, item)
+        except Exception as e:
+            results.append({
+                "success": False,
+                "status": "skipped",
+                "title": item.get("name", ""),
+                "category": current_category,
+                "reason": f"خطا در دانلود یا export فایل از Google Drive: {str(e)}",
+                "mime_type": mime_type,
+            })
+            continue
 
         if not prepared.get("success"):
             results.append({
