@@ -324,15 +324,7 @@ def chat(request: ChatRequest):
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
-    intent_context = f"""
-تشخیص نوع درخواست کاربر:
-{question_intent_label}
-
-دستور اختصاصی برای نوع این درخواست:
-{intent_instruction}
-"""
-
-    context = f"{context}\n\n{intent_context}".strip()
+    
     auto_domain = detect_domain(request.message)
     selected_domain = request.domain or "auto"
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
@@ -356,13 +348,13 @@ def chat(request: ChatRequest):
     standard_context = ""
 
     try:
-       standard_context = get_context_for_app(request.message)
+     standard_context = get_context_for_app(request.message)
     except Exception as e:
-      print("Standard engine failed:", e)
+       print("Standard engine failed:", e)
     standard_context = ""
 
     if standard_context:
-        context = f"{context}\n\n{standard_context}".strip()
+     context = f"{context}\n\n{standard_context}".strip()
     try:
         answer = ask_expert_assistant(
             message=request.message,
