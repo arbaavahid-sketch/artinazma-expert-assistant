@@ -40,14 +40,25 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
         "کار نمی",
         "روشن نمی",
         "نشتی",
+        "نوسان",
+        "لرزش",
+        "افت",
+        "افزایش ناگهانی",
         "baseline",
         "noise",
         "drift",
+        "tailing",
+        "fronting",
+        "پهن شدن پیک",
+        "دم کشیدن پیک",
         "error",
         "fault",
         "troubleshoot",
         "problem",
         "leak",
+        "leakage",
+        "contamination",
+        "instability",
     ]
 
     analysis_keywords = [
@@ -56,8 +67,15 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
         "تفسیر",
         "گزارش",
         "نتیجه",
+        "خروجی",
+        "پرینت",
         "نمودار",
         "کروماتوگرام",
+        "عدد",
+        "مقدار",
+        "غلظت",
+        "میانگین",
+        "تکرار",
         "peak",
         "پیک",
         "baseline",
@@ -67,6 +85,12 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
         "loq",
         "qc",
         "calibration",
+        "replicate",
+        "repeat",
+        "result",
+        "report",
+        "printout",
+        "concentration",
     ]
 
     equipment_keywords = [
@@ -114,6 +138,15 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
         "پیشنهاد",
         "مناسب",
         "انتخاب",
+        "اندازه گیری",
+        "اندازه‌گیری",
+        "سنجش",
+        "تعیین",
+        "روش مناسب",
+        "دستگاه مناسب",
+        "تجهیز مناسب",
+        "measurement",
+        "determination",
         "برای اندازه گیری",
         "برای اندازه‌گیری",
         "recommend",
@@ -122,7 +155,10 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
         "suitable",
     ]
 
-    if any(keyword in text for keyword in price_keywords):
+    has_price_intent = any(keyword in text for keyword in price_keywords)
+    has_suggestion_intent = any(keyword in text for keyword in suggestion_keywords)
+
+    if has_price_intent and not has_suggestion_intent:
         intent = "commercial_request"
         label = "قیمت، موجودی یا سفارش"
 
@@ -183,6 +219,7 @@ def get_intent_instruction(intent: str) -> str:
         5. محدودیت‌ها و نکات عملی چیست؟
         متن استاندارد را کپی نکن.
         اگر نسخه کامل لازم است، بگو باید از مرجع رسمی تهیه شود.
+        در توضیح استاندارد، ویژگی خاص یک دستگاه مشخص را به خود استاندارد نسبت نده. مثلاً نیاز یا عدم نیاز به هلیم، فیلم محافظ، طراحی دتکتور یا LOD مشخص، مربوط به دستگاه است نه خود استاندارد؛ مگر منبع دقیق داشته باشی.
         """,
 
         "troubleshooting": """
@@ -213,6 +250,10 @@ def get_intent_instruction(intent: str) -> str:
         حتماً این موارد را بررسی کن:
         نوع نمونه، ماتریس، آنالیت، محدوده غلظت، حد تشخیص، دقت، تعداد نمونه، استاندارد موردنیاز، آماده‌سازی نمونه، مصرفی‌ها و نگهداری.
         اگر اطلاعات کافی نیست، سؤال‌های تکمیلی بپرس.
+        اگر موضوع LPG، گاز مایع، گاز طبیعی یا نمونه فرار است:
+      - درباره ایمنی نمونه‌برداری، ظرف/کاپ مناسب، تبخیر، فشار، representativeness و آماده‌سازی نمونه هشدار بده.
+      - فقط نام دستگاه نگو؛ روش مناسب را با توجه به محدوده گوگرد، استاندارد موردنیاز و نوع ترکیبات گوگردی پیشنهاد بده.
+      - تفاوت Total Sulfur، H2S، Mercaptan، COS و CS2 را در صورت مرتبط بودن توضیح بده.
         """,
 
         "chemical_or_catalyst": """

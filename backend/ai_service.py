@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import base64
 import re
-from pathlib import Path
 import io
 from PIL import Image, ImageOps
 load_dotenv()
@@ -52,17 +51,31 @@ def clean_ai_answer(text: str) -> str:
     # حذف خط‌های جداکننده Markdown
     cleaned = re.sub(r"\n\s*---+\s*\n", "\n", cleaned)
 
-    # تمیز کردن tracking از لینک‌ها، بدون حذف خود لینک
-    cleaned = re.sub(r"\?utm_source=[^)\\s]+", "", cleaned)
-    cleaned = re.sub(r"&utm_source=[^)\\s]+", "", cleaned)
-    cleaned = re.sub(r"\?utm_medium=[^)\\s]+", "", cleaned)
-    cleaned = re.sub(r"&utm_medium=[^)\\s]+", "", cleaned)
-    cleaned = re.sub(r"\?utm_campaign=[^)\\s]+", "", cleaned)
-    cleaned = re.sub(r"&utm_campaign=[^)\\s]+", "", cleaned)
-    
-    # حذف خط‌های خالی زیاد
+        # حذف tracking از URLها، بدون حذف خود لینک
+    cleaned = re.sub(r"([?&])utm_source=[^)\s&]+&?", r"\1", cleaned)
+    cleaned = re.sub(r"([?&])utm_medium=[^)\s&]+&?", r"\1", cleaned)
+    cleaned = re.sub(r"([?&])utm_campaign=[^)\s&]+&?", r"\1", cleaned)
+    cleaned = re.sub(r"([?&])utm_term=[^)\s&]+&?", r"\1", cleaned)
+    cleaned = re.sub(r"([?&])utm_content=[^)\s&]+&?", r"\1", cleaned)
+
+    # تمیزکاری URLهایی که بعد از حذف tracking خراب می‌شوند
+    cleaned = cleaned.replace("?&", "?")
+    cleaned = re.sub(r"\?(\)|\s|$)", r"\1", cleaned)
+    cleaned = re.sub(r"&(\)|\s|$)", r"\1", cleaned)
+
+    # تمیزکاری فاصله‌های اضافه در خروجی
+    cleaned = re.sub(r"[ \t]+\n", "\n", cleaned)
+    cleaned = re.sub(r"\n[ \t]+", "\n", cleaned)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
+    # حذف فاصله اضافه بعد از تیترهای کوتاه
+    cleaned = re.sub(r"(\n[^:\n]{2,45}:\n)\n+", r"\1", cleaned)
+
+    # یکدست‌سازی بولت‌ها
+    cleaned = re.sub(r"^\s*[-*]\s+", "• ", cleaned, flags=re.MULTILINE)
+
+    # حذف بولد Markdown، چون فرانت فعلاً متن را ساده نشان می‌دهد
+    cleaned = re.sub(r"\*\*(.*?)\*\*", r"\1", cleaned)
     # حذف جمله‌های ناقص درباره لینک، وقتی لینکی در متن وجود ندارد
     has_markdown_link = bool(re.search(r"\[[^\]]+\]\(https?://[^)]+\)", cleaned))
     has_raw_url = bool(re.search(r"https?://\S+", cleaned))
@@ -348,18 +361,19 @@ def ask_expert_assistant(
 """
 
     request_payload = {
-        "model": MODEL,
-        "input": [
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT,
-            },
-            {
-                "role": "user",
-                "content": user_content,
-            },
-        ],
-    }
+    "model": MODEL,
+    "input": [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": user_content,
+        },
+    ],
+    "max_output_tokens": 3000,
+}
 
     if tools:
         request_payload["tools"] = tools
@@ -415,6 +429,12 @@ def analyze_image_with_ai(file_path: str, user_note: str = "", web_context: str 
 - از روی تصویر، نتیجه قطعی نساز؛ ولی برداشت فنی قابل دفاع بده.
 
 اگر تصویر مربوط به نتیجه آزمایش یا پرینت دستگاه است:
+- اگر چند تکرار یا replicate مثل C1، C2، R1، R2 دیده می‌شود، میانگین، اختلاف مطلق و در صورت امکان اختلاف نسبی تقریبی را محاسبه کن.
+- اگر محاسبه‌ای انجام می‌دهی، فرمول ساده یا روش محاسبه را کوتاه نشان بده؛ مثلاً میانگین = (C1 + C2) / 2 و اختلاف نسبی تقریبی = اختلاف / میانگین × 100.
+- اگر مقدار اصلی و تکرارها نزدیک هستند، درباره تکرارپذیری نظر فنی بده؛ اما بدون معیار رسمی قطعی حکم نده.
+- اگر روش ASTM، ISO یا نام method روی پرینت دیده می‌شود، آن را در تفسیر لحاظ کن.
+- اگر واحد درصد، ppm، ppb یا mg/kg دیده می‌شود، حتماً واحد را حفظ کن.
+- اگر نتیجه در محدوده بالای اندازه‌گیری است، احتمال نیاز به بررسی کالیبراسیون مناسب همان محدوده را مطرح کن.
 - نام دستگاه، روش، نمونه، پارامترها، واحدها، تکرارها، تاریخ/زمان و مقادیر مهم را بخوان.
 - اختلاف بین تکرارها، RSD احتمالی، outlier، drift یا خطای احتمالی را بررسی کن.
 - اگر QC لازم است، موارد Blank، Standard، Duplicate، Spike Recovery، CRM و Calibration را پیشنهاد بده.
