@@ -246,15 +246,49 @@ def chat(request: ChatRequest):
         except Exception:
             best_score = 0.0
 
+    resource_links = []
+    resource_images = []
+    artinazma_context = ""
+
+    try:
+        artinazma_resources = find_artinazma_resources(
+            message=request.message,
+            max_results=2
+        )
+
+        resource_links = artinazma_resources.get("links", [])
+        resource_images = artinazma_resources.get("images", [])
+
+        if resource_links:
+            artinazma_context = """
+            نتیجه جست‌وجوی سایت رسمی آرتین آزما:
+            این مورد در سایت رسمی آرتین آزما پیدا شده است.
+            هنگام پاسخ، کامل و فنی توضیح بده.
+            در متن پاسخ، لینک خام ننویس؛ لینک جداگانه توسط سیستم نمایش داده می‌شود.
+            اگر مشخصات دقیق محصول در متن منابع داخلی نیست، با دانش فنی معتبر و وب‌سرچ تکمیل کن، اما ادعای ساختگی نکن.
+            """
+
+            for link in resource_links:
+                artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
+                artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
+
+            search_mode = f"{search_mode}+artinazma_site"
+
+    except Exception as e:
+        print("ArtinAzma resource search failed:", e)
+        resource_links = []
+        resource_images = []
+        artinazma_context = ""
+
     allow_web_search = False
 
-    if specific_model_question and search_mode == "no_exact_model_context":
+    if specific_model_question:
+        allow_web_search = True
+    elif has_astm_code:
         allow_web_search = True
     elif not related_docs:
         allow_web_search = True
     elif search_mode in ["ai_vector", "local_fallback"] and best_score < 0.35:
-        allow_web_search = True
-    elif specific_model_question and best_score < 8:
         allow_web_search = True
 
     if allow_web_search:
@@ -279,34 +313,6 @@ def chat(request: ChatRequest):
             )
 
         context = "\n\n".join(context_parts)
-
-    resource_links = []
-    resource_images = []
-    artinazma_context = ""
-
-    try:
-        artinazma_resources = find_artinazma_resources(
-            message=request.message,
-            max_results=2
-        )
-
-        resource_links = artinazma_resources.get("links", [])
-        resource_images = artinazma_resources.get("images", [])
-
-        if resource_links:
-            artinazma_context = "\n\nصفحه مرتبط در سایت آرتین آزما پیدا شد:\n"
-
-            for link in resource_links:
-                artinazma_context += f"- عنوان: {link.get('title', '')}\n"
-                artinazma_context += f"  لینک: {link.get('url', '')}\n"
-
-            search_mode = f"{search_mode}+artinazma_site"
-
-    except Exception as e:
-        print("ArtinAzma resource search failed:", e)
-        resource_links = []
-        resource_images = []
-        artinazma_context = ""
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
