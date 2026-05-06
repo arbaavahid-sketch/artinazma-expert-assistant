@@ -2,6 +2,7 @@ import os
 import re
 from fastapi.staticfiles import StaticFiles
 import shutil
+from standard_service import get_context_for_app
 from intent_service import detect_question_intent
 from artinazma_index_service import rebuild_artinazma_index, load_index
 from site_resource_service import find_artinazma_resources
@@ -352,6 +353,16 @@ def chat(request: ChatRequest):
 """
 
     context = f"{context}\n\n{intent_context}".strip()
+    standard_context = ""
+
+    try:
+       standard_context = get_context_for_app(request.message)
+    except Exception as e:
+      print("Standard engine failed:", e)
+    standard_context = ""
+
+    if standard_context:
+        context = f"{context}\n\n{standard_context}".strip()
     try:
         answer = ask_expert_assistant(
             message=request.message,
