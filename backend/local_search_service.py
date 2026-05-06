@@ -135,36 +135,27 @@ def build_local_answer(query: str, results: List[Dict[str, Any]]) -> str:
             "یا کاتالوگ/دیتاشیت مرتبط را ارسال کنید."
         )
 
-    more_chunks = get_more_chunks_from_best_file(results, max_chunks=8)
+    best_result = results[0]
+    title = best_result.get("title", "")
+    content = best_result.get("content", "")
 
-    combined_text = "\n".join(
-        chunk["content"]
-        for chunk in more_chunks
-        if chunk.get("content")
-    )
-
-    relevant_sentences = extract_relevant_sentences(
-        combined_text,
-        query,
-        max_sentences=10
-    )
-
-    answer_parts = [
-        "جمع‌بندی اولیه:",
-    ]
-
-    if relevant_sentences:
-        for sentence in relevant_sentences[:6]:
-            answer_parts.append(f"• {sentence}")
-    else:
-        answer_parts.append(
-            "اطلاعات مرتبطی پیدا شد، اما متن موجود برای یک جمع‌بندی دقیق و کامل کافی نیست."
+    if not content.strip():
+        return (
+            "اطلاعات مرتبطی پیدا شد، اما متن کافی برای ارائه پاسخ دقیق در دسترس نیست.\n\n"
+            "برای پاسخ قطعی، لطفاً دیتاشیت، کاتالوگ یا مدل کامل را ارسال کنید."
         )
 
-    answer_parts.extend([
-        "",
-        "نکته مهم:",
-        "برای اعلام مشخصات قطعی، روش اندازه‌گیری، نوع نمونه قابل پذیرش، محدودیت‌ها یا کاربرد نهایی، بهتر است دیتاشیت، کاتالوگ یا مدل کامل بررسی شود."
-    ])
+    is_persian_query = bool(re.search(r"[\u0600-\u06FF]", query or ""))
 
-    return "\n".join(answer_parts)
+    if is_persian_query:
+        return (
+            "در حال حاضر امکان تولید پاسخ تحلیلی کامل برقرار نیست، اما اطلاعات مرتبطی برای این موضوع پیدا شد.\n\n"
+            f"برداشت اولیه: موضوع به «{title or 'منبع مرتبط'}» مربوط است.\n\n"
+            "برای ارائه پاسخ دقیق و قابل استناد، لازم است متن منبع توسط مدل تحلیلی پردازش شود یا اطلاعات تکمیلی مثل مدل کامل، کاربرد، نوع نمونه یا دیتاشیت ارسال شود."
+        )
+
+    return (
+        "Relevant information was found, but a full analytical answer is not available at the moment.\n\n"
+        f"Initial match: {title or 'related source'}\n\n"
+        "For a reliable answer, please provide the exact model, application, sample type, or datasheet."
+    )

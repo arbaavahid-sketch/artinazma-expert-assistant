@@ -160,29 +160,34 @@ def ask_expert_assistant(
 ) -> str:
     history_text = ""
     target_language = detect_user_language(message)
+
     if target_language == "fa":
-       language_instruction = """
-       زبان پیام جدید کاربر فارسی است.
-       قانون قطعی: پاسخ نهایی باید فقط فارسی باشد.
-       حتی اگر بخشی از پرامپت، تاریخچه، بانک دانش یا نام برندها انگلیسی بود، توضیحات و جمله‌بندی پاسخ را فارسی بنویس.
-       فقط نام برندها، مدل دستگاه‌ها، فرمول‌ها و اصطلاحات فنی ضروری می‌توانند انگلیسی بمانند.
-       """
+        language_instruction = """
+        زبان پیام جدید کاربر فارسی است.
+        قانون قطعی: پاسخ نهایی باید فقط فارسی باشد.
+        حتی اگر متن منبع، بانک دانش، استاندارد، کاتالوگ یا دیتاشیت انگلیسی بود، پاسخ را فارسی و کاربردی توضیح بده.
+        متن خام انگلیسی را کپی نکن؛ آن را خلاصه، ترجمه و تفسیر کن.
+        فقط نام برندها، مدل دستگاه‌ها، فرمول‌ها و اصطلاحات فنی ضروری می‌توانند انگلیسی بمانند.
+        """
     else:
         language_instruction = """
-          The user's latest message is in English.
-          Final answer must be in English.
-          """
+        The user's latest message is in English.
+        Final answer must be in English.
+        """
+
     if history:
         history_parts = []
+
         for item in history[-8:]:
             role = item.get("role", "")
             content = item.get("content", "")
+
             if role and content:
                 label = "کاربر" if role == "user" else "دستیار"
                 history_parts.append(f"{label}: {content}")
 
         history_text = "\n".join(history_parts)
-   
+
     user_content = f"""
     دستور زبان پاسخ:
     {language_instruction}
@@ -196,54 +201,51 @@ def ask_expert_assistant(
     سوال جدید کاربر:
     {message}
     """
+
     if context:
-     user_content += f"""
+        user_content += f"""
 
-       Relevant internal knowledge from Artin Azma Mehr knowledge base:
-    {context}
-     
-       Response instructions:
-       - Prioritize the internal knowledge above when it is relevant.
-       - If the knowledge base directly answers the user, use it as the main basis.
-       - If the knowledge base is incomplete, complete the answer with careful technical reasoning.
-       - If the question is about a product, device, chemical, catalyst, brand, analytical method, or ASTM standard, explain application, limitations, sample type, required equipment, QC considerations, and practical notes.
-       - If a product link or image is present in the knowledge/context, include it at the end.
-       - Do not invent links, prices, availability, certificates, or specifications.
-       - Avoid Markdown headings like ###.
-       - Ask only the most important follow-up questions.
-       """
+        اطلاعات بازیابی‌شده از منابع داخلی آرتین آزما:
+        {context}
+
+        دستور پاسخ:
+        - اگر اطلاعات داخلی مرتبط است، از آن برای پاسخ استفاده کن.
+        - به کاربر نگو پاسخ از بانک دانش، فایل داخلی، جست‌وجوی محلی یا منبع داخلی آمده است.
+        - نام فایل، امتیاز ارتباط، وضعیت اتصال یا روش بازیابی اطلاعات را در پاسخ نهایی نمایش نده.
+        - اگر متن منبع انگلیسی است و سوال فارسی است، آن را فارسی، خلاصه و کاربردی توضیح بده؛ متن خام انگلیسی را کپی نکن.
+        - اگر موضوع ASTM است، متن استاندارد را کپی نکن؛ کاربرد، دامنه، مفهوم، محدودیت‌ها و نکات عملی را توضیح بده.
+        - اگر اطلاعات کافی نیست، طبیعی و حرفه‌ای بگو چه اطلاعاتی برای پاسخ قطعی لازم است.
+        - از تیترهای Markdown مثل ### استفاده نکن.
+        """
     else:
-      user_content += """
+        user_content += """
 
-       Response instructions:
-       - No relevant internal knowledge was provided for this question.
-       - Answer using reliable technical reasoning and your role as Artin Azma Mehr's technical assistant.
-       - If the answer depends on product availability, exact model, price, or internal catalog data, clearly say that confirmation from the company is required.
-       - Do not invent links, prices, availability, certificates, or specifications.
-       - Avoid Markdown headings like ###.
-       - Ask only the most important follow-up questions.
-       """
+        دستور پاسخ:
+        - اطلاعات داخلی مرتبطی برای این سوال ارائه نشده است.
+        - با دانش فنی معتبر و با احتیاط پاسخ بده.
+        - اگر پاسخ به مدل دقیق، دیتاشیت، قیمت، موجودی یا کاتالوگ وابسته است، مشخصات قطعی نساز.
+        - از تیترهای Markdown مثل ### استفاده نکن.
+        """
+
     tools = []
 
-    if allow_web_search and os.getenv("OPENAI_WEB_SEARCH_ENABLED", "false").strip().lower() == "true":
-        tools.append({
-            "type": "web_search_preview"
-        })
+    if (
+        allow_web_search
+        and os.getenv("OPENAI_WEB_SEARCH_ENABLED", "false").strip().lower() == "true"
+    ):
+        tools.append({"type": "web_search_preview"})
 
         user_content += """
 
-       Web search instruction:
-       - If internal knowledge is insufficient, use web search to verify technical details.
-       - Prefer official manufacturer pages, official datasheets, manuals, standards organizations, academic or government sources.
-       - Do not rely on random reseller pages, marketplaces, blogs or unverified summaries for technical claims.
-       - Do not invent specifications, detector type, sample type, price, availability, certificates, or product images.
-       - Do not mention internal search process to the user.
-       - Do not say phrases like "based on web search", "based on internal knowledge", or "AI service".
-       - Present the final answer naturally as Artin, the technical advisor.
-       - If reliable information is still insufficient, clearly say what exact information is needed.
-       """
-        
-        request_payload = {
+        دستور جست‌وجوی وب:
+        - اگر اطلاعات داخلی کافی نیست، از جست‌وجوی وب برای راستی‌آزمایی استفاده کن.
+        - منابع رسمی سازنده، دیتاشیت رسمی، manual، استانداردها، منابع دانشگاهی یا دولتی را ترجیح بده.
+        - به صفحات فروشگاهی، وبلاگ‌ها و متن‌های تبلیغاتی به‌عنوان منبع قطعی اتکا نکن.
+        - مشخصات فنی، نوع نمونه، روش اندازه‌گیری، تصویر، قیمت یا موجودی را بدون منبع معتبر نساز.
+        - در پاسخ نهایی نگو که از وب سرچ یا بانک دانش استفاده کرده‌ای.
+        """
+
+    request_payload = {
         "model": MODEL,
         "input": [
             {
@@ -260,11 +262,18 @@ def ask_expert_assistant(
     if tools:
         request_payload["tools"] = tools
 
-    response = client.responses.create(**request_payload)
+    try:
+        response = client.responses.create(**request_payload)
+    except Exception as e:
+        if tools:
+            print("OpenAI web search failed, retrying without web search:", e)
+
+            request_payload.pop("tools", None)
+            response = client.responses.create(**request_payload)
+        else:
+            raise
 
     return clean_ai_answer(response.output_text)
-   
-
 
 def analyze_image_with_ai(file_path: str, user_note: str = "", web_context: str = "") -> str:
     path = Path(file_path)
