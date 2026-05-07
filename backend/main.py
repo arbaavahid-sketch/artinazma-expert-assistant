@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import shutil
 from standard_service import get_context_for_app
 from answer_formatter_service import format_answer_for_ui
+from text_format_service import format_answer_for_ui
 from answer_quality_service import build_answer_quality_context
 from intent_service import detect_question_intent
 from artinazma_index_service import rebuild_artinazma_index, load_index
