@@ -58,3 +58,124 @@ select {
   font-size: 18px;
   line-height: 1.9;
 }
+.ai-message-card {
+  max-width: 860px;
+  padding: 22px 26px;
+  border-radius: 28px;
+  background: #ffffff;
+  color: #172033;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+}
+
+.ai-markdown {
+  font-size: 15.8px;
+  line-height: 2.15;
+  color: #1f2937;
+}
+
+.rtl-markdown {
+  direction: rtl;
+  text-align: right;
+}
+
+.ltr-markdown {
+  direction: ltr;
+  text-align: left;
+}
+
+.ai-md-title {
+  margin: 0 0 14px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #0f172a;
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.9;
+}
+
+.ai-md-section {
+  margin: 18px 0 8px 0;
+  color: #1d4ed8;
+  font-size: 16.5px;
+  font-weight: 900;
+  line-height: 1.9;
+}
+
+.ai-md-paragraph {
+  margin: 0 0 12px 0;
+  line-height: 2.15;
+}
+
+.ai-md-list {
+  margin: 8px 0 14px 0;
+  padding-right: 22px;
+  padding-left: 0;
+}
+
+.ltr-markdown .ai-md-list {
+  padding-right: 0;
+  padding-left: 22px;
+}
+
+.ai-md-list-item {
+  margin: 6px 0;
+  line-height: 2.05;
+}
+
+.ai-md-list-item::marker {
+  color: #2563eb;
+  font-weight: 900;
+}
+
+.ai-md-strong {
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.ai-md-code {
+  direction: ltr;
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 13px;
+}
+
+.ai-md-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin: 14px 0;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.ai-md-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.ai-md-th {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 900;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ai-md-td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: top;
+}
+
+.ai-md-table tr:last-child .ai-md-td {
+  border-bottom: none;
+}

@@ -126,36 +126,76 @@ def extract_relevant_sentences(text: str, query: str, max_sentences: int = 8) ->
 
     return [sentence for _, sentence in scored_sentences[:max_sentences]]
 
-
 def build_local_answer(query: str, results: List[Dict[str, Any]]) -> str:
+    is_persian_query = bool(re.search(r"[\u0600-\u06FF]", query or ""))
+
     if not results:
+        if is_persian_query:
+            return (
+                "جمع‌بندی اولیه:\n"
+                "برای این سؤال، منبع داخلی دقیقی پیدا نشد؛ اما این موضوع از نوع دانش فنی عمومی است و نباید پاسخ متوقف شود.\n\n"
+                "اقدام پیشنهادی:\n"
+                "لطفاً وضعیت اتصال به مدل تحلیلی اصلی را بررسی کنید. در حالت صحیح، آرتین باید حتی بدون منبع داخلی هم پاسخ تخصصی و کاربردی ارائه کند.\n\n"
+                "برای پاسخ دقیق‌تر، نوع نمونه، هدف آزمون، عناصر موردنظر، محدوده غلظت و استاندارد موردنیاز را مشخص کنید."
+            )
+
         return (
-            "برای این موضوع اطلاعات کافی در منابع فعلی در دسترس نیست.\n\n"
-            "برای پاسخ دقیق‌تر، لطفاً مدل کامل دستگاه، برند، نوع نمونه، کاربرد موردنظر "
-            "یا کاتالوگ/دیتاشیت مرتبط را ارسال کنید."
+            "No exact internal source was found. The main analytical model should still answer this technical question. "
+            "Please check the main model connection and request logs."
         )
 
     best_result = results[0]
-    title = best_result.get("title", "")
+    title = best_result.get("title", "") or "منبع مرتبط"
     content = best_result.get("content", "")
 
-    if not content.strip():
-        return (
-            "اطلاعات مرتبطی پیدا شد، اما متن کافی برای ارائه پاسخ دقیق در دسترس نیست.\n\n"
-            "برای پاسخ قطعی، لطفاً دیتاشیت، کاتالوگ یا مدل کامل را ارسال کنید."
-        )
-
-    is_persian_query = bool(re.search(r"[\u0600-\u06FF]", query or ""))
-
     if is_persian_query:
-        return (
-            "در حال حاضر امکان تولید پاسخ تحلیلی کامل برقرار نیست، اما اطلاعات مرتبطی برای این موضوع پیدا شد.\n\n"
-            f"برداشت اولیه: موضوع به «{title or 'منبع مرتبط'}» مربوط است.\n\n"
-            "برای ارائه پاسخ دقیق و قابل استناد، لازم است متن منبع توسط مدل تحلیلی پردازش شود یا اطلاعات تکمیلی مثل مدل کامل، کاربرد، نوع نمونه یا دیتاشیت ارسال شود."
+        extracted_sentences = extract_relevant_sentences(
+            text=content,
+            query=query,
+            max_sentences=5,
         )
 
-    return (
-        "Relevant information was found, but a full analytical answer is not available at the moment.\n\n"
-        f"Initial match: {title or 'related source'}\n\n"
-        "For a reliable answer, please provide the exact model, application, sample type, or datasheet."
+        answer_parts = [
+            "جمع‌بندی اولیه:",
+            "اطلاعاتی مرتبط با سؤال پیدا شد، اما پاسخ کامل باید توسط مدل تحلیلی اصلی تولید شود.",
+            "",
+            f"منبع مرتبط: {title}",
+        ]
+
+        if extracted_sentences:
+            answer_parts.append("")
+            answer_parts.append("نکات قابل برداشت از متن موجود:")
+            for sentence in extracted_sentences:
+                answer_parts.append(f"• {sentence}")
+
+        answer_parts.extend([
+            "",
+            "اقدام پیشنهادی:",
+            "اگر این پاسخ به جای پاسخ کامل آرتین نمایش داده شده، یعنی فراخوانی مدل اصلی خطا داده است. لاگ بک‌اند را بررسی کنید؛ معمولاً خطا در API Key، مدل، پارامترهای Responses API، timeout یا web_search رخ می‌دهد.",
+        ])
+
+        return "\n".join(answer_parts)
+
+    extracted_sentences = extract_relevant_sentences(
+        text=content,
+        query=query,
+        max_sentences=5,
     )
+
+    answer_parts = [
+        "Relevant information was found, but the main analytical model should generate the full answer.",
+        f"Related source: {title}",
+    ]
+
+    if extracted_sentences:
+        answer_parts.append("")
+        answer_parts.append("Relevant extracted points:")
+        for sentence in extracted_sentences:
+            answer_parts.append(f"- {sentence}")
+
+    answer_parts.append("")
+    answer_parts.append(
+        "If this fallback is shown instead of the full answer, check the backend logs for the main model error."
+    )
+
+    return "\n".join(answer_parts)

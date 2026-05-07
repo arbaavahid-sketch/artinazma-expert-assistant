@@ -224,10 +224,10 @@ function getDomainLabel(domain: string) {
 }
 function cleanMarkdownText(text: string) {
   return text
-    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
     .replace(/^\s*---+\s*$/gm, "")
-    .replace(/\*\*(.*?)\*\*/g, "$1")
-    .replace(/^\s*[-*]\s+/gm, "• ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -1464,40 +1464,80 @@ function MessageBubble({
         )}
 
         <div
-          className={`rounded-[30px] px-6 py-5 shadow-sm ${
-            isUser
-              ? "bg-blue-700 text-white"
-              : "border border-slate-100 bg-white text-slate-900"
-          }`}
-        >
+  className={`shadow-sm ${
+    isUser
+      ? "max-w-[760px] rounded-[26px] bg-blue-700 px-5 py-4 text-white"
+      : "ai-message-card"
+  }`}
+>
           <div
   dir={direction}
   style={{ fontFamily }}
-  className={`whitespace-pre-wrap ${
-    direction === "rtl"
-      ? "chat-answer text-right"
-      : "chat-answer-en text-left"
-  }`}
+  className={
+    isUser
+      ? "whitespace-pre-wrap text-right leading-8"
+      : direction === "rtl"
+      ? "ai-markdown rtl-markdown"
+      : "ai-markdown ltr-markdown"
+  }
 >
   {isUser ? (
     displayContent
   ) : (
     <ReactMarkdown
-      components={{
-        a: ({ href, children }) => (
-          <a
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-            className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
-          >
-            {children}
-          </a>
-        ),
-      }}
-    >
-      {displayContent}
-    </ReactMarkdown>
+  components={{
+    h1: ({ children }) => (
+      <h2 className="ai-md-title">{children}</h2>
+    ),
+    h2: ({ children }) => (
+      <h2 className="ai-md-title">{children}</h2>
+    ),
+    h3: ({ children }) => (
+      <h3 className="ai-md-section">{children}</h3>
+    ),
+    p: ({ children }) => (
+      <p className="ai-md-paragraph">{children}</p>
+    ),
+    ul: ({ children }) => (
+      <ul className="ai-md-list">{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="ai-md-list ai-md-ordered">{children}</ol>
+    ),
+    li: ({ children }) => (
+      <li className="ai-md-list-item">{children}</li>
+    ),
+    strong: ({ children }) => (
+      <strong className="ai-md-strong">{children}</strong>
+    ),
+    code: ({ children }) => (
+      <code className="ai-md-code">{children}</code>
+    ),
+    a: ({ href, children }) => (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
+      >
+        {children}
+      </a>
+    ),
+    table: ({ children }) => (
+      <div className="ai-md-table-wrap">
+        <table className="ai-md-table">{children}</table>
+      </div>
+    ),
+    th: ({ children }) => (
+      <th className="ai-md-th">{children}</th>
+    ),
+    td: ({ children }) => (
+      <td className="ai-md-td">{children}</td>
+    ),
+  }}
+>
+  {displayContent}
+</ReactMarkdown>
   )}
 </div>
           {item.attachment && (

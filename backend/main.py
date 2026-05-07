@@ -85,34 +85,73 @@ def make_safe_filename(filename: str) -> str:
 def is_specific_product_or_model_question(message: str) -> bool:
     text = (message or "").lower()
 
-    has_latin_model = bool(
-        re.search(r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?", message or "")
+    latin_tokens = re.findall(
+        r"\b[A-Za-z][A-Za-z0-9\-]{1,}\b",
+        message or ""
     )
+
+    if not latin_tokens:
+        return False
+
+    # این‌ها تکنیک، روش، استاندارد یا اصطلاح عمومی هستند؛ مدل محصول حساب نشوند
+    known_technical_terms = {
+        "xrf", "edxrf", "wdxrf", "xrd",
+        "icp", "icp-oes", "icp-ms", "aas",
+        "gc", "gc-ms", "gcms", "hplc", "lc",
+        "ftir", "uv", "uv-vis", "uvvis",
+        "nmr", "ms", "fid", "tcd", "ecd", "fpd", "scd",
+        "bet", "tpr", "tpd", "sem", "tem",
+        "astm", "iso", "epa", "en", "api", "nace",
+        "btex", "voc", "h2s", "cos", "cs2",
+        "lod", "loq", "rsd", "qc", "crm",
+        "tan", "tbn", "cfpp",
+    }
+
+    normalized_tokens = {
+        token.strip().lower()
+        for token in latin_tokens
+        if token.strip()
+    }
+
+    # اگر همه کلمات لاتین از جنس تکنیک/استاندارد/پارامتر هستند، مدل دستگاه نیست
+    if normalized_tokens and all(token in known_technical_terms for token in normalized_tokens):
+        return False
 
     model_keywords = [
         "مدل",
         "دستگاه",
+        "آنالایزر",
         "مشخصات",
         "دیتاشیت",
         "کاتالوگ",
-        "چیست",
-        "درباره",
-        "در مورد",
-        "توضیح",
-        "معرفی",
+        "manual",
+        "datasheet",
+        "catalog",
         "model",
         "device",
         "instrument",
-        "datasheet",
-        "specification",
-        "manual",
-        "catalog",
-        "about",
+        "analyzer",
+        "part number",
+        "serial",
     ]
 
-    return has_latin_model and any(keyword in text for keyword in model_keywords)
+    # کلمه «چیست» را از این لیست حذف کردیم، چون سوال‌های عمومی مثل XRF چیست را خراب می‌کرد.
+    if not any(keyword in text for keyword in model_keywords):
+        return False
 
+    # اگر حداقل یک token لاتین شبیه مدل واقعی باشد
+    # مثال: SpectroScan SE، GC-5000، DMA-4500، M4000
+    has_model_like_token = any(
+        (
+            re.search(r"\d", token) or
+            "-" in token or
+            len(token) >= 6
+        )
+        and token.lower() not in known_technical_terms
+        for token in normalized_tokens
+    )
 
+    return has_model_like_token
 def context_has_exact_model_match(message: str, docs: list) -> bool:
     
     model_tokens = re.findall(
@@ -135,7 +174,6 @@ def context_has_exact_model_match(message: str, docs: list) -> bool:
             return True
 
     return False
-
 def is_artinazma_related_question(message: str) -> bool:
     text = (message or "").lower()
 
@@ -176,35 +214,83 @@ def is_artinazma_related_question(message: str) -> bool:
     return any(keyword in text for keyword in keywords)
 
 
-def remove_company_references(answer: str) -> str:
+def remove_company_mentions_if_not_allowed(answer: str) -> str:
     if not answer:
         return ""
 
-    cleaned = answer
-
-    forbidden_patterns = [
-        r"آرتین\s*آزما\s*مهر",
-        r"آرتین\s*آزما",
-        r"ارتین\s*ازما",
-        r"artinazma\.net",
-        r"https?://artinazma\.net\S*",
-        r"info@artinazma\.net",
-        r"02191008898",
-        r"09906060910",
-        r"کارشناسان\s+ما",
-        r"شرکت\s+ما",
-        r"وب‌سایت\s+ما",
-        r"وبسایت\s+ما",
-        r"سایت\s+ما",
+    blocked_patterns = [
+        r".*آرتین آزما مهر.*\n?",
+        r".*آرتین آزما.*\n?",
+        r".*ارتین ازما.*\n?",
+        r".*artinazma\.net.*\n?",
+        r".*info@artinazma\.net.*\n?",
+        r".*09906060910.*\n?",
+        r".*02191008898.*\n?",
+        r".*صفحه مرتبط در سایت.*\n?",
+        r".*سایت رسمی.*\n?",
+        r".*برای اطلاعات بیشتر.*کارشناسان.*\n?",
+        r".*برای راهنمایی بیشتر.*ایمیل.*\n?",
+        r".*برای دریافت پیش.?فاکتور.*\n?",
     ]
 
-    for pattern in forbidden_patterns:
+    cleaned = answer
+
+    for pattern in blocked_patterns:
         cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
 
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
-    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
 
     return cleaned.strip()
+def polish_answer_for_ui(answer: str) -> str:
+    if not answer:
+        return ""
+
+    text = answer.strip()
+
+    # حذف فاصله‌های خالی خیلی زیاد
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    # اگر چند بولت داخل یک خط آمده‌اند، جداشان کن
+    text = re.sub(r"\s+•\s+", "\n• ", text)
+
+    # اگر شماره‌گذاری‌ها داخل یک خط آمده‌اند، کمی مرتبشان کن
+    text = re.sub(r"\s+(\d+)\.\s+", r"\n\1. ", text)
+
+    # تیترهای رایج را از متن قبلی جدا کن
+    headings = [
+        "جمع‌بندی کاربردی",
+        "تفاوت بنیادی",
+        "مقایسه فنی و عملیاتی",
+        "محدودیت‌ها و خطاهای رایج",
+        "سناریوی انتخاب",
+        "اطلاعات لازم برای تصمیم قطعی",
+        "پیشنهاد عملی",
+        "نکات ایمنی",
+        "کنترل کیفیت",
+        "اقدام بعدی",
+    ]
+
+    for h in headings:
+        text = re.sub(rf"(?<!\n)({re.escape(h)})", r"\n\n\1", text)
+
+    # تمیزکاری خطوط
+    lines = [line.strip() for line in text.splitlines()]
+    cleaned_lines = []
+
+    for line in lines:
+        if not line:
+            if cleaned_lines and cleaned_lines[-1] != "":
+                cleaned_lines.append("")
+            continue
+
+        cleaned_lines.append(line)
+
+    text = "\n".join(cleaned_lines)
+
+    # دوباره فاصله‌های اضافی را کنترل کن
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    return text.strip()
 class ChatHistoryMessage(BaseModel):
     role: str
     content: str
@@ -326,7 +412,19 @@ def chat(request: ChatRequest):
             best_score = float(related_docs[0].get("score", 0) or 0)
         except Exception:
             best_score = 0.0
-
+            # برای سوالات عمومی فنی، مقایسه‌ای، انتخاب روش یا عیب‌یابی،
+    # اگر منبع داخلی خیلی مطمئن نیست، اجازه نده منبع نامرتبط جواب را خراب کند.
+    if question_intent in [
+    "technical_general",
+    "equipment_recommendation",
+    "troubleshooting",
+    "lab_analysis",
+]:
+     if best_score < 14:
+        related_docs = []
+        best_score = 0.0
+        search_mode = f"{search_mode}+ignored_weak_internal_context"
+    
     resource_links = []
     resource_images = []
     artinazma_context = ""
@@ -424,15 +522,32 @@ def chat(request: ChatRequest):
 
     context = f"{context}\n\n{intent_context}".strip()
 
+    quality_context = ""
+
+    try:
+        quality_context = build_answer_quality_context(
+            message=request.message,
+            intent=question_intent,
+            intent_label=question_intent_label,
+            domain=detected_domain,
+        )
+    except Exception as e:
+        print("Answer quality context failed:", e)
+        quality_context = ""
+
+    if quality_context:
+        context = f"{context}\n\n{quality_context}".strip()
+
     standard_context = ""
 
     try:
         standard_context = get_context_for_app(request.message)
     except Exception as e:
         print("Standard engine failed:", e)
+        standard_context = ""
 
     if standard_context:
-       context = f"{context}\n\n{standard_context}".strip()
+        context = f"{context}\n\n{standard_context}".strip()
 
     quality_context = ""
 
@@ -478,13 +593,16 @@ def chat(request: ChatRequest):
           domain=detected_domain,
           allow_web_search=allow_web_search
        )
+        answer = polish_answer_for_ui(answer)
         answer_mode = "ai"
     except Exception as e:
-        print("AI answer failed, using local answer:", e)
-        answer = build_local_answer(request.message, related_docs)
-        answer_mode = "local"
+      import traceback
+      traceback.print_exc()
+      print("AI answer failed, using local answer. Error:", repr(e))
+      answer = build_local_answer(request.message, related_docs)
+      answer_mode = "local"
     if not allow_company_reference:
-       answer = remove_company_references(answer)
+       answer = remove_company_mentions_if_not_allowed(answer)
     sources = [
         {
             "title": doc.get("title", ""),

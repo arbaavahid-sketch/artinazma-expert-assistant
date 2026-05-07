@@ -145,6 +145,10 @@ ISSUE_KEYWORDS = {
         "تحلیل", "تفسیر", "نتیجه", "گزارش", "نمودار", "کروماتوگرام",
         "این عدد", "این خروجی", "چطور تفسیر"
     ],
+    "مقایسه فنی": [
+    "تفاوت", "فرق", "مقایسه", "کدام بهتر", "کدوم بهتر",
+    "xrf و icp", "gc و hplc", "icp و aas", "compare", "difference"
+    ],
     "استاندارد یا روش آزمون": [
         "astm", "iso", "epa", "en ", "استاندارد", "روش آزمون", "method"
     ],
@@ -182,9 +186,25 @@ def build_core_quality_rules() -> str:
 - اگر سؤال فارسی است، پاسخ نهایی فارسی باشد و فقط نام برند، مدل، استاندارد و اصطلاحات ضروری انگلیسی بماند.
 - از فاصله‌های خالی زیاد استفاده نکن. بین بخش‌ها فقط یک خط فاصله کافی است.
 - از تیترهای ساده و کوتاه استفاده کن. از ### و --- استفاده نکن.
+- هر bullet باید در خط جداگانه باشد. چند bullet را داخل یک خط ننویس.
+- بعد از هر تیتر، متن را از خط بعد شروع کن.
+- پاراگراف‌ها کوتاه باشند و برای نمایش در کارت چت خوانا باشند.
 - خروجی را به یک فهرست طولانی بی‌هدف تبدیل نکن؛ فقط موارد مرتبط با سؤال را بیاور.
 """.strip()
-
+def build_presentation_rules() -> str:
+    return """
+قواعد ظاهر و قالب پاسخ:
+- پاسخ باید تمیز، حرفه‌ای، فشرده و قابل اسکن باشد.
+- از جمله‌های مقدماتی کلی مثل «در ادامه به مقایسه می‌پردازیم» استفاده نکن؛ مستقیم وارد جواب شو.
+- بین تیتر و متن فقط یک خط فاصله باشد، نه فاصله زیاد.
+- تیترها کوتاه باشند؛ مثل «جمع‌بندی»، «مقایسه فنی»، «کدام را انتخاب کنیم؟»، «QC و خطاهای رایج».
+- از Markdown سنگین مثل ###، --- و ایموجی زیاد استفاده نکن.
+- هر بخش بیشتر از ۴ تا ۶ بولت نداشته باشد.
+- اگر سؤال مقایسه‌ای است، پاسخ را به شکل مقایسه تصمیم‌ساز بنویس، نه توضیح کتابی.
+- اگر دو روش یا دستگاه مقایسه می‌شوند، حتماً بخش «کدام بهتر است؟» اضافه کن.
+- در پایان فقط اطلاعات تکمیلی واقعاً لازم را بپرس، نه فهرست طولانی.
+- خروجی نهایی نباید فاصله‌های خالی زیاد داشته باشد.
+""".strip()
 
 def build_intent_quality_rules(intent: str, intent_label: str) -> str:
     intent = intent or ""
@@ -325,12 +345,15 @@ def build_matrix_quality_rules(hints: Dict[str, List[str]]) -> str:
 - جذب سطحی، واکنش‌پذیری و ناپایداری ترکیبات گوگردی را توضیح بده.
 """)
 
-    if "فلزات و عناصر" in analytes or "ICP/AAS" in techniques:
+    if "فلزات و عناصر" in analytes or "ICP/AAS" in techniques or "XRF/XRD" in techniques:
         blocks.append("""
 قواعد فلزات و عناصر:
-- انتخاب بین ICP-OES، ICP-MS، AAS و XRF به غلظت، ماتریس، LOD/LOQ، تعداد عناصر و آماده‌سازی بستگی دارد.
-- digestion یا آماده‌سازی ناقص می‌تواند نتیجه را کم‌نمایی کند.
-- blank، CRM، matrix spike، duplicate، internal standard و interference correction را بررسی کن.
+- انتخاب بین XRF، ICP-OES، ICP-MS و AAS به ماتریس، غلظت، LOD/LOQ، تعداد عناصر، آماده‌سازی نمونه و هدف آزمون بستگی دارد.
+- XRF معمولاً سریع‌تر و کم‌تخریب‌تر است، اما اثر ماتریس، ضخامت نمونه، یکنواختی، cup/film و کالیبراسیون می‌تواند خطای جدی ایجاد کند.
+- ICP معمولاً برای trace metals و دقت بالاتر مناسب‌تر است، اما نیاز به digestion/رقیق‌سازی معتبر دارد.
+- digestion ناقص در ICP می‌تواند فلزات را کم‌نمایی کند، مخصوصاً در نفت خام، fuel oil، کاتالیست مصرف‌شده یا نمونه‌های دارای ذرات.
+- برای QC فلزات، blank، CRM، matrix spike، duplicate، calibration verification، internal standard و interference correction را بررسی کن.
+- XRF برای screening سریع و غلظت‌های بالاتر مناسب‌تر است؛ ICP-MS برای غلظت‌های خیلی پایین و ICP-OES برای چندعنصری روتین مناسب‌تر است.
 """)
 
     if "GC/GC-MS" in techniques or "HPLC" in techniques:
@@ -368,6 +391,17 @@ def build_matrix_quality_rules(hints: Dict[str, List[str]]) -> str:
 
 
 def build_final_answer_shape(intent: str) -> str:
+    
+    if intent == "technical_general":
+        return """
+ساختار پیشنهادی پاسخ:
+1. جمع‌بندی کوتاه
+2. تفاوت اصلی
+3. مقایسه فنی کاربردی
+4. کدام روش برای چه شرایطی بهتر است؟
+5. خطاها، QC و محدودیت‌های مهم
+6. اطلاعات تکمیلی لازم
+""".strip()
     if intent == "troubleshooting":
         return """
 ساختار پیشنهادی پاسخ:
@@ -459,7 +493,7 @@ def build_answer_quality_context(
 {detected_summary}
 {company_reference_rule}
 {build_core_quality_rules()}
-
+{build_presentation_rules()}
 {build_intent_quality_rules(intent=intent, intent_label=intent_label)}
 
 {build_matrix_quality_rules(hints)}
