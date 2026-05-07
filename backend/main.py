@@ -135,6 +135,7 @@ def context_has_exact_model_match(message: str, docs: list) -> bool:
             return True
 
     return False
+
 def is_artinazma_related_question(message: str) -> bool:
     text = (message or "").lower()
 
@@ -175,31 +176,33 @@ def is_artinazma_related_question(message: str) -> bool:
     return any(keyword in text for keyword in keywords)
 
 
-def remove_company_mentions_if_not_allowed(answer: str) -> str:
+def remove_company_references(answer: str) -> str:
     if not answer:
         return ""
 
-    blocked_patterns = [
-        r".*آرتین آزما مهر.*\n?",
-        r".*آرتین آزما.*\n?",
-        r".*ارتین ازما.*\n?",
-        r".*artinazma\.net.*\n?",
-        r".*info@artinazma\.net.*\n?",
-        r".*09906060910.*\n?",
-        r".*02191008898.*\n?",
-        r".*صفحه مرتبط در سایت.*\n?",
-        r".*سایت رسمی.*\n?",
-        r".*برای اطلاعات بیشتر.*کارشناسان.*\n?",
-        r".*برای راهنمایی بیشتر.*ایمیل.*\n?",
-        r".*برای دریافت پیش.?فاکتور.*\n?",
-    ]
-
     cleaned = answer
 
-    for pattern in blocked_patterns:
+    forbidden_patterns = [
+        r"آرتین\s*آزما\s*مهر",
+        r"آرتین\s*آزما",
+        r"ارتین\s*ازما",
+        r"artinazma\.net",
+        r"https?://artinazma\.net\S*",
+        r"info@artinazma\.net",
+        r"02191008898",
+        r"09906060910",
+        r"کارشناسان\s+ما",
+        r"شرکت\s+ما",
+        r"وب‌سایت\s+ما",
+        r"وبسایت\s+ما",
+        r"سایت\s+ما",
+    ]
+
+    for pattern in forbidden_patterns:
         cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
 
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
 
     return cleaned.strip()
 class ChatHistoryMessage(BaseModel):
@@ -481,7 +484,7 @@ def chat(request: ChatRequest):
         answer = build_local_answer(request.message, related_docs)
         answer_mode = "local"
     if not allow_company_reference:
-       answer = remove_company_mentions_if_not_allowed(answer)
+       answer = remove_company_references(answer)
     sources = [
         {
             "title": doc.get("title", ""),
