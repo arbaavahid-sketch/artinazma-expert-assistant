@@ -3,6 +3,7 @@ import re
 from fastapi.staticfiles import StaticFiles
 import shutil
 from standard_service import get_context_for_app
+from answer_formatter_service import format_answer_for_ui
 from answer_quality_service import build_answer_quality_context
 from intent_service import detect_question_intent
 from artinazma_index_service import rebuild_artinazma_index, load_index
@@ -587,20 +588,24 @@ def chat(request: ChatRequest):
     context = f"{context}\n\n{company_visibility_context}".strip()
     try:
         answer = ask_expert_assistant(
-          message=request.message,
-          context=context,
-          history=history,
-          domain=detected_domain,
-          allow_web_search=allow_web_search
-       )
-        answer = polish_answer_for_ui(answer)
+            message=request.message,
+            context=context,
+            history=history,
+            domain=detected_domain,
+            allow_web_search=allow_web_search
+        )
+
+        answer = format_answer_for_ui(answer)
+
         answer_mode = "ai"
+
     except Exception as e:
-      import traceback
-      traceback.print_exc()
-      print("AI answer failed, using local answer. Error:", repr(e))
-      answer = build_local_answer(request.message, related_docs)
-      answer_mode = "local"
+        print("AI answer failed, using local answer:", e)
+
+        answer = build_local_answer(request.message, related_docs)
+        answer = format_answer_for_ui(answer)
+
+        answer_mode = "local"
     if not allow_company_reference:
        answer = remove_company_mentions_if_not_allowed(answer)
     sources = [
@@ -1206,7 +1211,7 @@ def system_status(check_ai: bool = False):
         "openai_error": ai_error,
         "local_fallback_enabled": True,
         "knowledge_stats": knowledge_stats_data,
-    }
+        }
 @app.post("/customers/register")
 def customer_register(request: CustomerRegisterRequest):
     if not request.full_name.strip():
