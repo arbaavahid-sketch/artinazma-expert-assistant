@@ -5,64 +5,65 @@ def format_answer_for_ui(text: str) -> str:
     if not text:
         return ""
 
-    cleaned = text.strip()
+    cleaned = str(text).strip()
 
-    # حذف Markdown سنگین
+    # یکسان‌سازی newline
+    cleaned = cleaned.replace("\r\n", "\n").replace("\r", "\n")
+
+    # حذف markdown سنگین
     cleaned = re.sub(r"^#{1,6}\s*", "", cleaned, flags=re.MULTILINE)
-    cleaned = cleaned.replace("---", "")
+    cleaned = re.sub(r"\n\s*---+\s*\n", "\n\n", cleaned)
 
-    # تیترهای رایج که باید خط جدا داشته باشند
-    headings = [
-        "جمع‌بندی کاربردی",
-        "جمع‌بندی کوتاه",
-        "تفاوت بنیادی",
-        "مقایسه فنی و عملیاتی",
-        "مقایسه فنی",
-        "محدودیت‌ها و خطاهای رایج",
-        "سناریوی انتخاب",
-        "پیشنهاد عملی",
-        "نکات عملی",
-        "کنترل کیفیت",
-        "نکات نمونه‌برداری و آماده‌سازی",
-        "اطلاعات لازم برای تصمیم قطعی",
-        "اطلاعات تکمیلی موردنیاز",
-        "اقدام بعدی",
-        "نتیجه‌گیری",
-    ]
-
-    for heading in headings:
-        cleaned = re.sub(
-            rf"\s*{re.escape(heading)}\s*",
-            f"\n\n{heading}\n",
-            cleaned,
-        )
-
-    # هر بولت حتماً برود اول خط
+    # اگر مدل بولت‌ها را پشت سر هم نوشته، هر بولت را خط جدید کن
     cleaned = re.sub(r"\s*•\s*", "\n• ", cleaned)
 
-    # شماره‌گذاری‌ها هم خط جدا شوند
-    cleaned = re.sub(r"\s+([0-9۰-۹]+[\.\)])\s+", r"\n\1 ", cleaned)
+    # اگر مدل از - به عنوان بولت استفاده کرد
+    cleaned = re.sub(r"(?<!\n)\s+-\s+", "\n- ", cleaned)
 
-    # اگر تیتر با دو نقطه آمده بود، متن بعدی جدا شود
-    cleaned = re.sub(
-        r"(?m)^([آ-یA-Za-z0-9 /،()‌\-]{3,60}:)\s+",
-        r"\1\n",
-        cleaned,
-    )
+    # تیترهای رایج را از متن جدا کن
+    section_titles = [
+        "جمع‌بندی کاربردی",
+        "جمع بندی کاربردی",
+        "جمع‌بندی",
+        "جمع بندی",
+        "تفاوت بنیادی",
+        "مقایسه فنی",
+        "مقایسه فنی و عملیاتی",
+        "روش‌ها یا دستگاه‌های مناسب",
+        "روش ها یا دستگاه های مناسب",
+        "معیار انتخاب",
+        "نکات نمونه‌برداری",
+        "نکات نمونه برداری",
+        "آماده‌سازی نمونه",
+        "آماده سازی نمونه",
+        "کنترل کیفیت",
+        "QC",
+        "محدودیت‌ها",
+        "محدودیت ها",
+        "خطاهای رایج",
+        "سناریوی انتخاب",
+        "پیشنهاد عملی",
+        "اقدام بعدی",
+        "اطلاعات لازم برای تصمیم قطعی",
+        "اطلاعات تکمیلی موردنیاز",
+        "اطلاعات تکمیلی مورد نیاز",
+    ]
 
-    # تمیزکاری خط‌ها
-    lines = []
-    for line in cleaned.splitlines():
-        line = line.strip()
-        if line:
-            lines.append(line)
-        else:
-            if lines and lines[-1] != "":
-                lines.append("")
+    for title in section_titles:
+        cleaned = re.sub(
+            rf"\s*({re.escape(title)})(\s*:)?\s*",
+            rf"\n\n\1\n",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
 
-    cleaned = "\n".join(lines)
+    # اگر چند بولت پشت سر هم بعد از تیتر آمده، مرتب شود
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
-    # حذف فاصله‌های خیلی زیاد
+    # فاصله اضافه اول خط‌ها
+    cleaned = "\n".join(line.strip() for line in cleaned.split("\n"))
+
+    # دوباره فاصله‌های خیلی زیاد را کم کن
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
     return cleaned.strip()

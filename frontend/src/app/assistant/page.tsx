@@ -222,13 +222,76 @@ function getDomainLabel(domain: string) {
   if (domain === "analysis") return "آنالیز و تست";
   return "تشخیص خودکار";
 }
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function cleanMarkdownText(text: string) {
-  return text
+  if (!text) return "";
+
+  let cleaned = text
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
     .replace(/^\s*---+\s*$/gm, "")
-    .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  const sectionTitles = [
+    "جمع‌بندی کاربردی",
+    "جمع بندی کاربردی",
+    "جمع‌بندی",
+    "جمع بندی",
+    "تفاوت بنیادی",
+    "مقایسه فنی و عملیاتی",
+    "مقایسه فنی",
+    "روش‌ها یا دستگاه‌های مناسب",
+    "روش ها یا دستگاه های مناسب",
+    "معیار انتخاب",
+    "نکات نمونه‌برداری",
+    "نکات نمونه برداری",
+    "آماده‌سازی نمونه",
+    "آماده سازی نمونه",
+    "کنترل کیفیت",
+    "QC",
+    "محدودیت‌ها و خطاهای رایج",
+    "محدودیت‌ها",
+    "محدودیت ها",
+    "خطاهای رایج",
+    "سناریوی انتخاب",
+    "پیشنهاد عملی",
+    "اقدام بعدی",
+    "اطلاعات لازم برای تصمیم قطعی",
+    "اطلاعات تکمیلی موردنیاز",
+    "اطلاعات تکمیلی مورد نیاز",
+  ];
+
+  for (const title of sectionTitles) {
+    const pattern = new RegExp(
+      `(^|\\n|\\s)(${escapeRegExp(title)})(\\s*:)?\\s*`,
+      "g"
+    );
+
+    cleaned = cleaned.replace(pattern, `\n\n## ${title}\n\n`);
+  }
+
+  // تبدیل بولت فارسی/یونیکدی به markdown واقعی
+  cleaned = cleaned.replace(/\s*[•●▪]\s*/g, "\n- ");
+
+  // اگر مدل چند بولت را پشت سر هم در یک خط داده باشد
+  cleaned = cleaned.replace(/([^\n])\s+-\s+/g, "$1\n- ");
+
+  // بولد کردن عبارت‌های کلیدی قبل از دو نقطه
+  cleaned = cleaned.replace(
+    /^-\s*([^:\n]{2,45})\s*:\s*/gm,
+    "- **$1:** "
+  );
+
+  // اصلاح فاصله‌های اضافه
+  cleaned = cleaned
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+
+  return cleaned;
 }
 
 function hasPersianText(text: string) {
