@@ -114,6 +114,7 @@ def is_specific_product_or_model_question(message: str) -> bool:
 
 
 def context_has_exact_model_match(message: str, docs: list) -> bool:
+    
     model_tokens = re.findall(
         r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?",
         message or ""
@@ -134,6 +135,73 @@ def context_has_exact_model_match(message: str, docs: list) -> bool:
             return True
 
     return False
+def is_artinazma_related_question(message: str) -> bool:
+    text = (message or "").lower()
+
+    keywords = [
+        "آرتین آزما",
+        "ارتین ازما",
+        "آرتین‌آزما",
+        "artinazma",
+        "artin azma",
+        "سایت شما",
+        "سایتتون",
+        "وبسایت شما",
+        "شرکت شما",
+        "نمایندگی شما",
+        "محصولات شما",
+        "تو سایت شما",
+        "در سایت شما",
+        "آیا شما",
+        "شما دارید",
+        "شما تامین",
+        "از شما بخرم",
+        "خرید از شما",
+        "استعلام قیمت",
+        "قیمت",
+        "موجودی",
+        "پیش فاکتور",
+        "پیش‌فاکتور",
+        "سفارش",
+        "تماس",
+        "شماره تماس",
+        "ایمیل",
+        "واتساپ",
+        "آدرس",
+        "دفتر تهران",
+        "دفتر بوشهر",
+    ]
+
+    return any(keyword in text for keyword in keywords)
+
+
+def remove_company_mentions_if_not_allowed(answer: str) -> str:
+    if not answer:
+        return ""
+
+    blocked_patterns = [
+        r".*آرتین آزما مهر.*\n?",
+        r".*آرتین آزما.*\n?",
+        r".*ارتین ازما.*\n?",
+        r".*artinazma\.net.*\n?",
+        r".*info@artinazma\.net.*\n?",
+        r".*09906060910.*\n?",
+        r".*02191008898.*\n?",
+        r".*صفحه مرتبط در سایت.*\n?",
+        r".*سایت رسمی.*\n?",
+        r".*برای اطلاعات بیشتر.*کارشناسان.*\n?",
+        r".*برای راهنمایی بیشتر.*ایمیل.*\n?",
+        r".*برای دریافت پیش.?فاکتور.*\n?",
+    ]
+
+    cleaned = answer
+
+    for pattern in blocked_patterns:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
+
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+
+    return cleaned.strip()
 class ChatHistoryMessage(BaseModel):
     role: str
     content: str
@@ -208,6 +276,7 @@ def chat(request: ChatRequest):
     )
 
     specific_model_question = is_specific_product_or_model_question(request.message)
+    allow_company_reference = is_artinazma_related_question(request.message)
     intent_data = detect_question_intent(
     message=request.message,
     domain=request.domain or "auto"
@@ -259,32 +328,37 @@ def chat(request: ChatRequest):
     resource_images = []
     artinazma_context = ""
 
-    try:
-        artinazma_resources = find_artinazma_resources(
-            message=request.message,
-            max_results=2
-        )
+    if allow_company_reference:
+       try:
+           artinazma_resources = find_artinazma_resources(
+               message=request.message,
+               max_results=2
+           )
 
-        resource_links = artinazma_resources.get("links", [])
-        resource_images = artinazma_resources.get("images", [])
+           resource_links = artinazma_resources.get("links", [])
+           resource_images = artinazma_resources.get("images", [])
 
-        if resource_links:
-            artinazma_context = """
-            نتیجه جست‌وجوی سایت رسمی آرتین آزما:
-            این مورد در سایت رسمی آرتین آزما پیدا شده است.
-            هنگام پاسخ، کامل و فنی توضیح بده.
-            در متن پاسخ، لینک خام ننویس؛ لینک جداگانه توسط سیستم نمایش داده می‌شود.
-            اگر مشخصات دقیق محصول در متن منابع داخلی نیست، با دانش فنی معتبر و وب‌سرچ تکمیل کن، اما ادعای ساختگی نکن.
-            """
+           if resource_links:
+               artinazma_context = """
+               نتیجه جست‌وجوی سایت رسمی آرتین آزما:
+                این مورد در سایت رسمی آرتین آزما پیدا شده است.
+               هنگام پاسخ، کامل و فنی توضیح بده.
+               در متن پاسخ، لینک خام ننویس؛ لینک جداگانه توسط سیستم نمایش داده می‌شود.
+               اگر مشخصات دقیق محصول در متن منابع داخلی نیست، با دانش فنی معتبر تکمیل کن، اما ادعای ساختگی نکن.
+               """
 
-            for link in resource_links:
-                artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
-                artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
+               for link in resource_links:
+                   artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
+                   artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
 
-            search_mode = f"{search_mode}+artinazma_site"
+               search_mode = f"{search_mode}+artinazma_site"
 
-    except Exception as e:
-        print("ArtinAzma resource search failed:", e)
+       except Exception as e:
+           print("ArtinAzma resource search failed:", e)
+           resource_links = []
+           resource_images = []
+           artinazma_context = ""
+    else:
         resource_links = []
         resource_images = []
         artinazma_context = ""
@@ -372,7 +446,27 @@ def chat(request: ChatRequest):
         
     if quality_context:
         context = f"{context}\n\n{quality_context}".strip()
+    if allow_company_reference:
+         company_visibility_context = """
+     قانون نمایش اطلاعات شرکت:
+     کاربر در این پیام درباره آرتین آزما، سایت، تماس، خرید، استعلام، نمایندگی یا محصولات شرکت پرسیده است.
+     در صورت نیاز، اشاره به اطلاعات شرکت، لینک سایت یا مسیر تماس مجاز است.
+     """
+    else:
+        company_visibility_context = """
+    قانون نمایش اطلاعات شرکت:
+    کاربر در این پیام درباره آرتین آزما، سایت، تماس، خرید، استعلام، نمایندگی یا محصولات شرکت نپرسیده است.
 
+    بنابراین در پاسخ نهایی:
+    - نام آرتین آزما مهر را نیاور.
+    - لینک سایت نده.
+    - ایمیل، شماره تماس، واتساپ یا آدرس نده.
+    - پیشنهاد تماس با شرکت نده.
+    - عبارت‌هایی مثل «کارشناسان ما»، «شرکت ما»، «سایت رسمی ما» ننویس.
+    - پاسخ فقط فنی، تخصصی، بی‌طرف و کاربردی باشد.
+    """
+
+    context = f"{context}\n\n{company_visibility_context}".strip()
     try:
         answer = ask_expert_assistant(
           message=request.message,
@@ -386,7 +480,8 @@ def chat(request: ChatRequest):
         print("AI answer failed, using local answer:", e)
         answer = build_local_answer(request.message, related_docs)
         answer_mode = "local"
-
+    if not allow_company_reference:
+       answer = remove_company_mentions_if_not_allowed(answer)
     sources = [
         {
             "title": doc.get("title", ""),
@@ -432,8 +527,8 @@ def chat(request: ChatRequest):
         "detected_domain": detected_domain,
         "answer": answer,
         "sources": sources,
-        "resource_links": resource_links,
-        "resource_images": resource_images,
+        "resource_links": resource_links if allow_company_reference else [],
+        "resource_images": resource_images if allow_company_reference else [],
         "search_mode": search_mode,
         "web_search_used": allow_web_search,
         "question_intent": question_intent,
