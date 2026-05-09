@@ -266,11 +266,11 @@ function cleanMarkdownText(text: string) {
 
   for (const title of sectionTitles) {
     const pattern = new RegExp(
-      `(^|\\n|\\s)(${escapeRegExp(title)})(\\s*:)?\\s*`,
-      "g"
+     `^\\s*(?:[-*]\\s*)?(?:\\*\\*\\s*)?${escapeRegExp(title)}(?:\\s*\\*\\*)?(?:\\s*:)?\\s*$`,
+      "gmi"
     );
 
-    cleaned = cleaned.replace(pattern, `\n\n## ${title}\n\n`);
+    cleaned = cleaned.replace(pattern, `## ${title}`);
   }
 
   // تبدیل بولت فارسی/یونیکدی به markdown واقعی
