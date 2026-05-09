@@ -77,6 +77,7 @@ select {
 .rtl-markdown {
   direction: rtl;
   text-align: right;
+  unicode-bidi: plaintext;
 }
 
 .ltr-markdown {
@@ -92,6 +93,7 @@ select {
   font-size: 19px;
   font-weight: 900;
   line-height: 1.9;
+  unicode-bidi: plaintext;
 }
 
 .ai-md-section {
@@ -100,11 +102,13 @@ select {
   font-size: 16.5px;
   font-weight: 900;
   line-height: 1.9;
+  unicode-bidi: plaintext;
 }
 
 .ai-md-paragraph {
   margin: 0 0 12px 0;
   line-height: 2.15;
+  unicode-bidi: plaintext;
 }
 
 .ai-md-list {
@@ -121,6 +125,7 @@ select {
 .ai-md-list-item {
   margin: 6px 0;
   line-height: 2.05;
+  unicode-bidi: plaintext;
 }
 
 .ai-md-list-item::marker {
@@ -131,6 +136,7 @@ select {
 .ai-md-strong {
   color: #0f172a;
   font-weight: 900;
+  unicode-bidi: plaintext;
 }
 
 .ai-md-code {
@@ -167,6 +173,7 @@ select {
   border-bottom: 1px solid #e5e7eb;
   text-align: right;
   white-space: nowrap;
+  unicode-bidi: plaintext;
 }
 
 .ai-md-td {
@@ -174,6 +181,7 @@ select {
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
   vertical-align: top;
+  unicode-bidi: plaintext;
 }
 
 .ai-md-table tr:last-child .ai-md-td {
