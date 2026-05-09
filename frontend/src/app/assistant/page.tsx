@@ -542,13 +542,20 @@ export default function AssistantPage() {
   answerText: string
 ) {
   const prompts = {
-    shorter: `پاسخ قبلی را خلاصه‌تر و کاربردی‌تر کن:\n\n${answerText}`,
-    technical: `پاسخ قبلی را فنی‌تر و دقیق‌تر توضیح بده، اما منظم و قابل فهم باشد:\n\n${answerText}`,
-    table: `پاسخ قبلی را تا حد امکان به جدول مقایسه‌ای یا جدول تصمیم‌گیری تبدیل کن:\n\n${answerText}`,
-    customerText: `پاسخ قبلی را به یک متن رسمی، روان و قابل ارسال برای مشتری تبدیل کن:\n\n${answerText}`,
+    shorter: `پاسخ زیر را خلاصه‌تر و کاربردی‌تر کن. فقط پاسخ بازنویسی‌شده را بده:\n\n${answerText}`,
+    technical: `پاسخ زیر را فنی‌تر و دقیق‌تر توضیح بده، اما منظم و قابل فهم باشد. فقط پاسخ بازنویسی‌شده را بده:\n\n${answerText}`,
+    table: `پاسخ زیر را تا حد امکان به جدول مقایسه‌ای یا جدول تصمیم‌گیری تبدیل کن. فقط خروجی نهایی را بده:\n\n${answerText}`,
+    customerText: `پاسخ زیر را به یک متن رسمی، روان و قابل ارسال برای مشتری تبدیل کن. فقط متن نهایی را بده:\n\n${answerText}`,
   };
 
-  sendMessage(prompts[action]);
+  const visibleMessages = {
+    shorter: "خلاصه‌تر کن",
+    technical: "فنی‌تر توضیح بده",
+    table: "تبدیل به جدول",
+    customerText: "متن قابل ارسال به مشتری",
+  };
+
+  sendMessage(prompts[action], visibleMessages[action]);
 }
   function makeSessionTitle(text: string) {
   const clean = text.replace(/\s+/g, " ").trim();
