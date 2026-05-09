@@ -223,6 +223,12 @@ function getDomainLabel(domain: string) {
   if (domain === "analysis") return "آنالیز و تست";
   return "تشخیص خودکار";
 }
+function getResponseModeLabel(mode: string) {
+  if (mode === "brief") return "خلاصه";
+  if (mode === "technical") return "فنی کامل";
+  if (mode === "checklist") return "چک‌لیست عملیاتی";
+  return "هوشمند";
+}
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -235,7 +241,29 @@ function cleanMarkdownText(text: string) {
     .replace(/\r/g, "\n")
     .replace(/^\s*---+\s*$/gm, "")
     .trim();
+// اگر مدل جدول را داخل code block برگرداند، آن را از حالت کد خارج می‌کنیم
+cleaned = cleaned
+  .replace(/```(?:markdown|md)?\s*\n([\s\S]*?\|[\s\S]*?)\n```/gi, "$1")
+  .replace(/```\s*\n([\s\S]*?\|[\s\S]*?)\n```/g, "$1");
 
+// اگر خطوط جدول با فاصله شروع شده باشند، Markdown آن را code block حساب می‌کند.
+// این بخش فقط خطوط جدول را trim می‌کند تا remark-gfm بتواند جدول را رندر کند.
+cleaned = cleaned
+  .split("\n")
+  .map((line) => {
+    const trimmed = line.trim();
+
+    const looksLikeTableLine =
+      trimmed.includes("|") &&
+      (
+        trimmed.startsWith("|") ||
+        trimmed.endsWith("|") ||
+        /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(trimmed)
+      );
+
+    return looksLikeTableLine ? trimmed : line;
+  })
+  .join("\n");
   const sectionTitles = [
     "جمع‌بندی کاربردی",
     "جمع بندی کاربردی",
@@ -474,7 +502,7 @@ function AssistantQuickActions({
   onAction,
 }: {
   answerText: string;
-  onAction: (action: "shorter" | "technical" | "table" | "customerText", answerText: string) => void;
+  onAction: (action: "shorter" | "technical" | "table" , answerText: string) => void;
 }) {
   return (
     <div className="mt-4 flex flex-wrap gap-2">
@@ -498,13 +526,6 @@ function AssistantQuickActions({
       >
         تبدیل به جدول
       </button>
-
-      <button
-        onClick={() => onAction("customerText", answerText)}
-        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        متن قابل ارسال به مشتری
-      </button>
     </div>
   );
 }
@@ -513,6 +534,7 @@ export default function AssistantPage() {
   const [sessionIdParam, setSessionIdParam] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [domain, setDomain] = useState("auto");
+  const [responseMode, setResponseMode] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -538,21 +560,30 @@ export default function AssistantPage() {
     await navigator.clipboard.writeText(text);
   }
   function sendQuickAction(
-  action: "shorter" | "technical" | "table" | "customerText",
+  action: "shorter" | "technical" | "table" ,
   answerText: string
 ) {
+  const cleanAnswer = answerText.trim();
+
   const prompts = {
-    shorter: `پاسخ زیر را خلاصه‌تر و کاربردی‌تر کن. فقط پاسخ بازنویسی‌شده را بده:\n\n${answerText}`,
-    technical: `پاسخ زیر را فنی‌تر و دقیق‌تر توضیح بده، اما منظم و قابل فهم باشد. فقط پاسخ بازنویسی‌شده را بده:\n\n${answerText}`,
-    table: `پاسخ زیر را تا حد امکان به جدول مقایسه‌ای یا جدول تصمیم‌گیری تبدیل کن. فقط خروجی نهایی را بده:\n\n${answerText}`,
-    customerText: `پاسخ زیر را به یک متن رسمی، روان و قابل ارسال برای مشتری تبدیل کن. فقط متن نهایی را بده:\n\n${answerText}`,
+    shorter: `این متن را خلاصه‌تر، کاربردی‌تر و منظم‌تر بازنویسی کن. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+
+${cleanAnswer}`,
+
+    technical: `این متن را فنی‌تر، دقیق‌تر و کامل‌تر بازنویسی کن. توضیح باید منظم، قابل فهم و مناسب کارشناس آزمایشگاه باشد. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+
+${cleanAnswer}`,
+
+    table: `این متن را به یک جدول مقایسه‌ای یا جدول تصمیم‌گیری تمیز تبدیل کن. خروجی باید فارسی و Markdown باشد. اگر متن شامل چند روش یا چند گزینه است، آن‌ها را در ستون‌های جداگانه بیاور. فقط جدول و یک جمع‌بندی کوتاه بعد از جدول را بده:
+    
+${cleanAnswer}`,
   };
 
   const visibleMessages = {
     shorter: "خلاصه‌تر کن",
     technical: "فنی‌تر توضیح بده",
     table: "تبدیل به جدول",
-    customerText: "متن قابل ارسال به مشتری",
+    
   };
 
   sendMessage(prompts[action], visibleMessages[action]);
@@ -769,6 +800,7 @@ useEffect(() => {
 
 await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
   domain,
+  response_mode: responseMode,
   actual_prompt: displayMessage ? finalMessage : undefined,
 });
     setMessages([...previousMessages, userMessage]);
@@ -783,10 +815,11 @@ await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    message: finalMessage,
-    domain,
-    user_id: userId,
-    history: previousMessages.map((item) => {
+  message: finalMessage,
+  domain,
+  response_mode: responseMode,
+  user_id: userId,
+  history: previousMessages.map((item) => {
   let content = item.content;
 
   if (item.attachment) {
@@ -1292,28 +1325,39 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
-            <select
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
-            >
-              <option value="auto">تشخیص خودکار</option>
-              <option value="catalyst">کاتالیست</option>
-              <option value="equipment">تجهیزات</option>
-              <option value="chromatography">کروماتوگرافی</option>
-              <option value="mercury-analysis">آنالیز جیوه</option>
-              <option value="sulfur-analysis">آنالیز سولفور</option>
-              <option value="troubleshooting">عیب‌یابی</option>
-              <option value="analysis">آنالیز و تست</option>
-            </select>
+  <select
+    value={domain}
+    onChange={(e) => setDomain(e.target.value)}
+    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
+  >
+    <option value="auto">تشخیص خودکار</option>
+    <option value="catalyst">کاتالیست</option>
+    <option value="equipment">تجهیزات</option>
+    <option value="chromatography">کروماتوگرافی</option>
+    <option value="mercury-analysis">آنالیز جیوه</option>
+    <option value="sulfur-analysis">آنالیز سولفور</option>
+    <option value="troubleshooting">عیب‌یابی</option>
+    <option value="analysis">آنالیز و تست</option>
+  </select>
 
-            <button
-              onClick={clearChat}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
-            >
-              گفتگوی جدید
-            </button>
-          </div>
+  <select
+    value={responseMode}
+    onChange={(e) => setResponseMode(e.target.value)}
+    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
+  >
+    <option value="auto">نوع پاسخ: هوشمند</option>
+    <option value="brief">خلاصه و کاربردی</option>
+    <option value="technical">فنی کامل</option>
+    <option value="checklist">چک‌لیست عملیاتی</option>
+  </select>
+
+  <button
+    onClick={clearChat}
+    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+  >
+    گفتگوی جدید
+  </button>
+</div>
         </div>
       </header>
 
@@ -1580,7 +1624,7 @@ function MessageBubble({
   onCopy: (text: string) => void;
   onRequest: () => void;
   onQuickAction: (
-    action: "shorter" | "technical" | "table" | "customerText",
+    action: "shorter" | "technical" | "table" ,
     answerText: string
   ) => void;
 }) {
@@ -1756,13 +1800,6 @@ function MessageBubble({
         className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
       >
         تبدیل به جدول
-      </button>
-
-      <button
-        onClick={() => onQuickAction("customerText", item.content)}
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        متن قابل ارسال به مشتری
       </button>
 
       <button

@@ -306,6 +306,7 @@ class ChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatHistoryMessage]] = None
     domain: Optional[str] = "auto"
+    response_mode: Optional[str] = "auto"
     user_id: Optional[str] = "anonymous"
 class MemorySearchRequest(BaseModel):
     user_id: str
@@ -586,7 +587,37 @@ def chat(request: ChatRequest):
     - عبارت‌هایی مثل «کارشناسان ما»، «شرکت ما»، «سایت رسمی ما» ننویس.
     - پاسخ فقط فنی، تخصصی، بی‌طرف و کاربردی باشد.
     """
+    response_mode = request.response_mode or "auto"
 
+    response_mode_instructions = {
+    "auto": """
+    نوع پاسخ انتخابی کاربر: هوشمند.
+    بر اساس نوع سؤال، بهترین ساختار پاسخ را انتخاب کن.
+    """,
+
+    "brief": """
+    نوع پاسخ انتخابی کاربر: خلاصه و کاربردی.
+    پاسخ باید کوتاه، مستقیم و تصمیم‌ساز باشد.
+    از توضیح طولانی، مقدمه‌چینی و بخش‌بندی زیاد خودداری کن.
+    حداکثر ۳ بخش اصلی بنویس.
+    """,
+
+    "technical": """
+    نوع پاسخ انتخابی کاربر: فنی کامل.
+    پاسخ باید تخصصی‌تر، دقیق‌تر و کامل‌تر باشد.
+    نکات فنی، محدودیت‌ها، خطاهای رایج، آماده‌سازی نمونه، QC و معیار انتخاب را در صورت ارتباط توضیح بده.
+    عدد، استاندارد یا مشخصه فنی نساز مگر داده قطعی وجود داشته باشد.
+    """,
+
+    "checklist": """
+    نوع پاسخ انتخابی کاربر: چک‌لیست عملیاتی.
+    پاسخ را به صورت مرحله‌ای و قابل اجرا بنویس.
+    از بولت و شماره‌گذاری استفاده کن.
+    تمرکز روی اقدامات عملی، بررسی‌ها، اطلاعات لازم و خطاهای قابل کنترل باشد.
+    """
+}
+
+    context = f"{context}\n\n{response_mode_instructions.get(response_mode, response_mode_instructions['auto'])}".strip()
     context = f"{context}\n\n{company_visibility_context}".strip()
     try:
         answer = ask_expert_assistant(

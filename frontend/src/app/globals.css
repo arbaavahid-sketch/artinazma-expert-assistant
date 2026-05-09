@@ -155,6 +155,7 @@ select {
   margin: 14px 0;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
+  direction: rtl;
 }
 
 .ai-md-table {
@@ -162,8 +163,13 @@ select {
   border-collapse: collapse;
   background: #ffffff;
   font-size: 14px;
+  direction: rtl;
 }
-
+.ai-md-th,
+.ai-md-td {
+  text-align: right;
+  font-family: var(--font-persian);
+}
 .ai-md-th {
   background: #f8fafc;
   color: #0f172a;
