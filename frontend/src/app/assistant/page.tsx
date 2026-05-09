@@ -745,8 +745,9 @@ useEffect(() => {
   }, 18);
 }
 
-  async function sendMessage(customMessage?: string) {
-    const finalMessage = customMessage || message;
+  async function sendMessage(customMessage?: string, displayMessage?: string) {
+  const finalMessage = customMessage || message;
+  const visibleMessage = displayMessage || finalMessage;
 
     if (!finalMessage.trim()) return;
 
@@ -754,13 +755,14 @@ useEffect(() => {
     const userId = getOrCreateUserId();
 
     const userMessage: ChatMessage = {
-      role: "user",
-      content: finalMessage,
-    };
-   const customerSessionId = await ensureCustomerSession(finalMessage);
+  role: "user",
+  content: visibleMessage,
+};
+   const customerSessionId = await ensureCustomerSession(visibleMessage);
 
-await saveCustomerChatMessage(customerSessionId, "user", finalMessage, {
+await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
   domain,
+  actual_prompt: displayMessage ? finalMessage : undefined,
 });
     setMessages([...previousMessages, userMessage]);
     setMessage("");
@@ -1382,12 +1384,13 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
             <div className="mx-auto w-full max-w-5xl space-y-7 pb-4">
               {messages.map((item, index) => (
                 <MessageBubble
-                  key={index}
-                  item={item}
-                  loading={loading}
-                  onCopy={copyText}
-                  onRequest={() => router.push("/customer-request")}
-                />
+  key={index}
+  item={item}
+  loading={loading}
+  onCopy={copyText}
+  onRequest={() => router.push("/customer-request")}
+  onQuickAction={sendQuickAction}
+/>
               ))}
 
               {loading && (
@@ -1563,11 +1566,16 @@ function MessageBubble({
   loading,
   onCopy,
   onRequest,
+  onQuickAction,
 }: {
   item: ChatMessage;
   loading: boolean;
   onCopy: (text: string) => void;
   onRequest: () => void;
+  onQuickAction: (
+    action: "shorter" | "technical" | "table" | "customerText",
+    answerText: string
+  ) => void;
 }) {
   const isUser = item.role === "user";
   const displayContent = isUser ? item.content : cleanMarkdownText(item.content);
@@ -1720,25 +1728,52 @@ function MessageBubble({
   />
 )}
           {!isUser && (
-            <div className="mt-4 space-y-3">
-              
-              <div className="flex flex-wrap gap-2 pt-1">
-                <button
-                  onClick={() => onCopy(displayContent)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                >
-                  کپی پاسخ
-                </button>
+  <div className="mt-4 space-y-3">
+    <div className="flex flex-wrap gap-2 pt-1">
+      <button
+        onClick={() => onQuickAction("shorter", item.content)}
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        خلاصه‌تر کن
+      </button>
 
-                <button
-                  onClick={onRequest}
-                  className="rounded-2xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
-                >
-                  ثبت درخواست مشاوره
-                </button>
-              </div>
-            </div>
-          )}
+      <button
+        onClick={() => onQuickAction("technical", item.content)}
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        فنی‌تر توضیح بده
+      </button>
+
+      <button
+        onClick={() => onQuickAction("table", item.content)}
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        تبدیل به جدول
+      </button>
+
+      <button
+        onClick={() => onQuickAction("customerText", item.content)}
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        متن قابل ارسال به مشتری
+      </button>
+
+      <button
+        onClick={() => onCopy(displayContent)}
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+      >
+        کپی پاسخ
+      </button>
+
+      <button
+        onClick={onRequest}
+        className="rounded-2xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+      >
+        ثبت درخواست مشاوره
+      </button>
+    </div>
+  </div>
+)}
         </div>
       </div>
     </div>
