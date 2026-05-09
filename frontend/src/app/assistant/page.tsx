@@ -287,6 +287,14 @@ function cleanMarkdownText(text: string) {
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
+    // پایدارسازی جهت نمایش توکن‌های لاتین داخل متن فارسی
+  // با قرار دادن FSI/PDI دور واژه‌های لاتین، جابه‌جایی بصری در RTL کمتر می‌شود.
+  if (hasPersianText(cleaned)) {
+    cleaned = cleaned.replace(
+      /\b([A-Za-z][A-Za-z0-9.+/-]{1,})\b/g,
+      "\u2068$1\u2069"
+    );
+  }
 
   return cleaned;
 }
