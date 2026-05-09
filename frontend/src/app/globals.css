@@ -69,8 +69,8 @@ select {
 }
 
 .ai-markdown {
-  font-size: 18px;
-  line-height: 2.3;
+  font-size: 16px;
+  line-height: 2.05;
   color: #0f172a;
   letter-spacing: -0.005em;
 }
@@ -87,35 +87,34 @@ select {
 }
 
 .ai-md-title {
-  margin: 8px 0 18px 0;
-  padding-bottom: 12px;
+  margin: 4px 0 14px 0;
+  padding-bottom: 10px;
   border-bottom: 1px solid #e5e7eb;
   color: #0f172a;
-  font-size: 33px;
+  font-size: 22px;
   font-weight: 900;
-  line-height: 1.9;
+  line-height: 1.6;
   unicode-bidi: plaintext;
 }
 
 .ai-md-section {
-  margin: 24px 0 10px 0;
+  margin: 18px 0 8px 0;
   color: #0f172a;
-  font-size: 38px;
+  font-size: 20px;
   font-weight: 900;
-  line-height: 1.9;
+  line-height: 1.7;
   unicode-bidi: plaintext;
 }
 
 .ai-md-paragraph {
-  margin: 24px 0 10px 0;
-  margin: 0 0 16px 0;
-  line-height: 2.35;
+  margin: 0 0 12px 0;
+  line-height: 2.05;
   unicode-bidi: plaintext;
 }
 
 .ai-md-list {
-  margin: 10px 0 20px 0;
-  padding-right: 30px;
+  margin: 8px 0 14px 0;
+  padding-right: 24px;
   padding-left: 0;
 }
 
@@ -126,8 +125,8 @@ select {
 }
 
 .ai-md-list-item {
-  margin: 6px 0;
-  line-height: 2.05;
+  margin: 4px 0;
+  line-height: 2;
   unicode-bidi: plaintext;
 }
 
@@ -140,7 +139,6 @@ select {
 .ai-md-strong {
   color: #0f172a;
   font-weight: 900;
-  direction: rtl;
   unicode-bidi: isolate;
 }
 

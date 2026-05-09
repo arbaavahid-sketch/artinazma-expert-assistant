@@ -290,11 +290,18 @@ function cleanMarkdownText(text: string) {
     // پایدارسازی جهت نمایش توکن‌های لاتین داخل متن فارسی
   // با قرار دادن FSI/PDI دور واژه‌های لاتین، جابه‌جایی بصری در RTL کمتر می‌شود.
   if (hasPersianText(cleaned)) {
-    cleaned = cleaned.replace(
-      /\b([A-Za-z][A-Za-z0-9.+/-]{1,})\b/g,
-      "\u2068$1\u2069"
+  cleaned = cleaned
+    // عبارت‌های انگلیسی داخل پرانتز را یکپارچه LTR نگه می‌دارد
+    .replace(
+      /\(([A-Za-z][A-Za-z0-9.+/\-\s]{1,})\)/g,
+      "(\u2066$1\u2069)"
+    )
+    // مخفف‌های فنی مثل XRF, ICP, ICP-OES, GC-MS را LTR نگه می‌دارد
+    .replace(
+      /\b([A-Z]{2,}(?:-[A-Z0-9]+)?)\b/g,
+      "\u2066$1\u2069"
     );
-  }
+}
 
   return cleaned;
 }
