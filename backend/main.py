@@ -2,6 +2,7 @@ import os
 import re
 from fastapi.staticfiles import StaticFiles
 import shutil
+from comparison_table_service import ensure_comparison_table
 from standard_service import get_context_for_app
 from answer_formatter_service import format_answer_for_ui
 from text_format_service import format_answer_for_ui

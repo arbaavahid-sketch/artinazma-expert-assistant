@@ -1,5 +1,6 @@
 "use client";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl } from "@/lib/api";
@@ -468,6 +469,45 @@ function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[] }) {
     </div>
   );
 }
+function AssistantQuickActions({
+  answerText,
+  onAction,
+}: {
+  answerText: string;
+  onAction: (action: "shorter" | "technical" | "table" | "customerText", answerText: string) => void;
+}) {
+  return (
+    <div className="mt-4 flex flex-wrap gap-2">
+      <button
+        onClick={() => onAction("shorter", answerText)}
+        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        خلاصه‌تر کن
+      </button>
+
+      <button
+        onClick={() => onAction("technical", answerText)}
+        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        فنی‌تر توضیح بده
+      </button>
+
+      <button
+        onClick={() => onAction("table", answerText)}
+        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        تبدیل به جدول
+      </button>
+
+      <button
+        onClick={() => onAction("customerText", answerText)}
+        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+      >
+        متن قابل ارسال به مشتری
+      </button>
+    </div>
+  );
+}
 export default function AssistantPage() {
   const router = useRouter();
   const [sessionIdParam, setSessionIdParam] = useState<string | null>(null);
@@ -497,6 +537,19 @@ export default function AssistantPage() {
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
   }
+  function sendQuickAction(
+  action: "shorter" | "technical" | "table" | "customerText",
+  answerText: string
+) {
+  const prompts = {
+    shorter: `پاسخ قبلی را خلاصه‌تر و کاربردی‌تر کن:\n\n${answerText}`,
+    technical: `پاسخ قبلی را فنی‌تر و دقیق‌تر توضیح بده، اما منظم و قابل فهم باشد:\n\n${answerText}`,
+    table: `پاسخ قبلی را تا حد امکان به جدول مقایسه‌ای یا جدول تصمیم‌گیری تبدیل کن:\n\n${answerText}`,
+    customerText: `پاسخ قبلی را به یک متن رسمی، روان و قابل ارسال برای مشتری تبدیل کن:\n\n${answerText}`,
+  };
+
+  sendMessage(prompts[action]);
+}
   function makeSessionTitle(text: string) {
   const clean = text.replace(/\s+/g, " ").trim();
 
@@ -691,6 +744,7 @@ useEffect(() => {
     }
   }, 18);
 }
+
   async function sendMessage(customMessage?: string) {
     const finalMessage = customMessage || message;
 
@@ -1560,6 +1614,7 @@ function MessageBubble({
     displayContent
   ) : (
     <ReactMarkdown
+  remarkPlugins={[remarkGfm]}
   components={{
     h1: ({ children }) => (
       <h2 className="ai-md-title">{children}</h2>
