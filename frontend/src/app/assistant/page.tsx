@@ -822,55 +822,55 @@ ${cleanAnswer}`,
         }),
       });
 
-      const rawText = await res.text();
+            const rawText = await res.text();
 
-    if (!res.ok) {
-  let serverMessage = "خطا در دریافت پاسخ از سرور.";
+      if (!res.ok) {
+        let serverMessage = "خطا در دریافت پاسخ از سرور.";
 
-  try {
-    const errorData = JSON.parse(rawText);
-    serverMessage = errorData.message || errorData.error || serverMessage;
-  } catch {}
+        try {
+          const errorData = JSON.parse(rawText);
+          serverMessage = errorData.message || errorData.error || serverMessage;
+        } catch {}
 
-    throw new Error(serverMessage);
-}
+        throw new Error(serverMessage);
+      }
 
-    let data;
+      let data;
 
-    try {
-    data = JSON.parse(rawText);
-}   catch {
-    throw new Error("پاسخ سرور معتبر نبود.");
-}
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error("پاسخ سرور معتبر نبود.");
+      }
 
-const relatedDevices: DeviceAsset[] = [];
+      const relatedDevices: DeviceAsset[] = [];
 
-const assistantMessage: ChatMessage = {
-  role: "assistant",
-  content: data.answer || "پاسخی دریافت نشد.",
-  sources: data.sources || [],
-  detected_domain: data.detected_domain,
-  question_id: data.question_id,
-  relatedDevices,
-  resource_links: data.resource_links || [],
-  resource_images: data.resource_images || [],
-};
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: data.answer || "پاسخی دریافت نشد.",
+        sources: data.sources || [],
+        detected_domain: data.detected_domain,
+        question_id: data.question_id,
+        relatedDevices,
+        resource_links: data.resource_links || [],
+        resource_images: data.resource_images || [],
+      };
 
-await saveCustomerChatMessage(
-  customerSessionId,
-  "assistant",
-  assistantMessage.content,
-  {
-    sources: assistantMessage.sources || [],
-    detected_domain: assistantMessage.detected_domain,
-    question_id: assistantMessage.question_id,
-    relatedDevices,
-    resource_links: assistantMessage.resource_links || [],
-    resource_images: assistantMessage.resource_images || [],
-  }
-);
+      await saveCustomerChatMessage(
+        customerSessionId,
+        "assistant",
+        assistantMessage.content,
+        {
+          sources: assistantMessage.sources || [],
+          detected_domain: assistantMessage.detected_domain,
+          question_id: assistantMessage.question_id,
+          relatedDevices,
+          resource_links: assistantMessage.resource_links || [],
+          resource_images: assistantMessage.resource_images || [],
+        }
+      );
 
-typeAssistantMessage(previousMessages, userMessage, assistantMessage);
+      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch (error) {
   console.error("CHAT ERROR:", error);
 
