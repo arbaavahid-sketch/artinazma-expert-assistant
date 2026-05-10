@@ -119,7 +119,7 @@ export default function AdminRequestsPage() {
 
   const newCount = requests.filter((item) => item.status === "new").length;
   const inProgressCount = requests.filter(
-    (item) => item.status === "in_progress"
+    (item) => item.status === "in_progress",
   ).length;
   const doneCount = requests.filter((item) => item.status === "done").length;
 
@@ -144,13 +144,16 @@ export default function AdminRequestsPage() {
     setMessage("");
 
     try {
-      const res = await fetch(apiUrl(`/customer-requests/${requestId}/status`), {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        apiUrl(`/customer-requests/${requestId}/status`),
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status }),
         },
-        body: JSON.stringify({ status }),
-      });
+      );
 
       const data = await res.json();
 
@@ -187,8 +190,8 @@ export default function AdminRequestsPage() {
 
                 <p className="mt-4 max-w-3xl leading-8 text-slate-600">
                   درخواست‌های ثبت‌شده برای مشاوره، تجهیزات، مواد شیمیایی،
-                  کاتالیست، تحلیل تست، عیب‌یابی و استعلام قیمت در این بخش
-                  قابل پیگیری هستند.
+                  کاتالیست، تحلیل تست، عیب‌یابی و استعلام قیمت در این بخش قابل
+                  پیگیری هستند.
                 </p>
               </div>
 
@@ -197,7 +200,10 @@ export default function AdminRequestsPage() {
                 disabled={loading}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
-                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                <RefreshCw
+                  size={18}
+                  className={loading ? "animate-spin" : ""}
+                />
                 بروزرسانی
               </button>
             </div>
@@ -206,7 +212,9 @@ export default function AdminRequestsPage() {
 
         <div className="mb-6 grid gap-4 md:grid-cols-4">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">کل درخواست‌ها</div>
+            <div className="text-sm font-bold text-slate-500">
+              کل درخواست‌ها
+            </div>
             <div className="mt-2 text-3xl font-black text-slate-900">
               {requests.length}
             </div>
@@ -291,7 +299,7 @@ export default function AdminRequestsPage() {
 
                         <span
                           className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(
-                            item.status
+                            item.status,
                           )}`}
                         >
                           {getStatusLabel(item.status)}

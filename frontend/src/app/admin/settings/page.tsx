@@ -89,7 +89,7 @@ export default function AdminSettingsPage() {
         apiUrl(`/system/status${checkAi ? "?check_ai=true" : ""}`),
         {
           cache: "no-store",
-        }
+        },
       );
 
       const data = await res.json();
@@ -133,7 +133,10 @@ export default function AdminSettingsPage() {
                 disabled={loading}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
-                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                <RefreshCw
+                  size={18}
+                  className={loading ? "animate-spin" : ""}
+                />
                 {loading ? "در حال بروزرسانی..." : "بروزرسانی وضعیت"}
               </button>
             </div>
@@ -205,7 +208,7 @@ export default function AdminSettingsPage() {
 
             <div
               className={`inline-flex rounded-2xl border px-4 py-2 text-sm font-bold ${getAiStatusClass(
-                status?.openai_status || "not_checked"
+                status?.openai_status || "not_checked",
               )}`}
             >
               وضعیت: {getAiStatusLabel(status?.openai_status || "not_checked")}

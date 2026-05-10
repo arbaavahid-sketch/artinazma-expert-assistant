@@ -97,11 +97,15 @@ export default function QuestionDetailPage() {
   const [expertNote, setExpertNote] = useState("");
   const [reviewedAnswer, setReviewedAnswer] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
-  const [saveMessageType, setSaveMessageType] = useState<"success" | "error" | "">("");
+  const [saveMessageType, setSaveMessageType] = useState<
+    "success" | "error" | ""
+  >("");
 
   const [addingToKnowledge, setAddingToKnowledge] = useState(false);
   const [addKnowledgeMessage, setAddKnowledgeMessage] = useState("");
-  const [addKnowledgeType, setAddKnowledgeType] = useState<"success" | "error" | "">("");
+  const [addKnowledgeType, setAddKnowledgeType] = useState<
+    "success" | "error" | ""
+  >("");
 
   async function loadQuestion() {
     setLoading(true);
@@ -172,16 +176,19 @@ export default function QuestionDetailPage() {
     setAddKnowledgeType("");
 
     try {
-      const res = await fetch(apiUrl(`/questions/${questionId}/add-to-knowledge`), {
-        method: "POST",
-      });
+      const res = await fetch(
+        apiUrl(`/questions/${questionId}/add-to-knowledge`),
+        {
+          method: "POST",
+        },
+      );
 
       const data = await res.json();
 
       if (data.success) {
         setAddKnowledgeType("success");
         setAddKnowledgeMessage(
-          `با موفقیت به بانک دانش اضافه شد. تعداد بخش‌های اضافه‌شده: ${data.chunks_added}`
+          `با موفقیت به بانک دانش اضافه شد. تعداد بخش‌های اضافه‌شده: ${data.chunks_added}`,
         );
       } else {
         setAddKnowledgeType("error");
@@ -207,8 +214,13 @@ export default function QuestionDetailPage() {
     return (
       <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
         <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <RefreshCw className="mx-auto mb-4 animate-spin text-purple-700" size={28} />
-          <div className="font-bold text-slate-700">در حال دریافت اطلاعات سوال...</div>
+          <RefreshCw
+            className="mx-auto mb-4 animate-spin text-purple-700"
+            size={28}
+          />
+          <div className="font-bold text-slate-700">
+            در حال دریافت اطلاعات سوال...
+          </div>
         </div>
       </section>
     );
@@ -254,7 +266,7 @@ export default function QuestionDetailPage() {
 
                   <span
                     className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(
-                      question.expert_status
+                      question.expert_status,
                     )}`}
                   >
                     {getStatusLabel(question.expert_status)}
@@ -302,7 +314,9 @@ export default function QuestionDetailPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                   <MessageSquareText size={22} />
                 </div>
-                <h2 className="text-xl font-black text-slate-900">سوال کاربر</h2>
+                <h2 className="text-xl font-black text-slate-900">
+                  سوال کاربر
+                </h2>
               </div>
 
               <div className="whitespace-pre-wrap rounded-3xl bg-slate-50 p-5 leading-8 text-slate-800">
@@ -363,12 +377,16 @@ export default function QuestionDetailPage() {
 
                       <div className="mt-3 grid gap-2 text-sm leading-7 text-slate-600 md:grid-cols-3">
                         <div>
-                          <span className="font-bold text-slate-900">فایل:</span>{" "}
+                          <span className="font-bold text-slate-900">
+                            فایل:
+                          </span>{" "}
                           {source.file_name || "-"}
                         </div>
 
                         <div>
-                          <span className="font-bold text-slate-900">دسته:</span>{" "}
+                          <span className="font-bold text-slate-900">
+                            دسته:
+                          </span>{" "}
                           {source.category || "-"}
                         </div>
 
@@ -488,13 +506,15 @@ export default function QuestionDetailPage() {
 
               <div className="rounded-3xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
                 وقتی وضعیت سوال روی «تایید شده» ذخیره شود، می‌توانید پاسخ
-                اصلاح‌شده را وارد بانک دانش کنید تا آرتین در پاسخ‌های بعدی از
-                آن استفاده کند.
+                اصلاح‌شده را وارد بانک دانش کنید تا آرتین در پاسخ‌های بعدی از آن
+                استفاده کند.
               </div>
 
               <button
                 onClick={addToKnowledgeBase}
-                disabled={addingToKnowledge || question.expert_status !== "approved"}
+                disabled={
+                  addingToKnowledge || question.expert_status !== "approved"
+                }
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
               >
                 <Database size={18} />

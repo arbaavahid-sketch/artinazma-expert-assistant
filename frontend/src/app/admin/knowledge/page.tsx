@@ -86,7 +86,9 @@ export default function KnowledgePage() {
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [syncingDrive, setSyncingDrive] = useState(false);
   const [driveSyncMessage, setDriveSyncMessage] = useState("");
-  const [driveSyncResults, setDriveSyncResults] = useState<DriveSyncResult[]>([]);
+  const [driveSyncResults, setDriveSyncResults] = useState<DriveSyncResult[]>(
+    [],
+  );
   const [driveMaxFiles, setDriveMaxFiles] = useState(20);
   const [forceDriveResync, setForceDriveResync] = useState(false);
   const [knowledgeResult, setKnowledgeResult] = useState("");
@@ -147,7 +149,7 @@ export default function KnowledgePage() {
       if (data.success) {
         setKnowledgeResultType("success");
         setKnowledgeResult(
-          `فایل با موفقیت اضافه شد.\nنام فایل: ${data.file_name}\nتعداد بخش‌های اضافه‌شده: ${data.chunks_added}`
+          `فایل با موفقیت اضافه شد.\nنام فایل: ${data.file_name}\nتعداد بخش‌های اضافه‌شده: ${data.chunks_added}`,
         );
 
         setKnowledgeFile(null);
@@ -200,46 +202,46 @@ export default function KnowledgePage() {
       setTestingSearch(false);
     }
   }
- async function syncGoogleDrive() {
-  setSyncingDrive(true);
-  setDriveSyncMessage("");
-  setDriveSyncResults([]);
+  async function syncGoogleDrive() {
+    setSyncingDrive(true);
+    setDriveSyncMessage("");
+    setDriveSyncResults([]);
 
-  try {
-    const res = await fetch(apiUrl("/knowledge/sync-google-drive"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-  max_files: driveMaxFiles,
-  force_resync: forceDriveResync,
-}),
-    });
-    
-    const data = await res.json();
+    try {
+      const res = await fetch(apiUrl("/knowledge/sync-google-drive"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          max_files: driveMaxFiles,
+          force_resync: forceDriveResync,
+        }),
+      });
 
-    if (!data.success) {
-      setDriveSyncMessage(data.message || "خطا در همگام‌سازی Google Drive.");
-      return;
+      const data = await res.json();
+
+      if (!data.success) {
+        setDriveSyncMessage(data.message || "خطا در همگام‌سازی Google Drive.");
+        return;
+      }
+
+      setDriveSyncMessage(
+        `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`,
+      );
+
+      setDriveSyncResults(data.results || []);
+
+      await loadKnowledgeStats();
+    } catch {
+      setDriveSyncMessage("خطا در اتصال به سرور برای همگام‌سازی Google Drive.");
+    } finally {
+      setSyncingDrive(false);
     }
-
-    setDriveSyncMessage(
-  `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`
-);
-
-setDriveSyncResults(data.results || []);
-
-    await loadKnowledgeStats();
-  } catch {
-    setDriveSyncMessage("خطا در اتصال به سرور برای همگام‌سازی Google Drive.");
-  } finally {
-    setSyncingDrive(false);
   }
-}
   async function deleteKnowledgeFile(fileName: string) {
     const confirmed = window.confirm(
-      `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`
+      `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`,
     );
 
     if (!confirmed) return;
@@ -253,7 +255,7 @@ setDriveSyncResults(data.results || []);
         apiUrl(`/knowledge/files/${encodeURIComponent(fileName)}`),
         {
           method: "DELETE",
-        }
+        },
       );
 
       const data = await res.json();
@@ -261,7 +263,7 @@ setDriveSyncResults(data.results || []);
       if (data.success) {
         setKnowledgeResultType("success");
         setKnowledgeResult(
-          `فایل از بانک دانش حذف شد.\nنام فایل: ${data.file_name}\nتعداد chunk حذف‌شده: ${data.removed_chunks}`
+          `فایل از بانک دانش حذف شد.\nنام فایل: ${data.file_name}\nتعداد chunk حذف‌شده: ${data.removed_chunks}`,
         );
 
         await loadKnowledgeStats();
@@ -353,53 +355,60 @@ setDriveSyncResults(data.results || []);
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-  <select
-    value={driveMaxFiles}
-    onChange={(e) => setDriveMaxFiles(Number(e.target.value))}
-    disabled={syncingDrive}
-    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none disabled:opacity-50"
-  >
-    <option value={10}>۱۰ فایل</option>
-    <option value={20}>۲۰ فایل</option>
-    <option value={50}>۵۰ فایل</option>
-    <option value={100}>۱۰۰ فایل</option>
-    <option value={200}>۲۰۰ فایل</option>
-  </select>
+                <select
+                  value={driveMaxFiles}
+                  onChange={(e) => setDriveMaxFiles(Number(e.target.value))}
+                  disabled={syncingDrive}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none disabled:opacity-50"
+                >
+                  <option value={10}>۱۰ فایل</option>
+                  <option value={20}>۲۰ فایل</option>
+                  <option value={50}>۵۰ فایل</option>
+                  <option value={100}>۱۰۰ فایل</option>
+                  <option value={200}>۲۰۰ فایل</option>
+                </select>
 
-  <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
-    <input
-      type="checkbox"
-      checked={forceDriveResync}
-      disabled={syncingDrive}
-      onChange={(e) => setForceDriveResync(e.target.checked)}
-    />
-    بازسازی کامل
-  </label>
+                <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
+                  <input
+                    type="checkbox"
+                    checked={forceDriveResync}
+                    disabled={syncingDrive}
+                    onChange={(e) => setForceDriveResync(e.target.checked)}
+                  />
+                  بازسازی کامل
+                </label>
 
-  <button
-    onClick={syncGoogleDrive}
-    disabled={syncingDrive}
-    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
-  >
-    <RefreshCw size={18} className={syncingDrive ? "animate-spin" : ""} />
-    {syncingDrive ? "در حال همگام‌سازی..." : "همگام‌سازی Google Drive"}
-  </button>
+                <button
+                  onClick={syncGoogleDrive}
+                  disabled={syncingDrive}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+                >
+                  <RefreshCw
+                    size={18}
+                    className={syncingDrive ? "animate-spin" : ""}
+                  />
+                  {syncingDrive
+                    ? "در حال همگام‌سازی..."
+                    : "همگام‌سازی Google Drive"}
+                </button>
 
-  <button
-    onClick={loadKnowledgeStats}
-    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
-  >
-    <RefreshCw size={18} />
-    بروزرسانی وضعیت
-  </button>
-</div>
+                <button
+                  onClick={loadKnowledgeStats}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  <RefreshCw size={18} />
+                  بروزرسانی وضعیت
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">تعداد فایل‌ها</div>
+            <div className="text-sm font-bold text-slate-500">
+              تعداد فایل‌ها
+            </div>
             <div className="mt-2 text-3xl font-black text-slate-900">
               {stats?.total_files || 0}
             </div>
@@ -438,105 +447,105 @@ setDriveSyncResults(data.results || []);
             <span>{knowledgeResult}</span>
           </div>
         )}
-         {driveSyncMessage && (
-  <div className="mb-6 rounded-[28px] border border-blue-100 bg-blue-50 p-5 text-sm leading-8 text-blue-700">
-    {driveSyncMessage}
-  </div>
-)}
-{driveSyncResults.length > 0 && (
-  <div className="mb-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <div>
-        <h2 className="text-xl font-black text-slate-900">
-          گزارش همگام‌سازی Google Drive
-        </h2>
-        <p className="mt-2 text-sm leading-7 text-slate-500">
-         فایل‌های اضافه‌شده، بدون تغییر و ردشده در آخرین همگام‌سازی.
-        </p>
-      </div>
+        {driveSyncMessage && (
+          <div className="mb-6 rounded-[28px] border border-blue-100 bg-blue-50 p-5 text-sm leading-8 text-blue-700">
+            {driveSyncMessage}
+          </div>
+        )}
+        {driveSyncResults.length > 0 && (
+          <div className="mb-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">
+                  گزارش همگام‌سازی Google Drive
+                </h2>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  فایل‌های اضافه‌شده، بدون تغییر و ردشده در آخرین همگام‌سازی.
+                </p>
+              </div>
 
-      <button
-        onClick={() => setDriveSyncResults([])}
-        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-white"
-      >
-        پاک کردن گزارش
-      </button>
-    </div>
+              <button
+                onClick={() => setDriveSyncResults([])}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-white"
+              >
+                پاک کردن گزارش
+              </button>
+            </div>
 
-    <div className="max-h-[420px] overflow-y-auto rounded-3xl border border-slate-200">
-      <table className="w-full border-collapse text-right text-sm">
-        <thead className="sticky top-0 bg-slate-50">
-          <tr className="border-b border-slate-200 text-slate-600">
-            <th className="p-4 font-bold">وضعیت</th>
-            <th className="p-4 font-bold">فایل</th>
-            <th className="p-4 font-bold">دسته‌بندی</th>
-            <th className="p-4 font-bold">Chunk</th>
-            <th className="p-4 font-bold">توضیح</th>
-          </tr>
-        </thead>
+            <div className="max-h-[420px] overflow-y-auto rounded-3xl border border-slate-200">
+              <table className="w-full border-collapse text-right text-sm">
+                <thead className="sticky top-0 bg-slate-50">
+                  <tr className="border-b border-slate-200 text-slate-600">
+                    <th className="p-4 font-bold">وضعیت</th>
+                    <th className="p-4 font-bold">فایل</th>
+                    <th className="p-4 font-bold">دسته‌بندی</th>
+                    <th className="p-4 font-bold">Chunk</th>
+                    <th className="p-4 font-bold">توضیح</th>
+                  </tr>
+                </thead>
 
-        <tbody>
-          {driveSyncResults.map((item, index) => (
-            <tr
-              key={`${item.title}-${index}`}
-              className="border-b border-slate-100 hover:bg-slate-50"
-            >
-              <td className="p-4 align-top">
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${
-  item.status === "unchanged"
-    ? "bg-amber-50 text-amber-700"
-    : item.success
-      ? "bg-emerald-50 text-emerald-700"
-      : "bg-red-50 text-red-700"
-}`}
-                >
-                  {item.status === "unchanged"
-  ? "بدون تغییر"
-  : item.success
-    ? "اضافه شد"
-    : "رد شد"}
-                </span>
-              </td>
+                <tbody>
+                  {driveSyncResults.map((item, index) => (
+                    <tr
+                      key={`${item.title}-${index}`}
+                      className="border-b border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="p-4 align-top">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${
+                            item.status === "unchanged"
+                              ? "bg-amber-50 text-amber-700"
+                              : item.success
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-red-50 text-red-700"
+                          }`}
+                        >
+                          {item.status === "unchanged"
+                            ? "بدون تغییر"
+                            : item.success
+                              ? "اضافه شد"
+                              : "رد شد"}
+                        </span>
+                      </td>
 
-              <td className="p-4 align-top">
-                <div className="font-bold text-slate-900">
-                  {item.title || "بدون عنوان"}
-                </div>
+                      <td className="p-4 align-top">
+                        <div className="font-bold text-slate-900">
+                          {item.title || "بدون عنوان"}
+                        </div>
 
-                {item.file_name && (
-                  <div className="mt-1 break-all text-xs leading-6 text-slate-500">
-                    {item.file_name}
-                  </div>
-                )}
-              </td>
+                        {item.file_name && (
+                          <div className="mt-1 break-all text-xs leading-6 text-slate-500">
+                            {item.file_name}
+                          </div>
+                        )}
+                      </td>
 
-              <td className="p-4 align-top">
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                  {getCategoryLabel(item.category || "general")}
-                </span>
-              </td>
+                      <td className="p-4 align-top">
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                          {getCategoryLabel(item.category || "general")}
+                        </span>
+                      </td>
 
-              <td className="p-4 align-top">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
-                  {item.chunks_added || 0}
-                </span>
-              </td>
+                      <td className="p-4 align-top">
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                          {item.chunks_added || 0}
+                        </span>
+                      </td>
 
-              <td className="p-4 align-top text-xs leading-6 text-slate-500">
-                {item.message ||
-                  item.reason ||
-                  item.mime_type ||
-                  item.source_type ||
-                  "-"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+                      <td className="p-4 align-top text-xs leading-6 text-slate-500">
+                        {item.message ||
+                          item.reason ||
+                          item.mime_type ||
+                          item.source_type ||
+                          "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
           <aside className="space-y-6">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
         success: false,
         message: "رمز ادمین اشتباه است.",
       },
-      { status: 401 }
+      { status: 401 },
     );
   }
 

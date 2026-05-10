@@ -118,9 +118,11 @@ function getStatusCount(stats: RequestStats | null, status: string) {
 
 export default function DashboardPage() {
   const [knowledgeStats, setKnowledgeStats] = useState<KnowledgeStats | null>(
-    null
+    null,
   );
-  const [questionStats, setQuestionStats] = useState<QuestionStats | null>(null);
+  const [questionStats, setQuestionStats] = useState<QuestionStats | null>(
+    null,
+  );
   const [requestStats, setRequestStats] = useState<RequestStats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -194,7 +196,10 @@ export default function DashboardPage() {
                 disabled={loading}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
-                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                <RefreshCw
+                  size={18}
+                  className={loading ? "animate-spin" : ""}
+                />
                 بروزرسانی داشبورد
               </button>
             </div>

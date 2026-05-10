@@ -4,7 +4,8 @@
   --background: #f7f7f8;
   --foreground: #111827;
 
-  --font-persian: "Vazirmatn", "IRANSans", "Yekan", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-persian:
+    "Vazirmatn", "IRANSans", "Yekan", "Segoe UI", Tahoma, Arial, sans-serif;
   --font-english: "Times New Roman", Times, serif;
 }
 

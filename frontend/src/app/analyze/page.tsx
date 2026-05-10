@@ -24,7 +24,10 @@ const testTypes = [
 ];
 
 function getTestTypeLabel(value: string) {
-  return testTypes.find((item) => item.value === value)?.label || "گزارش عمومی آزمایشگاهی";
+  return (
+    testTypes.find((item) => item.value === value)?.label ||
+    "گزارش عمومی آزمایشگاهی"
+  );
 }
 
 export default function AnalyzePage() {
@@ -196,7 +199,11 @@ export default function AnalyzePage() {
                 disabled={loading || !file}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-4 font-bold text-white transition hover:bg-emerald-800 disabled:opacity-50"
               >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <Beaker size={18} />}
+                {loading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Beaker size={18} />
+                )}
                 {loading ? "در حال تحلیل..." : "شروع تحلیل تخصصی"}
               </button>
             </div>
@@ -211,10 +218,12 @@ export default function AnalyzePage() {
                   نوع نمونه، ماتریس و هدف آزمون را در توضیحات بنویسید.
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را اضافه کنید.
+                  اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را
+                  اضافه کنید.
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی شود.
+                  برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی
+                  شود.
                 </div>
               </div>
             </div>

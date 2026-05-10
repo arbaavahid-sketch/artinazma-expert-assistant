@@ -56,14 +56,19 @@ export default function CustomerDashboardPage() {
   const [profilePhone, setProfilePhone] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
-  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
+  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(
+    null,
+  );
   const [clearingAllSessions, setClearingAllSessions] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
   async function loadSessions(customerId: number) {
     try {
-      const res = await fetch(apiUrl(`/customers/${customerId}/chat-sessions`), {
-        cache: "no-store",
-      });
+      const res = await fetch(
+        apiUrl(`/customers/${customerId}/chat-sessions`),
+        {
+          cache: "no-store",
+        },
+      );
 
       const data = await res.json();
       setSessions(data.sessions || []);
@@ -83,134 +88,137 @@ export default function CustomerDashboardPage() {
     const parsed = JSON.parse(raw) as Customer;
 
     setCustomer(parsed);
-setProfileFullName(parsed.full_name || "");
-setProfileCompany(parsed.company || "");
-setProfilePhone(parsed.phone || "");
-loadSessions(parsed.id).finally(() => setLoading(false));
+    setProfileFullName(parsed.full_name || "");
+    setProfileCompany(parsed.company || "");
+    setProfilePhone(parsed.phone || "");
+    loadSessions(parsed.id).finally(() => setLoading(false));
   }, []);
- async function saveProfile() {
-  if (!customer) return;
+  async function saveProfile() {
+    if (!customer) return;
 
-  setProfileMessage("");
+    setProfileMessage("");
 
-  if (!profileFullName.trim()) {
-    setProfileMessage("نام و نام خانوادگی الزامی است.");
-    return;
-  }
-
-  setSavingProfile(true);
-
-  try {
-    const res = await fetch(apiUrl(`/customers/${customer.id}`), {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        full_name: profileFullName,
-        company: profileCompany,
-        phone: profilePhone,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!data.success) {
-      setProfileMessage(data.message || "خطا در بروزرسانی اطلاعات حساب.");
+    if (!profileFullName.trim()) {
+      setProfileMessage("نام و نام خانوادگی الزامی است.");
       return;
     }
 
-    setCustomer(data.customer);
-    localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-    setEditingProfile(false);
-    setProfileMessage("اطلاعات حساب با موفقیت بروزرسانی شد.");
-  } catch {
-    setProfileMessage("خطا در اتصال به سرور.");
-  } finally {
-    setSavingProfile(false);
-  }
-}
+    setSavingProfile(true);
 
-function cancelProfileEdit() {
-  if (!customer) return;
+    try {
+      const res = await fetch(apiUrl(`/customers/${customer.id}`), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          full_name: profileFullName,
+          company: profileCompany,
+          phone: profilePhone,
+        }),
+      });
 
-  setProfileFullName(customer.full_name || "");
-  setProfileCompany(customer.company || "");
-  setProfilePhone(customer.phone || "");
-  setProfileMessage("");
-  setEditingProfile(false);
-}
-async function deleteOneSession(sessionId: number) {
-  if (!customer) return;
+      const data = await res.json();
 
-  const confirmed = window.confirm("این گفتگو حذف شود؟");
-
-  if (!confirmed) return;
-
-  setSessionMessage("");
-  setDeletingSessionId(sessionId);
-
-  try {
-    const res = await fetch(
-      apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
-      {
-        method: "DELETE",
+      if (!data.success) {
+        setProfileMessage(data.message || "خطا در بروزرسانی اطلاعات حساب.");
+        return;
       }
+
+      setCustomer(data.customer);
+      localStorage.setItem("artin_customer", JSON.stringify(data.customer));
+      setEditingProfile(false);
+      setProfileMessage("اطلاعات حساب با موفقیت بروزرسانی شد.");
+    } catch {
+      setProfileMessage("خطا در اتصال به سرور.");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  function cancelProfileEdit() {
+    if (!customer) return;
+
+    setProfileFullName(customer.full_name || "");
+    setProfileCompany(customer.company || "");
+    setProfilePhone(customer.phone || "");
+    setProfileMessage("");
+    setEditingProfile(false);
+  }
+  async function deleteOneSession(sessionId: number) {
+    if (!customer) return;
+
+    const confirmed = window.confirm("این گفتگو حذف شود؟");
+
+    if (!confirmed) return;
+
+    setSessionMessage("");
+    setDeletingSessionId(sessionId);
+
+    try {
+      const res = await fetch(
+        apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        setSessionMessage(data.message || "خطا در حذف گفتگو.");
+        return;
+      }
+
+      setSessions((prev) => prev.filter((item) => item.id !== sessionId));
+      setSessionMessage("گفتگو با موفقیت حذف شد.");
+    } catch {
+      setSessionMessage("خطا در اتصال به سرور.");
+    } finally {
+      setDeletingSessionId(null);
+    }
+  }
+
+  async function deleteAllSessions() {
+    if (!customer) return;
+
+    const confirmed = window.confirm(
+      "همه گفتگوهای شما حذف شود؟ این عملیات قابل بازگشت نیست.",
     );
 
-    const data = await res.json();
+    if (!confirmed) return;
 
-    if (!data.success) {
-      setSessionMessage(data.message || "خطا در حذف گفتگو.");
-      return;
+    setSessionMessage("");
+    setClearingAllSessions(true);
+
+    try {
+      const res = await fetch(
+        apiUrl(`/customers/${customer.id}/chat-sessions`),
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        setSessionMessage(data.message || "خطا در حذف گفتگوها.");
+        return;
+      }
+
+      setSessions([]);
+      setSessionMessage("همه گفتگوها با موفقیت حذف شدند.");
+    } catch {
+      setSessionMessage("خطا در اتصال به سرور.");
+    } finally {
+      setClearingAllSessions(false);
     }
-
-    setSessions((prev) => prev.filter((item) => item.id !== sessionId));
-    setSessionMessage("گفتگو با موفقیت حذف شد.");
-  } catch {
-    setSessionMessage("خطا در اتصال به سرور.");
-  } finally {
-    setDeletingSessionId(null);
   }
-}
-
-async function deleteAllSessions() {
-  if (!customer) return;
-
-  const confirmed = window.confirm(
-    "همه گفتگوهای شما حذف شود؟ این عملیات قابل بازگشت نیست."
-  );
-
-  if (!confirmed) return;
-
-  setSessionMessage("");
-  setClearingAllSessions(true);
-
-  try {
-    const res = await fetch(apiUrl(`/customers/${customer.id}/chat-sessions`), {
-      method: "DELETE",
-    });
-
-    const data = await res.json();
-
-    if (!data.success) {
-      setSessionMessage(data.message || "خطا در حذف گفتگوها.");
-      return;
-    }
-
-    setSessions([]);
-    setSessionMessage("همه گفتگوها با موفقیت حذف شدند.");
-  } catch {
-    setSessionMessage("خطا در اتصال به سرور.");
-  } finally {
-    setClearingAllSessions(false);
-  }
-}
   function logout() {
-  localStorage.removeItem("artin_customer");
-  document.cookie = "artin_customer_auth=; path=/; max-age=0";
-  window.location.href = "/customer-login";
-}
+    localStorage.removeItem("artin_customer");
+    document.cookie = "artin_customer_auth=; path=/; max-age=0";
+    window.location.href = "/customer-login";
+  }
 
   if (!customer) {
     return (
@@ -248,8 +256,8 @@ async function deleteAllSessions() {
                   </h1>
 
                   <p className="mt-2 leading-8 text-slate-600">
-                    گفتگوهای قبلی، اطلاعات حساب و مسیر ارتباط با آرتین اینجا
-                    در دسترس شماست.
+                    گفتگوهای قبلی، اطلاعات حساب و مسیر ارتباط با آرتین اینجا در
+                    دسترس شماست.
                   </p>
                 </div>
               </div>
@@ -278,114 +286,123 @@ async function deleteAllSessions() {
         <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
           <aside className="space-y-6">
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-  <div className="mb-5 flex items-center justify-between gap-3">
-    <h2 className="text-xl font-black text-slate-900">
-      اطلاعات حساب
-    </h2>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h2 className="text-xl font-black text-slate-900">
+                  اطلاعات حساب
+                </h2>
 
-    {!editingProfile ? (
-      <button
-        onClick={() => setEditingProfile(true)}
-        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-white"
-      >
-        <Pencil size={15} />
-        ویرایش
-      </button>
-    ) : (
-      <button
-        onClick={cancelProfileEdit}
-        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
-      >
-        <X size={15} />
-        انصراف
-      </button>
-    )}
-  </div>
+                {!editingProfile ? (
+                  <button
+                    onClick={() => setEditingProfile(true)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-white"
+                  >
+                    <Pencil size={15} />
+                    ویرایش
+                  </button>
+                ) : (
+                  <button
+                    onClick={cancelProfileEdit}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  >
+                    <X size={15} />
+                    انصراف
+                  </button>
+                )}
+              </div>
 
-  {!editingProfile ? (
-    <div className="space-y-3">
-      <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-        <Mail className="mt-1 shrink-0 text-blue-700" size={18} />
-        <div className="min-w-0">
-          <div className="text-xs font-bold text-slate-500">ایمیل</div>
-          <div className="mt-1 break-words text-sm font-bold text-slate-900">
-            {customer.email}
-          </div>
-        </div>
-      </div>
+              {!editingProfile ? (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                    <Mail className="mt-1 shrink-0 text-blue-700" size={18} />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-500">
+                        ایمیل
+                      </div>
+                      <div className="mt-1 break-words text-sm font-bold text-slate-900">
+                        {customer.email}
+                      </div>
+                    </div>
+                  </div>
 
-      <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-        <Phone className="mt-1 shrink-0 text-blue-700" size={18} />
-        <div>
-          <div className="text-xs font-bold text-slate-500">شماره تماس</div>
-          <div className="mt-1 text-sm font-bold text-slate-900">
-            {customer.phone || "ثبت نشده"}
-          </div>
-        </div>
-      </div>
+                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                    <Phone className="mt-1 shrink-0 text-blue-700" size={18} />
+                    <div>
+                      <div className="text-xs font-bold text-slate-500">
+                        شماره تماس
+                      </div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {customer.phone || "ثبت نشده"}
+                      </div>
+                    </div>
+                  </div>
 
-      <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-        <Building2 className="mt-1 shrink-0 text-blue-700" size={18} />
-        <div>
-          <div className="text-xs font-bold text-slate-500">شرکت</div>
-          <div className="mt-1 text-sm font-bold text-slate-900">
-            {customer.company || "ثبت نشده"}
-          </div>
-        </div>
-      </div>
-    </div>
-  ) : (
-    <div className="space-y-4">
-      <div>
-        <label className="mb-2 block text-sm font-bold text-slate-700">
-          نام و نام خانوادگی
-        </label>
-        <input
-          value={profileFullName}
-          onChange={(e) => setProfileFullName(e.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
-        />
-      </div>
+                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                    <Building2
+                      className="mt-1 shrink-0 text-blue-700"
+                      size={18}
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-500">
+                        شرکت
+                      </div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {customer.company || "ثبت نشده"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700">
+                      نام و نام خانوادگی
+                    </label>
+                    <input
+                      value={profileFullName}
+                      onChange={(e) => setProfileFullName(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-bold text-slate-700">
-          شرکت / سازمان
-        </label>
-        <input
-          value={profileCompany}
-          onChange={(e) => setProfileCompany(e.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
-        />
-      </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700">
+                      شرکت / سازمان
+                    </label>
+                    <input
+                      value={profileCompany}
+                      onChange={(e) => setProfileCompany(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-bold text-slate-700">
-          شماره تماس
-        </label>
-        <input
-          value={profilePhone}
-          onChange={(e) => setProfilePhone(e.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
-        />
-      </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700">
+                      شماره تماس
+                    </label>
+                    <input
+                      value={profilePhone}
+                      onChange={(e) => setProfilePhone(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+                    />
+                  </div>
 
-      <button
-        onClick={saveProfile}
-        disabled={savingProfile}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50"
-      >
-        <Save size={17} />
-        {savingProfile ? "در حال ذخیره..." : "ذخیره تغییرات"}
-      </button>
-    </div>
-  )}
+                  <button
+                    onClick={saveProfile}
+                    disabled={savingProfile}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50"
+                  >
+                    <Save size={17} />
+                    {savingProfile ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                  </button>
+                </div>
+              )}
 
-  {profileMessage && (
-    <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
-      {profileMessage}
-    </div>
-  )}
-</div>
+              {profileMessage && (
+                <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
+                  {profileMessage}
+                </div>
+              )}
+            </div>
 
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
@@ -422,30 +439,30 @@ async function deleteAllSessions() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-  {sessions.length > 0 && (
-    <button
-      onClick={deleteAllSessions}
-      disabled={clearingAllSessions}
-      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
-    >
-      <Trash2 size={16} />
-      {clearingAllSessions ? "در حال حذف..." : "حذف همه گفتگوها"}
-    </button>
-  )}
+                {sessions.length > 0 && (
+                  <button
+                    onClick={deleteAllSessions}
+                    disabled={clearingAllSessions}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                  >
+                    <Trash2 size={16} />
+                    {clearingAllSessions ? "در حال حذف..." : "حذف همه گفتگوها"}
+                  </button>
+                )}
 
-  <Link
-    href="/assistant"
-    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-white"
-  >
-    شروع گفتگوی تازه
-  </Link>
-</div>
+                <Link
+                  href="/assistant"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-white"
+                >
+                  شروع گفتگوی تازه
+                </Link>
+              </div>
             </div>
             {sessionMessage && (
-  <div className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
-    {sessionMessage}
-  </div>
-)}
+              <div className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
+                {sessionMessage}
+              </div>
+            )}
             {loading ? (
               <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
                 در حال دریافت گفتگوها...
@@ -472,23 +489,23 @@ async function deleteAllSessions() {
                       </div>
 
                       <div className="flex shrink-0 items-center gap-2">
-  <span className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-blue-700">
-    ادامه گفتگو
-  </span>
+                        <span className="rounded-2xl bg-white px-4 py-2 text-sm font-bold text-blue-700">
+                          ادامه گفتگو
+                        </span>
 
-  <button
-    onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      deleteOneSession(session.id);
-    }}
-    disabled={deletingSessionId === session.id}
-    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-    title="حذف گفتگو"
-  >
-    <Trash2 size={16} />
-  </button>
-</div>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            deleteOneSession(session.id);
+                          }}
+                          disabled={deletingSessionId === session.id}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                          title="حذف گفتگو"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -509,12 +526,11 @@ async function deleteAllSessions() {
                 </p>
 
                 <Link
-  href="/assistant"
-  className="mt-6 inline-flex rounded-2xl bg-blue-700 px-6 py-3 font-bold text-white"
->
-  شروع گفتگو با آرتین
-</Link>
-
+                  href="/assistant"
+                  className="mt-6 inline-flex rounded-2xl bg-blue-700 px-6 py-3 font-bold text-white"
+                >
+                  شروع گفتگو با آرتین
+                </Link>
               </div>
             )}
           </div>

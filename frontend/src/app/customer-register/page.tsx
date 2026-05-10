@@ -67,9 +67,10 @@ export default function CustomerRegisterPage() {
       }
 
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-document.cookie = "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
+      document.cookie =
+        "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
 
-router.push("/assistant");
+      router.push("/assistant");
     } catch {
       setMessage("خطا در اتصال به سرور.");
     } finally {

@@ -17,9 +17,7 @@ export default function AppNav() {
           <div className="text-xl font-bold text-slate-900">
             ArtinAzma Expert Assistant
           </div>
-          <div className="text-sm text-slate-500">
-            دستیار تخصصی آرتین آزما
-          </div>
+          <div className="text-sm text-slate-500">دستیار تخصصی آرتین آزما</div>
         </div>
 
         <nav className="flex flex-wrap gap-2">

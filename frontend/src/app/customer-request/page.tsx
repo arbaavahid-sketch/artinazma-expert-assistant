@@ -32,7 +32,9 @@ type SavedCustomer = {
 };
 
 function getRequestTypeLabel(value: string) {
-  return requestTypes.find((item) => item.value === value)?.label || "مشاوره فنی";
+  return (
+    requestTypes.find((item) => item.value === value)?.label || "مشاوره فنی"
+  );
 }
 
 export default function CustomerRequestPage() {
@@ -98,7 +100,7 @@ export default function CustomerRequestPage() {
         setResultType("success");
         setResultMessage(
           data.message ||
-            "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما در اولین فرصت پیگیری خواهند کرد."
+            "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما در اولین فرصت پیگیری خواهند کرد.",
         );
 
         setRequestType("consultation");
@@ -313,9 +315,9 @@ export default function CustomerRequestPage() {
                 چه زمانی درخواست ثبت کنم؟
               </div>
               <p className="text-sm leading-8">
-                وقتی نیاز به پیشنهاد دقیق دستگاه، انتخاب ماده یا کاتالیست،
-                بررسی گزارش تست، عیب‌یابی دستگاه، استعلام قیمت یا پیگیری
-                کارشناسی دارید.
+                وقتی نیاز به پیشنهاد دقیق دستگاه، انتخاب ماده یا کاتالیست، بررسی
+                گزارش تست، عیب‌یابی دستگاه، استعلام قیمت یا پیگیری کارشناسی
+                دارید.
               </p>
             </div>
 

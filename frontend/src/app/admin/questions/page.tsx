@@ -37,8 +37,10 @@ function getStatusLabel(status: string) {
 }
 
 function getStatusClass(status: string) {
-  if (status === "approved") return "bg-emerald-50 text-emerald-700 border-emerald-100";
-  if (status === "needs_edit") return "bg-amber-50 text-amber-700 border-amber-100";
+  if (status === "approved")
+    return "bg-emerald-50 text-emerald-700 border-emerald-100";
+  if (status === "needs_edit")
+    return "bg-amber-50 text-amber-700 border-amber-100";
   if (status === "rejected") return "bg-red-50 text-red-700 border-red-100";
   return "bg-slate-100 text-slate-700 border-slate-200";
 }
@@ -120,15 +122,15 @@ export default function QuestionsPage() {
   }, [questions, searchText, statusFilter]);
 
   const pendingCount = questions.filter(
-    (item) => !item.expert_status || item.expert_status === "pending"
+    (item) => !item.expert_status || item.expert_status === "pending",
   ).length;
 
   const approvedCount = questions.filter(
-    (item) => item.expert_status === "approved"
+    (item) => item.expert_status === "approved",
   ).length;
 
   const needsEditCount = questions.filter(
-    (item) => item.expert_status === "needs_edit"
+    (item) => item.expert_status === "needs_edit",
   ).length;
 
   return (
@@ -158,7 +160,10 @@ export default function QuestionsPage() {
                 disabled={loading}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
-                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                <RefreshCw
+                  size={18}
+                  className={loading ? "animate-spin" : ""}
+                />
                 بروزرسانی
               </button>
             </div>
@@ -190,7 +195,9 @@ export default function QuestionsPage() {
           </div>
 
           <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
-            <div className="text-sm font-bold text-amber-700">نیازمند اصلاح</div>
+            <div className="text-sm font-bold text-amber-700">
+              نیازمند اصلاح
+            </div>
             <div className="mt-2 text-3xl font-black text-amber-700">
               {needsEditCount}
             </div>
@@ -246,7 +253,7 @@ export default function QuestionsPage() {
 
                         <span
                           className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(
-                            item.expert_status
+                            item.expert_status,
                           )}`}
                         >
                           {getStatusLabel(item.expert_status)}

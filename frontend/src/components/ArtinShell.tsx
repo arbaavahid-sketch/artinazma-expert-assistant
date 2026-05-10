@@ -82,7 +82,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [customerSessions, setCustomerSessions] = useState<ChatSession[]>([]);
   const [renamingSessionId, setRenamingSessionId] = useState<number | null>(
-    null
+    null,
   );
   const [renameTitle, setRenameTitle] = useState("");
 
@@ -104,7 +104,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         apiUrl(`/customers/${savedCustomer.id}/chat-sessions`),
         {
           cache: "no-store",
-        }
+        },
       );
 
       const data = await res.json();
@@ -153,7 +153,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
         {
           method: "DELETE",
-        }
+        },
       );
 
       const data = await res.json();
@@ -387,7 +387,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                 onClick={() => {
                                   setRenamingSessionId(session.id);
                                   setRenameTitle(
-                                    session.title || "گفتگوی جدید"
+                                    session.title || "گفتگوی جدید",
                                   );
                                 }}
                                 className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"

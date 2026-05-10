@@ -121,8 +121,6 @@ export default function AdminLoginPage() {
               {loading ? "در حال ورود..." : "ورود به پنل ادمین"}
               <ArrowLeft size={18} />
             </button>
-
-            
           </div>
 
           <div className="flex items-center justify-center bg-gradient-to-b from-purple-50 via-white to-slate-50 p-8">
@@ -136,8 +134,8 @@ export default function AdminLoginPage() {
               </div>
 
               <p className="mt-3 text-center leading-8 text-slate-600">
-                این بخش مخصوص مدیریت بانک دانش، بررسی پاسخ‌ها و پیگیری درخواست‌های
-                مشتریان است.
+                این بخش مخصوص مدیریت بانک دانش، بررسی پاسخ‌ها و پیگیری
+                درخواست‌های مشتریان است.
               </p>
 
               <div className="mt-5 grid gap-3 text-sm">

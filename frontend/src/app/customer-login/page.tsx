@@ -52,12 +52,13 @@ export default function CustomerLoginPage() {
       }
 
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-document.cookie = "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
+      document.cookie =
+        "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
 
-const params = new URLSearchParams(window.location.search);
-const nextPath = params.get("next") || "/assistant";
+      const params = new URLSearchParams(window.location.search);
+      const nextPath = params.get("next") || "/assistant";
 
-router.push(nextPath);
+      router.push(nextPath);
     } catch {
       setMessage("خطا در اتصال به سرور.");
     } finally {
@@ -171,8 +172,8 @@ router.push(nextPath);
               </div>
 
               <p className="mt-3 leading-8 text-slate-600">
-                برای سوالات فنی، تحلیل تست، تجهیزات، مواد شیمیایی، کاتالیست‌ها
-                و موضوعات مرتبط با آرتین آزما.
+                برای سوالات فنی، تحلیل تست، تجهیزات، مواد شیمیایی، کاتالیست‌ها و
+                موضوعات مرتبط با آرتین آزما.
               </p>
 
               <div className="mt-5 grid gap-3 text-right text-sm">
