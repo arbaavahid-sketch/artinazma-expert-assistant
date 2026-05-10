@@ -726,7 +726,7 @@ useEffect(() => {
     }
   }
 }, [router, sessionIdParam]);
- function typeAssistantMessage(
+function typeAssistantMessage(
   previousMessages: ChatMessage[],
   userMessage: ChatMessage,
   assistantMessage: ChatMessage
@@ -820,9 +820,9 @@ async function sendMessage(customMessage?: string, displayMessage?: string) {
       }),
     });
 
-const rawText = await res.text();
+  const rawText = await res.text();
 
-if (!res.ok) {
+  if (!res.ok) {
   let serverMessage = "خطا در دریافت پاسخ از سرور.";
 
   try {
