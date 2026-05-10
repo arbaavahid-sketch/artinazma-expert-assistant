@@ -619,48 +619,48 @@ ${cleanAnswer}`,
     }
   }
 
-async function ensureCustomerSession(titleSource: string) {
-  const activeCustomer = customer || getSavedCustomer();
+  async function ensureCustomerSession(titleSource: string) {
+    const activeCustomer = customer || getSavedCustomer();
 
-  if (!activeCustomer) return null;
+    if (!activeCustomer) return null;
 
-  if (!customer) {
-    setCustomer(activeCustomer);
+    if (!customer) {
+      setCustomer(activeCustomer);
+    }
+
+    if (activeSessionId) return activeSessionId;
+
+    return createCustomerChatSession(titleSource);
   }
 
-  if (activeSessionId) return activeSessionId;
+  async function saveCustomerChatMessage(
+    sessionId: number | null,
+    role: "user" | "assistant",
+    content: string,
+    metadata: Record<string, unknown> = {}
+  ) {
+    const activeCustomer = customer || getSavedCustomer();
 
-  return createCustomerChatSession(titleSource);
-}
+    if (!activeCustomer || !sessionId || !content.trim()) return;
 
-async function saveCustomerChatMessage(
-  sessionId: number | null,
-  role: "user" | "assistant",
-  content: string,
-  metadata: Record<string, unknown> = {}
-) {
-  const activeCustomer = customer || getSavedCustomer();
-
-  if (!activeCustomer || !sessionId || !content.trim()) return;
-
-  try {
-    await fetch(apiUrl("/customers/chat-messages"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        customer_id: activeCustomer.id,
-        session_id: sessionId,
-        role,
-        content,
-        metadata,
-      }),
-    });
-  } catch {
-    // ذخیره گفتگو نباید باعث خراب شدن چت اصلی شود
+    try {
+      await fetch(apiUrl("/customers/chat-messages"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customer_id: activeCustomer.id,
+          session_id: sessionId,
+          role,
+          content,
+          metadata,
+        }),
+      });
+    } catch {
+      // ذخیره گفتگو نباید باعث خراب شدن چت اصلی شود
+    }
   }
-}
 
 async function loadSavedChatSession(customerId: number, sessionId: number) {
   setLoadingSavedSession(true);
