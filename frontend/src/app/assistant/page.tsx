@@ -491,10 +491,11 @@ export default function AssistantPage() {
   
 
   async function copyText(text: string) {
-    await navigator.clipboard.writeText(text);
-  }
-  function sendQuickAction(
-  action: "shorter" | "technical" | "table" ,
+  await navigator.clipboard.writeText(text);
+}
+
+function sendQuickAction(
+  action: "shorter" | "technical" | "table",
   answerText: string
 ) {
   const cleanAnswer = answerText.trim();
@@ -522,18 +523,19 @@ ${cleanAnswer}`,
     shorter: "خلاصه‌تر کن",
     technical: "فنی‌تر توضیح بده",
     table: "تبدیل به جدول",
-    
   };
 
   sendMessage(prompts[action], visibleMessages[action]);
 }
-  function makeSessionTitle(text: string) {
+
+function makeSessionTitle(text: string) {
   const clean = text.replace(/\s+/g, " ").trim();
 
   if (!clean) return "گفتگوی جدید";
 
   return clean.length > 42 ? `${clean.slice(0, 42)}...` : clean;
 }
+
 async function sendAnswerFeedback(
   questionId: number | undefined,
   status: "approved" | "needs_edit"
@@ -570,6 +572,7 @@ async function sendAnswerFeedback(
     // خطای بازخورد نباید چت را خراب کند
   }
 }
+
 function getSavedCustomer(): Customer | null {
   try {
     const raw = localStorage.getItem("artin_customer");
@@ -581,7 +584,6 @@ function getSavedCustomer(): Customer | null {
     return null;
   }
 }
-
 async function createCustomerChatSession(title: string) {
   const activeCustomer = customer || getSavedCustomer();
 
