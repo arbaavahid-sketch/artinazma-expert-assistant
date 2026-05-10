@@ -413,39 +413,39 @@ def chat(request: ChatRequest):
     artinazma_context = ""
 
     if allow_company_reference:
-       try:
-           artinazma_resources = find_artinazma_resources(
-               message=request.message,
-               max_results=2
-           )
+        try:
+            artinazma_resources = find_artinazma_resources(
+                message=request.message,
+                max_results=2,
+            )
 
-           resource_links = artinazma_resources.get("links", [])
-           resource_images = artinazma_resources.get("images", [])
+            resource_links = artinazma_resources.get("links", [])
+            resource_images = artinazma_resources.get("images", [])
 
-           if resource_links:
-               artinazma_context = """
-               نتیجه جست‌وجوی سایت رسمی آرتین آزما:
-                این مورد در سایت رسمی آرتین آزما پیدا شده است.
-               هنگام پاسخ، کامل و فنی توضیح بده.
-               در متن پاسخ، لینک خام ننویس؛ لینک جداگانه توسط سیستم نمایش داده می‌شود.
-               اگر مشخصات دقیق محصول در متن منابع داخلی نیست، با دانش فنی معتبر تکمیل کن، اما ادعای ساختگی نکن.
-               """
+            if resource_links:
+                artinazma_context = """
+نتیجه جست‌وجوی سایت رسمی آرتین آزما:
+این مورد در سایت رسمی آرتین آزما پیدا شده است.
+هنگام پاسخ، کامل و فنی توضیح بده.
+در متن پاسخ، لینک خام ننویس؛ لینک جداگانه توسط سیستم نمایش داده می‌شود.
+اگر مشخصات دقیق محصول در متن منابع داخلی نیست، با دانش فنی معتبر تکمیل کن، اما ادعای ساختگی نکن.
+"""
 
-               for link in resource_links:
-                   artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
-                   artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
+            for link in resource_links:
+                artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
+                artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
 
-               search_mode = f"{search_mode}+artinazma_site"
+            search_mode = f"{search_mode}+artinazma_site"
 
-       except Exception as e:
-           print("ArtinAzma resource search failed:", e)
-           resource_links = []
-           resource_images = []
-           artinazma_context = ""
+        except Exception as e:
+            print("ArtinAzma resource search failed:", e)
+            resource_links = []
+            resource_images = []
+            artinazma_context = ""
     else:
-        resource_links = []
-        resource_images = []
-        artinazma_context = ""
+       resource_links = []
+       resource_images = []
+       artinazma_context = ""
 
     allow_web_search = False
 
