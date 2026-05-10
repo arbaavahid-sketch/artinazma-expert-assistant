@@ -588,36 +588,36 @@ ${cleanAnswer}`,
   async function createCustomerChatSession(title: string) {
     const activeCustomer = customer || getSavedCustomer();
 
-  if (!activeCustomer) return null;
+    if (!activeCustomer) return null;
 
-  try {
-    const res = await fetch(apiUrl("/customers/chat-sessions"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        customer_id: activeCustomer.id,
-        title: makeSessionTitle(title),
-      }),
-    });
+    try {
+      const res = await fetch(apiUrl("/customers/chat-sessions"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customer_id: activeCustomer.id,
+          title: makeSessionTitle(title),
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!data.success || !data.session_id) return null;
+      if (!data.success || !data.session_id) return null;
 
-    const newSessionId = Number(data.session_id);
+      const newSessionId = Number(data.session_id);
 
-    setCustomer(activeCustomer);
-    setActiveSessionId(newSessionId);
+      setCustomer(activeCustomer);
+      setActiveSessionId(newSessionId);
 
-    window.history.replaceState(null, "", `/assistant?session_id=${newSessionId}`);
+      window.history.replaceState(null, "", `/assistant?session_id=${newSessionId}`);
 
-    return newSessionId;
-  } catch {
-    return null;
+      return newSessionId;
+    } catch {
+      return null;
+    }
   }
-}
 
 async function ensureCustomerSession(titleSource: string) {
   const activeCustomer = customer || getSavedCustomer();
