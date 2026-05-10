@@ -7,9 +7,8 @@ def format_answer_for_ui(text: str) -> str:
 
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-    # حذف markdown اضافی
+    # حذف خط جداکننده اضافه، اما تیترهای Markdown را نگه می‌داریم
     text = re.sub(r"^\s*---+\s*$", "", text, flags=re.MULTILINE)
-    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
 
     # فاصله‌های خیلی زیاد را اول کنترل کن
     text = re.sub(r"[ \t]+", " ", text)
