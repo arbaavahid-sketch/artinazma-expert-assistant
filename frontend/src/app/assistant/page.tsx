@@ -728,6 +728,7 @@ ${cleanAnswer}`,
       }
     }
   }, [router, sessionIdParam]);
+
   function typeAssistantMessage(
     previousMessages: ChatMessage[],
     userMessage: ChatMessage,
@@ -822,7 +823,7 @@ ${cleanAnswer}`,
         }),
       });
 
-            const rawText = await res.text();
+                  const rawText = await res.text();
 
       if (!res.ok) {
         let serverMessage = "خطا در دریافت پاسخ از سرور.";
