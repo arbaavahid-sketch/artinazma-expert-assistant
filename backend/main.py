@@ -360,8 +360,7 @@ def home():
         "message": "ArtinAzma Expert Assistant API is running"
     }
 
-@app.put("/questions/{question_id}/review")
-def review_question(question_id: int, request: QuestionReviewRequest):
+def save_question_review(question_id: int, request: QuestionReviewRequest):
     updated = update_question_review(
         question_id=question_id,
         expert_status=request.expert_status,
@@ -372,14 +371,24 @@ def review_question(question_id: int, request: QuestionReviewRequest):
     if not updated:
         return {
             "success": False,
-            "message": "Question not found"
+            "message": "Question not found",
         }
 
     return {
         "success": True,
         "question_id": question_id,
-        "expert_status": request.expert_status
+        "expert_status": request.expert_status,
     }
+
+
+@app.put("/questions/{question_id}/review")
+def review_question_put(question_id: int, request: QuestionReviewRequest):
+    return save_question_review(question_id, request)
+
+
+@app.patch("/questions/{question_id}/review")
+def review_question_patch(question_id: int, request: QuestionReviewRequest):
+    return save_question_review(question_id, request)
 @app.post("/chat")
 def chat(request: ChatRequest):
     has_astm_code = bool(
