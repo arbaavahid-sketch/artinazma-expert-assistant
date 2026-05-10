@@ -833,9 +833,9 @@ async function sendMessage(customMessage?: string, displayMessage?: string) {
   throw new Error(serverMessage);
 }
 
-let data;
+  let data;
 
-try {
+  try {
   data = JSON.parse(rawText);
 } catch {
   throw new Error("پاسخ سرور معتبر نبود.");
