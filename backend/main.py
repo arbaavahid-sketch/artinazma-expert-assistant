@@ -5,7 +5,6 @@ import shutil
 from comparison_table_service import ensure_comparison_table
 from standard_service import get_context_for_app
 from answer_formatter_service import format_answer_for_ui
-from text_format_service import format_answer_for_ui
 from answer_quality_service import build_answer_quality_context
 from intent_service import detect_question_intent
 from artinazma_index_service import rebuild_artinazma_index, load_index
@@ -572,21 +571,7 @@ def chat(request: ChatRequest):
     if standard_context:
         context = f"{context}\n\n{standard_context}".strip()
 
-    quality_context = ""
-
-    try:
-       quality_context = build_answer_quality_context(
-           message=request.message,
-           intent=question_intent,
-           intent_label=question_intent_label,
-           domain=detected_domain,
-       )
-    except Exception as e:
-        print("Answer quality engine failed:", e)
-        quality_context = ""
-        
-    if quality_context:
-        context = f"{context}\n\n{quality_context}".strip()
+    
     if allow_company_reference:
          company_visibility_context = """
      قانون نمایش اطلاعات شرکت:
