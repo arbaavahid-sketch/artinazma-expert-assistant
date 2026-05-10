@@ -1,7 +1,7 @@
 "use client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
@@ -194,22 +194,8 @@ function getImageTypeLabel(value: string) {
   return imageTypes.find((item) => item.value === value)?.label || "تصویر عمومی";
 }
 
-function getDomainLabel(domain: string) {
-  if (domain === "catalyst") return "کاتالیست";
-  if (domain === "equipment") return "تجهیزات";
-  if (domain === "chromatography") return "کروماتوگرافی";
-  if (domain === "mercury-analysis") return "آنالیز جیوه";
-  if (domain === "sulfur-analysis") return "آنالیز سولفور";
-  if (domain === "troubleshooting") return "عیب‌یابی";
-  if (domain === "analysis") return "آنالیز و تست";
-  return "تشخیص خودکار";
-}
-function getResponseModeLabel(mode: string) {
-  if (mode === "brief") return "خلاصه";
-  if (mode === "technical") return "فنی کامل";
-  if (mode === "checklist") return "چک‌لیست عملیاتی";
-  return "هوشمند";
-}
+
+
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -504,7 +490,7 @@ export default function AssistantPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
-  const domainLabel = useMemo(() => getDomainLabel(domain), [domain]);
+  
 
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
