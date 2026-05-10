@@ -703,30 +703,31 @@ ${cleanAnswer}`,
       setLoadingSavedSession(false);
     }
   }
-  
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  setSessionIdParam(params.get("session_id"));
-}, []);
-useEffect(() => {
-  const savedCustomer = getSavedCustomer();
 
-  if (!savedCustomer) {
-    router.replace("/customer-login");
-    return;
-  }
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSessionIdParam(params.get("session_id"));
+  }, []);
 
-  setCustomer(savedCustomer);
-  setCheckingCustomerLogin(false);
+  useEffect(() => {
+    const savedCustomer = getSavedCustomer();
 
-  if (sessionIdParam) {
-    const sessionId = Number(sessionIdParam);
-
-    if (!Number.isNaN(sessionId)) {
-      loadSavedChatSession(savedCustomer.id, sessionId);
+    if (!savedCustomer) {
+      router.replace("/customer-login");
+      return;
     }
-  }
-}, [router, sessionIdParam]);
+
+    setCustomer(savedCustomer);
+    setCheckingCustomerLogin(false);
+
+    if (sessionIdParam) {
+      const sessionId = Number(sessionIdParam);
+
+      if (!Number.isNaN(sessionId)) {
+        loadSavedChatSession(savedCustomer.id, sessionId);
+      }
+    }
+  }, [router, sessionIdParam]);
 function typeAssistantMessage(
   previousMessages: ChatMessage[],
   userMessage: ChatMessage,
