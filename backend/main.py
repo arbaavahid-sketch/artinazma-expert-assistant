@@ -435,7 +435,7 @@ def chat(request: ChatRequest):
                     artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
                     artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
 
-            search_mode = f"{search_mode}+artinazma_site"
+                search_mode = f"{search_mode}+artinazma_site"
 
         except Exception as e:
             print("ArtinAzma resource search failed:", e)
