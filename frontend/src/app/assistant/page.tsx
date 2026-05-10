@@ -537,6 +537,7 @@ export default function AssistantPage() {
   const [responseMode, setResponseMode] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [feedbackStatus, setFeedbackStatus] = useState<Record<number, string>>({});
   const [showTools, setShowTools] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
@@ -600,7 +601,42 @@ ${cleanAnswer}`,
 
   return clean.length > 42 ? `${clean.slice(0, 42)}...` : clean;
 }
+async function sendAnswerFeedback(
+  questionId: number | undefined,
+  status: "approved" | "needs_edit"
+) {
+  if (!questionId) return;
 
+  const expertNote =
+    status === "approved"
+      ? "کاربر پاسخ را مفید اعلام کرد."
+      : "کاربر اعلام کرد پاسخ نیاز به اصلاح دارد.";
+
+  try {
+    const res = await fetch(apiUrl(`/questions/${questionId}/review`), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        expert_status: status,
+        expert_note: expertNote,
+        reviewed_answer: "",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      setFeedbackStatus((prev) => ({
+        ...prev,
+        [questionId]: status,
+      }));
+    }
+  } catch {
+    // خطای بازخورد نباید چت را خراب کند
+  }
+}
 function getSavedCustomer(): Customer | null {
   try {
     const raw = localStorage.getItem("artin_customer");
@@ -1439,13 +1475,15 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
 ) : (
             <div className="mx-auto w-full max-w-5xl space-y-7 pb-4">
               {messages.map((item, index) => (
-                <MessageBubble
-  key={index}
-  item={item}
-  loading={loading}
-  onCopy={copyText}
-  onRequest={() => router.push("/customer-request")}
-  onQuickAction={sendQuickAction}
+  <MessageBubble
+   key={index}
+   item={item}
+   loading={loading}
+   onCopy={copyText}
+   onRequest={() => router.push("/customer-request")}
+   onQuickAction={sendQuickAction}
+   onFeedback={sendAnswerFeedback}
+   feedbackValue={item.question_id ? feedbackStatus[item.question_id] : undefined}
 />
               ))}
 
@@ -1623,15 +1661,22 @@ function MessageBubble({
   onCopy,
   onRequest,
   onQuickAction,
+  onFeedback,
+  feedbackValue,
 }: {
   item: ChatMessage;
   loading: boolean;
   onCopy: (text: string) => void;
   onRequest: () => void;
   onQuickAction: (
-    action: "shorter" | "technical" | "table" ,
+    action: "shorter" | "technical" | "table",
     answerText: string
   ) => void;
+  onFeedback: (
+    questionId: number | undefined,
+    status: "approved" | "needs_edit"
+  ) => void;
+  feedbackValue?: string;
 }) {
   const isUser = item.role === "user";
   const displayContent = isUser ? item.content : cleanMarkdownText(item.content);
@@ -1820,6 +1865,29 @@ function MessageBubble({
       >
         ثبت درخواست مشاوره
       </button>
+      <button
+  onClick={() => onFeedback(item.question_id, "approved")}
+  disabled={feedbackValue === "approved"}
+  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
+    feedbackValue === "approved"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+  }`}
+>
+  پاسخ خوب بود
+</button>
+
+<button
+  onClick={() => onFeedback(item.question_id, "needs_edit")}
+  disabled={feedbackValue === "needs_edit"}
+  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
+    feedbackValue === "needs_edit"
+      ? "border-amber-200 bg-amber-50 text-amber-700"
+      : "border-slate-200 bg-white text-slate-700 hover:bg-amber-50 hover:text-amber-700"
+  }`}
+>
+  نیاز به اصلاح دارد
+</button>
     </div>
   </div>
 )}
