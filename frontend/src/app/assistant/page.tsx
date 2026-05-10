@@ -760,47 +760,49 @@ useEffect(() => {
   }, 18);
 }
 
-  async function sendMessage(customMessage?: string, displayMessage?: string) {
+async function sendMessage(customMessage?: string, displayMessage?: string) {
   const finalMessage = customMessage || message;
   const visibleMessage = displayMessage || finalMessage;
 
-    if (!finalMessage.trim()) return;
+  if (!finalMessage.trim()) return;
 
-    const previousMessages = messages;
-    const userId = getOrCreateUserId();
+  const previousMessages = messages;
+  const userId = getOrCreateUserId();
 
-    const userMessage: ChatMessage = {
-  role: "user",
-  content: visibleMessage,
-};
-   const customerSessionId = await ensureCustomerSession(visibleMessage);
+  const userMessage: ChatMessage = {
+    role: "user",
+    content: visibleMessage,
+  };
 
-await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
-  domain,
-  response_mode: responseMode,
-  actual_prompt: displayMessage ? finalMessage : undefined,
-});
-    setMessages([...previousMessages, userMessage]);
-    setMessage("");
-    setLoading(true);
-    setShowTools(false);
+  const customerSessionId = await ensureCustomerSession(visibleMessage);
 
-    try {
-      const res = await fetch(apiUrl("/chat"), {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-  message: finalMessage,
-  domain,
-  response_mode: responseMode,
-  user_id: userId,
-  history: previousMessages.map((item) => {
-  let content = item.content;
+  await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
+    domain,
+    response_mode: responseMode,
+    actual_prompt: displayMessage ? finalMessage : undefined,
+  });
 
-  if (item.attachment) {
-    content += `
+  setMessages([...previousMessages, userMessage]);
+  setMessage("");
+  setLoading(true);
+  setShowTools(false);
+
+  try {
+    const res = await fetch(apiUrl("/chat"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: finalMessage,
+        domain,
+        response_mode: responseMode,
+        user_id: userId,
+        history: previousMessages.map((item) => {
+          let content = item.content;
+
+          if (item.attachment) {
+            content += `
 
 اطلاعات فایل/عکس قبلی:
 نام: ${item.attachment.name}
@@ -808,15 +810,15 @@ await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
 دسته‌بندی تحلیل: ${item.attachment.analysisType || ""}
 توضیح کاربر: ${item.attachment.note || ""}
 `;
-  }
+          }
 
-  return {
-    role: item.role,
-    content,
-  };
-}),
-  }),
-});
+          return {
+            role: item.role,
+            content,
+          };
+        }),
+      }),
+    });
 
 const rawText = await res.text();
 
