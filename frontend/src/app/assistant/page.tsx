@@ -584,6 +584,7 @@ function getSavedCustomer(): Customer | null {
     return null;
   }
 }
+
 async function createCustomerChatSession(title: string) {
   const activeCustomer = customer || getSavedCustomer();
 
