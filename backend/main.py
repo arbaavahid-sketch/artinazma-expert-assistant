@@ -394,14 +394,15 @@ def chat(request: ChatRequest):
             best_score = float(related_docs[0].get("score", 0) or 0)
         except Exception:
             best_score = 0.0
-           # برای سوالات عمومی فنی، مقایسه‌ای، انتخاب روش یا عیب‌یابی،
-           # اگر منبع داخلی خیلی مطمئن نیست، اجازه نده منبع نامرتبط جواب را خراب کند.
+
+    # برای سوالات عمومی فنی، مقایسه‌ای، انتخاب روش یا عیب‌یابی،
+    # اگر منبع داخلی خیلی مطمئن نیست، اجازه نده منبع نامرتبط جواب را خراب کند.
     if question_intent in [
         "technical_general",
         "equipment_recommendation",
         "troubleshooting",
         "lab_analysis",
-]:
+    ]:
         if best_score < 14:
             related_docs = []
             best_score = 0.0
