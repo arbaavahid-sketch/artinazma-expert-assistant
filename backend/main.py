@@ -443,9 +443,9 @@ def chat(request: ChatRequest):
             resource_images = []
             artinazma_context = ""
     else:
-       resource_links = []
-       resource_images = []
-       artinazma_context = ""
+        resource_links = []
+        resource_images = []
+        artinazma_context = ""
 
     allow_web_search = False
 
