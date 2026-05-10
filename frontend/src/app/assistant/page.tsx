@@ -91,25 +91,6 @@ type ToolAction =
   | "catalyst-suggestion"
   | "customer-request";
 
-const quickPrompts = [
-  {
-    title: "آنالیز سولفور",
-    text: "برای آنالیز سولفور در LPG چه راهکاری پیشنهاد می‌کنید؟",
-  },
-  {
-    title: "عیب‌یابی GC",
-    text: "علت نوسان baseline در GC چیست؟",
-  },
-  {
-    title: "بررسی کاتالیست",
-    text: "برای بررسی افت فعالیت کاتالیست چه تست‌هایی لازم است؟",
-  },
-  {
-    title: "آنالیز جیوه",
-    text: "برای اندازه‌گیری جیوه در آب و خاک چه تجهیزاتی مناسب است؟",
-  },
-];
-
 const tools: {
   label: string;
   description: string;
@@ -494,38 +475,6 @@ function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[] }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-function AssistantQuickActions({
-  answerText,
-  onAction,
-}: {
-  answerText: string;
-  onAction: (action: "shorter" | "technical" | "table" , answerText: string) => void;
-}) {
-  return (
-    <div className="mt-4 flex flex-wrap gap-2">
-      <button
-        onClick={() => onAction("shorter", answerText)}
-        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        خلاصه‌تر کن
-      </button>
-
-      <button
-        onClick={() => onAction("technical", answerText)}
-        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        فنی‌تر توضیح بده
-      </button>
-
-      <button
-        onClick={() => onAction("table", answerText)}
-        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        تبدیل به جدول
-      </button>
     </div>
   );
 }
