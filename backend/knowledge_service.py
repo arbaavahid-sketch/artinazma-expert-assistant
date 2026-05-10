@@ -64,10 +64,7 @@ def chunk_text(text: str, chunk_size: int = 1200, overlap: int = 200) -> List[st
 
 
 def create_embedding(text: str) -> List[float]:
-    response = client.embeddings.create(
-        model=EMBEDDING_MODEL,
-        input=text
-    )
+    response = client.embeddings.create(model=EMBEDDING_MODEL, input=text)
 
     return response.data[0].embedding
 
@@ -88,7 +85,7 @@ def save_vector_store(data: List[Dict[str, Any]]) -> None:
         try:
             backup_path.write_text(
                 VECTOR_STORE_PATH.read_text(encoding="utf-8", errors="ignore"),
-                encoding="utf-8"
+                encoding="utf-8",
             )
         except Exception:
             pass
@@ -98,13 +95,11 @@ def save_vector_store(data: List[Dict[str, Any]]) -> None:
 
     os.replace(temp_path, VECTOR_STORE_PATH)
 
+
 def knowledge_file_exists(file_name: str) -> bool:
     store = load_vector_store()
 
-    return any(
-        item.get("file_name") == file_name
-        for item in store
-    )
+    return any(item.get("file_name") == file_name for item in store)
 
 
 def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
@@ -112,11 +107,7 @@ def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
 
     before_count = len(store)
 
-    new_store = [
-        item
-        for item in store
-        if item.get("file_name") != file_name
-    ]
+    new_store = [item for item in store if item.get("file_name") != file_name]
 
     removed_chunks = before_count - len(new_store)
 
@@ -125,7 +116,7 @@ def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
             "success": False,
             "message": "فایلی با این نام در بانک دانش پیدا نشد.",
             "file_name": file_name,
-            "removed_chunks": 0
+            "removed_chunks": 0,
         }
 
     save_vector_store(new_store)
@@ -134,7 +125,7 @@ def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
         "success": True,
         "message": "فایل با موفقیت از بانک دانش حذف شد.",
         "file_name": file_name,
-        "removed_chunks": removed_chunks
+        "removed_chunks": removed_chunks,
     }
 
 
@@ -143,11 +134,7 @@ def replace_knowledge_file_if_exists(file_name: str) -> int:
 
     before_count = len(store)
 
-    new_store = [
-        item
-        for item in store
-        if item.get("file_name") != file_name
-    ]
+    new_store = [item for item in store if item.get("file_name") != file_name]
 
     removed_chunks = before_count - len(new_store)
 
@@ -155,6 +142,8 @@ def replace_knowledge_file_if_exists(file_name: str) -> int:
         save_vector_store(new_store)
 
     return removed_chunks
+
+
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     vector_a = np.array(a)
     vector_b = np.array(b)
@@ -171,7 +160,7 @@ def add_file_to_knowledge_base(
     file_path: str,
     title: str = "",
     category: str = "general",
-    replace_existing: bool = False
+    replace_existing: bool = False,
 ) -> Dict[str, Any]:
     file_name = Path(file_path).name
 
@@ -181,7 +170,7 @@ def add_file_to_knowledge_base(
                 "success": False,
                 "duplicate": True,
                 "message": "این فایل قبلاً در بانک دانش ثبت شده است. اگر می‌خواهید نسخه قبلی حذف و فایل جدید جایگزین شود، گزینه جایگزینی فایل تکراری را فعال کنید.",
-                "file_name": file_name
+                "file_name": file_name,
             }
 
         removed_chunks = replace_knowledge_file_if_exists(file_name)
@@ -193,7 +182,7 @@ def add_file_to_knowledge_base(
     if not text.strip():
         return {
             "success": False,
-            "message": "متنی از فایل استخراج نشد. فعلاً PDF متنی، TXT و MD پشتیبانی می‌شوند."
+            "message": "متنی از فایل استخراج نشد. فعلاً PDF متنی، TXT و MD پشتیبانی می‌شوند.",
         }
 
     chunks = chunk_text(text)
@@ -205,14 +194,16 @@ def add_file_to_knowledge_base(
     for index, chunk in enumerate(chunks):
         embedding = create_embedding(chunk)
 
-        store.append({
-            "title": title or file_name,
-            "category": category,
-            "file_name": file_name,
-            "chunk_index": index,
-            "content": chunk,
-            "embedding": embedding
-        })
+        store.append(
+            {
+                "title": title or file_name,
+                "category": category,
+                "file_name": file_name,
+                "chunk_index": index,
+                "content": chunk,
+                "embedding": embedding,
+            }
+        )
 
         added_chunks += 1
 
@@ -224,8 +215,9 @@ def add_file_to_knowledge_base(
         "file_name": file_name,
         "chunks_added": added_chunks,
         "replaced": replace_existing,
-        "removed_old_chunks": removed_chunks
+        "removed_old_chunks": removed_chunks,
     }
+
 
 def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     store = load_vector_store()
@@ -240,14 +232,16 @@ def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     for item in store:
         score = cosine_similarity(query_embedding, item["embedding"])
 
-        results.append({
-            "score": score,
-            "title": item["title"],
-            "category": item["category"],
-            "file_name": item["file_name"],
-            "chunk_index": item["chunk_index"],
-            "content": item["content"]
-        })
+        results.append(
+            {
+                "score": score,
+                "title": item["title"],
+                "category": item["category"],
+                "file_name": item["file_name"],
+                "chunk_index": item["chunk_index"],
+                "content": item["content"],
+            }
+        )
 
     results.sort(key=lambda x: x["score"], reverse=True)
 
@@ -283,13 +277,15 @@ def get_knowledge_stats() -> Dict[str, Any]:
     file_details = []
 
     for file_name, data in file_map.items():
-        file_details.append({
-            "file_name": data["file_name"],
-            "title": data["title"],
-            "category": data["category"],
-            "categories": sorted(list(data["categories"])),
-            "chunks": data["chunks"],
-        })
+        file_details.append(
+            {
+                "file_name": data["file_name"],
+                "title": data["title"],
+                "category": data["category"],
+                "categories": sorted(list(data["categories"])),
+                "chunks": data["chunks"],
+            }
+        )
 
     file_details.sort(key=lambda item: item["file_name"])
 
@@ -300,16 +296,18 @@ def get_knowledge_stats() -> Dict[str, Any]:
         "categories": categories,
         "file_details": file_details,
     }
+
+
 def add_text_to_knowledge_base(
     title: str,
     content: str,
     category: str = "expert-faq",
-    file_name: str = "expert_faq.txt"
+    file_name: str = "expert_faq.txt",
 ) -> Dict[str, Any]:
     if not content.strip():
         return {
             "success": False,
-            "message": "متنی برای افزودن به بانک دانش وجود ندارد."
+            "message": "متنی برای افزودن به بانک دانش وجود ندارد.",
         }
 
     chunks = chunk_text(content)
@@ -321,14 +319,16 @@ def add_text_to_knowledge_base(
     for index, chunk in enumerate(chunks):
         embedding = create_embedding(chunk)
 
-        store.append({
-            "title": title,
-            "category": category,
-            "file_name": file_name,
-            "chunk_index": index,
-            "content": chunk,
-            "embedding": embedding
-        })
+        store.append(
+            {
+                "title": title,
+                "category": category,
+                "file_name": file_name,
+                "chunk_index": index,
+                "content": chunk,
+                "embedding": embedding,
+            }
+        )
 
         added_chunks += 1
 
@@ -340,5 +340,5 @@ def add_text_to_knowledge_base(
         "title": title,
         "file_name": file_name,
         "category": category,
-        "chunks_added": added_chunks
+        "chunks_added": added_chunks,
     }

@@ -42,9 +42,7 @@ def local_search_knowledge_base(query: str, top_k: int = 12) -> List[Dict[str, A
         file_name = item.get("file_name", "")
         category = item.get("category", "")
 
-        searchable_text = normalize_text(
-            f"{title} {file_name} {category} {content}"
-        )
+        searchable_text = normalize_text(f"{title} {file_name} {category} {content}")
 
         searchable_compact = searchable_text.replace(" ", "")
 
@@ -59,21 +57,25 @@ def local_search_knowledge_base(query: str, top_k: int = 12) -> List[Dict[str, A
                 score += 50
 
         if score > 0:
-            results.append({
-                "score": float(score),
-                "title": title,
-                "category": category,
-                "file_name": file_name,
-                "chunk_index": item.get("chunk_index", 0),
-                "content": content
-            })
+            results.append(
+                {
+                    "score": float(score),
+                    "title": title,
+                    "category": category,
+                    "file_name": file_name,
+                    "chunk_index": item.get("chunk_index", 0),
+                    "content": content,
+                }
+            )
 
     results.sort(key=lambda x: x["score"], reverse=True)
 
     return results[:top_k]
 
 
-def get_more_chunks_from_best_file(results: List[Dict[str, Any]], max_chunks: int = 8) -> List[Dict[str, Any]]:
+def get_more_chunks_from_best_file(
+    results: List[Dict[str, Any]], max_chunks: int = 8
+) -> List[Dict[str, Any]]:
     if not results:
         return []
 
@@ -87,7 +89,7 @@ def get_more_chunks_from_best_file(results: List[Dict[str, Any]], max_chunks: in
             "category": item.get("category", ""),
             "file_name": item.get("file_name", ""),
             "chunk_index": item.get("chunk_index", 0),
-            "content": item.get("content", "")
+            "content": item.get("content", ""),
         }
         for item in store
         if item.get("file_name") == best_file
@@ -98,7 +100,9 @@ def get_more_chunks_from_best_file(results: List[Dict[str, Any]], max_chunks: in
     return file_chunks[:max_chunks]
 
 
-def extract_relevant_sentences(text: str, query: str, max_sentences: int = 8) -> List[str]:
+def extract_relevant_sentences(
+    text: str, query: str, max_sentences: int = 8
+) -> List[str]:
     query_tokens = tokenize(query)
 
     sentences = re.split(r"(?<=[.!؟?])\s+|\n+", text)
@@ -125,6 +129,7 @@ def extract_relevant_sentences(text: str, query: str, max_sentences: int = 8) ->
     scored_sentences.sort(key=lambda x: x[0], reverse=True)
 
     return [sentence for _, sentence in scored_sentences[:max_sentences]]
+
 
 def build_local_answer(query: str, results: List[Dict[str, Any]]) -> str:
     is_persian_query = bool(re.search(r"[\u0600-\u06FF]", query or ""))
@@ -168,11 +173,13 @@ def build_local_answer(query: str, results: List[Dict[str, Any]]) -> str:
             for sentence in extracted_sentences:
                 answer_parts.append(f"• {sentence}")
 
-        answer_parts.extend([
-            "",
-            "اقدام پیشنهادی:",
-            "اگر این پاسخ به جای پاسخ کامل آرتین نمایش داده شده، یعنی فراخوانی مدل اصلی خطا داده است. لاگ بک‌اند را بررسی کنید؛ معمولاً خطا در API Key، مدل، پارامترهای Responses API، timeout یا web_search رخ می‌دهد.",
-        ])
+        answer_parts.extend(
+            [
+                "",
+                "اقدام پیشنهادی:",
+                "اگر این پاسخ به جای پاسخ کامل آرتین نمایش داده شده، یعنی فراخوانی مدل اصلی خطا داده است. لاگ بک‌اند را بررسی کنید؛ معمولاً خطا در API Key، مدل، پارامترهای Responses API، timeout یا web_search رخ می‌دهد.",
+            ]
+        )
 
         return "\n".join(answer_parts)
 

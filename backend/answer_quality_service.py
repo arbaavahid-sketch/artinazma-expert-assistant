@@ -1,7 +1,6 @@
 import re
 from typing import Dict, List
 
-
 PERSIAN_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 
 
@@ -26,139 +25,303 @@ def find_matches(text: str, mapping: Dict[str, List[str]]) -> List[str]:
 
 MATRIX_KEYWORDS = {
     "نمونه فرار یا تحت فشار": [
-        "lpg", "ال پی جی", "گاز مایع", "گاز طبیعی", "natural gas",
-        "gas sample", "گاز", "نمونه گازی", "h2s", "voc", "headspace",
-        "نمونه فرار", "تحت فشار"
+        "lpg",
+        "ال پی جی",
+        "گاز مایع",
+        "گاز طبیعی",
+        "natural gas",
+        "gas sample",
+        "گاز",
+        "نمونه گازی",
+        "h2s",
+        "voc",
+        "headspace",
+        "نمونه فرار",
+        "تحت فشار",
     ],
-    "نفت خام و میعانات": [
-        "نفت خام", "crude", "crude oil", "میعانات", "condensate"
-    ],
+    "نفت خام و میعانات": ["نفت خام", "crude", "crude oil", "میعانات", "condensate"],
     "سوخت مایع": [
-        "بنزین", "gasoline", "diesel", "دیزل", "گازوئیل", "نفت سفید",
-        "kerosene", "سوخت", "fuel", "fuel oil", "سوخت دریایی"
+        "بنزین",
+        "gasoline",
+        "diesel",
+        "دیزل",
+        "گازوئیل",
+        "نفت سفید",
+        "kerosene",
+        "سوخت",
+        "fuel",
+        "fuel oil",
+        "سوخت دریایی",
     ],
     "آب و پساب": [
-        "آب", "پساب", "wastewater", "produced water", "آب تولیدی",
-        "آب صنعتی", "آب آشامیدنی"
+        "آب",
+        "پساب",
+        "wastewater",
+        "produced water",
+        "آب تولیدی",
+        "آب صنعتی",
+        "آب آشامیدنی",
     ],
     "خاک و محیط زیست": [
-        "خاک", "soil", "sediment", "رسوب محیطی", "محیط زیست", "environmental"
+        "خاک",
+        "soil",
+        "sediment",
+        "رسوب محیطی",
+        "محیط زیست",
+        "environmental",
     ],
     "روغن و روانکار": [
-        "روغن", "lubricant", "lube oil", "روانکار", "used oil",
-        "روغن کارکرده"
+        "روغن",
+        "lubricant",
+        "lube oil",
+        "روانکار",
+        "used oil",
+        "روغن کارکرده",
     ],
     "کاتالیست و جاذب": [
-        "کاتالیست", "catalyst", "جاذب", "adsorbent", "زئولیت",
-        "مولکولارسیو", "molecular sieve", "کربن فعال", "activated carbon"
+        "کاتالیست",
+        "catalyst",
+        "جاذب",
+        "adsorbent",
+        "زئولیت",
+        "مولکولارسیو",
+        "molecular sieve",
+        "کربن فعال",
+        "activated carbon",
     ],
     "مواد شیمیایی": [
-        "مواد شیمیایی", "حلال", "solvent", "رزین", "resin", "افزودنی",
-        "additive", "آمین", "amine"
+        "مواد شیمیایی",
+        "حلال",
+        "solvent",
+        "رزین",
+        "resin",
+        "افزودنی",
+        "additive",
+        "آمین",
+        "amine",
     ],
     "نمونه جامد یا پودری": [
-        "جامد", "پودر", "solid", "powder", "قرص", "pellet", "گرانول", "granule"
+        "جامد",
+        "پودر",
+        "solid",
+        "powder",
+        "قرص",
+        "pellet",
+        "گرانول",
+        "granule",
     ],
 }
 
 
 ANALYTE_KEYWORDS = {
-    "گوگرد کل": [
-        "گوگرد کل", "total sulfur", "sulfur", "sulphur", "سولفور"
-    ],
+    "گوگرد کل": ["گوگرد کل", "total sulfur", "sulfur", "sulphur", "سولفور"],
     "گونه‌های گوگردی": [
-        "h2s", "مرکاپتان", "mercaptan", "cos", "cs2", "sulfide",
-        "گونه بندی", "گونه‌بندی", "speciation"
+        "h2s",
+        "مرکاپتان",
+        "mercaptan",
+        "cos",
+        "cs2",
+        "sulfide",
+        "گونه بندی",
+        "گونه‌بندی",
+        "speciation",
     ],
-    "جیوه": [
-        "جیوه", "mercury", "hg"
-    ],
+    "جیوه": ["جیوه", "mercury", "hg"],
     "فلزات و عناصر": [
-        "فلز", "فلزات", "عنصر", "عناصر", "metals", "elements",
-        "icp", "aas", "ni", "v", "fe", "as", "pb", "cd", "cr"
+        "فلز",
+        "فلزات",
+        "عنصر",
+        "عناصر",
+        "metals",
+        "elements",
+        "icp",
+        "aas",
+        "ni",
+        "v",
+        "fe",
+        "as",
+        "pb",
+        "cd",
+        "cr",
     ],
-    "آب یا رطوبت": [
-        "رطوبت", "آب", "moisture", "water content", "karl fischer", "kf"
-    ],
+    "آب یا رطوبت": ["رطوبت", "آب", "moisture", "water content", "karl fischer", "kf"],
     "نمک، کلراید یا رسوب": [
-        "نمک", "salt", "chloride", "کلراید", "رسوب", "sediment", "bs&w", "bsw"
+        "نمک",
+        "salt",
+        "chloride",
+        "کلراید",
+        "رسوب",
+        "sediment",
+        "bs&w",
+        "bsw",
     ],
     "BTEX/VOC/آروماتیک": [
-        "btex", "voc", "بنزن", "benzene", "تولوئن", "toluene",
-        "زایلن", "xylene", "aromatic", "آروماتیک"
+        "btex",
+        "voc",
+        "بنزن",
+        "benzene",
+        "تولوئن",
+        "toluene",
+        "زایلن",
+        "xylene",
+        "aromatic",
+        "آروماتیک",
     ],
     "خواص فیزیکی": [
-        "چگالی", "density", "ویسکوزیته", "viscosity", "نقطه اشتعال",
-        "flash point", "فشار بخار", "vapor pressure", "تقطیر", "distillation",
-        "pour point", "cloud point", "cfpp"
+        "چگالی",
+        "density",
+        "ویسکوزیته",
+        "viscosity",
+        "نقطه اشتعال",
+        "flash point",
+        "فشار بخار",
+        "vapor pressure",
+        "تقطیر",
+        "distillation",
+        "pour point",
+        "cloud point",
+        "cfpp",
     ],
     "اسیدیته یا قلیائیت": [
-        "tan", "tbn", "acid number", "base number", "اسیدیته", "قلیائیت",
-        "عدد اسیدی", "عدد بازی"
+        "tan",
+        "tbn",
+        "acid number",
+        "base number",
+        "اسیدیته",
+        "قلیائیت",
+        "عدد اسیدی",
+        "عدد بازی",
     ],
-    "خوردگی و HSE": [
-        "خوردگی", "corrosion", "h2s", "ترش", "sour", "ایمنی", "hse"
-    ],
+    "خوردگی و HSE": ["خوردگی", "corrosion", "h2s", "ترش", "sour", "ایمنی", "hse"],
     "فعالیت کاتالیست": [
-        "conversion", "selectivity", "yield", "deactivation", "افت فعالیت",
-        "مسمومیت", "poisoning", "کک", "coke", "sintering"
+        "conversion",
+        "selectivity",
+        "yield",
+        "deactivation",
+        "افت فعالیت",
+        "مسمومیت",
+        "poisoning",
+        "کک",
+        "coke",
+        "sintering",
     ],
 }
 
 
 TECHNIQUE_KEYWORDS = {
     "GC/GC-MS": [
-        "gc", "gc-ms", "gcms", "کروماتوگرافی گازی", "کروماتوگرام",
-        "retention", "peak", "پیک", "baseline"
+        "gc",
+        "gc-ms",
+        "gcms",
+        "کروماتوگرافی گازی",
+        "کروماتوگرام",
+        "retention",
+        "peak",
+        "پیک",
+        "baseline",
     ],
-    "HPLC": [
-        "hplc", "کروماتوگرافی مایع", "lc", "peak area", "mobile phase"
-    ],
-    "XRF/XRD": [
-        "xrf", "edxrf", "wdxrf", "xrd", "اشعه ایکس", "x-ray"
-    ],
-    "ICP/AAS": [
-        "icp", "icp-oes", "icp-ms", "aas", "جذب اتمی", "پلاسما"
-    ],
-    "UV-Vis/FTIR": [
-        "uv-vis", "uvvis", "ftir", "infrared", "فرابنفش", "مادون قرمز"
-    ],
-    "تیتراسیون/KF": [
-        "titration", "تیتراسیون", "karl fischer", "kf", "پتانسیومتری"
-    ],
+    "HPLC": ["hplc", "کروماتوگرافی مایع", "lc", "peak area", "mobile phase"],
+    "XRF/XRD": ["xrf", "edxrf", "wdxrf", "xrd", "اشعه ایکس", "x-ray"],
+    "ICP/AAS": ["icp", "icp-oes", "icp-ms", "aas", "جذب اتمی", "پلاسما"],
+    "UV-Vis/FTIR": ["uv-vis", "uvvis", "ftir", "infrared", "فرابنفش", "مادون قرمز"],
+    "تیتراسیون/KF": ["titration", "تیتراسیون", "karl fischer", "kf", "پتانسیومتری"],
     "BET/XRD/TPR/TPD/SEM": [
-        "bet", "surface area", "سطح ویژه", "tpr", "tpd", "sem", "tem", "xrd"
+        "bet",
+        "surface area",
+        "سطح ویژه",
+        "tpr",
+        "tpd",
+        "sem",
+        "tem",
+        "xrd",
     ],
 }
 
 
 ISSUE_KEYWORDS = {
     "انتخاب روش یا دستگاه": [
-        "چه دستگاهی", "چه روشی", "مناسب است", "پیشنهاد", "انتخاب",
-        "برای اندازه گیری", "برای اندازه‌گیری", "recommend", "which method"
+        "چه دستگاهی",
+        "چه روشی",
+        "مناسب است",
+        "پیشنهاد",
+        "انتخاب",
+        "برای اندازه گیری",
+        "برای اندازه‌گیری",
+        "recommend",
+        "which method",
     ],
     "عیب‌یابی": [
-        "مشکل", "خطا", "ارور", "عیب", "عیب‌یابی", "کار نمی", "خراب",
-        "نشتی", "noise", "drift", "baseline", "نوسان", "error", "fault"
+        "مشکل",
+        "خطا",
+        "ارور",
+        "عیب",
+        "عیب‌یابی",
+        "کار نمی",
+        "خراب",
+        "نشتی",
+        "noise",
+        "drift",
+        "baseline",
+        "نوسان",
+        "error",
+        "fault",
     ],
     "تحلیل نتیجه": [
-        "تحلیل", "تفسیر", "نتیجه", "گزارش", "نمودار", "کروماتوگرام",
-        "این عدد", "این خروجی", "چطور تفسیر"
+        "تحلیل",
+        "تفسیر",
+        "نتیجه",
+        "گزارش",
+        "نمودار",
+        "کروماتوگرام",
+        "این عدد",
+        "این خروجی",
+        "چطور تفسیر",
     ],
     "مقایسه فنی": [
-    "تفاوت", "فرق", "مقایسه", "کدام بهتر", "کدوم بهتر",
-    "xrf و icp", "gc و hplc", "icp و aas", "compare", "difference"
+        "تفاوت",
+        "فرق",
+        "مقایسه",
+        "کدام بهتر",
+        "کدوم بهتر",
+        "xrf و icp",
+        "gc و hplc",
+        "icp و aas",
+        "compare",
+        "difference",
     ],
     "استاندارد یا روش آزمون": [
-        "astm", "iso", "epa", "en ", "استاندارد", "روش آزمون", "method"
+        "astm",
+        "iso",
+        "epa",
+        "en ",
+        "استاندارد",
+        "روش آزمون",
+        "method",
     ],
     "محصول یا مدل دستگاه": [
-        "مدل", "دستگاه", "آنالایزر", "مشخصات", "کاتالوگ", "دیتاشیت",
-        "manual", "datasheet", "instrument", "device"
+        "مدل",
+        "دستگاه",
+        "آنالایزر",
+        "مشخصات",
+        "کاتالوگ",
+        "دیتاشیت",
+        "manual",
+        "datasheet",
+        "instrument",
+        "device",
     ],
     "قیمت یا خرید": [
-        "قیمت", "خرید", "موجودی", "پیش فاکتور", "پیش‌فاکتور",
-        "استعلام", "سفارش", "زمان تحویل", "price", "quotation", "buy"
+        "قیمت",
+        "خرید",
+        "موجودی",
+        "پیش فاکتور",
+        "پیش‌فاکتور",
+        "استعلام",
+        "سفارش",
+        "زمان تحویل",
+        "price",
+        "quotation",
+        "buy",
     ],
 }
 
@@ -191,6 +354,8 @@ def build_core_quality_rules() -> str:
 - پاراگراف‌ها کوتاه باشند و برای نمایش در کارت چت خوانا باشند.
 - خروجی را به یک فهرست طولانی بی‌هدف تبدیل نکن؛ فقط موارد مرتبط با سؤال را بیاور.
 """.strip()
+
+
 def build_presentation_rules() -> str:
     return """
 قواعد ظاهر و قالب پاسخ:
@@ -213,12 +378,13 @@ def build_presentation_rules() -> str:
 - از فاصله‌های خالی زیاد استفاده نکن؛ فقط یک خط فاصله بین بخش‌ها کافی است.
 """.strip()
 
+
 def build_intent_quality_rules(intent: str, intent_label: str) -> str:
     intent = intent or ""
     intent_label = intent_label or ""
 
     rules = {
-                "commercial_request": """
+        "commercial_request": """
 قواعد اختصاصی درخواست تجاری:
 - قیمت، موجودی، زمان تحویل یا پیش‌فاکتور حدس نزن.
 - پاسخ کوتاه و حرفه‌ای باشد.
@@ -272,11 +438,14 @@ def build_intent_quality_rules(intent: str, intent_label: str) -> str:
 """,
     }
 
-    selected = rules.get(intent, """
+    selected = rules.get(
+        intent,
+        """
 قواعد اختصاصی سؤال عمومی فنی:
 - پاسخ باید شامل جمع‌بندی، تحلیل فنی، نکات عملی، محدودیت‌ها و اطلاعات تکمیلی موردنیاز باشد.
 - اگر موضوع چندمسیره است، مسیرهای محتمل را اولویت‌بندی کن.
-""")
+""",
+    )
 
     return f"""
 نوع درخواست تشخیص‌داده‌شده:
@@ -352,7 +521,11 @@ def build_matrix_quality_rules(hints: Dict[str, List[str]]) -> str:
 - جذب سطحی، واکنش‌پذیری و ناپایداری ترکیبات گوگردی را توضیح بده.
 """)
 
-    if "فلزات و عناصر" in analytes or "ICP/AAS" in techniques or "XRF/XRD" in techniques:
+    if (
+        "فلزات و عناصر" in analytes
+        or "ICP/AAS" in techniques
+        or "XRF/XRD" in techniques
+    ):
         blocks.append("""
 قواعد فلزات و عناصر:
 - انتخاب بین XRF، ICP-OES، ICP-MS و AAS به ماتریس، غلظت، LOD/LOQ، تعداد عناصر، آماده‌سازی نمونه و هدف آزمون بستگی دارد.
@@ -398,7 +571,7 @@ def build_matrix_quality_rules(hints: Dict[str, List[str]]) -> str:
 
 
 def build_final_answer_shape(intent: str) -> str:
-    
+
     if intent == "technical_general":
         return """
 ساختار پیشنهادی پاسخ:

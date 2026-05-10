@@ -6,16 +6,22 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
     text = (message or "").lower()
 
     has_astm = bool(
-    re.search(
-        r"\b(astm|iso|epa|en|ip|uop|nace|api|gpa|sm)\s*[a-zA-Z]*\s*\d{1,6}(?:\.\d+)?\b",
-        text,
-        flags=re.IGNORECASE
+        re.search(
+            r"\b(astm|iso|epa|en|ip|uop|nace|api|gpa|sm)\s*[a-zA-Z]*\s*\d{1,6}(?:\.\d+)?\b",
+            text,
+            flags=re.IGNORECASE,
+        )
+        or re.search(r"\bD\s*\d{2,5}\b", message or "", flags=re.IGNORECASE)
+        or re.search(
+            r"\bNACE\s*(TM|MR)\s*\d{4,5}\b", message or "", flags=re.IGNORECASE
+        )
+        or re.search(
+            r"\bAPI\s*MPMS\s*\d+(?:\.\d+)*\b", message or "", flags=re.IGNORECASE
+        )
+        or re.search(
+            r"\bSM\s*\d{4}(?:\s*-\s*[A-Z]+)?\b", message or "", flags=re.IGNORECASE
+        )
     )
-    or re.search(r"\bD\s*\d{2,5}\b", message or "", flags=re.IGNORECASE)
-    or re.search(r"\bNACE\s*(TM|MR)\s*\d{4,5}\b", message or "", flags=re.IGNORECASE)
-    or re.search(r"\bAPI\s*MPMS\s*\d+(?:\.\d+)*\b", message or "", flags=re.IGNORECASE)
-    or re.search(r"\bSM\s*\d{4}(?:\s*-\s*[A-Z]+)?\b", message or "", flags=re.IGNORECASE)
-)
 
     has_latin_model = bool(
         re.search(r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{1,})?", message or "")
@@ -253,7 +259,6 @@ def get_intent_instruction(intent: str) -> str:
         مشخصات لازم برای استعلام را از کاربر بخواه: نام محصول، برند، مدل، تعداد، کاربرد، نوع نمونه، محدوده اندازه‌گیری و اطلاعات تماس.
         ایمیل رسمی info@artinazma.net را برای ارسال درخواست ذکر کن.
         """,
-
         "method_comparison": """
         نوع درخواست: مقایسه فنی و انتخاب روش.
 
@@ -295,7 +300,6 @@ def get_intent_instruction(intent: str) -> str:
         - اگر ICP مطرح است، در صورت نیاز بین ICP-OES و ICP-MS تفاوت بگذار.
         - اگر XRF مطرح است، غیرمخرب بودن، سرعت، اثر ماتریس، ضخامت/یکنواختی نمونه و محدودیت در trace analysis را توضیح بده.
         """,
-
         "standard_explanation": """
         نوع درخواست: استاندارد یا روش آزمون.
 
@@ -320,7 +324,6 @@ def get_intent_instruction(intent: str) -> str:
        - درباره اثر ماتریس نمونه، کالیبراسیون با استانداردهای مناسب، یکنواختی نمونه، انتخاب cup/cell مناسب، ضخامت/حجم نمونه، تکرارپذیری، کنترل drift و استفاده از QC sample توضیح عملی بده.
        - اگر کاربر فقط پرسیده «درباره چیست؟»، پاسخ را خیلی طولانی نکن، اما باید تخصصی و کاربردی باشد.
         """,
-
         "troubleshooting": """
         نوع درخواست: عیب‌یابی تجهیزات.
         پاسخ باید مرحله‌ای باشد:
@@ -331,7 +334,6 @@ def get_intent_instruction(intent: str) -> str:
         5. اقدامات ایمن و مواردی که نیاز به کارشناس سرویس دارد
         از ساده‌ترین احتمال شروع کن و هر مورد را به صورت بولت بنویس.
         """,
-
         "lab_analysis": """
         نوع درخواست: تحلیل تست، گزارش، تصویر، نمودار یا داده آزمایشگاهی.
         پاسخ باید تفسیری باشد:
@@ -342,7 +344,6 @@ def get_intent_instruction(intent: str) -> str:
         5. پیشنهاد اقدام بعدی
         اگر داده کافی نیست، دقیق بگو چه داده‌ای لازم است.
         """,
-
         "equipment_recommendation": """
         نوع درخواست: پیشنهاد دستگاه یا روش.
         قالب خروجی:
@@ -361,7 +362,6 @@ def get_intent_instruction(intent: str) -> str:
       - فقط نام دستگاه نگو؛ روش مناسب را با توجه به محدوده گوگرد، استاندارد موردنیاز و نوع ترکیبات گوگردی پیشنهاد بده.
       - تفاوت Total Sulfur، H2S، Mercaptan، COS و CS2 را در صورت مرتبط بودن توضیح بده.
         """,
-
         "chemical_or_catalyst": """
         نوع درخواست: مواد شیمیایی، کاتالیست، جاذب یا افزودنی.
         قالب خروجی:
@@ -373,7 +373,6 @@ def get_intent_instruction(intent: str) -> str:
         پاسخ باید شامل کاربرد، سازوکار احتمالی، معیار انتخاب، محدودیت‌ها، نکات ایمنی، شرایط عملیاتی و اطلاعات لازم برای پیشنهاد دقیق باشد.
         از ادعای قطعی درباره عملکرد یا سازگاری بدون داده پرهیز کن.
         """,
-
         "product_or_device": """
         نوع درخواست: محصول، دستگاه یا مدل مشخص.
         قالب خروجی:
@@ -387,7 +386,6 @@ def get_intent_instruction(intent: str) -> str:
         توضیح بده دستگاه در چه دسته‌ای است، روش اندازه‌گیری چیست، کاربردها، مزایا، محدودیت‌ها، استانداردهای مرتبط و اطلاعات لازم برای انتخاب یا خرید چیست.
         لینک خام را در متن تکرار نکن اگر سیستم کارت لینک را جداگانه نمایش می‌دهد.
         """,
-
         "technical_general": """
         نوع درخواست: سؤال عمومی فنی.
         قالب خروجی:

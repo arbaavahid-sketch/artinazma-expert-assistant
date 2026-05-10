@@ -5,7 +5,6 @@ import time
 from typing import Dict, List
 from urllib.parse import urlparse, unquote
 
-
 ARTINAZMA_BASE_URL = "https://artinazma.net"
 INDEX_FILE = "artinazma_site_index.json"
 MAX_INDEX_PAGES = 1000
@@ -86,11 +85,7 @@ def get_local_sitemap_urls() -> List[str]:
             with open(file_name, "r", encoding="utf-8-sig") as f:
                 xml_text = f.read()
 
-        urls = re.findall(
-            r"<loc>\s*(.*?)\s*</loc>",
-            xml_text,
-            flags=re.IGNORECASE
-        )
+        urls = re.findall(r"<loc>\s*(.*?)\s*</loc>", xml_text, flags=re.IGNORECASE)
 
         for url in urls:
             url = url.strip()
@@ -150,14 +145,16 @@ def rebuild_artinazma_index(force: bool = False) -> Dict:
     for url in urls:
         title = make_title_from_url(url)
 
-        items.append({
-            "title": title,
-            "url": url,
-            "description": "",
-            "image_url": "",
-            "text": title,
-            "normalized": normalize_text(f"{title} {url}"),
-        })
+        items.append(
+            {
+                "title": title,
+                "url": url,
+                "description": "",
+                "image_url": "",
+                "text": title,
+                "normalized": normalize_text(f"{title} {url}"),
+            }
+        )
 
     save_index(items)
 
@@ -182,8 +179,7 @@ def search_artinazma_index(query: str, max_results: int = 2) -> Dict[str, List[D
     query_norm = normalize_text(query)
 
     latin_phrases = re.findall(
-        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{1,})?",
-        query or ""
+        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{1,})?", query or ""
     )
 
     strict_model_tokens = []
@@ -199,11 +195,7 @@ def search_artinazma_index(query: str, max_results: int = 2) -> Dict[str, List[D
             strict_model_tokens = parts
             break
 
-    tokens = [
-        token
-        for token in query_norm.split()
-        if len(token) >= 3
-    ]
+    tokens = [token for token in query_norm.split() if len(token) >= 3]
 
     scored = []
 
@@ -244,10 +236,12 @@ def search_artinazma_index(query: str, max_results: int = 2) -> Dict[str, List[D
                 score += 1
 
         if score >= 20:
-            scored.append({
-                **item,
-                "score": score,
-            })
+            scored.append(
+                {
+                    **item,
+                    "score": score,
+                }
+            )
 
     scored.sort(key=lambda item: item["score"], reverse=True)
 

@@ -4,6 +4,7 @@ from knowledge_service import add_file_to_knowledge_base, knowledge_file_exists
 FOLDER_PATH = "knowledge_files/astm"
 CATEGORY = "ASTM Standards"
 
+
 def main():
     if not os.path.exists(FOLDER_PATH):
         print(f"Folder not found: {FOLDER_PATH}")
@@ -14,8 +15,6 @@ def main():
         for file_name in os.listdir(FOLDER_PATH)
         if file_name.lower().endswith(".pdf")
     ]
-
-    
 
     if not files:
         print("No PDF files found.")
@@ -36,9 +35,7 @@ def main():
 
         try:
             result = add_file_to_knowledge_base(
-                file_path=file_path,
-                title=title,
-                category=CATEGORY
+                file_path=file_path, title=title, category=CATEGORY
             )
 
             print("Result:", result)
@@ -47,6 +44,7 @@ def main():
             print(f"Error importing {file_name}: {e}")
 
     print("Bulk import finished.")
+
 
 if __name__ == "__main__":
     main()

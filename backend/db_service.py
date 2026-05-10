@@ -6,7 +6,6 @@ from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List
 
-
 STORAGE_DIR = Path("storage")
 DB_PATH = STORAGE_DIR / "app.db"
 VALID_EXPERT_STATUSES = {"pending", "approved", "needs_edit", "rejected"}
@@ -24,8 +23,7 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS expert_questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             question TEXT NOT NULL,
@@ -38,8 +36,7 @@ def init_db():
             created_at TEXT NOT NULL,
             updated_at TEXT
         )
-        """
-    )
+        """)
 
     existing_columns = [
         row["name"]
@@ -62,11 +59,8 @@ def init_db():
         )
 
     if "updated_at" not in existing_columns:
-        cursor.execute(
-            "ALTER TABLE expert_questions ADD COLUMN updated_at TEXT"
-        )
-    cursor.execute(
-        """
+        cursor.execute("ALTER TABLE expert_questions ADD COLUMN updated_at TEXT")
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_memories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -77,10 +71,8 @@ def init_db():
             metadata_json TEXT,
             created_at TEXT NOT NULL
         )
-        """
-    )
-    cursor.execute(
-        """
+        """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS customers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             full_name TEXT NOT NULL,
@@ -90,11 +82,9 @@ def init_db():
             phone TEXT DEFAULT '',
             created_at TEXT NOT NULL
         )
-        """
-    )
+        """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS chat_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             customer_id INTEGER NOT NULL,
@@ -103,11 +93,9 @@ def init_db():
             updated_at TEXT,
             FOREIGN KEY(customer_id) REFERENCES customers(id)
         )
-        """
-    )
+        """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS chat_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER NOT NULL,
@@ -117,10 +105,8 @@ def init_db():
             created_at TEXT NOT NULL,
             FOREIGN KEY(session_id) REFERENCES chat_sessions(id)
         )
-        """
-    )
-    cursor.execute(
-        """
+        """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS customer_requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             full_name TEXT NOT NULL,
@@ -134,8 +120,7 @@ def init_db():
             created_at TEXT NOT NULL,
             updated_at TEXT
         )
-        """
-    )
+        """)
     conn.commit()
     conn.close()
 
@@ -143,97 +128,100 @@ def init_db():
 def detect_domain(question: str) -> str:
     q = question.lower()
 
-    if any(word in q for word in [
-        "کاتالیست",
-        "catalyst",
-        "conversion",
-        "selectivity",
-        "yield",
-        "bet",
-        "tpr",
-        "tpd",
-        "xrd",
-        "فعالیت کاتالیست",
-        "افت فعالیت"
-    ]):
+    if any(
+        word in q
+        for word in [
+            "کاتالیست",
+            "catalyst",
+            "conversion",
+            "selectivity",
+            "yield",
+            "bet",
+            "tpr",
+            "tpd",
+            "xrd",
+            "فعالیت کاتالیست",
+            "افت فعالیت",
+        ]
+    ):
         return "catalyst"
 
-    if any(word in q for word in [
-        "gc",
-        "hplc",
-        "کروماتوگرافی",
-        "chromatography",
-        "fid",
-        "tcd",
-        "ms",
-        "پیک",
-        "baseline",
-        "retention",
-        "column",
-        "ستون"
-    ]):
+    if any(
+        word in q
+        for word in [
+            "gc",
+            "hplc",
+            "کروماتوگرافی",
+            "chromatography",
+            "fid",
+            "tcd",
+            "ms",
+            "پیک",
+            "baseline",
+            "retention",
+            "column",
+            "ستون",
+        ]
+    ):
         return "chromatography"
 
-    if any(word in q for word in [
-        "جیوه",
-        "mercury",
-        "hg"
-    ]):
+    if any(word in q for word in ["جیوه", "mercury", "hg"]):
         return "mercury-analysis"
 
-    if any(word in q for word in [
-        "سولفور",
-        "گوگرد",
-        "sulfur",
-        "sulphur",
-        "h2s",
-        "mercaptan",
-        "مرکاپتان"
-    ]):
+    if any(
+        word in q
+        for word in [
+            "سولفور",
+            "گوگرد",
+            "sulfur",
+            "sulphur",
+            "h2s",
+            "mercaptan",
+            "مرکاپتان",
+        ]
+    ):
         return "sulfur-analysis"
 
-    if any(word in q for word in [
-        "خطا",
-        "ارور",
-        "عیب",
-        "مشکل",
-        "troubleshooting",
-        "error",
-        "noise",
-        "drift",
-        "نویز",
-        "نوسان"
-    ]):
+    if any(
+        word in q
+        for word in [
+            "خطا",
+            "ارور",
+            "عیب",
+            "مشکل",
+            "troubleshooting",
+            "error",
+            "noise",
+            "drift",
+            "نویز",
+            "نوسان",
+        ]
+    ):
         return "troubleshooting"
 
-    if any(word in q for word in [
-        "دستگاه",
-        "تجهیزات",
-        "device",
-        "instrument",
-        "analyzer",
-        "آنالایزر"
-    ]):
+    if any(
+        word in q
+        for word in [
+            "دستگاه",
+            "تجهیزات",
+            "device",
+            "instrument",
+            "analyzer",
+            "آنالایزر",
+        ]
+    ):
         return "equipment"
 
-    if any(word in q for word in [
-        "تست",
-        "آنالیز",
-        "analysis",
-        "sample",
-        "نمونه",
-        "گزارش"
-    ]):
+    if any(
+        word in q for word in ["تست", "آنالیز", "analysis", "sample", "نمونه", "گزارش"]
+    ):
         return "analysis"
 
     return "general"
 
 
 def save_expert_question(
-    question: str,
-    answer: str,
-    sources: List[Dict[str, Any]],
-    detected_domain: str
+    question: str, answer: str, sources: List[Dict[str, Any]], detected_domain: str
 ) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -253,8 +241,8 @@ def save_expert_question(
             "",
             "",
             datetime.now().isoformat(timespec="seconds"),
-            None
-        )
+            None,
+        ),
     )
 
     question_id = cursor.lastrowid
@@ -277,7 +265,7 @@ def get_recent_questions(limit: int = 20) -> List[Dict[str, Any]]:
         ORDER BY id DESC
         LIMIT ?
         """,
-        (limit,)
+        (limit,),
     )
 
     rows = cursor.fetchall()
@@ -286,18 +274,20 @@ def get_recent_questions(limit: int = 20) -> List[Dict[str, Any]]:
     results = []
 
     for row in rows:
-        results.append({
-            "id": row["id"],
-            "question": row["question"],
-            "answer": row["answer"],
-            "detected_domain": row["detected_domain"],
-            "sources": json.loads(row["sources_json"] or "[]"),
-            "expert_status": row["expert_status"] or "pending",
-            "expert_note": row["expert_note"] or "",
-            "reviewed_answer": row["reviewed_answer"] or "",
-            "created_at": row["created_at"],
-            "updated_at": row["updated_at"],
-        })
+        results.append(
+            {
+                "id": row["id"],
+                "question": row["question"],
+                "answer": row["answer"],
+                "detected_domain": row["detected_domain"],
+                "sources": json.loads(row["sources_json"] or "[]"),
+                "expert_status": row["expert_status"] or "pending",
+                "expert_note": row["expert_note"] or "",
+                "reviewed_answer": row["reviewed_answer"] or "",
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
+        )
 
     return results
 
@@ -309,25 +299,21 @@ def get_question_stats() -> Dict[str, Any]:
     cursor.execute("SELECT COUNT(*) AS total FROM expert_questions")
     total_questions = cursor.fetchone()["total"]
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT detected_domain, COUNT(*) AS count
         FROM expert_questions
         GROUP BY detected_domain
         ORDER BY count DESC
-        """
-    )
+        """)
 
     domain_rows = cursor.fetchall()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT id, question, detected_domain, created_at
         FROM expert_questions
         ORDER BY id DESC
         LIMIT 5
-        """
-    )
+        """)
 
     recent_rows = cursor.fetchall()
 
@@ -336,10 +322,7 @@ def get_question_stats() -> Dict[str, Any]:
     return {
         "total_questions": total_questions,
         "domains": [
-            {
-                "domain": row["detected_domain"] or "general",
-                "count": row["count"]
-            }
+            {"domain": row["detected_domain"] or "general", "count": row["count"]}
             for row in domain_rows
         ],
         "recent_questions": [
@@ -350,7 +333,7 @@ def get_question_stats() -> Dict[str, Any]:
                 "created_at": row["created_at"],
             }
             for row in recent_rows
-        ]
+        ],
     }
 
 
@@ -365,7 +348,7 @@ def get_question_by_id(question_id: int) -> Dict[str, Any] | None:
         FROM expert_questions
         WHERE id = ?
         """,
-        (question_id,)
+        (question_id,),
     )
 
     row = cursor.fetchone()
@@ -389,10 +372,7 @@ def get_question_by_id(question_id: int) -> Dict[str, Any] | None:
 
 
 def update_question_review(
-    question_id: int,
-    expert_status: str,
-    expert_note: str,
-    reviewed_answer: str
+    question_id: int, expert_status: str, expert_note: str, reviewed_answer: str
 ) -> bool:
     if expert_status not in VALID_EXPERT_STATUSES:
         expert_status = "pending"
@@ -414,8 +394,8 @@ def update_question_review(
             expert_note,
             reviewed_answer,
             datetime.now().isoformat(timespec="seconds"),
-            question_id
-        )
+            question_id,
+        ),
     )
 
     updated = cursor.rowcount > 0
@@ -437,7 +417,7 @@ def get_all_questions(limit: int = 100) -> List[Dict[str, Any]]:
         ORDER BY id DESC
         LIMIT ?
         """,
-        (limit,)
+        (limit,),
     )
 
     rows = cursor.fetchall()
@@ -454,13 +434,15 @@ def get_all_questions(limit: int = 100) -> List[Dict[str, Any]]:
         }
         for row in rows
     ]
+
+
 def save_user_memory(
     user_id: str,
     question: str,
     answer: str,
     detected_domain: str = "general",
     memory_type: str = "chat",
-    metadata: Dict[str, Any] | None = None
+    metadata: Dict[str, Any] | None = None,
 ) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -478,8 +460,8 @@ def save_user_memory(
             answer,
             detected_domain,
             json.dumps(metadata or {}, ensure_ascii=False),
-            datetime.now().isoformat(timespec="seconds")
-        )
+            datetime.now().isoformat(timespec="seconds"),
+        ),
     )
 
     memory_id = cursor.lastrowid
@@ -491,9 +473,7 @@ def save_user_memory(
 
 
 def search_user_memories(
-    user_id: str,
-    query: str = "",
-    limit: int = 50
+    user_id: str, query: str = "", limit: int = 50
 ) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
@@ -514,7 +494,7 @@ def search_user_memories(
             ORDER BY id DESC
             LIMIT ?
             """,
-            (user_id, search_text, search_text, search_text, limit)
+            (user_id, search_text, search_text, search_text, limit),
         )
     else:
         cursor.execute(
@@ -525,7 +505,7 @@ def search_user_memories(
             ORDER BY id DESC
             LIMIT ?
             """,
-            (user_id, limit)
+            (user_id, limit),
         )
 
     rows = cursor.fetchall()
@@ -556,7 +536,7 @@ def get_user_memory_stats(user_id: str) -> Dict[str, Any]:
         FROM user_memories
         WHERE user_id = ?
         """,
-        (user_id,)
+        (user_id,),
     )
 
     total = cursor.fetchone()["total"]
@@ -569,7 +549,7 @@ def get_user_memory_stats(user_id: str) -> Dict[str, Any]:
         GROUP BY detected_domain
         ORDER BY count DESC
         """,
-        (user_id,)
+        (user_id,),
     )
 
     domain_rows = cursor.fetchall()
@@ -579,13 +559,12 @@ def get_user_memory_stats(user_id: str) -> Dict[str, Any]:
     return {
         "total_memories": total,
         "domains": [
-            {
-                "domain": row["detected_domain"] or "general",
-                "count": row["count"]
-            }
+            {"domain": row["detected_domain"] or "general", "count": row["count"]}
             for row in domain_rows
-        ]
+        ],
     }
+
+
 def save_customer_request(
     full_name: str,
     company: str,
@@ -593,7 +572,7 @@ def save_customer_request(
     email: str,
     request_type: str,
     subject: str,
-    message: str
+    message: str,
 ) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -614,8 +593,8 @@ def save_customer_request(
             message,
             "new",
             datetime.now().isoformat(timespec="seconds"),
-            None
-        )
+            None,
+        ),
     )
 
     request_id = cursor.lastrowid
@@ -638,7 +617,7 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
         ORDER BY id DESC
         LIMIT ?
         """,
-        (limit,)
+        (limit,),
     )
 
     rows = cursor.fetchall()
@@ -676,11 +655,7 @@ def update_customer_request_status(request_id: int, status: str) -> bool:
             updated_at = ?
         WHERE id = ?
         """,
-        (
-            status,
-            datetime.now().isoformat(timespec="seconds"),
-            request_id
-        )
+        (status, datetime.now().isoformat(timespec="seconds"), request_id),
     )
 
     updated = cursor.rowcount > 0
@@ -698,25 +673,21 @@ def get_customer_request_stats() -> Dict[str, Any]:
     cursor.execute("SELECT COUNT(*) AS total FROM customer_requests")
     total = cursor.fetchone()["total"]
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT status, COUNT(*) AS count
         FROM customer_requests
         GROUP BY status
         ORDER BY count DESC
-        """
-    )
+        """)
 
     status_rows = cursor.fetchall()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT request_type, COUNT(*) AS count
         FROM customer_requests
         GROUP BY request_type
         ORDER BY count DESC
-        """
-    )
+        """)
 
     type_rows = cursor.fetchall()
 
@@ -725,21 +696,17 @@ def get_customer_request_stats() -> Dict[str, Any]:
     return {
         "total_requests": total,
         "statuses": [
-            {
-                "status": row["status"] or "new",
-                "count": row["count"]
-            }
+            {"status": row["status"] or "new", "count": row["count"]}
             for row in status_rows
         ],
         "types": [
             {
                 "request_type": row["request_type"] or "consultation",
-                "count": row["count"]
+                "count": row["count"],
             }
             for row in type_rows
-        ]
+        ],
     }
-
 
 
 def hash_password(password: str) -> str:
@@ -758,11 +725,7 @@ def verify_password(password: str, stored_hash: str) -> bool:
 
 
 def create_customer(
-    full_name: str,
-    email: str,
-    password: str,
-    company: str = "",
-    phone: str = ""
+    full_name: str, email: str, password: str, company: str = "", phone: str = ""
 ) -> Dict[str, Any]:
     conn = get_connection()
     cursor = conn.cursor()
@@ -780,23 +743,17 @@ def create_customer(
                 hash_password(password),
                 company,
                 phone,
-                datetime.now().isoformat(timespec="seconds")
-            )
+                datetime.now().isoformat(timespec="seconds"),
+            ),
         )
 
         customer_id = cursor.lastrowid
         conn.commit()
 
-        return {
-            "success": True,
-            "customer_id": customer_id
-        }
+        return {"success": True, "customer_id": customer_id}
 
     except sqlite3.IntegrityError:
-        return {
-            "success": False,
-            "message": "این ایمیل قبلاً ثبت شده است."
-        }
+        return {"success": False, "message": "این ایمیل قبلاً ثبت شده است."}
 
     finally:
         conn.close()
@@ -812,7 +769,7 @@ def authenticate_customer(email: str, password: str) -> Dict[str, Any] | None:
         FROM customers
         WHERE email = ?
         """,
-        (email.lower().strip(),)
+        (email.lower().strip(),),
     )
 
     row = cursor.fetchone()
@@ -844,7 +801,7 @@ def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
         FROM customers
         WHERE id = ?
         """,
-        (customer_id,)
+        (customer_id,),
     )
 
     row = cursor.fetchone()
@@ -862,11 +819,9 @@ def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
         "created_at": row["created_at"],
     }
 
+
 def update_customer_profile(
-    customer_id: int,
-    full_name: str,
-    company: str = "",
-    phone: str = ""
+    customer_id: int, full_name: str, company: str = "", phone: str = ""
 ) -> Dict[str, Any] | None:
     if not full_name.strip():
         return None
@@ -882,12 +837,7 @@ def update_customer_profile(
             phone = ?
         WHERE id = ?
         """,
-        (
-            full_name.strip(),
-            company.strip(),
-            phone.strip(),
-            customer_id
-        )
+        (full_name.strip(), company.strip(), phone.strip(), customer_id),
     )
 
     updated = cursor.rowcount > 0
@@ -899,6 +849,8 @@ def update_customer_profile(
         return None
 
     return get_customer_by_id(customer_id)
+
+
 def create_chat_session(customer_id: int, title: str) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -911,7 +863,7 @@ def create_chat_session(customer_id: int, title: str) -> int:
         (customer_id, title, created_at, updated_at)
         VALUES (?, ?, ?, ?)
         """,
-        (customer_id, title, now, now)
+        (customer_id, title, now, now),
     )
 
     session_id = cursor.lastrowid
@@ -923,10 +875,7 @@ def create_chat_session(customer_id: int, title: str) -> int:
 
 
 def save_chat_message(
-    session_id: int,
-    role: str,
-    content: str,
-    metadata: Dict[str, Any] | None = None
+    session_id: int, role: str, content: str, metadata: Dict[str, Any] | None = None
 ) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -942,8 +891,8 @@ def save_chat_message(
             role,
             content,
             json.dumps(metadata or {}, ensure_ascii=False),
-            datetime.now().isoformat(timespec="seconds")
-        )
+            datetime.now().isoformat(timespec="seconds"),
+        ),
     )
 
     message_id = cursor.lastrowid
@@ -954,7 +903,7 @@ def save_chat_message(
         SET updated_at = ?
         WHERE id = ?
         """,
-        (datetime.now().isoformat(timespec="seconds"), session_id)
+        (datetime.now().isoformat(timespec="seconds"), session_id),
     )
 
     conn.commit()
@@ -963,7 +912,9 @@ def save_chat_message(
     return message_id
 
 
-def get_customer_chat_sessions(customer_id: int, limit: int = 50) -> List[Dict[str, Any]]:
+def get_customer_chat_sessions(
+    customer_id: int, limit: int = 50
+) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -975,7 +926,7 @@ def get_customer_chat_sessions(customer_id: int, limit: int = 50) -> List[Dict[s
         ORDER BY COALESCE(updated_at, created_at) DESC
         LIMIT ?
         """,
-        (customer_id, limit)
+        (customer_id, limit),
     )
 
     rows = cursor.fetchall()
@@ -1002,7 +953,7 @@ def get_chat_messages(session_id: int, customer_id: int) -> List[Dict[str, Any]]
         FROM chat_sessions s
         WHERE s.id = ? AND s.customer_id = ?
         """,
-        (session_id, customer_id)
+        (session_id, customer_id),
     )
 
     session = cursor.fetchone()
@@ -1018,7 +969,7 @@ def get_chat_messages(session_id: int, customer_id: int) -> List[Dict[str, Any]]
         WHERE session_id = ?
         ORDER BY id ASC
         """,
-        (session_id,)
+        (session_id,),
     )
 
     rows = cursor.fetchall()
@@ -1034,11 +985,9 @@ def get_chat_messages(session_id: int, customer_id: int) -> List[Dict[str, Any]]
         }
         for row in rows
     ]
-def update_chat_session_title(
-    session_id: int,
-    customer_id: int,
-    title: str
-) -> bool:
+
+
+def update_chat_session_title(session_id: int, customer_id: int, title: str) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -1052,8 +1001,8 @@ def update_chat_session_title(
             title.strip() or "گفتگوی جدید",
             datetime.now().isoformat(timespec="seconds"),
             session_id,
-            customer_id
-        )
+            customer_id,
+        ),
     )
 
     updated = cursor.rowcount > 0
@@ -1064,10 +1013,7 @@ def update_chat_session_title(
     return updated
 
 
-def delete_chat_session(
-    session_id: int,
-    customer_id: int
-) -> bool:
+def delete_chat_session(session_id: int, customer_id: int) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -1077,7 +1023,7 @@ def delete_chat_session(
         FROM chat_sessions
         WHERE id = ? AND customer_id = ?
         """,
-        (session_id, customer_id)
+        (session_id, customer_id),
     )
 
     session = cursor.fetchone()
@@ -1091,7 +1037,7 @@ def delete_chat_session(
         DELETE FROM chat_messages
         WHERE session_id = ?
         """,
-        (session_id,)
+        (session_id,),
     )
 
     cursor.execute(
@@ -1099,7 +1045,7 @@ def delete_chat_session(
         DELETE FROM chat_sessions
         WHERE id = ? AND customer_id = ?
         """,
-        (session_id, customer_id)
+        (session_id, customer_id),
     )
 
     deleted = cursor.rowcount > 0
@@ -1108,6 +1054,8 @@ def delete_chat_session(
     conn.close()
 
     return deleted
+
+
 def delete_all_customer_chat_sessions(customer_id: int) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -1120,7 +1068,7 @@ def delete_all_customer_chat_sessions(customer_id: int) -> int:
             WHERE customer_id = ?
         )
         """,
-        (customer_id,)
+        (customer_id,),
     )
 
     cursor.execute(
@@ -1128,7 +1076,7 @@ def delete_all_customer_chat_sessions(customer_id: int) -> int:
         DELETE FROM chat_sessions
         WHERE customer_id = ?
         """,
-        (customer_id,)
+        (customer_id,),
     )
 
     deleted_sessions = cursor.rowcount

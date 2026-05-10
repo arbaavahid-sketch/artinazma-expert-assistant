@@ -8,10 +8,10 @@ import requests
 from bs4 import BeautifulSoup
 
 from artinazma_index_service import search_artinazma_index, load_index
-ARTINAZMA_BASE_URL = os.getenv(
-    "ARTINAZMA_BASE_URL",
-    "https://artinazma.net"
-).rstrip("/")
+
+ARTINAZMA_BASE_URL = os.getenv("ARTINAZMA_BASE_URL", "https://artinazma.net").rstrip(
+    "/"
+)
 
 SEARCH_TIMEOUT = float(os.getenv("ARTINAZMA_SEARCH_TIMEOUT", "20"))
 MIN_SCORE = int(os.getenv("ARTINAZMA_MIN_RESOURCE_SCORE", "5"))
@@ -57,7 +57,6 @@ PRODUCT_INTENT_KEYWORDS = [
     "خرید",
     "قیمت",
     "موجودی",
-
     # English
     "device",
     "equipment",
@@ -108,6 +107,7 @@ STOP_WORDS_FA = {
     "تصویر",
 }
 
+
 def find_manual_resource(message: str) -> Dict[str, List[Dict]]:
     text = normalize_text(message)
 
@@ -116,33 +116,38 @@ def find_manual_resource(message: str) -> Dict[str, List[Dict]]:
 
     for item in MANUAL_ARTINAZMA_RESOURCES:
         matched = any(
-            normalize_text(keyword) in text
-            for keyword in item.get("keywords", [])
+            normalize_text(keyword) in text for keyword in item.get("keywords", [])
         )
 
         if not matched:
             continue
 
-        links.append({
-            "title": item["title"],
-            "url": item["url"],
-            "source": "artinazma.net",
-            "score": 100,
-        })
+        links.append(
+            {
+                "title": item["title"],
+                "url": item["url"],
+                "source": "artinazma.net",
+                "score": 100,
+            }
+        )
 
         if item.get("image_url"):
-            images.append({
-                "title": item["title"],
-                "url": item["image_url"],
-                "page_url": item["url"],
-                "source": "artinazma.net",
-            })
+            images.append(
+                {
+                    "title": item["title"],
+                    "url": item["image_url"],
+                    "page_url": item["url"],
+                    "source": "artinazma.net",
+                }
+            )
 
     return {
         "links": links,
         "images": images,
         "resources_found": bool(links),
     }
+
+
 def is_product_or_material_question(message: str) -> bool:
     text = (message or "").lower()
 
@@ -183,9 +188,7 @@ def fetch_html(url: str) -> Optional[str]:
         response = requests.get(
             url,
             timeout=SEARCH_TIMEOUT,
-            headers={
-                "User-Agent": "ArtinAzmaBot/1.0 (+https://artinazma.net)"
-            },
+            headers={"User-Agent": "ArtinAzmaBot/1.0 (+https://artinazma.net)"},
         )
 
         if response.status_code >= 400:
@@ -205,8 +208,7 @@ def build_search_queries(message: str) -> List[str]:
 
     # مدل‌های انگلیسی / لاتین
     latin_phrases = re.findall(
-        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?",
-        message or ""
+        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?", message or ""
     )
 
     for phrase in latin_phrases:
@@ -252,9 +254,7 @@ def search_wordpress_api(query: str) -> List[Dict]:
                 "per_page": 10,
             },
             timeout=SEARCH_TIMEOUT,
-            headers={
-                "User-Agent": "ArtinAzmaBot/1.0 (+https://artinazma.net)"
-            },
+            headers={"User-Agent": "ArtinAzmaBot/1.0 (+https://artinazma.net)"},
         )
 
         if response.status_code >= 400:
@@ -268,10 +268,12 @@ def search_wordpress_api(query: str) -> List[Dict]:
             item_url = clean_url(item.get("url", ""))
 
             if item_url and is_artinazma_url(item_url):
-                results.append({
-                    "title": item.get("title", ""),
-                    "url": item_url,
-                })
+                results.append(
+                    {
+                        "title": item.get("title", ""),
+                        "url": item_url,
+                    }
+                )
 
         return results
 
@@ -304,25 +306,30 @@ def search_html_page(query: str) -> List[Dict]:
         parsed_path = urlparse(href).path.lower()
 
         # حذف لینک‌های غیرمحصولی یا تکراری
-        if any(skip in parsed_path for skip in [
-            "/tag/",
-            "/category/",
-            "/author/",
-            "/wp-content/",
-            "/feed/",
-            "/cart",
-            "/checkout",
-            "/my-account",
-        ]):
+        if any(
+            skip in parsed_path
+            for skip in [
+                "/tag/",
+                "/category/",
+                "/author/",
+                "/wp-content/",
+                "/feed/",
+                "/cart",
+                "/checkout",
+                "/my-account",
+            ]
+        ):
             continue
 
         if href.rstrip("/") == ARTINAZMA_BASE_URL.rstrip("/"):
             continue
 
-        results.append({
-            "title": title,
-            "url": href,
-        })
+        results.append(
+            {
+                "title": title,
+                "url": href,
+            }
+        )
 
     # حذف تکراری‌ها
     unique = {}
@@ -374,7 +381,9 @@ def extract_page_metadata(url: str) -> Optional[Dict]:
 
     if not image_url:
         # اگر og:image نبود، اولین تصویر جدی داخل صفحه را بردار
-        for img in soup.select("article img[src], main img[src], .entry-content img[src], .product img[src]"):
+        for img in soup.select(
+            "article img[src], main img[src], .entry-content img[src], .product img[src]"
+        ):
             src = img.get("src", "").strip()
 
             if not src:
@@ -414,8 +423,7 @@ def score_candidate(message: str, query: str, candidate: Dict, metadata: Dict) -
 
     # عبارت دقیق مدل لاتین امتیاز بالا بگیرد
     latin_phrases = re.findall(
-        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?",
-        message or ""
+        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?", message or ""
     )
 
     for phrase in latin_phrases:
@@ -442,7 +450,9 @@ def score_candidate(message: str, query: str, candidate: Dict, metadata: Dict) -
     return score
 
 
-def find_artinazma_resources(message: str, max_results: int = 2) -> Dict[str, List[Dict]]:
+def find_artinazma_resources(
+    message: str, max_results: int = 2
+) -> Dict[str, List[Dict]]:
     if not is_product_or_material_question(message):
         return {
             "links": [],
@@ -505,21 +515,25 @@ def find_artinazma_resources(message: str, max_results: int = 2) -> Dict[str, Li
         if score < MIN_SCORE:
             continue
 
-        title = metadata.get("title") or candidate.get("title") or "صفحه مرتبط آرتین آزما"
+        title = (
+            metadata.get("title") or candidate.get("title") or "صفحه مرتبط آرتین آزما"
+        )
         image_url = metadata.get("image_url", "")
 
         if image_url and not is_artinazma_url(image_url):
             # طبق قانون شما، عکس هم فقط از سایت آرتین آزما باشد
             image_url = ""
 
-        scored_items.append({
-            "title": title,
-            "url": candidate["url"],
-            "image_url": image_url,
-            "description": metadata.get("description", ""),
-            "source": "artinazma.net",
-            "score": score,
-        })
+        scored_items.append(
+            {
+                "title": title,
+                "url": candidate["url"],
+                "image_url": image_url,
+                "description": metadata.get("description", ""),
+                "source": "artinazma.net",
+                "score": score,
+            }
+        )
 
     scored_items.sort(key=lambda item: item["score"], reverse=True)
 

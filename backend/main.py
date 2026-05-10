@@ -21,7 +21,7 @@ from knowledge_service import (
     get_knowledge_stats,
     delete_knowledge_file,
     knowledge_file_exists,
-    add_text_to_knowledge_base
+    add_text_to_knowledge_base,
 )
 from ai_service import ask_expert_assistant, analyze_image_with_ai
 from file_analyzer import analyze_excel_or_csv, read_pdf_text
@@ -51,21 +51,19 @@ from db_service import (
     get_chat_messages,
     update_chat_session_title,
     delete_chat_session,
-    get_all_questions
+    get_all_questions,
 )
+
 app = FastAPI(title="ArtinAzma Expert Assistant API")
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 init_db()
 frontend_origins = os.getenv(
-    "FRONTEND_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
+    "FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
 )
 
 allowed_origins = [
-    origin.strip()
-    for origin in frontend_origins.split(",")
-    if origin.strip()
+    origin.strip() for origin in frontend_origins.split(",") if origin.strip()
 ]
 
 app.add_middleware(
@@ -75,6 +73,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 def make_safe_filename(filename: str) -> str:
     base_name = os.path.basename(filename or "uploaded_file")
     safe_name = base_name.replace(" ", "_")
@@ -84,39 +84,76 @@ def make_safe_filename(filename: str) -> str:
         safe_name = "uploaded_file"
 
     return safe_name
+
+
 def is_specific_product_or_model_question(message: str) -> bool:
     text = (message or "").lower()
 
-    latin_tokens = re.findall(
-        r"\b[A-Za-z][A-Za-z0-9\-]{1,}\b",
-        message or ""
-    )
+    latin_tokens = re.findall(r"\b[A-Za-z][A-Za-z0-9\-]{1,}\b", message or "")
 
     if not latin_tokens:
         return False
 
     # این‌ها تکنیک، روش، استاندارد یا اصطلاح عمومی هستند؛ مدل محصول حساب نشوند
     known_technical_terms = {
-        "xrf", "edxrf", "wdxrf", "xrd",
-        "icp", "icp-oes", "icp-ms", "aas",
-        "gc", "gc-ms", "gcms", "hplc", "lc",
-        "ftir", "uv", "uv-vis", "uvvis",
-        "nmr", "ms", "fid", "tcd", "ecd", "fpd", "scd",
-        "bet", "tpr", "tpd", "sem", "tem",
-        "astm", "iso", "epa", "en", "api", "nace",
-        "btex", "voc", "h2s", "cos", "cs2",
-        "lod", "loq", "rsd", "qc", "crm",
-        "tan", "tbn", "cfpp",
+        "xrf",
+        "edxrf",
+        "wdxrf",
+        "xrd",
+        "icp",
+        "icp-oes",
+        "icp-ms",
+        "aas",
+        "gc",
+        "gc-ms",
+        "gcms",
+        "hplc",
+        "lc",
+        "ftir",
+        "uv",
+        "uv-vis",
+        "uvvis",
+        "nmr",
+        "ms",
+        "fid",
+        "tcd",
+        "ecd",
+        "fpd",
+        "scd",
+        "bet",
+        "tpr",
+        "tpd",
+        "sem",
+        "tem",
+        "astm",
+        "iso",
+        "epa",
+        "en",
+        "api",
+        "nace",
+        "btex",
+        "voc",
+        "h2s",
+        "cos",
+        "cs2",
+        "lod",
+        "loq",
+        "rsd",
+        "qc",
+        "crm",
+        "tan",
+        "tbn",
+        "cfpp",
     }
 
     normalized_tokens = {
-        token.strip().lower()
-        for token in latin_tokens
-        if token.strip()
+        token.strip().lower() for token in latin_tokens if token.strip()
     }
 
     # اگر همه کلمات لاتین از جنس تکنیک/استاندارد/پارامتر هستند، مدل دستگاه نیست
-    if normalized_tokens and all(token in known_technical_terms for token in normalized_tokens):
+    if normalized_tokens and all(
+        token in known_technical_terms for token in normalized_tokens
+    ):
         return False
 
     model_keywords = [
@@ -144,21 +181,18 @@ def is_specific_product_or_model_question(message: str) -> bool:
     # اگر حداقل یک token لاتین شبیه مدل واقعی باشد
     # مثال: SpectroScan SE، GC-5000، DMA-4500، M4000
     has_model_like_token = any(
-        (
-            re.search(r"\d", token) or
-            "-" in token or
-            len(token) >= 6
-        )
+        (re.search(r"\d", token) or "-" in token or len(token) >= 6)
         and token.lower() not in known_technical_terms
         for token in normalized_tokens
     )
 
     return has_model_like_token
+
+
 def context_has_exact_model_match(message: str, docs: list) -> bool:
-    
+
     model_tokens = re.findall(
-        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?",
-        message or ""
+        r"[A-Za-z][A-Za-z0-9\-]{2,}(?:\s+[A-Za-z0-9\-]{2,})?", message or ""
     )
 
     if not model_tokens:
@@ -176,6 +210,8 @@ def context_has_exact_model_match(message: str, docs: list) -> bool:
             return True
 
     return False
+
+
 def is_artinazma_related_question(message: str) -> bool:
     text = (message or "").lower()
 
@@ -244,28 +280,38 @@ def remove_company_mentions_if_not_allowed(answer: str) -> str:
 
     return cleaned.strip()
 
+
 class ChatHistoryMessage(BaseModel):
     role: str
     content: str
+
 
 class GoogleDriveSyncRequest(BaseModel):
     root_folder_id: str = ""
     max_files: int = 200
     force_resync: bool = False
+
+
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatHistoryMessage]] = None
     domain: Optional[str] = "auto"
     response_mode: Optional[str] = "auto"
     user_id: Optional[str] = "anonymous"
+
+
 class MemorySearchRequest(BaseModel):
     user_id: str
     query: str = ""
     limit: int = 50
+
+
 class QuestionReviewRequest(BaseModel):
     expert_status: str
     expert_note: str = ""
     reviewed_answer: str = ""
+
+
 class CustomerRequestCreate(BaseModel):
     full_name: str
     company: str = ""
@@ -274,8 +320,12 @@ class CustomerRequestCreate(BaseModel):
     request_type: str = "consultation"
     subject: str = ""
     message: str
+
+
 class CustomerRequestStatusUpdate(BaseModel):
     status: str
+
+
 class CustomerRegisterRequest(BaseModel):
     full_name: str
     email: str
@@ -287,17 +337,23 @@ class CustomerRegisterRequest(BaseModel):
 class CustomerLoginRequest(BaseModel):
     email: str
     password: str
+
+
 class CustomerProfileUpdateRequest(BaseModel):
     full_name: str
     company: str = ""
     phone: str = ""
 
+
 class CustomerSessionCreateRequest(BaseModel):
     customer_id: int
     title: str = "گفتگوی جدید"
+
+
 class CustomerSessionUpdateRequest(BaseModel):
     customer_id: int
     title: str
+
 
 class CustomerChatMessageCreateRequest(BaseModel):
     customer_id: int
@@ -305,11 +361,12 @@ class CustomerChatMessageCreateRequest(BaseModel):
     role: str
     content: str
     metadata: dict = {}
+
+
 @app.get("/")
 def home():
-    return {
-        "message": "ArtinAzma Expert Assistant API is running"
-    }
+    return {"message": "ArtinAzma Expert Assistant API is running"}
+
 
 def save_question_review(question_id: int, request: QuestionReviewRequest):
     updated = update_question_review(
@@ -340,6 +397,8 @@ def review_question_put(question_id: int, request: QuestionReviewRequest):
 @app.patch("/questions/{question_id}/review")
 def review_question_patch(question_id: int, request: QuestionReviewRequest):
     return save_question_review(question_id, request)
+
+
 @app.post("/chat")
 def chat(request: ChatRequest):
     has_astm_code = bool(
@@ -349,8 +408,7 @@ def chat(request: ChatRequest):
     specific_model_question = is_specific_product_or_model_question(request.message)
     allow_company_reference = is_artinazma_related_question(request.message)
     intent_data = detect_question_intent(
-    message=request.message,
-    domain=request.domain or "auto"
+        message=request.message, domain=request.domain or "auto"
     )
 
     question_intent = intent_data["intent"]
@@ -369,7 +427,11 @@ def chat(request: ChatRequest):
     elif specific_model_question:
         exact_local_match = context_has_exact_model_match(request.message, local_docs)
 
-        if exact_local_match and local_docs and float(local_docs[0].get("score", 0) or 0) >= 8:
+        if (
+            exact_local_match
+            and local_docs
+            and float(local_docs[0].get("score", 0) or 0) >= 8
+        ):
             related_docs = local_docs[:8]
             search_mode = "local_exact_model"
         else:
@@ -407,7 +469,7 @@ def chat(request: ChatRequest):
             related_docs = []
             best_score = 0.0
             search_mode = f"{search_mode}+ignored_weak_internal_context"
-    
+
     resource_links = []
     resource_images = []
     artinazma_context = ""
@@ -467,8 +529,7 @@ def chat(request: ChatRequest):
         context_parts = []
 
         for doc in related_docs:
-            context_parts.append(
-                f"""
+            context_parts.append(f"""
                 منبع داخلی:
                 عنوان: {doc.get('title', '')}
                 فایل: {doc.get('file_name', '')}
@@ -476,24 +537,19 @@ def chat(request: ChatRequest):
                 امتیاز ارتباط: {doc.get('score', '')}
                 متن:
                 {doc.get('content', '')}
-                """
-            )
+                """)
 
         context = "\n\n".join(context_parts)
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
-    
+
     auto_domain = detect_domain(request.message)
     selected_domain = request.domain or "auto"
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
 
     history = [
-        {
-            "role": item.role,
-            "content": item.content
-        }
-        for item in (request.history or [])
+        {"role": item.role, "content": item.content} for item in (request.history or [])
     ]
     intent_context = f"""
     تشخیص نوع درخواست کاربر:
@@ -532,7 +588,6 @@ def chat(request: ChatRequest):
     if standard_context:
         context = f"{context}\n\n{standard_context}".strip()
 
-    
     if allow_company_reference:
         company_visibility_context = """
     قانون نمایش اطلاعات شرکت:
@@ -588,7 +643,7 @@ def chat(request: ChatRequest):
             context=context,
             history=history,
             domain=detected_domain,
-            allow_web_search=allow_web_search
+            allow_web_search=allow_web_search,
         )
 
         answer = format_answer_for_ui(answer)
@@ -609,7 +664,7 @@ def chat(request: ChatRequest):
             "title": doc.get("title", ""),
             "file_name": doc.get("file_name", ""),
             "category": doc.get("category", ""),
-            "score": float(doc.get("score", 0) or 0)
+            "score": float(doc.get("score", 0) or 0),
         }
         for doc in related_docs
     ]
@@ -618,7 +673,7 @@ def chat(request: ChatRequest):
         question=request.message,
         answer=answer,
         sources=sources,
-        detected_domain=detected_domain
+        detected_domain=detected_domain,
     )
 
     memory_id = None
@@ -640,8 +695,7 @@ def chat(request: ChatRequest):
                 "resource_images": resource_images,
                 "question_intent": question_intent,
                 "question_intent_label": question_intent_label,
-                
-            }
+            },
         )
 
     return {
@@ -657,13 +711,15 @@ def chat(request: ChatRequest):
         "question_intent": question_intent,
         "question_intent_label": question_intent_label,
         "response_mode": response_mode,
-        "answer_mode": answer_mode
+        "answer_mode": answer_mode,
     }
+
+
 @app.post("/analyze-file")
 async def analyze_file(
     file: UploadFile = File(...),
     test_type: str = Form("general"),
-    user_note: str = Form("")
+    user_note: str = Form(""),
 ):
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
@@ -671,7 +727,7 @@ async def analyze_file(
     safe_filename = make_safe_filename(file.filename)
     file_path = os.path.join(upload_dir, safe_filename)
     file_url = f"/uploads/{safe_filename}"
-    
+
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
@@ -790,7 +846,7 @@ async def analyze_file(
             "raw_analysis": analysis,
             "file_url": file_url,
             "file_name": safe_filename,
-            "ai_analysis": ai_answer
+            "ai_analysis": ai_answer,
         }
 
     if ext == "pdf":
@@ -831,18 +887,18 @@ async def analyze_file(
             "extracted_text": text[:2000],
             "file_url": file_url,
             "file_name": safe_filename,
-            "ai_analysis": ai_answer
+            "ai_analysis": ai_answer,
         }
 
-    return {
-        "error": "فعلاً فقط فایل‌های Excel, CSV و PDF پشتیبانی می‌شوند."
-    }
+    return {"error": "فعلاً فقط فایل‌های Excel, CSV و PDF پشتیبانی می‌شوند."}
+
+
 @app.post("/knowledge/upload")
 async def upload_knowledge_file(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
     category: Optional[str] = Form("general"),
-    replace_existing: bool = Form(False)
+    replace_existing: bool = Form(False),
 ):
     upload_dir = "knowledge_files"
     os.makedirs(upload_dir, exist_ok=True)
@@ -857,7 +913,7 @@ async def upload_knowledge_file(
         file_path=file_path,
         title=title or safe_filename,
         category=category or "general",
-        replace_existing=replace_existing
+        replace_existing=replace_existing,
     )
 
     return result
@@ -865,61 +921,61 @@ async def upload_knowledge_file(
 
 @app.post("/knowledge/sync-google-drive")
 def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
-    folder_id = request.root_folder_id.strip() or os.getenv(
-        "GOOGLE_DRIVE_ROOT_FOLDER_ID",
-        ""
-    ).strip()
+    folder_id = (
+        request.root_folder_id.strip()
+        or os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
+    )
 
     if not folder_id:
         return {
             "success": False,
-            "message": "GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است."
+            "message": "GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است.",
         }
 
     try:
         return sync_google_drive_folder(
             root_folder_id=folder_id,
             max_files=request.max_files,
-            force_resync=request.force_resync
+            force_resync=request.force_resync,
         )
     except Exception as e:
         return {
             "success": False,
-            "message": f"خطا در همگام‌سازی Google Drive: {str(e)}"
+            "message": f"خطا در همگام‌سازی Google Drive: {str(e)}",
         }
 
 
 @app.get("/knowledge/stats")
 def knowledge_stats():
     return get_knowledge_stats()
+
+
 @app.delete("/knowledge/files/{file_name}")
 def knowledge_file_delete(file_name: str):
     return delete_knowledge_file(file_name)
+
+
 @app.delete("/customers/{customer_id}/chat-sessions")
 def customer_chat_sessions_delete_all(customer_id: int):
     customer = get_customer_by_id(customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد.",
-            "deleted_sessions": 0
-        }
+        return {"success": False, "message": "مشتری پیدا نشد.", "deleted_sessions": 0}
 
     deleted_sessions = delete_all_customer_chat_sessions(customer_id)
 
     return {
         "success": True,
         "message": "همه گفتگوهای مشتری حذف شدند.",
-        "deleted_sessions": deleted_sessions
+        "deleted_sessions": deleted_sessions,
     }
+
+
 @app.post("/knowledge/search")
 def knowledge_search(request: ChatRequest):
     query = request.message
 
-    has_astm_code = bool(
-        re.search(r"\bD\s*\d{3,5}\b", query, flags=re.IGNORECASE)
-    )
+    has_astm_code = bool(re.search(r"\bD\s*\d{3,5}\b", query, flags=re.IGNORECASE))
 
     if has_astm_code:
         local_results = local_search_knowledge_base(query, top_k=10)
@@ -942,26 +998,26 @@ def knowledge_search(request: ChatRequest):
                 "file_name": item["file_name"],
                 "category": item["category"],
                 "score": float(item.get("score", 0)),
-                "content": item["content"][:900]
+                "content": item["content"][:900],
             }
             for item in results
-        ]
+        ],
     }
+
+
 @app.get("/questions/recent")
 def questions_recent(limit: int = 20):
-    return {
-        "questions": get_recent_questions(limit=limit)
-    }
+    return {"questions": get_recent_questions(limit=limit)}
 
 
 @app.get("/questions/stats")
 def questions_stats():
     return get_question_stats()
+
+
 @app.get("/questions")
 def questions_all(limit: int = 100):
-    return {
-        "questions": get_all_questions(limit=limit)
-    }
+    return {"questions": get_all_questions(limit=limit)}
 
 
 @app.get("/questions/{question_id}")
@@ -969,9 +1025,7 @@ def question_detail(question_id: int):
     question = get_question_by_id(question_id)
 
     if not question:
-        return {
-            "error": "سوال موردنظر پیدا نشد."
-        }
+        return {"error": "سوال موردنظر پیدا نشد."}
 
     return question
 
@@ -982,33 +1036,26 @@ def question_review(question_id: int, request: QuestionReviewRequest):
         question_id=question_id,
         expert_status=request.expert_status,
         expert_note=request.expert_note,
-        reviewed_answer=request.reviewed_answer
+        reviewed_answer=request.reviewed_answer,
     )
 
     if not updated:
-        return {
-            "success": False,
-            "message": "سوال موردنظر پیدا نشد."
-        }
+        return {"success": False, "message": "سوال موردنظر پیدا نشد."}
 
-    return {
-        "success": True,
-        "message": "بررسی کارشناس با موفقیت ذخیره شد."
-    }
+    return {"success": True, "message": "بررسی کارشناس با موفقیت ذخیره شد."}
+
+
 @app.post("/questions/{question_id}/add-to-knowledge")
 def question_add_to_knowledge(question_id: int):
     question = get_question_by_id(question_id)
 
     if not question:
-        return {
-            "success": False,
-            "message": "سوال موردنظر پیدا نشد."
-        }
+        return {"success": False, "message": "سوال موردنظر پیدا نشد."}
 
     if question["expert_status"] != "approved":
         return {
             "success": False,
-            "message": "فقط سوالات تاییدشده توسط کارشناس می‌توانند به بانک دانش اضافه شوند."
+            "message": "فقط سوالات تاییدشده توسط کارشناس می‌توانند به بانک دانش اضافه شوند.",
         }
 
     final_answer = question["reviewed_answer"] or question["answer"]
@@ -1033,15 +1080,17 @@ def question_add_to_knowledge(question_id: int):
         title=f"FAQ تاییدشده #{question_id} - {question['detected_domain']}",
         content=content,
         category="expert-faq",
-        file_name=f"expert_faq_question_{question_id}.txt"
+        file_name=f"expert_faq_question_{question_id}.txt",
     )
 
     return result
+
+
 @app.post("/analyze-image")
 async def analyze_image(
     file: UploadFile = File(...),
     image_type: str = Form("general"),
-    user_note: str = Form("")
+    user_note: str = Form(""),
 ):
     try:
         upload_dir = "uploads"
@@ -1088,27 +1137,23 @@ async def analyze_image(
         ai_answer = analyze_image_with_ai(file_path, user_note=combined_note)
 
         return {
-    "file_type": ext,
-    "file_name": safe_filename,
-    "file_url": file_url,
-    "image_type": image_type,
-    "image_type_label": selected_image_type,
-    "ai_analysis": ai_answer
-}
+            "file_type": ext,
+            "file_name": safe_filename,
+            "file_url": file_url,
+            "image_type": image_type,
+            "image_type_label": selected_image_type,
+            "ai_analysis": ai_answer,
+        }
 
     except Exception as e:
-        return {
-            "error": f"خطا در تحلیل تصویر: {str(e)}"
-        }
+        return {"error": f"خطا در تحلیل تصویر: {str(e)}"}
 
 
 @app.post("/memory/search")
 def memory_search(request: MemorySearchRequest):
     return {
         "memories": search_user_memories(
-            user_id=request.user_id,
-            query=request.query,
-            limit=request.limit
+            user_id=request.user_id, query=request.query, limit=request.limit
         )
     }
 
@@ -1116,6 +1161,8 @@ def memory_search(request: MemorySearchRequest):
 @app.get("/memory/stats/{user_id}")
 def memory_stats(user_id: str):
     return get_user_memory_stats(user_id)
+
+
 @app.post("/customer-requests")
 def create_customer_request(request: CustomerRequestCreate):
     request_id = save_customer_request(
@@ -1125,45 +1172,38 @@ def create_customer_request(request: CustomerRequestCreate):
         email=request.email,
         request_type=request.request_type,
         subject=request.subject,
-        message=request.message
+        message=request.message,
     )
 
     return {
         "success": True,
         "request_id": request_id,
-        "message": "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما با شما تماس خواهند گرفت."
+        "message": "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما با شما تماس خواهند گرفت.",
     }
 
 
 @app.get("/customer-requests")
 def customer_requests(limit: int = 100):
-    return {
-        "requests": get_customer_requests(limit=limit)
-    }
+    return {"requests": get_customer_requests(limit=limit)}
 
 
 @app.patch("/customer-requests/{request_id}/status")
 def customer_request_status(request_id: int, request: CustomerRequestStatusUpdate):
     updated = update_customer_request_status(
-        request_id=request_id,
-        status=request.status
+        request_id=request_id, status=request.status
     )
 
     if not updated:
-        return {
-            "success": False,
-            "message": "درخواست موردنظر پیدا نشد."
-        }
+        return {"success": False, "message": "درخواست موردنظر پیدا نشد."}
 
-    return {
-        "success": True,
-        "message": "وضعیت درخواست بروزرسانی شد."
-    }
+    return {"success": True, "message": "وضعیت درخواست بروزرسانی شد."}
 
 
 @app.get("/customer-requests/stats")
 def customer_requests_stats():
     return get_customer_request_stats()
+
+
 @app.get("/system/status")
 def system_status(check_ai: bool = False):
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
@@ -1182,14 +1222,16 @@ def system_status(check_ai: bool = False):
     if check_ai:
         if not openai_configured:
             ai_status = "not_configured"
-            ai_error = "OPENAI_API_KEY تنظیم نشده یا عمداً برای حالت آفلاین غیرفعال شده است."
+            ai_error = (
+                "OPENAI_API_KEY تنظیم نشده یا عمداً برای حالت آفلاین غیرفعال شده است."
+            )
         else:
             try:
                 test_answer = ask_expert_assistant(
                     message="فقط کلمه OK را برگردان.",
                     context="",
                     history=[],
-                    domain="health-check"
+                    domain="health-check",
                 )
 
                 if test_answer:
@@ -1209,33 +1251,26 @@ def system_status(check_ai: bool = False):
         "openai_error": ai_error,
         "local_fallback_enabled": True,
         "knowledge_stats": knowledge_stats_data,
-        }
+    }
+
+
 @app.post("/customers/register")
 def customer_register(request: CustomerRegisterRequest):
     if not request.full_name.strip():
-        return {
-            "success": False,
-            "message": "نام و نام خانوادگی الزامی است."
-        }
+        return {"success": False, "message": "نام و نام خانوادگی الزامی است."}
 
     if not request.email.strip():
-        return {
-            "success": False,
-            "message": "ایمیل الزامی است."
-        }
+        return {"success": False, "message": "ایمیل الزامی است."}
 
     if len(request.password) < 6:
-        return {
-            "success": False,
-            "message": "رمز عبور باید حداقل ۶ کاراکتر باشد."
-        }
+        return {"success": False, "message": "رمز عبور باید حداقل ۶ کاراکتر باشد."}
 
     result = create_customer(
         full_name=request.full_name,
         email=request.email,
         password=request.password,
         company=request.company,
-        phone=request.phone
+        phone=request.phone,
     )
 
     if not result.get("success"):
@@ -1246,27 +1281,21 @@ def customer_register(request: CustomerRegisterRequest):
     return {
         "success": True,
         "message": "ثبت‌نام با موفقیت انجام شد.",
-        "customer": customer
+        "customer": customer,
     }
 
 
 @app.post("/customers/login")
 def customer_login(request: CustomerLoginRequest):
-    customer = authenticate_customer(
-        email=request.email,
-        password=request.password
-    )
+    customer = authenticate_customer(email=request.email, password=request.password)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "ایمیل یا رمز عبور اشتباه است."
-        }
+        return {"success": False, "message": "ایمیل یا رمز عبور اشتباه است."}
 
     return {
         "success": True,
         "message": "ورود با موفقیت انجام شد.",
-        "customer": customer
+        "customer": customer,
     }
 
 
@@ -1275,15 +1304,10 @@ def customer_profile(customer_id: int):
     customer = get_customer_by_id(customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد."
-        }
+        return {"success": False, "message": "مشتری پیدا نشد."}
 
-    return {
-        "success": True,
-        "customer": customer
-    }
+    return {"success": True, "customer": customer}
+
 
 @app.patch("/customers/{customer_id}")
 def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequest):
@@ -1291,35 +1315,27 @@ def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequ
         customer_id=customer_id,
         full_name=request.full_name,
         company=request.company,
-        phone=request.phone
+        phone=request.phone,
     )
 
     if not updated_customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد یا نام وارد نشده است."
-        }
+        return {"success": False, "message": "مشتری پیدا نشد یا نام وارد نشده است."}
 
     return {
         "success": True,
         "message": "اطلاعات حساب با موفقیت بروزرسانی شد.",
-        "customer": updated_customer
+        "customer": updated_customer,
     }
+
+
 @app.get("/customers/{customer_id}/chat-sessions")
 def customer_chat_sessions(customer_id: int):
     customer = get_customer_by_id(customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد.",
-            "sessions": []
-        }
+        return {"success": False, "message": "مشتری پیدا نشد.", "sessions": []}
 
-    return {
-        "success": True,
-        "sessions": get_customer_chat_sessions(customer_id)
-    }
+    return {"success": True, "sessions": get_customer_chat_sessions(customer_id)}
 
 
 @app.post("/customers/chat-sessions")
@@ -1327,20 +1343,13 @@ def customer_chat_session_create(request: CustomerSessionCreateRequest):
     customer = get_customer_by_id(request.customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد."
-        }
+        return {"success": False, "message": "مشتری پیدا نشد."}
 
     session_id = create_chat_session(
-        customer_id=request.customer_id,
-        title=request.title.strip() or "گفتگوی جدید"
+        customer_id=request.customer_id, title=request.title.strip() or "گفتگوی جدید"
     )
 
-    return {
-        "success": True,
-        "session_id": session_id
-    }
+    return {"success": True, "session_id": session_id}
 
 
 @app.get("/customers/{customer_id}/chat-sessions/{session_id}/messages")
@@ -1348,18 +1357,11 @@ def customer_chat_session_messages(customer_id: int, session_id: int):
     customer = get_customer_by_id(customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد.",
-            "messages": []
-        }
+        return {"success": False, "message": "مشتری پیدا نشد.", "messages": []}
 
     return {
         "success": True,
-        "messages": get_chat_messages(
-            session_id=session_id,
-            customer_id=customer_id
-        )
+        "messages": get_chat_messages(session_id=session_id, customer_id=customer_id),
     }
 
 
@@ -1368,51 +1370,35 @@ def customer_chat_message_create(request: CustomerChatMessageCreateRequest):
     customer = get_customer_by_id(request.customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد."
-        }
+        return {"success": False, "message": "مشتری پیدا نشد."}
 
     message_id = save_chat_message(
         session_id=request.session_id,
         role=request.role,
         content=request.content,
-        metadata=request.metadata
+        metadata=request.metadata,
     )
 
-    return {
-        "success": True,
-        "message_id": message_id
-    }
+    return {"success": True, "message_id": message_id}
+
+
 @app.patch("/customers/chat-sessions/{session_id}")
 def customer_chat_session_update(
-    session_id: int,
-    request: CustomerSessionUpdateRequest
+    session_id: int, request: CustomerSessionUpdateRequest
 ):
     customer = get_customer_by_id(request.customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد."
-        }
+        return {"success": False, "message": "مشتری پیدا نشد."}
 
     updated = update_chat_session_title(
-        session_id=session_id,
-        customer_id=request.customer_id,
-        title=request.title
+        session_id=session_id, customer_id=request.customer_id, title=request.title
     )
 
     if not updated:
-        return {
-            "success": False,
-            "message": "گفتگوی موردنظر پیدا نشد."
-        }
+        return {"success": False, "message": "گفتگوی موردنظر پیدا نشد."}
 
-    return {
-        "success": True,
-        "message": "نام گفتگو تغییر کرد."
-    }
+    return {"success": True, "message": "نام گفتگو تغییر کرد."}
 
 
 @app.delete("/customers/{customer_id}/chat-sessions/{session_id}")
@@ -1420,26 +1406,16 @@ def customer_chat_session_delete(customer_id: int, session_id: int):
     customer = get_customer_by_id(customer_id)
 
     if not customer:
-        return {
-            "success": False,
-            "message": "مشتری پیدا نشد."
-        }
+        return {"success": False, "message": "مشتری پیدا نشد."}
 
-    deleted = delete_chat_session(
-        session_id=session_id,
-        customer_id=customer_id
-    )
+    deleted = delete_chat_session(session_id=session_id, customer_id=customer_id)
 
     if not deleted:
-        return {
-            "success": False,
-            "message": "گفتگوی موردنظر پیدا نشد."
-        }
+        return {"success": False, "message": "گفتگوی موردنظر پیدا نشد."}
 
-    return {
-        "success": True,
-        "message": "گفتگو حذف شد."
-    }
+    return {"success": True, "message": "گفتگو حذف شد."}
+
+
 @app.post("/knowledge/index-artinazma-site")
 def index_artinazma_site(force: bool = False):
     return rebuild_artinazma_index(force=force)

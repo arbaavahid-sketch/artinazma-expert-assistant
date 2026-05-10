@@ -15,7 +15,6 @@ from knowledge_service import (
     knowledge_file_exists,
 )
 
-
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
 DOWNLOAD_DIR = Path("google_drive_files")
@@ -57,41 +56,33 @@ CATEGORY_MAP = {
     "laboratory equipment": "equipment",
     "تجهیزات": "equipment",
     "دستگاه": "equipment",
-
     "catalyst": "catalyst",
     "catalysts": "catalyst",
     "کاتالیست": "catalyst",
-
     "chemicals": "general",
     "chemical": "general",
     "مواد شیمیایی": "general",
-
     "astm": "ASTM Standards",
     "astm standards": "ASTM Standards",
     "استاندارد": "ASTM Standards",
     "استانداردهای astm": "ASTM Standards",
-
     "chromatography": "chromatography",
     "gc": "chromatography",
     "hplc": "chromatography",
     "کروماتوگرافی": "chromatography",
-
     "mercury": "mercury-analysis",
     "mercury analysis": "mercury-analysis",
     "جیوه": "mercury-analysis",
     "آنالیز جیوه": "mercury-analysis",
-
     "sulfur": "sulfur-analysis",
     "sulphur": "sulfur-analysis",
     "sulfur analysis": "sulfur-analysis",
     "سولفور": "sulfur-analysis",
     "گوگرد": "sulfur-analysis",
     "آنالیز سولفور": "sulfur-analysis",
-
     "troubleshooting": "troubleshooting",
     "عیب یابی": "troubleshooting",
     "عیب‌یابی": "troubleshooting",
-
     "application notes": "application-note",
     "application note": "application-note",
     "اپلیکیشن نوت": "application-note",
@@ -227,17 +218,9 @@ def get_drive_service():
     credentials = get_drive_credentials()
 
     http = httplib2.Http(timeout=GOOGLE_HTTP_TIMEOUT)
-    authorized_http = google_auth_httplib2.AuthorizedHttp(
-        credentials,
-        http=http
-    )
+    authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
-    return build(
-        "drive",
-        "v3",
-        http=authorized_http,
-        cache_discovery=False
-    )
+    return build("drive", "v3", http=authorized_http, cache_discovery=False)
 
 
 def list_folder_items(service, folder_id: str) -> List[Dict[str, Any]]:
@@ -255,7 +238,7 @@ def list_folder_items(service, folder_id: str) -> List[Dict[str, Any]]:
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
             )
-                        .execute(num_retries=GOOGLE_API_RETRIES)
+            .execute(num_retries=GOOGLE_API_RETRIES)
         )
 
         items.extend(response.get("files", []))
@@ -271,30 +254,25 @@ def download_binary_file(service, file_id: str, output_path: Path) -> None:
     request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
 
     with output_path.open("wb") as f:
-        downloader = MediaIoBaseDownload(
-            f,
-            request,
-            chunksize=DOWNLOAD_CHUNK_SIZE
-        )
+        downloader = MediaIoBaseDownload(f, request, chunksize=DOWNLOAD_CHUNK_SIZE)
         done = False
 
         while not done:
             _, done = downloader.next_chunk(num_retries=GOOGLE_API_RETRIES)
 
 
-def export_google_file(service, file_id: str, export_mime: str, output_path: Path) -> None:
+def export_google_file(
+    service, file_id: str, export_mime: str, output_path: Path
+) -> None:
     request = service.files().export_media(fileId=file_id, mimeType=export_mime)
 
     with output_path.open("wb") as f:
-        downloader = MediaIoBaseDownload(
-            f,
-            request,
-            chunksize=DOWNLOAD_CHUNK_SIZE
-        )
+        downloader = MediaIoBaseDownload(f, request, chunksize=DOWNLOAD_CHUNK_SIZE)
         done = False
 
         while not done:
             _, done = downloader.next_chunk(num_retries=GOOGLE_API_RETRIES)
+
 
 def prepare_drive_file(service, item: Dict[str, Any]) -> Dict[str, Any]:
     file_id = item["id"]
@@ -370,19 +348,23 @@ def walk_drive_folder(
 
     for item in items:
         if state["processed_files"] >= max_files:
-            results.append({
-                "success": False,
-                "status": "skipped",
-                "title": item.get("name", ""),
-                "reason": "max_files_limit_reached",
-            })
+            results.append(
+                {
+                    "success": False,
+                    "status": "skipped",
+                    "title": item.get("name", ""),
+                    "reason": "max_files_limit_reached",
+                }
+            )
             break
 
         mime_type = item.get("mimeType", "")
 
         if mime_type == GOOGLE_FOLDER_MIME_TYPE:
             folder_name = item.get("name", "")
-            next_category = normalize_category(folder_name) if is_root else current_category
+            next_category = (
+                normalize_category(folder_name) if is_root else current_category
+            )
 
             results.extend(
                 walk_drive_folder(
@@ -404,16 +386,17 @@ def walk_drive_folder(
         modified_time = item.get("modifiedTime", "")
         output_info = get_drive_output_info(item)
 
-
         if not output_info.get("supported"):
-            results.append({
-                "success": False,
-                "status": "skipped",
-                "title": item.get("name", ""),
-                "category": current_category,
-                "reason": output_info.get("reason", "unsupported_file_type"),
-                "mime_type": output_info.get("mime_type", mime_type),
-            })
+            results.append(
+                {
+                    "success": False,
+                    "status": "skipped",
+                    "title": item.get("name", ""),
+                    "category": current_category,
+                    "reason": output_info.get("reason", "unsupported_file_type"),
+                    "mime_type": output_info.get("mime_type", mime_type),
+                }
+            )
             continue
 
         expected_file_name = output_info["file_name"]
@@ -427,16 +410,18 @@ def walk_drive_folder(
             and previous.get("file_name") == expected_file_name
             and knowledge_file_exists(expected_file_name)
         ):
-            results.append({
-                "success": True,
-                "status": "unchanged",
-                "title": item.get("name", ""),
-                "file_name": expected_file_name,
-                "category": current_category,
-                "chunks_added": 0,
-                "message": "فایل از آخرین همگام‌سازی تغییری نکرده است.",
-                "source_type": output_info.get("source_type", ""),
-            })
+            results.append(
+                {
+                    "success": True,
+                    "status": "unchanged",
+                    "title": item.get("name", ""),
+                    "file_name": expected_file_name,
+                    "category": current_category,
+                    "chunks_added": 0,
+                    "message": "فایل از آخرین همگام‌سازی تغییری نکرده است.",
+                    "source_type": output_info.get("source_type", ""),
+                }
+            )
             continue
 
         if (
@@ -449,25 +434,29 @@ def walk_drive_folder(
         try:
             prepared = prepare_drive_file(service, item)
         except Exception as e:
-            results.append({
-                "success": False,
-                "status": "skipped",
-                "title": item.get("name", ""),
-                "category": current_category,
-                "reason": f"خطا در دانلود یا export فایل از Google Drive: {str(e)}",
-                "mime_type": mime_type,
-            })
+            results.append(
+                {
+                    "success": False,
+                    "status": "skipped",
+                    "title": item.get("name", ""),
+                    "category": current_category,
+                    "reason": f"خطا در دانلود یا export فایل از Google Drive: {str(e)}",
+                    "mime_type": mime_type,
+                }
+            )
             continue
 
         if not prepared.get("success"):
-            results.append({
-                "success": False,
-                "status": "skipped",
-                "title": prepared.get("title", item.get("name", "")),
-                "category": current_category,
-                "reason": prepared.get("reason", "download_failed"),
-                "mime_type": prepared.get("mime_type", mime_type),
-            })
+            results.append(
+                {
+                    "success": False,
+                    "status": "skipped",
+                    "title": prepared.get("title", item.get("name", "")),
+                    "category": current_category,
+                    "reason": prepared.get("reason", "download_failed"),
+                    "mime_type": prepared.get("mime_type", mime_type),
+                }
+            )
             continue
 
         try:
@@ -490,24 +479,28 @@ def walk_drive_folder(
                     "source_type": prepared.get("source_type", ""),
                 }
 
-            results.append({
-                "success": add_success,
-                "status": "added" if add_success else "skipped",
-                "title": prepared["title"],
-                "file_name": prepared["file_name"],
-                "category": current_category,
-                "chunks_added": add_result.get("chunks_added", 0),
-                "message": add_result.get("message", ""),
-                "source_type": prepared.get("source_type", ""),
-            })
+            results.append(
+                {
+                    "success": add_success,
+                    "status": "added" if add_success else "skipped",
+                    "title": prepared["title"],
+                    "file_name": prepared["file_name"],
+                    "category": current_category,
+                    "chunks_added": add_result.get("chunks_added", 0),
+                    "message": add_result.get("message", ""),
+                    "source_type": prepared.get("source_type", ""),
+                }
+            )
         except Exception as e:
-            results.append({
-                "success": False,
-                "status": "skipped",
-                "title": prepared.get("title", item.get("name", "")),
-                "category": current_category,
-                "reason": str(e),
-            })
+            results.append(
+                {
+                    "success": False,
+                    "status": "skipped",
+                    "title": prepared.get("title", item.get("name", "")),
+                    "category": current_category,
+                    "reason": str(e),
+                }
+            )
 
     return results
 
@@ -539,19 +532,18 @@ def sync_google_drive_folder(
     save_drive_sync_state(sync_state)
 
     added_files = [
-        item for item in results
+        item
+        for item in results
         if item.get("success") and item.get("status") == "added"
     ]
 
     unchanged_files = [
-        item for item in results
+        item
+        for item in results
         if item.get("success") and item.get("status") == "unchanged"
     ]
 
-    skipped_files = [
-        item for item in results
-        if not item.get("success")
-    ]
+    skipped_files = [item for item in results if not item.get("success")]
 
     total_chunks = sum(int(item.get("chunks_added") or 0) for item in added_files)
 

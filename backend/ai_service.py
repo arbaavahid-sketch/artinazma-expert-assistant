@@ -371,7 +371,7 @@ def get_specialized_protocol(query_type: str) -> str:
 پروتکل عمومی:
 - پاسخ را فنی، دقیق، ساختارمند و قابل اجرا بنویس.
 - اگر داده ناقص است، برداشت فنی بده و اطلاعات لازم برای قطعیت را مشخص کن.
-"""
+""",
     }
 
     return protocols.get(query_type, protocols["general"])
@@ -469,7 +469,7 @@ def build_user_content(
     context: str = "",
     history: Optional[List[Dict[str, str]]] = None,
     domain: str = "auto",
-    allow_web_search: bool = False
+    allow_web_search: bool = False,
 ) -> str:
     target_language = detect_user_language(message)
     query_type = classify_query_type(message)
@@ -585,7 +585,7 @@ def ask_expert_assistant(
     context: str = "",
     history: Optional[List[Dict[str, str]]] = None,
     domain: str = "auto",
-    allow_web_search: bool = False
+    allow_web_search: bool = False,
 ) -> str:
     user_content = build_user_content(
         message=message,
@@ -709,9 +709,7 @@ IMAGE_ANALYSIS_PROMPT = """
 
 
 def analyze_image_with_ai(
-    file_path: str,
-    user_note: str = "",
-    web_context: str = ""
+    file_path: str, user_note: str = "", web_context: str = ""
 ) -> str:
     encoded_image, mime_type = prepare_image_for_ai(file_path)
 

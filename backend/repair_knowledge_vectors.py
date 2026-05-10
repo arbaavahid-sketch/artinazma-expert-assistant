@@ -50,13 +50,11 @@ def main():
             break
 
     REPAIRED_PATH.write_text(
-        json.dumps(items, ensure_ascii=False, indent=2),
-        encoding="utf-8"
+        json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
     STORAGE_PATH.write_text(
-        json.dumps(items, ensure_ascii=False, indent=2),
-        encoding="utf-8"
+        json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
     print("Repair finished.")

@@ -4,7 +4,6 @@ from typing import Any, Dict, List
 
 import requests
 
-
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "").strip()
 WEB_SEARCH_ENABLED = os.getenv("WEB_SEARCH_ENABLED", "false").strip().lower() == "true"
 
@@ -174,12 +173,14 @@ def search_web_sources(query: str, max_results: int = 5) -> List[Dict[str, Any]]
             if not title or not url or not content:
                 continue
 
-            cleaned_results.append({
-                "title": title,
-                "url": url,
-                "content": content[:1200],
-                "score": score_web_result(item),
-            })
+            cleaned_results.append(
+                {
+                    "title": title,
+                    "url": url,
+                    "content": content[:1200],
+                    "score": score_web_result(item),
+                }
+            )
 
         cleaned_results.sort(key=lambda item: item.get("score", 0), reverse=True)
 
@@ -196,15 +197,13 @@ def build_web_context(web_results: List[Dict[str, Any]]) -> str:
     parts = []
 
     for index, item in enumerate(web_results, start=1):
-        parts.append(
-            f"""
+        parts.append(f"""
 منبع وب {index}
 عنوان: {item.get("title", "")}
 آدرس: {item.get("url", "")}
 امتیاز تقریبی: {item.get("score", 0)}
 خلاصه محتوای بازیابی‌شده:
 {item.get("content", "")}
-"""
-        )
+""")
 
     return "\n\n".join(parts)
