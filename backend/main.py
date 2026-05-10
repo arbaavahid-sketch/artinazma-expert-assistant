@@ -603,7 +603,7 @@ def chat(request: ChatRequest):
 
         answer_mode = "local"
     if not allow_company_reference:
-       answer = remove_company_mentions_if_not_allowed(answer)
+        answer = remove_company_mentions_if_not_allowed(answer)
     sources = [
         {
             "title": doc.get("title", ""),
