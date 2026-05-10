@@ -431,9 +431,9 @@ def chat(request: ChatRequest):
 اگر مشخصات دقیق محصول در متن منابع داخلی نیست، با دانش فنی معتبر تکمیل کن، اما ادعای ساختگی نکن.
 """
 
-            for link in resource_links:
-                artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
-                artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
+                for link in resource_links:
+                    artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
+                    artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
 
             search_mode = f"{search_mode}+artinazma_site"
 
