@@ -662,47 +662,48 @@ ${cleanAnswer}`,
     }
   }
 
-async function loadSavedChatSession(customerId: number, sessionId: number) {
-  setLoadingSavedSession(true);
+  async function loadSavedChatSession(customerId: number, sessionId: number) {
+    setLoadingSavedSession(true);
 
-  try {
-    const res = await fetch(
-      apiUrl(`/customers/${customerId}/chat-sessions/${sessionId}/messages`)
-    );
+    try {
+      const res = await fetch(
+        apiUrl(`/customers/${customerId}/chat-sessions/${sessionId}/messages`)
+      );
 
-    const data = await res.json();
+      const data = await res.json();
 
-    const savedMessages: ChatMessage[] = (data.messages || []).map(
-      (item: SavedChatMessage) => ({
-        role: item.role === "user" ? "user" : "assistant",
-        content: item.content,
-        sources: item.metadata?.sources || [],
-        detected_domain: item.metadata?.detected_domain,
-        question_id: item.metadata?.question_id,
-        relatedDevices: item.metadata?.relatedDevices || [],
-        resource_links: item.metadata?.resource_links || [],
-        resource_images: item.metadata?.resource_images || [],
-        attachment: item.metadata?.attachment
-  ? {
-      ...item.metadata.attachment,
-      previewUrl:
-        item.metadata.attachment.previewUrl ||
-        (item.metadata.file_url
-          ? apiUrl(item.metadata.file_url as string)
-          : undefined),
+      const savedMessages: ChatMessage[] = (data.messages || []).map(
+        (item: SavedChatMessage) => ({
+          role: item.role === "user" ? "user" : "assistant",
+          content: item.content,
+          sources: item.metadata?.sources || [],
+          detected_domain: item.metadata?.detected_domain,
+          question_id: item.metadata?.question_id,
+          relatedDevices: item.metadata?.relatedDevices || [],
+          resource_links: item.metadata?.resource_links || [],
+          resource_images: item.metadata?.resource_images || [],
+          attachment: item.metadata?.attachment
+            ? {
+                ...item.metadata.attachment,
+                previewUrl:
+                  item.metadata.attachment.previewUrl ||
+                  (item.metadata.file_url
+                    ? apiUrl(item.metadata.file_url as string)
+                    : undefined),
+              }
+            : undefined,
+        })
+      );
+
+      setMessages(savedMessages);
+      setActiveSessionId(sessionId);
+    } catch {
+      setMessages([]);
+    } finally {
+      setLoadingSavedSession(false);
     }
-  : undefined,
-      })
-    );
-
-    setMessages(savedMessages);
-    setActiveSessionId(sessionId);
-  } catch {
-    setMessages([]);
-  } finally {
-    setLoadingSavedSession(false);
   }
-}
+  
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
   setSessionIdParam(params.get("session_id"));
