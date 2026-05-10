@@ -728,39 +728,39 @@ ${cleanAnswer}`,
       }
     }
   }, [router, sessionIdParam]);
-function typeAssistantMessage(
-  previousMessages: ChatMessage[],
-  userMessage: ChatMessage,
-  assistantMessage: ChatMessage
-) {
-  const fullText = assistantMessage.content || "";
-  let index = 0;
+  function typeAssistantMessage(
+    previousMessages: ChatMessage[],
+    userMessage: ChatMessage,
+    assistantMessage: ChatMessage
+  ) {
+    const fullText = assistantMessage.content || "";
+    let index = 0;
 
-  const emptyAssistantMessage: ChatMessage = {
-    ...assistantMessage,
-    content: "",
-  };
+    const emptyAssistantMessage: ChatMessage = {
+      ...assistantMessage,
+      content: "",
+    };
 
-  setMessages([...previousMessages, userMessage, emptyAssistantMessage]);
+    setMessages([...previousMessages, userMessage, emptyAssistantMessage]);
 
-  const interval = window.setInterval(() => {
-    index += 8;
+    const interval = window.setInterval(() => {
+      index += 8;
 
-    setMessages([
-      ...previousMessages,
-      userMessage,
-      {
-        ...assistantMessage,
-        content: fullText.slice(0, index),
-      },
-    ]);
+      setMessages([
+        ...previousMessages,
+        userMessage,
+        {
+          ...assistantMessage,
+          content: fullText.slice(0, index),
+        },
+      ]);
 
-    if (index >= fullText.length) {
-      window.clearInterval(interval);
-      setMessages([...previousMessages, userMessage, assistantMessage]);
-    }
-  }, 18);
-}
+      if (index >= fullText.length) {
+        window.clearInterval(interval);
+        setMessages([...previousMessages, userMessage, assistantMessage]);
+      }
+    }, 18);
+  }
 
 async function sendMessage(customMessage?: string, displayMessage?: string) {
   const finalMessage = customMessage || message;
