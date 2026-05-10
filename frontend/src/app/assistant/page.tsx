@@ -490,26 +490,26 @@ export default function AssistantPage() {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   
 
-  async function copyText(text: string) {
-  await navigator.clipboard.writeText(text);
-}
+    async function copyText(text: string) {
+    await navigator.clipboard.writeText(text);
+  }
 
-function sendQuickAction(
-  action: "shorter" | "technical" | "table",
-  answerText: string
-) {
-  const cleanAnswer = answerText.trim();
+  function sendQuickAction(
+    action: "shorter" | "technical" | "table",
+    answerText: string
+  ) {
+    const cleanAnswer = answerText.trim();
 
-  const prompts = {
-    shorter: `این متن را خلاصه‌تر، کاربردی‌تر و منظم‌تر بازنویسی کن. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
-
-${cleanAnswer}`,
-
-    technical: `این متن را فنی‌تر، دقیق‌تر و کامل‌تر بازنویسی کن. توضیح باید منظم، قابل فهم و مناسب کارشناس آزمایشگاه باشد. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+    const prompts = {
+      shorter: `این متن را خلاصه‌تر، کاربردی‌تر و منظم‌تر بازنویسی کن. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
 
 ${cleanAnswer}`,
 
-    table: `درخواست امن و مجاز: فقط متن فنی زیر را از حالت توضیحی به جدول Markdown تبدیل کن.
+      technical: `این متن را فنی‌تر، دقیق‌تر و کامل‌تر بازنویسی کن. توضیح باید منظم، قابل فهم و مناسب کارشناس آزمایشگاه باشد. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+
+${cleanAnswer}`,
+
+      table: `درخواست امن و مجاز: فقط متن فنی زیر را از حالت توضیحی به جدول Markdown تبدیل کن.
 هیچ اطلاعات جدیدی اضافه نکن.
 اگر متن درباره روش‌های آزمایشگاهی، دستگاه، استاندارد یا نمونه است، همان اطلاعات موجود را در جدول خلاصه کن.
 خروجی فقط فارسی باشد.
@@ -517,73 +517,73 @@ ${cleanAnswer}`,
 
 متن برای تبدیل به جدول:
 ${cleanAnswer}`,
-  };
+    };
 
-  const visibleMessages = {
-    shorter: "خلاصه‌تر کن",
-    technical: "فنی‌تر توضیح بده",
-    table: "تبدیل به جدول",
-  };
+    const visibleMessages = {
+      shorter: "خلاصه‌تر کن",
+      technical: "فنی‌تر توضیح بده",
+      table: "تبدیل به جدول",
+    };
 
-  sendMessage(prompts[action], visibleMessages[action]);
-}
+    sendMessage(prompts[action], visibleMessages[action]);
+  }
 
-function makeSessionTitle(text: string) {
-  const clean = text.replace(/\s+/g, " ").trim();
+  function makeSessionTitle(text: string) {
+    const clean = text.replace(/\s+/g, " ").trim();
 
-  if (!clean) return "گفتگوی جدید";
+    if (!clean) return "گفتگوی جدید";
 
-  return clean.length > 42 ? `${clean.slice(0, 42)}...` : clean;
-}
+    return clean.length > 42 ? `${clean.slice(0, 42)}...` : clean;
+  }
 
-async function sendAnswerFeedback(
-  questionId: number | undefined,
-  status: "approved" | "needs_edit"
-) {
-  if (!questionId) return;
+  async function sendAnswerFeedback(
+    questionId: number | undefined,
+    status: "approved" | "needs_edit"
+  ) {
+    if (!questionId) return;
 
-  const expertNote =
-    status === "approved"
-      ? "کاربر پاسخ را مفید اعلام کرد."
-      : "کاربر اعلام کرد پاسخ نیاز به اصلاح دارد.";
+    const expertNote =
+      status === "approved"
+        ? "کاربر پاسخ را مفید اعلام کرد."
+        : "کاربر اعلام کرد پاسخ نیاز به اصلاح دارد.";
 
-  try {
-    const res = await fetch(apiUrl(`/questions/${questionId}/review`), {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        expert_status: status,
-        expert_note: expertNote,
-        reviewed_answer: "",
-      }),
-    });
+    try {
+      const res = await fetch(apiUrl(`/questions/${questionId}/review`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          expert_status: status,
+          expert_note: expertNote,
+          reviewed_answer: "",
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      setFeedbackStatus((prev) => ({
-        ...prev,
-        [questionId]: status,
-      }));
+      if (data.success) {
+        setFeedbackStatus((prev) => ({
+          ...prev,
+          [questionId]: status,
+        }));
+      }
+    } catch {
+      // خطای بازخورد نباید چت را خراب کند
     }
-  } catch {
-    // خطای بازخورد نباید چت را خراب کند
   }
-}
 
-function getSavedCustomer(): Customer | null {
-  try {
-    const raw = localStorage.getItem("artin_customer");
+  function getSavedCustomer(): Customer | null {
+    try {
+      const raw = localStorage.getItem("artin_customer");
 
-    if (!raw) return null;
+      if (!raw) return null;
 
-    return JSON.parse(raw);
-  } catch {
-    return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
-}
 
 async function createCustomerChatSession(title: string) {
   const activeCustomer = customer || getSavedCustomer();
