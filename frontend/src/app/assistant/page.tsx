@@ -820,9 +820,9 @@ async function sendMessage(customMessage?: string, displayMessage?: string) {
       }),
     });
 
-  const rawText = await res.text();
+    const rawText = await res.text();
 
-  if (!res.ok) {
+    if (!res.ok) {
   let serverMessage = "خطا در دریافت پاسخ از سرور.";
 
   try {
@@ -830,15 +830,15 @@ async function sendMessage(customMessage?: string, displayMessage?: string) {
     serverMessage = errorData.message || errorData.error || serverMessage;
   } catch {}
 
-  throw new Error(serverMessage);
+    throw new Error(serverMessage);
 }
 
-  let data;
+    let data;
 
-  try {
-  data = JSON.parse(rawText);
-} catch {
-  throw new Error("پاسخ سرور معتبر نبود.");
+    try {
+    data = JSON.parse(rawText);
+}   catch {
+    throw new Error("پاسخ سرور معتبر نبود.");
 }
 
 const relatedDevices: DeviceAsset[] = [];
