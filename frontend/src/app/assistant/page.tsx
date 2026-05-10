@@ -872,20 +872,19 @@ ${cleanAnswer}`,
       );
 
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
-    } catch (error) {
-  console.error("CHAT ERROR:", error);
+        } catch (error) {
+      console.error("CHAT ERROR:", error);
 
-  setMessages([
-    ...previousMessages,
-    userMessage,
-    {
-      role: "assistant",
-      content:
-  "در حال حاضر ارتباط با سرویس پاسخ‌گویی دچار اختلال شده است. لطفاً چند لحظه بعد دوباره تلاش کنید.",
-    },
-  ]);
-}
- finally {
+      setMessages([
+        ...previousMessages,
+        userMessage,
+        {
+          role: "assistant",
+          content:
+            "در حال حاضر ارتباط با سرویس پاسخ‌گویی دچار اختلال شده است. لطفاً چند لحظه بعد دوباره تلاش کنید.",
+        },
+      ]);
+    } finally {
       setLoading(false);
     }
   }
