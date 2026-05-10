@@ -420,9 +420,9 @@ def chat(request: ChatRequest):
     related_docs = []
     search_mode = "unknown"
 
-    if has_astm_code and local_docs:
-        related_docs = local_docs[:8]
-        search_mode = "local_astm"
+    if has_astm_code:
+         related_docs = []
+         search_mode = "gpt_astm_direct"
 
     elif specific_model_question:
         exact_local_match = context_has_exact_model_match(request.message, local_docs)
@@ -560,23 +560,7 @@ def chat(request: ChatRequest):
     """
 
     context = f"{context}\n\n{intent_context}".strip()
-
-    quality_context = ""
-
-    try:
-        quality_context = build_answer_quality_context(
-            message=request.message,
-            intent=question_intent,
-            intent_label=question_intent_label,
-            domain=detected_domain,
-        )
-    except Exception as e:
-        print("Answer quality context failed:", e)
-        quality_context = ""
-
-    if quality_context:
-        context = f"{context}\n\n{quality_context}".strip()
-
+   
     standard_context = ""
 
     try:
@@ -587,25 +571,7 @@ def chat(request: ChatRequest):
 
     if standard_context:
         context = f"{context}\n\n{standard_context}".strip()
-
-    unknown_standard_guard = ""
-
-    if has_astm_code and not standard_context:
-        unknown_standard_guard = """
-    قانون بسیار مهم درباره استاندارد ناشناخته:
-    در پیام کاربر یک کد ASTM تشخیص داده شده، اما این کد در بانک استانداردهای داخلی به‌صورت قطعی شناسایی نشده است.
-
-    در پاسخ نهایی:
-    - عنوان، دامنه کاربرد، روش آزمون، نوع نمونه، دستگاه یا کاربرد استاندارد را حدس نزن.
-    - اگر اطلاعات قطعی نداری، با صراحت بگو این کد در داده‌های موجود به‌صورت قطعی شناسایی نشد.
-    - پاسخ را مفید نگه دار: توضیح بده برای بررسی رسمی چه اطلاعاتی لازم است.
-    - اگر احتمال می‌دهی کاربر کد مشابهی را منظور داشته، فقط با عبارت «ممکن است منظور شما...» مطرح کن، نه با قطعیت.
-    - برای استفاده رسمی، بررسی نسخه کامل و به‌روز استاندارد از مرجع رسمی ASTM الزامی است.
-    """
-
-    if unknown_standard_guard:
-        context = f"{context}\n\n{unknown_standard_guard}".strip()
-
+    
     if allow_company_reference:
         company_visibility_context = """
     قانون نمایش اطلاعات شرکت:
