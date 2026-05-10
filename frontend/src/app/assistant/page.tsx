@@ -64,24 +64,24 @@ type SavedChatMessage = {
   role: "user" | "assistant";
   content: string;
   metadata?: {
-  sources?: Source[];
-  detected_domain?: string;
-  question_id?: number;
-  relatedDevices?: DeviceAsset[];
-  resource_links?: ResourceLink[];
-  resource_images?: ResourceImage[];
-  attachment?: ChatMessage["attachment"];
+    sources?: Source[];
+    detected_domain?: string;
+    question_id?: number;
+    relatedDevices?: DeviceAsset[];
+    resource_links?: ResourceLink[];
+    resource_images?: ResourceImage[];
+    attachment?: ChatMessage["attachment"];
 
-  file_name?: string;
-  file_url?: string;
-  file_type?: string;
+    file_name?: string;
+    file_url?: string;
+    file_type?: string;
 
-  test_type?: string;
-  test_type_label?: string;
+    test_type?: string;
+    test_type_label?: string;
 
-  image_type?: string;
-  image_type_label?: string;
-};
+    image_type?: string;
+    image_type_label?: string;
+  };
   created_at: string;
 };
 type ToolAction =
@@ -135,17 +135,12 @@ function getToolIcon(action: ToolAction): LucideIcon {
   if (action === "catalyst-suggestion") return FlaskConical;
   return UserRound;
 }
-function ToolMenu({
-  onSelect,
-}: {
-  onSelect: (action: ToolAction) => void;
-}) {
-  
+function ToolMenu({ onSelect }: { onSelect: (action: ToolAction) => void }) {
   return (
     <div className="w-[245px] overflow-hidden rounded-[18px] border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-300/40">
       {tools.map((tool, index) => {
         const Icon = getToolIcon(tool.action);
-   
+
         return (
           <button
             key={tool.action}
@@ -191,10 +186,10 @@ function getTestTypeLabel(value: string) {
 }
 
 function getImageTypeLabel(value: string) {
-  return imageTypes.find((item) => item.value === value)?.label || "تصویر عمومی";
+  return (
+    imageTypes.find((item) => item.value === value)?.label || "تصویر عمومی"
+  );
 }
-
-
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -208,29 +203,27 @@ function cleanMarkdownText(text: string) {
     .replace(/\r/g, "\n")
     .replace(/^\s*---+\s*$/gm, "")
     .trim();
-// اگر مدل جدول را داخل code block برگرداند، آن را از حالت کد خارج می‌کنیم
-cleaned = cleaned
-  .replace(/```(?:markdown|md)?\s*\n([\s\S]*?\|[\s\S]*?)\n```/gi, "$1")
-  .replace(/```\s*\n([\s\S]*?\|[\s\S]*?)\n```/g, "$1");
+  // اگر مدل جدول را داخل code block برگرداند، آن را از حالت کد خارج می‌کنیم
+  cleaned = cleaned
+    .replace(/```(?:markdown|md)?\s*\n([\s\S]*?\|[\s\S]*?)\n```/gi, "$1")
+    .replace(/```\s*\n([\s\S]*?\|[\s\S]*?)\n```/g, "$1");
 
-// اگر خطوط جدول با فاصله شروع شده باشند، Markdown آن را code block حساب می‌کند.
-// این بخش فقط خطوط جدول را trim می‌کند تا remark-gfm بتواند جدول را رندر کند.
-cleaned = cleaned
-  .split("\n")
-  .map((line) => {
-    const trimmed = line.trim();
+  // اگر خطوط جدول با فاصله شروع شده باشند، Markdown آن را code block حساب می‌کند.
+  // این بخش فقط خطوط جدول را trim می‌کند تا remark-gfm بتواند جدول را رندر کند.
+  cleaned = cleaned
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
 
-    const looksLikeTableLine =
-      trimmed.includes("|") &&
-      (
-        trimmed.startsWith("|") ||
-        trimmed.endsWith("|") ||
-        /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(trimmed)
-      );
+      const looksLikeTableLine =
+        trimmed.includes("|") &&
+        (trimmed.startsWith("|") ||
+          trimmed.endsWith("|") ||
+          /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(trimmed));
 
-    return looksLikeTableLine ? trimmed : line;
-  })
-  .join("\n");
+      return looksLikeTableLine ? trimmed : line;
+    })
+    .join("\n");
   const sectionTitles = [
     "جمع‌بندی کاربردی",
     "جمع بندی کاربردی",
@@ -262,8 +255,8 @@ cleaned = cleaned
 
   for (const title of sectionTitles) {
     const pattern = new RegExp(
-     `^\\s*(?:[-*]\\s*)?(?:\\*\\*\\s*)?${escapeRegExp(title)}(?:\\s*\\*\\*)?(?:\\s*:)?\\s*$`,
-      "gmi"
+      `^\\s*(?:[-*]\\s*)?(?:\\*\\*\\s*)?${escapeRegExp(title)}(?:\\s*\\*\\*)?(?:\\s*:)?\\s*$`,
+      "gmi",
     );
 
     cleaned = cleaned.replace(pattern, `## ${title}`);
@@ -283,21 +276,15 @@ cleaned = cleaned
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
-    // پایدارسازی جهت نمایش توکن‌های لاتین داخل متن فارسی
+  // پایدارسازی جهت نمایش توکن‌های لاتین داخل متن فارسی
   // با قرار دادن FSI/PDI دور واژه‌های لاتین، جابه‌جایی بصری در RTL کمتر می‌شود.
   if (hasPersianText(cleaned)) {
-  cleaned = cleaned
-    // عبارت‌های انگلیسی داخل پرانتز را یکپارچه LTR نگه می‌دارد
-    .replace(
-      /\(([A-Za-z][A-Za-z0-9.+/\-\s]{1,})\)/g,
-      "(\u2066$1\u2069)"
-    )
-    // مخفف‌های فنی مثل XRF, ICP, ICP-OES, GC-MS را LTR نگه می‌دارد
-    .replace(
-      /\b([A-Z]{2,}(?:-[A-Z0-9]+)?)\b/g,
-      "\u2066$1\u2069"
-    );
-}
+    cleaned = cleaned
+      // عبارت‌های انگلیسی داخل پرانتز را یکپارچه LTR نگه می‌دارد
+      .replace(/\(([A-Za-z][A-Za-z0-9.+/\-\s]{1,})\)/g, "(\u2066$1\u2069)")
+      // مخفف‌های فنی مثل XRF, ICP, ICP-OES, GC-MS را LTR نگه می‌دارد
+      .replace(/\b([A-Z]{2,}(?:-[A-Z0-9]+)?)\b/g, "\u2066$1\u2069");
+  }
 
   return cleaned;
 }
@@ -311,11 +298,12 @@ function getTextDirection(text: string) {
 }
 
 function getTextFont(text: string) {
-  return hasPersianText(text)
-    ? "var(--font-persian)"
-    : "var(--font-english)";
+  return hasPersianText(text) ? "var(--font-persian)" : "var(--font-english)";
 }
-function shouldShowRelatedDeviceCards(userText: string, selectedDomain: string) {
+function shouldShowRelatedDeviceCards(
+  userText: string,
+  selectedDomain: string,
+) {
   const text = userText.toLowerCase();
 
   if (selectedDomain === "equipment") return true;
@@ -472,7 +460,9 @@ export default function AssistantPage() {
   const [responseMode, setResponseMode] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [feedbackStatus, setFeedbackStatus] = useState<Record<number, string>>({});
+  const [feedbackStatus, setFeedbackStatus] = useState<Record<number, string>>(
+    {},
+  );
   const [showTools, setShowTools] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
@@ -488,7 +478,6 @@ export default function AssistantPage() {
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
-  
 
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
@@ -496,7 +485,7 @@ export default function AssistantPage() {
 
   function sendQuickAction(
     action: "shorter" | "technical" | "table",
-    answerText: string
+    answerText: string,
   ) {
     const cleanAnswer = answerText.trim();
 
@@ -538,7 +527,7 @@ ${cleanAnswer}`,
 
   async function sendAnswerFeedback(
     questionId: number | undefined,
-    status: "approved" | "needs_edit"
+    status: "approved" | "needs_edit",
   ) {
     if (!questionId) return;
 
@@ -611,7 +600,11 @@ ${cleanAnswer}`,
       setCustomer(activeCustomer);
       setActiveSessionId(newSessionId);
 
-      window.history.replaceState(null, "", `/assistant?session_id=${newSessionId}`);
+      window.history.replaceState(
+        null,
+        "",
+        `/assistant?session_id=${newSessionId}`,
+      );
 
       return newSessionId;
     } catch {
@@ -637,7 +630,7 @@ ${cleanAnswer}`,
     sessionId: number | null,
     role: "user" | "assistant",
     content: string,
-    metadata: Record<string, unknown> = {}
+    metadata: Record<string, unknown> = {},
   ) {
     const activeCustomer = customer || getSavedCustomer();
 
@@ -667,7 +660,7 @@ ${cleanAnswer}`,
 
     try {
       const res = await fetch(
-        apiUrl(`/customers/${customerId}/chat-sessions/${sessionId}/messages`)
+        apiUrl(`/customers/${customerId}/chat-sessions/${sessionId}/messages`),
       );
 
       const data = await res.json();
@@ -692,7 +685,7 @@ ${cleanAnswer}`,
                     : undefined),
               }
             : undefined,
-        })
+        }),
       );
 
       setMessages(savedMessages);
@@ -732,7 +725,7 @@ ${cleanAnswer}`,
   function typeAssistantMessage(
     previousMessages: ChatMessage[],
     userMessage: ChatMessage,
-    assistantMessage: ChatMessage
+    assistantMessage: ChatMessage,
   ) {
     const fullText = assistantMessage.content || "";
     let index = 0;
@@ -823,7 +816,7 @@ ${cleanAnswer}`,
         }),
       });
 
-                  const rawText = await res.text();
+      const rawText = await res.text();
 
       if (!res.ok) {
         let serverMessage = "خطا در دریافت پاسخ از سرور.";
@@ -868,11 +861,11 @@ ${cleanAnswer}`,
           relatedDevices,
           resource_links: assistantMessage.resource_links || [],
           resource_images: assistantMessage.resource_images || [],
-        }
+        },
       );
 
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
-        } catch (error) {
+    } catch (error) {
       console.error("CHAT ERROR:", error);
 
       setMessages([
@@ -890,12 +883,12 @@ ${cleanAnswer}`,
   }
 
   function clearChat() {
-  setMessages([]);
-  setMessage("");
-  setShowTools(false);
-  setActiveSessionId(null);
-  router.replace("/assistant");
-}
+    setMessages([]);
+    setMessage("");
+    setShowTools(false);
+    setActiveSessionId(null);
+    router.replace("/assistant");
+  }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -920,16 +913,18 @@ ${cleanAnswer}`,
     };
 
     const previousMessages = messages;
-    const customerSessionId = await ensureCustomerSession(`تحلیل فایل ${file.name}`);
+    const customerSessionId = await ensureCustomerSession(
+      `تحلیل فایل ${file.name}`,
+    );
 
-await saveCustomerChatMessage(
-  customerSessionId,
-  "user",
-  `فایل برای تحلیل ارسال شد: ${file.name}`,
-  {
-    attachment: userMessage.attachment,
-  }
-);
+    await saveCustomerChatMessage(
+      customerSessionId,
+      "user",
+      `فایل برای تحلیل ارسال شد: ${file.name}`,
+      {
+        attachment: userMessage.attachment,
+      },
+    );
     setMessages([...previousMessages, userMessage]);
     setLoading(true);
 
@@ -947,40 +942,39 @@ await saveCustomerChatMessage(
       const data = await res.json();
 
       const relatedDevices = shouldShowRelatedDeviceCards(
-  `${file.name}\n${chatUserNote}`,
-  domain
-)
-  ? findRelatedDevices(
-      `${file.name}\n${chatUserNote}\n${data.ai_analysis || data.error || ""}`,
-      2
-    )
-  : [];
+        `${file.name}\n${chatUserNote}`,
+        domain,
+      )
+        ? findRelatedDevices(
+            `${file.name}\n${chatUserNote}\n${data.ai_analysis || data.error || ""}`,
+            2,
+          )
+        : [];
 
-const assistantMessage: ChatMessage = {
-  role: "assistant",
-  content:
-    data.ai_analysis ||
-    data.error ||
-    "فایل دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
-  detected_domain: "file-analysis",
-  relatedDevices,
-};
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content:
+          data.ai_analysis ||
+          data.error ||
+          "فایل دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
+        detected_domain: "file-analysis",
+        relatedDevices,
+      };
 
-await saveCustomerChatMessage(
-  customerSessionId,
-  "assistant",
-  assistantMessage.content,
-  {
-    detected_domain: "file-analysis",
-    file_name: data.file_name,
-    file_url: data.file_url,
-    file_type: data.file_type,
-    test_type: data.test_type,
-    test_type_label: data.test_type_label,
-    relatedDevices,
-  }
-);
-
+      await saveCustomerChatMessage(
+        customerSessionId,
+        "assistant",
+        assistantMessage.content,
+        {
+          detected_domain: "file-analysis",
+          file_name: data.file_name,
+          file_url: data.file_url,
+          file_type: data.file_type,
+          test_type: data.test_type,
+          test_type_label: data.test_type_label,
+          relatedDevices,
+        },
+      );
 
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
@@ -996,7 +990,7 @@ await saveCustomerChatMessage(
       setLoading(false);
     }
   }
-  
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
@@ -1029,16 +1023,18 @@ await saveCustomerChatMessage(
     };
 
     const previousMessages = messages;
-    const customerSessionId = await ensureCustomerSession(`تحلیل عکس ${file.name}`);
+    const customerSessionId = await ensureCustomerSession(
+      `تحلیل عکس ${file.name}`,
+    );
 
-await saveCustomerChatMessage(
-  customerSessionId,
-  "user",
-  `عکس برای تحلیل ارسال شد: ${file.name}`,
-  {
-    attachment: userMessage.attachment,
-  }
-);
+    await saveCustomerChatMessage(
+      customerSessionId,
+      "user",
+      `عکس برای تحلیل ارسال شد: ${file.name}`,
+      {
+        attachment: userMessage.attachment,
+      },
+    );
     setMessages([...previousMessages, userMessage]);
     setLoading(true);
 
@@ -1056,41 +1052,41 @@ await saveCustomerChatMessage(
       const data = await res.json();
 
       const relatedDevices = shouldShowRelatedDeviceCards(
-  `${file.name}\n${chatImageNote}`,
-  domain
-)
-  ? findRelatedDevices(
-      `${file.name}\n${chatImageNote}\n${data.ai_analysis || data.error || ""}`,
-      2
-    )
-  : [];
+        `${file.name}\n${chatImageNote}`,
+        domain,
+      )
+        ? findRelatedDevices(
+            `${file.name}\n${chatImageNote}\n${data.ai_analysis || data.error || ""}`,
+            2,
+          )
+        : [];
 
-const assistantMessage: ChatMessage = {
-  role: "assistant",
-  content:
-    data.ai_analysis ||
-    data.error ||
-    "عکس دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
-  detected_domain: "image-analysis",
-  relatedDevices,
-};
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content:
+          data.ai_analysis ||
+          data.error ||
+          "عکس دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
+        detected_domain: "image-analysis",
+        relatedDevices,
+      };
 
-await saveCustomerChatMessage(
-  customerSessionId,
-  "assistant",
-  assistantMessage.content,
-  {
-    detected_domain: "image-analysis",
-    file_name: data.file_name,
-    file_url: data.file_url,
-    file_type: data.file_type,
-    image_type: data.image_type,
-    image_type_label: data.image_type_label,
-    relatedDevices,
-  }
-);
+      await saveCustomerChatMessage(
+        customerSessionId,
+        "assistant",
+        assistantMessage.content,
+        {
+          detected_domain: "image-analysis",
+          file_name: data.file_name,
+          file_url: data.file_url,
+          file_type: data.file_type,
+          image_type: data.image_type,
+          image_type_label: data.image_type_label,
+          relatedDevices,
+        },
+      );
 
-typeAssistantMessage(previousMessages, userMessage, assistantMessage);
+      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     } catch {
       setMessages([
         ...previousMessages,
@@ -1104,7 +1100,7 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
       setLoading(false);
     }
   }
-  
+
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
@@ -1118,27 +1114,27 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     e.target.value = "";
   }
   function handleUploadChange(e: React.ChangeEvent<HTMLInputElement>) {
-  const file = e.target.files?.[0];
+    const file = e.target.files?.[0];
 
-  if (!file) return;
+    if (!file) return;
 
-  const fileName = file.name.toLowerCase();
-  const ext = fileName.split(".").pop() || "";
+    const fileName = file.name.toLowerCase();
+    const ext = fileName.split(".").pop() || "";
 
-  if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
-    setPendingImage(file);
-    setShowImageOptions(true);
-    setChatImageType("general");
-    setChatImageNote("");
-  } else {
-    setPendingFile(file);
-    setShowFileOptions(true);
-    setChatTestType("general");
-    setChatUserNote("");
+    if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
+      setPendingImage(file);
+      setShowImageOptions(true);
+      setChatImageType("general");
+      setChatImageNote("");
+    } else {
+      setPendingFile(file);
+      setShowFileOptions(true);
+      setChatTestType("general");
+      setChatUserNote("");
+    }
+
+    e.target.value = "";
   }
-
-  e.target.value = "";
-}
   function confirmFileAnalysis() {
     if (!pendingFile) return;
 
@@ -1172,19 +1168,18 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
   function handleToolClick(action: ToolAction) {
     setShowTools(false);
     if (action === "upload") {
-  uploadInputRef.current?.click();
-  return;
-}    
+      uploadInputRef.current?.click();
+      return;
+    }
     if (action === "customer-request") {
       router.push("/customer-request");
       return;
     }
 
-    
     if (action === "troubleshooting") {
       setDomain("troubleshooting");
       setMessage(
-        "برای عیب‌یابی این مشکل دستگاه، علت‌های احتمالی و چک‌لیست مرحله‌ای بده: "
+        "برای عیب‌یابی این مشکل دستگاه، علت‌های احتمالی و چک‌لیست مرحله‌ای بده: ",
       );
       return;
     }
@@ -1192,7 +1187,7 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     if (action === "device-suggestion") {
       setDomain("equipment");
       setMessage(
-        "برای این کاربرد یا نوع نمونه، دستگاه/تجهیز مناسب آرتین آزما را پیشنهاد بده: "
+        "برای این کاربرد یا نوع نمونه، دستگاه/تجهیز مناسب آرتین آزما را پیشنهاد بده: ",
       );
       return;
     }
@@ -1200,34 +1195,33 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
     if (action === "catalyst-suggestion") {
       setDomain("catalyst");
       setMessage(
-        "برای این فرایند یا مشکل، کاتالیست مناسب یا تست‌های لازم برای بررسی کاتالیست را پیشنهاد بده: "
+        "برای این فرایند یا مشکل، کاتالیست مناسب یا تست‌های لازم برای بررسی کاتالیست را پیشنهاد بده: ",
       );
     }
   }
-   if (checkingCustomerLogin) {
-  return (
-    <section className="flex h-full items-center justify-center bg-white px-6">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <div className="text-lg font-bold text-slate-900">
-          در حال بررسی ورود مشتری...
-        </div>
+  if (checkingCustomerLogin) {
+    return (
+      <section className="flex h-full items-center justify-center bg-white px-6">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="text-lg font-bold text-slate-900">
+            در حال بررسی ورود مشتری...
+          </div>
 
-        <div className="mt-3 text-sm text-slate-500">
-          برای استفاده از آرتین باید وارد حساب کاربری شوید.
+          <div className="mt-3 text-sm text-slate-500">
+            برای استفاده از آرتین باید وارد حساب کاربری شوید.
+          </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
+    );
+  }
   return (
-     <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff]">   
-      
+    <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff]">
       <input
-         ref={uploadInputRef}
-         type="file"
-         accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp"
-         onChange={handleUploadChange}
-         className="hidden"
+        ref={uploadInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp"
+        onChange={handleUploadChange}
+        className="hidden"
       />
       {showFileOptions && pendingFile && (
         <UploadModal
@@ -1272,10 +1266,10 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
             <div className="relative">
               <div className="absolute -inset-1 rounded-3xl bg-blue-200 blur-lg" />
               <img
-  src="/images/artin-avatar.png"
-  alt="آرتین"
-  className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
-/>
+                src="/images/artin-avatar.png"
+                alt="آرتین"
+                className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
+              />
             </div>
 
             <div>
@@ -1293,144 +1287,151 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
-  <select
-    value={domain}
-    onChange={(e) => setDomain(e.target.value)}
-    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
-  >
-    <option value="auto">تشخیص خودکار</option>
-    <option value="catalyst">کاتالیست</option>
-    <option value="equipment">تجهیزات</option>
-    <option value="chromatography">کروماتوگرافی</option>
-    <option value="mercury-analysis">آنالیز جیوه</option>
-    <option value="sulfur-analysis">آنالیز سولفور</option>
-    <option value="troubleshooting">عیب‌یابی</option>
-    <option value="analysis">آنالیز و تست</option>
-  </select>
+            <select
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
+            >
+              <option value="auto">تشخیص خودکار</option>
+              <option value="catalyst">کاتالیست</option>
+              <option value="equipment">تجهیزات</option>
+              <option value="chromatography">کروماتوگرافی</option>
+              <option value="mercury-analysis">آنالیز جیوه</option>
+              <option value="sulfur-analysis">آنالیز سولفور</option>
+              <option value="troubleshooting">عیب‌یابی</option>
+              <option value="analysis">آنالیز و تست</option>
+            </select>
 
-  <select
-    value={responseMode}
-    onChange={(e) => setResponseMode(e.target.value)}
-    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
-  >
-    <option value="auto">نوع پاسخ: هوشمند</option>
-    <option value="brief">خلاصه و کاربردی</option>
-    <option value="technical">فنی کامل</option>
-    <option value="checklist">چک‌لیست عملیاتی</option>
-  </select>
+            <select
+              value={responseMode}
+              onChange={(e) => setResponseMode(e.target.value)}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
+            >
+              <option value="auto">نوع پاسخ: هوشمند</option>
+              <option value="brief">خلاصه و کاربردی</option>
+              <option value="technical">فنی کامل</option>
+              <option value="checklist">چک‌لیست عملیاتی</option>
+            </select>
 
-  <button
-    onClick={clearChat}
-    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
-  >
-    گفتگوی جدید
-  </button>
-</div>
+            <button
+              onClick={clearChat}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+            >
+              گفتگوی جدید
+            </button>
+          </div>
         </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loadingSavedSession && (
-  <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-blue-50 p-4 text-center text-sm font-bold text-blue-700">
-    در حال بارگذاری گفتگوی ذخیره‌شده...
-  </div>
-)}
+          <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-blue-50 p-4 text-center text-sm font-bold text-blue-700">
+            در حال بارگذاری گفتگوی ذخیره‌شده...
+          </div>
+        )}
         <div className="mx-auto w-full max-w-6xl px-6 pb-6 pt-6">
           {messages.length === 0 ? (
-  <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
-    <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-      امروز چه کمکی از آرتین می‌خواهید؟
-    </h2>
+            <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
+              <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+                امروز چه کمکی از آرتین می‌خواهید؟
+              </h2>
 
-    <p className="mt-4 max-w-2xl text-base leading-8 text-slate-500">
-      سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا درخواست مشاوره ثبت کنید.
-    </p>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-500">
+                سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا درخواست
+                مشاوره ثبت کنید.
+              </p>
 
-    <div className="relative mt-8 w-full max-w-3xl">
-      {showTools && (
-  <div className="absolute top-full right-0 z-50 mt-2">
-    <ToolMenu onSelect={handleToolClick} />
-  </div>
-)}
+              <div className="relative mt-8 w-full max-w-3xl">
+                {showTools && (
+                  <div className="absolute top-full right-0 z-50 mt-2">
+                    <ToolMenu onSelect={handleToolClick} />
+                  </div>
+                )}
 
-      <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <button
-            onClick={() => setShowTools((prev) => !prev)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-2xl text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
-          >
-            +
-          </button>
+                <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <button
+                      onClick={() => setShowTools((prev) => !prev)}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-2xl text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      +
+                    </button>
 
-          <textarea
-            dir="auto"
-            style={{ fontFamily: getTextFont(message || "فارسی") }}
-            className="max-h-32 min-h-[46px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[17px] leading-7 outline-none"
-            placeholder="از آرتین بپرسید..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+                    <textarea
+                      dir="auto"
+                      style={{ fontFamily: getTextFont(message || "فارسی") }}
+                      className="max-h-32 min-h-[46px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[17px] leading-7 outline-none"
+                      placeholder="از آرتین بپرسید..."
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                    />
 
-          <button
-            onClick={() => sendMessage()}
-            disabled={loading || !message.trim()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xl text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-300"
-          >
-            ↑
-          </button>
-        </div>
-      </div>
-    </div>
+                    <button
+                      onClick={() => sendMessage()}
+                      disabled={loading || !message.trim()}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xl text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-300"
+                    >
+                      ↑
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-    <div className="mt-5 flex flex-wrap justify-center gap-3">
-      <button
-  onClick={() => handleToolClick("upload")}
-  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
->
-  آپلود فایل یا عکس
-</button>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <button
+                  onClick={() => handleToolClick("upload")}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  آپلود فایل یا عکس
+                </button>
 
-      <button
-        onClick={() => handleToolClick("customer-request")}
-        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
-      >
-        درخواست مشاوره
-      </button>
-    </div>
-  </div>
-) : (
+                <button
+                  onClick={() => handleToolClick("customer-request")}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  درخواست مشاوره
+                </button>
+              </div>
+            </div>
+          ) : (
             <div className="mx-auto w-full max-w-5xl space-y-7 pb-4">
               {messages.map((item, index) => (
-  <MessageBubble
-   key={index}
-   item={item}
-   loading={loading}
-   onCopy={copyText}
-   onRequest={() => router.push("/customer-request")}
-   onQuickAction={sendQuickAction}
-   onFeedback={sendAnswerFeedback}
-   feedbackValue={item.question_id ? feedbackStatus[item.question_id] : undefined}
-/>
+                <MessageBubble
+                  key={index}
+                  item={item}
+                  loading={loading}
+                  onCopy={copyText}
+                  onRequest={() => router.push("/customer-request")}
+                  onQuickAction={sendQuickAction}
+                  onFeedback={sendAnswerFeedback}
+                  feedbackValue={
+                    item.question_id
+                      ? feedbackStatus[item.question_id]
+                      : undefined
+                  }
+                />
               ))}
 
               {loading && (
-  <div className="flex justify-start">
-    <div className="flex max-w-[80%] flex-row-reverse items-center gap-3 rounded-[28px] bg-white px-5 py-4 text-slate-600 shadow-sm">
-      <img
-        src="/images/artin-avatar.png"
-        alt="آرتین"
-        className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
-      />
-      <span className="font-persian">آرتین در حال تحلیل و آماده‌سازی پاسخ است...</span>
-      <span className="flex gap-1">
-        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:120ms]" />
-        <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:240ms]" />
-      </span>
-    </div>
-  </div>
-)}
+                <div className="flex justify-start">
+                  <div className="flex max-w-[80%] flex-row-reverse items-center gap-3 rounded-[28px] bg-white px-5 py-4 text-slate-600 shadow-sm">
+                    <img
+                      src="/images/artin-avatar.png"
+                      alt="آرتین"
+                      className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
+                    />
+                    <span className="font-persian">
+                      آرتین در حال تحلیل و آماده‌سازی پاسخ است...
+                    </span>
+                    <span className="flex gap-1">
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:120ms]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:240ms]" />
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <div ref={messagesEndRef} />
             </div>
@@ -1438,52 +1439,51 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
         </div>
       </div>
       {messages.length > 0 && (
-      <footer className="shrink-0 border-t border-slate-200/70 bg-white/75 backdrop-blur-xl">
-        
-        <div className="mx-auto w-full max-w-6xl px-6 py-3">
-          <div className="relative mx-auto max-w-4xl">
-            {showTools && (
-  <div className="absolute bottom-full left-0 right-auto z-50 mb-2 md:left-auto md:right-0">
-    <ToolMenu onSelect={handleToolClick} />
-  </div>
-)}
+        <footer className="shrink-0 border-t border-slate-200/70 bg-white/75 backdrop-blur-xl">
+          <div className="mx-auto w-full max-w-6xl px-6 py-3">
+            <div className="relative mx-auto max-w-4xl">
+              {showTools && (
+                <div className="absolute bottom-full left-0 right-auto z-50 mb-2 md:left-auto md:right-0">
+                  <ToolMenu onSelect={handleToolClick} />
+                </div>
+              )}
 
-            <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
-              <div className="flex items-end gap-3 px-3 py-3">
-                <button
-                  onClick={() => setShowTools((prev) => !prev)}
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-2xl text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
-                >
-                  +
-                </button>
+              <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
+                <div className="flex items-end gap-3 px-3 py-3">
+                  <button
+                    onClick={() => setShowTools((prev) => !prev)}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-2xl text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                  >
+                    +
+                  </button>
 
-                <textarea
-                  dir="auto"
-                  style={{ fontFamily: getTextFont(message || "فارسی") }}
-                  className="max-h-40 min-h-[52px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[18px] leading-8 outline-none"
-                  placeholder="از آرتین بپرسید..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
+                  <textarea
+                    dir="auto"
+                    style={{ fontFamily: getTextFont(message || "فارسی") }}
+                    className="max-h-40 min-h-[52px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[18px] leading-8 outline-none"
+                    placeholder="از آرتین بپرسید..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                  />
 
-                <button
-                  onClick={() => sendMessage()}
-                  disabled={loading || !message.trim()}
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xl text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-300"
-                >
-                  ↑
-                </button>
+                  <button
+                    onClick={() => sendMessage()}
+                    disabled={loading || !message.trim()}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xl text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-300"
+                  >
+                    ↑
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <p className="mt-2 text-center text-xs leading-5 text-slate-500">
-              آرتین پاسخ را بر اساس بانک دانش و تحلیل فنی ارائه می‌کند؛ برای
-              تصمیم‌های مهم، امکان ثبت درخواست مشاوره وجود دارد.
-            </p>
+              <p className="mt-2 text-center text-xs leading-5 text-slate-500">
+                آرتین پاسخ را بر اساس بانک دانش و تحلیل فنی ارائه می‌کند؛ برای
+                تصمیم‌های مهم، امکان ثبت درخواست مشاوره وجود دارد.
+              </p>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
       )}
     </section>
   );
@@ -1520,7 +1520,6 @@ function UploadModal({
   onCancel: () => void;
   footer?: string;
 }) {
-  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
       <div className="w-full max-w-xl rounded-[36px] bg-white p-6 shadow-2xl">
@@ -1545,9 +1544,7 @@ function UploadModal({
           ))}
         </select>
 
-        <label className="mb-2 mt-5 block text-sm font-bold">
-          {noteLabel}
-        </label>
+        <label className="mb-2 mt-5 block text-sm font-bold">{noteLabel}</label>
 
         <textarea
           value={noteValue}
@@ -1597,16 +1594,18 @@ function MessageBubble({
   onRequest: () => void;
   onQuickAction: (
     action: "shorter" | "technical" | "table",
-    answerText: string
+    answerText: string,
   ) => void;
   onFeedback: (
     questionId: number | undefined,
-    status: "approved" | "needs_edit"
+    status: "approved" | "needs_edit",
   ) => void;
   feedbackValue?: string;
 }) {
   const isUser = item.role === "user";
-  const displayContent = isUser ? item.content : cleanMarkdownText(item.content);
+  const displayContent = isUser
+    ? item.content
+    : cleanMarkdownText(item.content);
   const direction = getTextDirection(displayContent);
   const fontFamily = getTextFont(displayContent);
 
@@ -1629,83 +1628,83 @@ function MessageBubble({
         )}
 
         <div
-  className={`shadow-sm ${
-    isUser
-      ? "max-w-[760px] rounded-[26px] bg-blue-700 px-5 py-4 text-white"
-      : "ai-message-card"
-  }`}
->
+          className={`shadow-sm ${
+            isUser
+              ? "max-w-[760px] rounded-[26px] bg-blue-700 px-5 py-4 text-white"
+              : "ai-message-card"
+          }`}
+        >
           <div
-  dir={direction}
-  style={{ fontFamily }}
-  className={
-    isUser
-      ? "whitespace-pre-wrap text-right leading-8"
-      : direction === "rtl"
-      ? "ai-markdown rtl-markdown"
-      : "ai-markdown ltr-markdown"
-  }
->
-  {isUser ? (
-    displayContent
-  ) : (
-    <ReactMarkdown
-  remarkPlugins={[remarkGfm]}
-  components={{
-    h1: ({ children }) => (
-      <h2 className="ai-md-title">{children}</h2>
-    ),
-    h2: ({ children }) => (
-      <h2 className="ai-md-title">{children}</h2>
-    ),
-    h3: ({ children }) => (
-      <h3 className="ai-md-section">{children}</h3>
-    ),
-    p: ({ children }) => (
-      <p className="ai-md-paragraph">{children}</p>
-    ),
-    ul: ({ children }) => (
-      <ul className="ai-md-list">{children}</ul>
-    ),
-    ol: ({ children }) => (
-      <ol className="ai-md-list ai-md-ordered">{children}</ol>
-    ),
-    li: ({ children }) => (
-      <li className="ai-md-list-item">{children}</li>
-    ),
-    strong: ({ children }) => (
-      <strong className="ai-md-strong">{children}</strong>
-    ),
-    code: ({ children }) => (
-      <code className="ai-md-code">{children}</code>
-    ),
-    a: ({ href, children }) => (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
-      >
-        {children}
-      </a>
-    ),
-    table: ({ children }) => (
-      <div className="ai-md-table-wrap">
-        <table className="ai-md-table">{children}</table>
-      </div>
-    ),
-    th: ({ children }) => (
-      <th className="ai-md-th">{children}</th>
-    ),
-    td: ({ children }) => (
-      <td className="ai-md-td">{children}</td>
-    ),
-  }}
->
-  {displayContent}
-</ReactMarkdown>
-  )}
-</div>
+            dir={direction}
+            style={{ fontFamily }}
+            className={
+              isUser
+                ? "whitespace-pre-wrap text-right leading-8"
+                : direction === "rtl"
+                  ? "ai-markdown rtl-markdown"
+                  : "ai-markdown ltr-markdown"
+            }
+          >
+            {isUser ? (
+              displayContent
+            ) : (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => (
+                    <h2 className="ai-md-title">{children}</h2>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="ai-md-title">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="ai-md-section">{children}</h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="ai-md-paragraph">{children}</p>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="ai-md-list">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="ai-md-list ai-md-ordered">{children}</ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="ai-md-list-item">{children}</li>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="ai-md-strong">{children}</strong>
+                  ),
+                  code: ({ children }) => (
+                    <code className="ai-md-code">{children}</code>
+                  ),
+                  a: ({ href, children }) => (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
+                    >
+                      {children}
+                    </a>
+                  ),
+                  table: ({ children }) => (
+                    <div className="ai-md-table-wrap">
+                      <table className="ai-md-table">{children}</table>
+                    </div>
+                  ),
+                  th: ({ children }) => (
+                    <th className="ai-md-th">{children}</th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="ai-md-td">{children}</td>
+                  ),
+                }}
+              >
+                {displayContent}
+              </ReactMarkdown>
+            )}
+          </div>
           {item.attachment && (
             <div
               className={`mt-4 rounded-3xl p-4 text-sm leading-7 ${
@@ -1748,76 +1747,76 @@ function MessageBubble({
               )}
             </div>
           )}
-           
-{!isUser && (
-  <ArtinazmaResourceCards
-    links={item.resource_links}
-    images={item.resource_images}
-  />
-)}
+
           {!isUser && (
-  <div className="mt-4 space-y-3">
-    <div className="flex flex-wrap gap-2 pt-1">
-      <button
-        onClick={() => onQuickAction("shorter", item.content)}
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        خلاصه‌تر کن
-      </button>
+            <ArtinazmaResourceCards
+              links={item.resource_links}
+              images={item.resource_images}
+            />
+          )}
+          {!isUser && (
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  onClick={() => onQuickAction("shorter", item.content)}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  خلاصه‌تر کن
+                </button>
 
-      <button
-        onClick={() => onQuickAction("technical", item.content)}
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        فنی‌تر توضیح بده
-      </button>
+                <button
+                  onClick={() => onQuickAction("technical", item.content)}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  فنی‌تر توضیح بده
+                </button>
 
-      <button
-        onClick={() => onQuickAction("table", item.content)}
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      >
-        تبدیل به جدول
-      </button>
+                <button
+                  onClick={() => onQuickAction("table", item.content)}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  تبدیل به جدول
+                </button>
 
-      <button
-        onClick={() => onCopy(displayContent)}
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
-      >
-        کپی پاسخ
-      </button>
+                <button
+                  onClick={() => onCopy(displayContent)}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  کپی پاسخ
+                </button>
 
-      <button
-        onClick={onRequest}
-        className="rounded-2xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
-      >
-        ثبت درخواست مشاوره
-      </button>
-      <button
-  onClick={() => onFeedback(item.question_id, "approved")}
-  disabled={feedbackValue === "approved"}
-  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
-    feedbackValue === "approved"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-  }`}
->
-  پاسخ خوب بود
-</button>
+                <button
+                  onClick={onRequest}
+                  className="rounded-2xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+                >
+                  ثبت درخواست مشاوره
+                </button>
+                <button
+                  onClick={() => onFeedback(item.question_id, "approved")}
+                  disabled={feedbackValue === "approved"}
+                  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
+                    feedbackValue === "approved"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                  }`}
+                >
+                  پاسخ خوب بود
+                </button>
 
-<button
-  onClick={() => onFeedback(item.question_id, "needs_edit")}
-  disabled={feedbackValue === "needs_edit"}
-  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
-    feedbackValue === "needs_edit"
-      ? "border-amber-200 bg-amber-50 text-amber-700"
-      : "border-slate-200 bg-white text-slate-700 hover:bg-amber-50 hover:text-amber-700"
-  }`}
->
-  نیاز به اصلاح دارد
-</button>
-    </div>
-  </div>
-)}
+                <button
+                  onClick={() => onFeedback(item.question_id, "needs_edit")}
+                  disabled={feedbackValue === "needs_edit"}
+                  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
+                    feedbackValue === "needs_edit"
+                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-amber-50 hover:text-amber-700"
+                  }`}
+                >
+                  نیاز به اصلاح دارد
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
