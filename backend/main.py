@@ -677,6 +677,7 @@ def chat(request: ChatRequest):
                 "resource_images": resource_images,
                 "question_intent": question_intent,
                 "question_intent_label": question_intent_label,
+                
             }
         )
 
@@ -692,6 +693,7 @@ def chat(request: ChatRequest):
         "web_search_used": allow_web_search,
         "question_intent": question_intent,
         "question_intent_label": question_intent_label,
+        "response_mode": response_mode,
         "answer_mode": answer_mode
     }
 @app.post("/analyze-file")
