@@ -243,56 +243,7 @@ def remove_company_mentions_if_not_allowed(answer: str) -> str:
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
     return cleaned.strip()
-def polish_answer_for_ui(answer: str) -> str:
-    if not answer:
-        return ""
 
-    text = answer.strip()
-
-    # حذف فاصله‌های خالی خیلی زیاد
-    text = re.sub(r"\n{3,}", "\n\n", text)
-
-    # اگر چند بولت داخل یک خط آمده‌اند، جداشان کن
-    text = re.sub(r"\s+•\s+", "\n• ", text)
-
-    # اگر شماره‌گذاری‌ها داخل یک خط آمده‌اند، کمی مرتبشان کن
-    text = re.sub(r"\s+(\d+)\.\s+", r"\n\1. ", text)
-
-    # تیترهای رایج را از متن قبلی جدا کن
-    headings = [
-        "جمع‌بندی کاربردی",
-        "تفاوت بنیادی",
-        "مقایسه فنی و عملیاتی",
-        "محدودیت‌ها و خطاهای رایج",
-        "سناریوی انتخاب",
-        "اطلاعات لازم برای تصمیم قطعی",
-        "پیشنهاد عملی",
-        "نکات ایمنی",
-        "کنترل کیفیت",
-        "اقدام بعدی",
-    ]
-
-    for h in headings:
-        text = re.sub(rf"(?<!\n)({re.escape(h)})", r"\n\n\1", text)
-
-    # تمیزکاری خطوط
-    lines = [line.strip() for line in text.splitlines()]
-    cleaned_lines = []
-
-    for line in lines:
-        if not line:
-            if cleaned_lines and cleaned_lines[-1] != "":
-                cleaned_lines.append("")
-            continue
-
-        cleaned_lines.append(line)
-
-    text = "\n".join(cleaned_lines)
-
-    # دوباره فاصله‌های اضافی را کنترل کن
-    text = re.sub(r"\n{3,}", "\n\n", text)
-
-    return text.strip()
 class ChatHistoryMessage(BaseModel):
     role: str
     content: str
