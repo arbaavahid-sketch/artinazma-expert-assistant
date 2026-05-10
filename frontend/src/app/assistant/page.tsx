@@ -460,9 +460,7 @@ export default function AssistantPage() {
   const [responseMode, setResponseMode] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [feedbackStatus, setFeedbackStatus] = useState<Record<number, string>>(
-    {},
-  );
+  const [feedbackStatus, setFeedbackStatus] = useState<Record<number, string>>({},);
   const [showTools, setShowTools] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
