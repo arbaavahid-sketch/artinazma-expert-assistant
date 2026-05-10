@@ -487,8 +487,6 @@ export default function AssistantPage() {
   const [chatImageNote, setChatImageNote] = useState("");
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   
 
@@ -1215,21 +1213,8 @@ typeAssistantMessage(previousMessages, userMessage, assistantMessage);
   );
 }
   return (
-     <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff]">      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".xlsx,.xls,.csv,.pdf"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept=".jpg,.jpeg,.png,.webp"
-        onChange={handleImageChange}
-        className="hidden"
-      />
+     <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff]">   
+      
       <input
          ref={uploadInputRef}
          type="file"
