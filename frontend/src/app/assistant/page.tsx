@@ -762,49 +762,49 @@ ${cleanAnswer}`,
     }, 18);
   }
 
-async function sendMessage(customMessage?: string, displayMessage?: string) {
-  const finalMessage = customMessage || message;
-  const visibleMessage = displayMessage || finalMessage;
+  async function sendMessage(customMessage?: string, displayMessage?: string) {
+    const finalMessage = customMessage || message;
+    const visibleMessage = displayMessage || finalMessage;
 
-  if (!finalMessage.trim()) return;
+    if (!finalMessage.trim()) return;
 
-  const previousMessages = messages;
-  const userId = getOrCreateUserId();
+    const previousMessages = messages;
+    const userId = getOrCreateUserId();
 
-  const userMessage: ChatMessage = {
-    role: "user",
-    content: visibleMessage,
-  };
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: visibleMessage,
+    };
 
-  const customerSessionId = await ensureCustomerSession(visibleMessage);
+    const customerSessionId = await ensureCustomerSession(visibleMessage);
 
-  await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
-    domain,
-    response_mode: responseMode,
-    actual_prompt: displayMessage ? finalMessage : undefined,
-  });
+    await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
+      domain,
+      response_mode: responseMode,
+      actual_prompt: displayMessage ? finalMessage : undefined,
+    });
 
-  setMessages([...previousMessages, userMessage]);
-  setMessage("");
-  setLoading(true);
-  setShowTools(false);
+    setMessages([...previousMessages, userMessage]);
+    setMessage("");
+    setLoading(true);
+    setShowTools(false);
 
-  try {
-    const res = await fetch(apiUrl("/chat"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: finalMessage,
-        domain,
-        response_mode: responseMode,
-        user_id: userId,
-        history: previousMessages.map((item) => {
-          let content = item.content;
+    try {
+      const res = await fetch(apiUrl("/chat"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: finalMessage,
+          domain,
+          response_mode: responseMode,
+          user_id: userId,
+          history: previousMessages.map((item) => {
+            let content = item.content;
 
-          if (item.attachment) {
-            content += `
+            if (item.attachment) {
+              content += `
 
 اطلاعات فایل/عکس قبلی:
 نام: ${item.attachment.name}
@@ -812,17 +812,17 @@ async function sendMessage(customMessage?: string, displayMessage?: string) {
 دسته‌بندی تحلیل: ${item.attachment.analysisType || ""}
 توضیح کاربر: ${item.attachment.note || ""}
 `;
-          }
+            }
 
-          return {
-            role: item.role,
-            content,
-          };
+            return {
+              role: item.role,
+              content,
+            };
+          }),
         }),
-      }),
-    });
+      });
 
-    const rawText = await res.text();
+      const rawText = await res.text();
 
     if (!res.ok) {
   let serverMessage = "خطا در دریافت پاسخ از سرور.";
