@@ -490,7 +490,7 @@ export default function AssistantPage() {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   
 
-    async function copyText(text: string) {
+  async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
   }
 
@@ -585,8 +585,8 @@ ${cleanAnswer}`,
     }
   }
 
-async function createCustomerChatSession(title: string) {
-  const activeCustomer = customer || getSavedCustomer();
+  async function createCustomerChatSession(title: string) {
+    const activeCustomer = customer || getSavedCustomer();
 
   if (!activeCustomer) return null;
 
