@@ -77,6 +77,9 @@ function Router() {
       <Route path="/questions/:id">
         {(params) => <Redirect to={`/admin/questions/${params.id}`} />}
       </Route>
+      <Route path="/questions">
+        <Redirect to="/admin/questions" />
+      </Route>
 
       <Route component={NotFound} />
     </Switch>
