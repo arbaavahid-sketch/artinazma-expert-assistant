@@ -1,0 +1,181 @@
+/* Balanced ChatGPT-like visual treatment for the assistant experience.
+   The chat page should stay minimal, but not feel flat or empty. */
+
+.assistant-visual-shell,
+.chat-shell,
+.assistant-shell,
+[data-app-path="/assistant"] {
+  background:
+    linear-gradient(180deg, #fbfbfc 0%, #f6f7f9 100%) !important;
+}
+
+.assistant-visual-header,
+.chat-header,
+.assistant-header {
+  border-bottom: 1px solid #e7e9ee !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03) !important;
+}
+
+.assistant-visual-composer,
+.chat-composer,
+.assistant-composer {
+  border: 1px solid #d8dce5 !important;
+  border-radius: 28px !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 18px 44px rgba(15, 23, 42, 0.08),
+    0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+.assistant-visual-empty,
+.chat-empty-card,
+.assistant-empty-card {
+  border: 1px solid #eef0f4 !important;
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045) !important;
+  backdrop-filter: blur(10px);
+}
+
+.assistant-visual-quick,
+.chat-quick-card,
+.assistant-quick-card {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.035) !important;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.assistant-visual-quick:hover,
+.chat-quick-card:hover,
+.assistant-quick-card:hover {
+  transform: translateY(-1px);
+  border-color: #cfd6e3 !important;
+  background: #fafafa !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055) !important;
+}
+
+.assistant-visual-user,
+.chat-bubble-user,
+.assistant-bubble-user {
+  background: #eef2ff !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  border: 1px solid #dbe3ff !important;
+}
+
+.assistant-visual-ai,
+.chat-bubble-ai,
+.assistant-bubble-ai,
+.ai-message-card {
+  border: 1px solid #edf0f5 !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.035) !important;
+}
+
+.ai-message-card {
+  max-width: 860px !important;
+  padding: 20px 24px !important;
+  border-radius: 24px !important;
+}
+
+.ai-message-card::before,
+.ai-message-card::after {
+  content: none !important;
+  display: none !important;
+}
+
+.ai-markdown {
+  color: #111827 !important;
+  font-size: 16px !important;
+  line-height: 2 !important;
+}
+
+.ai-md-title {
+  border-bottom: 1px solid #edf0f5 !important;
+  padding-bottom: 8px !important;
+  margin-top: 0 !important;
+}
+
+.ai-md-section::before {
+  display: none !important;
+}
+
+.ai-md-th {
+  background: #f5f7fb !important;
+}
+
+.ai-md-table-wrap {
+  border-color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+.assistant-visual-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 0.35rem 0.75rem;
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 750;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.035);
+}
+
+.assistant-visual-toolbar {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.035);
+}
+
+[data-app-path="/assistant"] > section,
+[data-app-path="/assistant"] section[class*="min-h"] {
+  background: transparent !important;
+}
+
+[data-app-path="/assistant"] .ui-card {
+  border-color: #e5e7eb !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045) !important;
+}
+
+[data-app-path="/assistant"] select,
+[data-app-path="/assistant"] textarea,
+[data-app-path="/assistant"] input[type="text"] {
+  border-color: #d8dce5 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+[data-app-path="/assistant"] textarea:focus,
+[data-app-path="/assistant"] input[type="text"]:focus,
+[data-app-path="/assistant"] select:focus {
+  border-color: #9ca3af !important;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.055) !important;
+  outline: none !important;
+}
+
+[data-app-path="/assistant"] button:not([disabled]):not([aria-label="بستن منو"]):hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .ai-message-card {
+    padding: 16px 18px !important;
+    border-radius: 20px !important;
+  }
+
+  .ai-markdown {
+    font-size: 15px !important;
+    line-height: 1.95 !important;
+  }
+}
