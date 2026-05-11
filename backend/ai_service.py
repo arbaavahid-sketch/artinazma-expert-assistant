@@ -716,11 +716,14 @@ def ask_expert_assistant(
     ]
 
     for item in history[-6:]:
-        if item.get("role") in ["user", "assistant"] and item.get("content"):
+        role = item.get("role")
+        content = item.get("content")
+
+        if role in ["user", "assistant"] and content:
             input_messages.append(
                 {
-                    "role": item["role"],
-                    "content": item["content"],
+                    "role": role,
+                    "content": content,
                 }
             )
 
@@ -731,23 +734,20 @@ def ask_expert_assistant(
         }
     )
 
+    kwargs = {
+        "model": MODEL,
+        "input": input_messages,
+        "temperature": OPENAI_TEMPERATURE,
+    }
+
     if allow_web_search:
-        response = client.responses.create(
-            model=MODEL,
-            input=input_messages,
-            tools=[
-                {
-                    "type": "web_search_preview",
-                }
-            ],
-            temperature=OPENAI_TEMPERATURE,
-        )
-    else:
-        response = client.responses.create(
-            model=MODEL,
-            input=input_messages,
-            temperature=OPENAI_TEMPERATURE,
-        )
+        kwargs["tools"] = [
+            {
+                "type": "web_search_preview",
+            }
+        ]
+
+    response = client.responses.create(**kwargs)
 
     return response.output_text.strip()
 
