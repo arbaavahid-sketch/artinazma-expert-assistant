@@ -1,55 +1,53 @@
-/* Balanced ChatGPT-like visual treatment for the assistant experience.
-   The chat page should stay minimal, but not feel flat or empty. */
+/* ChatGPT-like assistant page: quiet canvas, focused composer.
+   The main visual emphasis is the message box, not the whole chat background. */
 
 .assistant-visual-shell,
 .chat-shell,
 .assistant-shell,
 [data-app-path="/assistant"] {
-  background:
-    linear-gradient(180deg, #fbfbfc 0%, #f6f7f9 100%) !important;
+  background: #ffffff !important;
 }
 
 .assistant-visual-header,
 .chat-header,
 .assistant-header {
-  border-bottom: 1px solid #e7e9ee !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03) !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: none !important;
 }
 
 .assistant-visual-composer,
 .chat-composer,
 .assistant-composer {
-  border: 1px solid #d8dce5 !important;
-  border-radius: 28px !important;
+  border: 1px solid #d7d7dc !important;
+  border-radius: 30px !important;
   background: #ffffff !important;
   box-shadow:
-    0 18px 44px rgba(15, 23, 42, 0.08),
-    0 2px 8px rgba(15, 23, 42, 0.04) !important;
+    0 18px 44px rgba(15, 23, 42, 0.10),
+    0 2px 8px rgba(15, 23, 42, 0.05) !important;
 }
 
 .assistant-visual-empty,
 .chat-empty-card,
 .assistant-empty-card {
-  border: 1px solid #eef0f4 !important;
-  border-radius: 28px !important;
-  background: rgba(255, 255, 255, 0.72) !important;
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045) !important;
-  backdrop-filter: blur(10px);
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
 .assistant-visual-quick,
 .chat-quick-card,
 .assistant-quick-card {
-  border: 1px solid #e5e7eb !important;
-  border-radius: 18px !important;
+  border: 1px solid #ededf0 !important;
+  border-radius: 16px !important;
   background: #ffffff !important;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.035) !important;
+  box-shadow: none !important;
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
-    box-shadow 0.15s ease,
     transform 0.15s ease;
 }
 
@@ -57,33 +55,33 @@
 .chat-quick-card:hover,
 .assistant-quick-card:hover {
   transform: translateY(-1px);
-  border-color: #cfd6e3 !important;
-  background: #fafafa !important;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055) !important;
+  border-color: #d7d7dc !important;
+  background: #f7f7f8 !important;
+  box-shadow: none !important;
 }
 
 .assistant-visual-user,
 .chat-bubble-user,
 .assistant-bubble-user {
-  background: #eef2ff !important;
+  background: #f4f4f5 !important;
   color: #111827 !important;
   box-shadow: none !important;
-  border: 1px solid #dbe3ff !important;
+  border: 1px solid #eeeeee !important;
 }
 
 .assistant-visual-ai,
 .chat-bubble-ai,
 .assistant-bubble-ai,
 .ai-message-card {
-  border: 1px solid #edf0f5 !important;
-  background: rgba(255, 255, 255, 0.78) !important;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.035) !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .ai-message-card {
-  max-width: 860px !important;
-  padding: 20px 24px !important;
-  border-radius: 24px !important;
+  max-width: 840px !important;
+  padding: 12px 4px !important;
+  border-radius: 0 !important;
 }
 
 .ai-message-card::before,
@@ -99,8 +97,8 @@
 }
 
 .ai-md-title {
-  border-bottom: 1px solid #edf0f5 !important;
-  padding-bottom: 8px !important;
+  border-bottom: 0 !important;
+  padding-bottom: 0 !important;
   margin-top: 0 !important;
 }
 
@@ -109,11 +107,11 @@
 }
 
 .ai-md-th {
-  background: #f5f7fb !important;
+  background: #f7f7f8 !important;
 }
 
 .ai-md-table-wrap {
-  border-color: #e5e7eb !important;
+  border-color: #ededf0 !important;
   box-shadow: none !important;
 }
 
@@ -122,36 +120,36 @@
   align-items: center;
   gap: 0.4rem;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #ededf0;
   background: #ffffff;
   padding: 0.35rem 0.75rem;
   color: #374151;
   font-size: 0.78rem;
   font-weight: 750;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.035);
+  box-shadow: none;
 }
 
 .assistant-visual-toolbar {
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.035);
+  border: 1px solid #ededf0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: none;
 }
 
 [data-app-path="/assistant"] > section,
 [data-app-path="/assistant"] section[class*="min-h"] {
-  background: transparent !important;
+  background: #ffffff !important;
 }
 
 [data-app-path="/assistant"] .ui-card {
-  border-color: #e5e7eb !important;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045) !important;
+  border-color: #ededf0 !important;
+  box-shadow: none !important;
 }
 
 [data-app-path="/assistant"] select,
 [data-app-path="/assistant"] textarea,
 [data-app-path="/assistant"] input[type="text"] {
-  border-color: #d8dce5 !important;
+  border-color: #d7d7dc !important;
   background: #ffffff !important;
   box-shadow: none !important;
 }
@@ -170,8 +168,7 @@
 
 @media (max-width: 768px) {
   .ai-message-card {
-    padding: 16px 18px !important;
-    border-radius: 20px !important;
+    padding: 10px 0 !important;
   }
 
   .ai-markdown {
