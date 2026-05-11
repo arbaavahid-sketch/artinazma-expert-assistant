@@ -436,35 +436,3 @@ small,
 .ai-md-table tr:last-child .ai-md-td {
   border-bottom: none;
 }
-
-/* Page-scoped fix: remove unexpected hairline under form fields on customer request page */
-.customer-request-page .ui-input,
-.customer-request-page .ui-textarea,
-.customer-request-page .ui-select {
-  /* ensure no accidental thin border or pseudo-element shows as a hairline */
-  border-bottom: 1px solid #cbd5e1;
-}
-
-.customer-request-page .ui-input::after,
-.customer-request-page .ui-input::before,
-.customer-request-page .ui-textarea::after,
-.customer-request-page .ui-textarea::before {
-  content: none !important;
-}
-
-/* Reduce subpixel hairline / seam artifacts that sometimes appear between adjacent inputs
-   (especially on Windows / certain browsers). Scoped to customer-request page only. */
-.customer-request-page .ui-input,
-.customer-request-page .ui-textarea,
-.customer-request-page .ui-select {
-  background-clip: padding-box; /* keep border separate from background */
-  -webkit-background-clip: padding-box;
-  transform: translateZ(0); /* promote to its own layer to avoid subpixel seam */
-  backface-visibility: hidden;
-  box-shadow: none; /* avoid overlapping shadow seam */
-}
-
-.customer-request-page .grid > div {
-  /* ensure each grid cell has consistent background to avoid visible seams */
-  background-clip: padding-box;
-}
