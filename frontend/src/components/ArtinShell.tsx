@@ -506,7 +506,10 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           </div>
         </aside>
 
-        <section className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <section
+          data-app-path={pathname}
+          className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+        >
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="ui-btn ui-btn-ghost fixed right-4 top-4 z-20 border-slate-300 shadow-sm md:hidden"
