@@ -11,6 +11,7 @@ import {
   FileText,
   FlaskConical,
   Loader2,
+  ShieldCheck,
   UploadCloud,
 } from "lucide-react";
 
@@ -28,6 +29,12 @@ function getTestTypeLabel(value: string) {
     testTypes.find((item) => item.value === value)?.label ||
     "گزارش عمومی آزمایشگاهی"
   );
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function AnalyzePage() {
@@ -82,18 +89,18 @@ export default function AnalyzePage() {
   }
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-emerald-50 via-white to-slate-50 p-8">
+        <div className="brand-panel hero-grid-bg mb-6 overflow-hidden rounded-[34px]">
+          <div className="bg-gradient-to-l from-emerald-50/80 via-white/80 to-blue-50/50 p-6 md:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+                <div className="brand-kicker mb-4 border-emerald-200 bg-emerald-50 text-emerald-700">
                   <FlaskConical size={17} />
                   Artin Test Analyzer
                 </div>
 
-                <h1 className="text-3xl font-black text-slate-900">
+                <h1 className="text-3xl font-black leading-[1.55] text-slate-950 md:text-4xl">
                   تحلیل تخصصی فایل تست با آرتین
                 </h1>
 
@@ -104,28 +111,38 @@ export default function AnalyzePage() {
                 </p>
               </div>
 
-              <div className="rounded-[28px] bg-white p-5 shadow-sm">
-                <div className="text-sm font-bold text-slate-500">
-                  فرمت‌های قابل تحلیل
+              <div className="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
+                <div className="rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-sm">
+                  <div className="text-sm font-bold text-slate-500">
+                    فرمت‌های قابل تحلیل
+                  </div>
+                  <div className="mt-2 font-black text-slate-950">
+                    PDF، Excel، CSV
+                  </div>
                 </div>
-                <div className="mt-2 font-black text-slate-900">
-                  PDF، Excel، CSV
+                <div className="rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-sm">
+                  <div className="text-sm font-bold text-slate-500">
+                    خروجی پیشنهادی
+                  </div>
+                  <div className="mt-2 font-black text-slate-950">
+                    تحلیل فنی و اقدام بعدی
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
+        <div className="grid gap-6 xl:grid-cols-[430px_1fr]">
           <aside className="space-y-6">
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="brand-card rounded-[30px] p-6">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                   <UploadCloud size={25} />
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-slate-950">
                     اطلاعات تحلیل
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
@@ -141,7 +158,7 @@ export default function AnalyzePage() {
               <select
                 value={testType}
                 onChange={(e) => setTestType(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-emerald-600"
+                className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
               >
                 {testTypes.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -157,7 +174,7 @@ export default function AnalyzePage() {
               <textarea
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
-                className="h-36 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none transition focus:border-emerald-600"
+                className="ui-textarea h-36 resize-none rounded-2xl p-4 leading-8 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
                 placeholder="مثلاً: نمونه LPG است، هدف بررسی ترکیبات گوگردی است، یا تست کاتالیست در دمای 350 درجه انجام شده..."
               />
 
@@ -165,29 +182,47 @@ export default function AnalyzePage() {
                 فایل تست
               </label>
 
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv,.pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-emerald-600"
-              />
+              <label className="group block cursor-pointer rounded-[26px] border-2 border-dashed border-slate-300 bg-slate-50/80 p-6 text-center transition hover:border-emerald-300 hover:bg-emerald-50/60">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv,.pdf"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm transition group-hover:scale-105">
+                  <UploadCloud size={30} />
+                </div>
+
+                <div className="font-black text-slate-950">
+                  فایل را انتخاب کنید یا اینجا رها کنید
+                </div>
+                <div className="mt-2 text-sm leading-7 text-slate-500">
+                  PDF، Excel یا CSV برای تحلیل تخصصی آرتین
+                </div>
+              </label>
 
               {file && (
-                <div className="mt-4 rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
+                <div className="mt-4 rounded-[24px] border border-emerald-100 bg-emerald-50 p-4">
                   <div className="flex items-start gap-3">
                     <FileSpreadsheet
-                      size={22}
+                      size={24}
                       className="mt-1 shrink-0 text-emerald-700"
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm font-bold text-emerald-700">
-                        فایل انتخاب‌شده
+                        فایل آماده تحلیل
                       </div>
-                      <div className="mt-1 break-all text-sm font-black text-slate-900">
+                      <div className="mt-1 break-all text-sm font-black text-slate-950">
                         {file.name}
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        نوع تحلیل: {getTestTypeLabel(testType)}
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                        <span className="rounded-full bg-white px-3 py-1">
+                          {formatFileSize(file.size)}
+                        </span>
+                        <span className="rounded-full bg-white px-3 py-1">
+                          {getTestTypeLabel(testType)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -197,7 +232,7 @@ export default function AnalyzePage() {
               <button
                 onClick={uploadFile}
                 disabled={loading || !file}
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-4 font-bold text-white transition hover:bg-emerald-800 disabled:opacity-50"
+                className="ui-btn mt-5 w-full gap-2 rounded-2xl bg-gradient-to-l from-emerald-700 to-teal-700 px-5 py-4 text-white shadow-lg shadow-emerald-700/15 transition hover:from-emerald-800 hover:to-teal-800 disabled:opacity-50"
               >
                 {loading ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -208,28 +243,31 @@ export default function AnalyzePage() {
               </button>
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-black text-slate-900">
-                نکات بهتر برای تحلیل دقیق‌تر
-              </h3>
+            <div className="brand-card rounded-[30px] p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                  <ShieldCheck size={21} />
+                </div>
+                <h3 className="text-lg font-black text-slate-950">
+                  نکات بهتر برای تحلیل دقیق‌تر
+                </h3>
+              </div>
 
-              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+              <div className="space-y-3 text-sm leading-7 text-slate-600">
                 <div className="rounded-2xl bg-slate-50 p-3">
                   نوع نمونه، ماتریس و هدف آزمون را در توضیحات بنویسید.
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را
-                  اضافه کنید.
+                  اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را اضافه کنید.
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی
-                  شود.
+                  برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی شود.
                 </div>
               </div>
             </div>
           </aside>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="brand-card rounded-[30px] p-6">
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-700">
@@ -237,7 +275,7 @@ export default function AnalyzePage() {
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-slate-950">
                     نتیجه تحلیل
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
@@ -249,7 +287,7 @@ export default function AnalyzePage() {
               {fileAnalysis && (
                 <button
                   onClick={copyResult}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  className="ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm"
                 >
                   <ClipboardCopy size={16} />
                   کپی نتیجه
@@ -258,13 +296,13 @@ export default function AnalyzePage() {
             </div>
 
             {!fileAnalysis && !loading && (
-              <div className="flex min-h-[520px] items-center justify-center rounded-3xl bg-slate-50 p-8 text-center">
+              <div className="flex min-h-[520px] items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-slate-50/80 p-8 text-center">
                 <div>
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-emerald-700 shadow-sm">
                     <UploadCloud size={32} />
                   </div>
 
-                  <h3 className="text-lg font-black text-slate-900">
+                  <h3 className="text-lg font-black text-slate-950">
                     هنوز تحلیلی انجام نشده است
                   </h3>
 
@@ -277,13 +315,13 @@ export default function AnalyzePage() {
             )}
 
             {loading && (
-              <div className="flex min-h-[520px] items-center justify-center rounded-3xl bg-slate-50 p-8 text-center">
+              <div className="flex min-h-[520px] items-center justify-center rounded-[28px] bg-slate-50 p-8 text-center">
                 <div>
                   <Loader2
                     size={34}
                     className="mx-auto mb-4 animate-spin text-emerald-700"
                   />
-                  <h3 className="text-lg font-black text-slate-900">
+                  <h3 className="text-lg font-black text-slate-950">
                     آرتین در حال تحلیل فایل است...
                   </h3>
                   <p className="mt-3 leading-8 text-slate-500">
@@ -295,13 +333,13 @@ export default function AnalyzePage() {
 
             {fileAnalysis && (
               <div
-                className={`min-h-[520px] whitespace-pre-wrap rounded-3xl p-6 leading-8 ${
+                className={`min-h-[520px] whitespace-pre-wrap rounded-[28px] border p-6 leading-9 shadow-inner ${
                   resultType === "error"
-                    ? "bg-red-50 text-red-700"
-                    : "bg-slate-50 text-slate-800"
+                    ? "border-red-100 bg-red-50 text-red-700"
+                    : "border-slate-200 bg-slate-50/90 text-slate-800"
                 }`}
               >
-                <div className="mb-4 flex items-center gap-2 text-sm font-bold">
+                <div className="mb-4 flex items-center gap-2 text-sm font-black">
                   {resultType === "error" ? (
                     <>
                       <AlertCircle size={18} />
@@ -321,7 +359,7 @@ export default function AnalyzePage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-blue-100 bg-blue-50 p-5 text-sm leading-8 text-blue-900">
+        <div className="mt-6 rounded-[26px] border border-blue-100 bg-blue-50/90 p-5 text-sm leading-8 text-blue-900 shadow-sm">
           این فایل فقط برای تحلیل موقت استفاده می‌شود و به بانک دانش داخلی آرتین
           آزما اضافه نمی‌شود، مگر اینکه کارشناس بعداً آن را تایید و ثبت کند.
         </div>
