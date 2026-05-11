@@ -539,7 +539,7 @@ def chat(request: ChatRequest):
 
     allow_web_search = True
     
-    if request.response_mode == "brief" or is_transform_followup:
+    if request.response_mode == "brief":
         allow_web_search = False
 
     if question_intent in verified_answer_intents:
@@ -547,6 +547,14 @@ def chat(request: ChatRequest):
 
     if specific_model_question or has_astm_code or not related_docs:
         allow_web_search = True
+
+    # درخواست‌های بازنویسی مثل «تبدیل به جدول»، «خلاصه‌تر کن» و «فنی‌تر توضیح بده»
+    # باید فقط روی پاسخ قبلی کار کنند و نباید دوباره web search بزنند.
+    if is_transform_followup:
+        allow_web_search = False
+        related_docs = []
+        sources = []
+        search_mode = "followup_transform"
 
     if allow_web_search:
         search_mode = f"{search_mode}+openai_web"
