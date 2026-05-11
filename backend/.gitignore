@@ -1,0 +1,7 @@
+storage/
+uploads/
+__pycache__/
+*.pyc
+*.pyo
+.env
+google_drive_files/
