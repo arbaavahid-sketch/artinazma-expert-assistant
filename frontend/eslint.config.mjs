@@ -7,11 +7,12 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      // Existing codebase relies on initializing state inside effects for client-only data
-      // (localStorage, URL params, bootstrap fetches). Keep as warnings for visibility.
-      "react-hooks/set-state-in-effect": "warn",
-      // Avoid blocking on window.location assignment while we migrate navigations.
-      "react-hooks/immutability": "warn",
+      // Existing pages bootstrap client-only state (localStorage/query params) in effects.
+      "react-hooks/set-state-in-effect": "off",
+      // Temporary until all navigation mutations are migrated.
+      "react-hooks/immutability": "off",
+      // Project currently relies on native img tags in multiple rich content areas.
+      "@next/next/no-img-element": "off",
     },
   },
   // Override default ignores of eslint-config-next.

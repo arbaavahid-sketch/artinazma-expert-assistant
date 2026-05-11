@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiUrl } from "@/lib/api";
 import {
   ArrowRight,
   BookOpenCheck,
-  CheckCircle2,
   Clock3,
   Copy,
   Database,
@@ -107,7 +106,7 @@ export default function QuestionDetailPage() {
     "success" | "error" | ""
   >("");
 
-  async function loadQuestion() {
+  const loadQuestion = useCallback(async () => {
     setLoading(true);
     setSaveMessage("");
     setAddKnowledgeMessage("");
@@ -132,7 +131,7 @@ export default function QuestionDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [questionId]);
 
   async function saveReview() {
     setSaving(true);
@@ -208,7 +207,7 @@ export default function QuestionDetailPage() {
 
   useEffect(() => {
     loadQuestion();
-  }, [questionId]);
+  }, [loadQuestion]);
 
   if (loading) {
     return (

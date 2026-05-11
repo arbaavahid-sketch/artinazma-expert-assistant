@@ -411,47 +411,6 @@ function ArtinazmaResourceCards({
     </div>
   );
 }
-function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[] }) {
-  if (!devices || devices.length === 0) return null;
-
-  return (
-    <div className="mt-4 grid gap-3 md:grid-cols-2">
-      {devices.map((device) => (
-        <div
-          key={device.id}
-          className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm"
-        >
-          <div className="flex gap-4 p-4">
-            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-100">
-              <img
-                src={device.image}
-                alt={device.title}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            </div>
-
-            <div className="min-w-0">
-              <div className="text-sm font-black text-slate-900">
-                {device.title}
-              </div>
-
-              <div className="mt-2 text-xs leading-6 text-slate-500">
-                {device.subtitle}
-              </div>
-
-              <div className="mt-3 rounded-full bg-blue-50 px-3 py-1 text-center text-xs font-bold text-blue-700">
-                دستگاه مرتبط پیشنهادی
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 export default function AssistantPage() {
   const router = useRouter();
   const [sessionIdParam, setSessionIdParam] = useState<string | null>(null);
@@ -989,19 +948,6 @@ ${cleanAnswer}`,
     }
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setPendingFile(file);
-    setShowFileOptions(true);
-    setChatTestType("general");
-    setChatUserNote("");
-
-    e.target.value = "";
-  }
-
   async function uploadAndAnalyzeImage(file: File) {
     setShowTools(false);
 
@@ -1099,18 +1045,6 @@ ${cleanAnswer}`,
     }
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    setPendingImage(file);
-    setShowImageOptions(true);
-    setChatImageType("general");
-    setChatImageNote("");
-
-    e.target.value = "";
-  }
   function handleUploadChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
