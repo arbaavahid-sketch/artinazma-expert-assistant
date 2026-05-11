@@ -177,7 +177,65 @@ small, .text-caption { font-size: var(--font-size-caption); line-height: 1.7; }
 
 textarea::placeholder, input::placeholder { color: #94a3b8; }
 
+/* Scoped assistant page polish */
+[data-app-path="/assistant"] {
+  background:
+    radial-gradient(circle at 80% 8%, rgba(29, 78, 216, 0.12), transparent 28rem),
+    radial-gradient(circle at 18% 90%, rgba(8, 145, 178, 0.08), transparent 24rem),
+    #f6f8fb;
+}
+
+[data-app-path="/assistant"] > section,
+[data-app-path="/assistant"] section[class*="min-h"] {
+  background: transparent !important;
+}
+
+[data-app-path="/assistant"] select,
+[data-app-path="/assistant"] textarea,
+[data-app-path="/assistant"] input[type="text"] {
+  border-color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+}
+
+[data-app-path="/assistant"] textarea:focus,
+[data-app-path="/assistant"] input[type="text"]:focus,
+[data-app-path="/assistant"] select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13), 0 12px 28px rgba(15, 23, 42, 0.06);
+  outline: none;
+}
+
+[data-app-path="/assistant"] button:not([aria-label="بستن منو"]):not([aria-label="تغییر نام گفتگو"]):not([aria-label="حذف گفتگو"]) {
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+[data-app-path="/assistant"] button:not([disabled]):not([aria-label="بستن منو"]):hover {
+  transform: translateY(-1px);
+}
+
+[data-app-path="/assistant"] .ui-card {
+  border-color: rgba(226, 232, 240, 0.9);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+}
+
+[data-app-path="/assistant"] .ai-message-card {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-app-path="/assistant"] .ai-message-card::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #1d4ed8, #0891b2);
+}
+
 @media (max-width: 768px) {
   .ai-message-card { padding: 18px; border-radius: 22px; }
   .ai-markdown { font-size: 15px; line-height: 2; }
+  [data-app-path="/assistant"] { padding-top: 0; }
 }
