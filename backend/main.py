@@ -2,12 +2,8 @@ import os
 import re
 from fastapi.staticfiles import StaticFiles
 import shutil
-from comparison_table_service import ensure_comparison_table
-from standard_service import get_context_for_app
-from answer_formatter_service import format_answer_for_ui
-from answer_quality_service import build_answer_quality_context
-from intent_service import detect_question_intent
 from artinazma_index_service import rebuild_artinazma_index, load_index
+from intent_service import detect_question_intent
 from site_resource_service import find_artinazma_resources
 from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, UploadFile, File, Form
