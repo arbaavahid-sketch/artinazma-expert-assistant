@@ -421,8 +421,8 @@ def chat(request: ChatRequest):
     search_mode = "unknown"
 
     if has_astm_code:
-         related_docs = []
-         search_mode = "gpt_astm_direct"
+        related_docs = []
+        search_mode = "gpt_astm_direct"
 
     elif specific_model_question:
         exact_local_match = context_has_exact_model_match(request.message, local_docs)
@@ -549,8 +549,6 @@ def chat(request: ChatRequest):
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
 
     history = [
-
-    
         {"role": item.role, "content": item.content} for item in (request.history or [])
     ]
     response_mode = request.response_mode or "auto"
@@ -563,76 +561,76 @@ def chat(request: ChatRequest):
  برای مقایسه‌ها، حتماً جدول مقایسه و تحلیل بعد از جدول بده.
  پاسخ فارسی باشد.
   """
-    #intent_context = f"""
-    #تشخیص نوع درخواست کاربر:
-    #{question_intent_label}
+    # intent_context = f"""
+    # تشخیص نوع درخواست کاربر:
+    # {question_intent_label}
 
-    #دستور اختصاصی برای نوع این درخواست:
-    #{intent_instruction}
-    #"""
+    # دستور اختصاصی برای نوع این درخواست:
+    # {intent_instruction}
+    # """
 
-    #context = f"{context}\n\n{intent_context}".strip()
-   
-    #standard_context = ""
+    # context = f"{context}\n\n{intent_context}".strip()
 
-    #try:
-        #standard_context = get_context_for_app(request.message)
-    #except Exception as e:
-       # print("Standard engine failed:", e)
-        #standard_context = ""
+    # standard_context = ""
 
-    #if standard_context:
-       # context = f"{context}\n\n{standard_context}".strip()
-    
-    #if allow_company_reference:
-        #company_visibility_context = """
-   # قانون نمایش اطلاعات شرکت:
-   # کاربر در این پیام درباره آرتین آزما، سایت، تماس، خرید، استعلام، نمایندگی یا محصولات شرکت پرسیده است.
-    #در صورت نیاز، اشاره به اطلاعات شرکت، لینک سایت یا مسیر تماس مجاز است.
-    #"""
-    #else:
-      #  company_visibility_context = """
-   # قانون نمایش اطلاعات شرکت:
-   # کاربر در این پیام درباره آرتین آزما، سایت، تماس، خرید، استعلام، نمایندگی یا محصولات شرکت نپرسیده است.
-#
-    #بنابراین در پاسخ نهایی:
-    #- نام آرتین آزما مهر را نیاور.
-   # - لینک سایت نده.
-   # - ایمیل، شماره تماس، واتساپ یا آدرس نده.
-   # - پیشنهاد تماس با شرکت نده.
-   # - عبارت‌هایی مثل «کارشناسان ما»، «شرکت ما»، «سایت رسمی ما» ننویس.
-   # - پاسخ فقط فنی، تخصصی، بی‌طرف و کاربردی باشد.
-   # """
-#
-    #response_mode = request.response_mode or "auto"
+    # try:
+    # standard_context = get_context_for_app(request.message)
+    # except Exception as e:
+    # print("Standard engine failed:", e)
+    # standard_context = ""
 
-   # response_mode_instructions = {
-       # "auto": """
-    #نوع پاسخ انتخابی کاربر: هوشمند.
-    #بر اساس نوع سؤال، بهترین ساختار پاسخ را انتخاب کن.
-    #""",
-      #  "brief": """
-    #نوع پاسخ انتخابی کاربر: خلاصه و کاربردی.
-    #پاسخ باید کوتاه، مستقیم و تصمیم‌ساز باشد.
-    #از توضیح طولانی، مقدمه‌چینی و بخش‌بندی زیاد خودداری کن.
-    #حداکثر ۳ بخش اصلی بنویس.
-    #""",
-      #  "technical": """
-    #نوع پاسخ انتخابی کاربر: فنی کامل.
-    #پاسخ باید تخصصی‌تر، دقیق‌تر و کامل‌تر باشد.
-    #نکات فنی، محدودیت‌ها، خطاهای رایج، آماده‌سازی نمونه، QC و معیار انتخاب را در صورت ارتباط توضیح بده.
-    #عدد، استاندارد یا مشخصه فنی نساز مگر داده قطعی وجود داشته باشد.
-   # """,
+    # if standard_context:
+    # context = f"{context}\n\n{standard_context}".strip()
+
+    # if allow_company_reference:
+    # company_visibility_context = """
+    # قانون نمایش اطلاعات شرکت:
+    # کاربر در این پیام درباره آرتین آزما، سایت، تماس، خرید، استعلام، نمایندگی یا محصولات شرکت پرسیده است.
+    # در صورت نیاز، اشاره به اطلاعات شرکت، لینک سایت یا مسیر تماس مجاز است.
+    # """
+    # else:
+    #  company_visibility_context = """
+    # قانون نمایش اطلاعات شرکت:
+    # کاربر در این پیام درباره آرتین آزما، سایت، تماس، خرید، استعلام، نمایندگی یا محصولات شرکت نپرسیده است.
+    #
+    # بنابراین در پاسخ نهایی:
+    # - نام آرتین آزما مهر را نیاور.
+    # - لینک سایت نده.
+    # - ایمیل، شماره تماس، واتساپ یا آدرس نده.
+    # - پیشنهاد تماس با شرکت نده.
+    # - عبارت‌هایی مثل «کارشناسان ما»، «شرکت ما»، «سایت رسمی ما» ننویس.
+    # - پاسخ فقط فنی، تخصصی، بی‌طرف و کاربردی باشد.
+    # """
+    #
+    # response_mode = request.response_mode or "auto"
+
+    # response_mode_instructions = {
+    # "auto": """
+    # نوع پاسخ انتخابی کاربر: هوشمند.
+    # بر اساس نوع سؤال، بهترین ساختار پاسخ را انتخاب کن.
+    # """,
+    #  "brief": """
+    # نوع پاسخ انتخابی کاربر: خلاصه و کاربردی.
+    # پاسخ باید کوتاه، مستقیم و تصمیم‌ساز باشد.
+    # از توضیح طولانی، مقدمه‌چینی و بخش‌بندی زیاد خودداری کن.
+    # حداکثر ۳ بخش اصلی بنویس.
+    # """,
+    #  "technical": """
+    # نوع پاسخ انتخابی کاربر: فنی کامل.
+    # پاسخ باید تخصصی‌تر، دقیق‌تر و کامل‌تر باشد.
+    # نکات فنی، محدودیت‌ها، خطاهای رایج، آماده‌سازی نمونه، QC و معیار انتخاب را در صورت ارتباط توضیح بده.
+    # عدد، استاندارد یا مشخصه فنی نساز مگر داده قطعی وجود داشته باشد.
+    # """,
     #    "checklist": """
-    #نوع پاسخ انتخابی کاربر: چک‌لیست عملیاتی.
-   # پاسخ را به صورت مرحله‌ای و قابل اجرا بنویس.
-   # از بولت و شماره‌گذاری استفاده کن.
-    #تمرکز روی اقدامات عملی، بررسی‌ها، اطلاعات لازم و خطاهای قابل کنترل باشد.
-   # """,
-   # }
- #
- #   context = f"{context}\n\n{response_mode_instructions.get(response_mode, response_mode_instructions['auto'])}".strip()
- #   context = f"{context}\n\n{company_visibility_context}".strip()
+    # نوع پاسخ انتخابی کاربر: چک‌لیست عملیاتی.
+    # پاسخ را به صورت مرحله‌ای و قابل اجرا بنویس.
+    # از بولت و شماره‌گذاری استفاده کن.
+    # تمرکز روی اقدامات عملی، بررسی‌ها، اطلاعات لازم و خطاهای قابل کنترل باشد.
+    # """,
+    # }
+    #
+    #   context = f"{context}\n\n{response_mode_instructions.get(response_mode, response_mode_instructions['auto'])}".strip()
+    #   context = f"{context}\n\n{company_visibility_context}".strip()
     try:
         answer = ask_expert_assistant(
             message=request.message,
@@ -642,7 +640,7 @@ def chat(request: ChatRequest):
             allow_web_search=allow_web_search,
         )
 
-       # answer = format_answer_for_ui(answer)
+        # answer = format_answer_for_ui(answer)
 
         answer_mode = "ai"
 
@@ -650,11 +648,11 @@ def chat(request: ChatRequest):
         print("AI answer failed, using local answer:", e)
 
         answer = build_local_answer(request.message, related_docs)
-        #answer = format_answer_for_ui(answer)
+        # answer = format_answer_for_ui(answer)
 
         answer_mode = "local"
-    if not allow_company_reference:
-        answer = remove_company_mentions_if_not_allowed(answer)
+    # if not allow_company_reference:
+    #  answer = remove_company_mentions_if_not_allowed(answer)
     sources = [
         {
             "title": doc.get("title", ""),
