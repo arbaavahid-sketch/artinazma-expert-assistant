@@ -247,6 +247,28 @@ def is_artinazma_related_question(message: str) -> bool:
 
     return any(keyword in text for keyword in keywords)
 
+def is_followup_transform_request(message: str) -> bool:
+    text = (message or "").strip().lower()
+    text = text.replace("ي", "ی").replace("ك", "ک")
+    text = text.replace("‌", " ")
+
+    transform_keywords = [
+        "خلاصه تر کن",
+        "خلاصه‌تر کن",
+        "کوتاه تر کن",
+        "کوتاه‌تر کن",
+        "فنی تر توضیح بده",
+        "فنی‌تر توضیح بده",
+        "تبدیل به جدول",
+        "به جدول تبدیل کن",
+        "جدول کن",
+        "به صورت جدول",
+        "جدولی کن",
+        "مرتب تر کن",
+        "مرتب‌تر کن",
+    ]
+
+    return any(keyword in text for keyword in transform_keywords)
 
 def remove_company_mentions_if_not_allowed(answer: str) -> str:
     if not answer:
@@ -403,6 +425,7 @@ def chat(request: ChatRequest):
 
     specific_model_question = is_specific_product_or_model_question(request.message)
     allow_company_reference = is_artinazma_related_question(request.message)
+    is_transform_followup = is_followup_transform_request(request.message)
     intent_data = detect_question_intent(
         message=request.message, domain=request.domain or "auto"
     )
@@ -516,7 +539,7 @@ def chat(request: ChatRequest):
 
     allow_web_search = True
     
-    if request.response_mode == "brief":
+    if request.response_mode == "brief" or is_transform_followup:
         allow_web_search = False
 
     if question_intent in verified_answer_intents:
@@ -577,6 +600,27 @@ def chat(request: ChatRequest):
 
 پاسخ فارسی باشد.
 """
+    if is_transform_followup:
+        context = f"""
+    {context}
+
+قانون بسیار مهم برای درخواست‌های بازنویسی:
+پیام فعلی کاربر یک درخواست بازنویسی، خلاصه‌سازی، فنی‌تر کردن یا تبدیل پاسخ قبلی است.
+- از history و پاسخ قبلی استفاده کن.
+- web search انجام نده.
+- اطلاعات جدید، منبع جدید، لینک، نام سایت یا دامنه اضافه نکن.
+- فقط همان پاسخ قبلی را طبق درخواست کاربر بازنویسی کن.
+
+اگر کاربر خواست «تبدیل به جدول»:
+- فقط یک جدول Markdown معتبر تولید کن.
+- از tab استفاده نکن.
+- از <br> داخل جدول استفاده نکن.
+- داخل سلول جدول خط جدید نگذار.
+- نام سایت، لینک، دامنه یا منبع داخل جدول ننویس.
+- هر ردیف باید دقیقاً تعداد ستون‌های برابر داشته باشد.
+- متن هر سلول کوتاه، تمیز و قابل نمایش در UI باشد.
+""".strip()
+
     try:
         answer = ask_expert_assistant(
             message=request.message,
