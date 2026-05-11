@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { Clock3, FileQuestion, RefreshCw, Search, ShieldCheck } from "lucide-react";
@@ -114,7 +113,7 @@ export default function QuestionsPage() {
           ) : filteredQuestions.length > 0 ? (
             <div className="space-y-3">
               {filteredQuestions.map((item) => (
-                <Link key={item.id} href={`/admin/questions/${item.id}`} className="group block rounded-[28px] border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm">
+                <div key={item.id} className="group block rounded-[28px] border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -122,15 +121,15 @@ export default function QuestionsPage() {
                         <span className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(item.expert_status)}`}>{getStatusLabel(item.expert_status)}</span>
                         <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">{getDomainLabel(item.detected_domain)}</span>
                       </div>
-                      <div className="line-clamp-2 text-base font-bold leading-8 text-slate-900 group-hover:text-purple-700">{item.question}</div>
+                      <div className="line-clamp-2 text-base font-bold leading-8 text-slate-900">{item.question}</div>
                       <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
                         <span className="inline-flex items-center gap-1"><Clock3 size={14} />{formatDate(item.created_at)}</span>
                         {item.updated_at && <span className="inline-flex items-center gap-1"><ShieldCheck size={14} />بروزرسانی: {formatDate(item.updated_at)}</span>}
                       </div>
                     </div>
-                    <div className="shrink-0 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-purple-700">مشاهده و بررسی</div>
+                    <span className="shrink-0 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-purple-700">#{item.id}</span>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           ) : (
