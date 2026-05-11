@@ -382,7 +382,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                               {session.title || "گفتگوی جدید"}
                             </Link>
 
-                            <div className="flex shrink-0 items-center gap-1 pl-2 opacity-0 transition group-hover:opacity-100">
+                            <div className="hidden shrink-0 items-center gap-1 pl-2 group-hover:flex">
                               <button
                                 onClick={() => {
                                   setRenamingSessionId(session.id);
@@ -390,20 +390,20 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                     session.title || "گفتگوی جدید",
                                   );
                                 }}
-                                className="ui-btn ui-btn-ghost flex h-8 w-8 items-center justify-center p-0 text-slate-400 hover:text-blue-700"
-                                title="تغییر نام"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"
+                                aria-label="تغییر نام گفتگو"
                               >
-                                <Pencil size={15} strokeWidth={2} />
+                                <Pencil size={14} strokeWidth={2} />
                               </button>
 
                               <button
                                 onClick={() =>
                                   deleteCustomerChatSession(session.id)
                                 }
-                                className="ui-btn ui-btn-ghost flex h-8 w-8 items-center justify-center p-0 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                title="حذف گفتگو"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                                aria-label="حذف گفتگو"
                               >
-                                <Trash2 size={15} strokeWidth={2} />
+                                <Trash2 size={14} strokeWidth={2} />
                               </button>
                             </div>
                           </div>
