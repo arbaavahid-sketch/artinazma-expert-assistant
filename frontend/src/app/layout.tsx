@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
+import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import ArtinShell from "@/components/ArtinShell";
+
+const vazirmatn = Vazirmatn({
+  subsets: ["arabic", "latin"],
+  variable: "--font-persian",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "آرتین آزما | دستیار هوشمند تخصصی",
@@ -15,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl">
-      <body>
+      <body className={vazirmatn.variable}>
         <ArtinShell>{children}</ArtinShell>
       </body>
     </html>

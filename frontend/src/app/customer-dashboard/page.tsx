@@ -223,7 +223,7 @@ export default function CustomerDashboardPage() {
   if (!customer) {
     return (
       <section className="flex min-h-screen items-center justify-center bg-[#f7f7f8] px-6">
-        <div className="rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="ui-card rounded-[32px] p-8 text-center shadow-sm">
           <div className="text-lg font-black text-slate-900">
             در حال بررسی حساب کاربری...
           </div>
@@ -238,7 +238,7 @@ export default function CustomerDashboardPage() {
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
+        <div className="ui-card mb-6 overflow-hidden rounded-[36px] shadow-sm">
           <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-4">
@@ -265,7 +265,7 @@ export default function CustomerDashboardPage() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/assistant"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
+                  className="ui-btn ui-btn-primary inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm"
                 >
                   <Plus size={18} />
                   گفتگوی جدید
@@ -273,7 +273,7 @@ export default function CustomerDashboardPage() {
 
                 <button
                   onClick={logout}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
+                  className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-5 py-3 text-sm"
                 >
                   <LogOut size={18} />
                   خروج
@@ -285,7 +285,7 @@ export default function CustomerDashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
           <aside className="space-y-6">
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h2 className="text-xl font-black text-slate-900">
                   اطلاعات حساب
@@ -294,7 +294,7 @@ export default function CustomerDashboardPage() {
                 {!editingProfile ? (
                   <button
                     onClick={() => setEditingProfile(true)}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-white"
+                    className="ui-btn ui-btn-ghost inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs"
                   >
                     <Pencil size={15} />
                     ویرایش
@@ -302,7 +302,7 @@ export default function CustomerDashboardPage() {
                 ) : (
                   <button
                     onClick={cancelProfileEdit}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                    className="ui-btn ui-btn-ghost inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs text-slate-600"
                   >
                     <X size={15} />
                     انصراف
@@ -360,7 +360,7 @@ export default function CustomerDashboardPage() {
                     <input
                       value={profileFullName}
                       onChange={(e) => setProfileFullName(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+                      className="ui-input rounded-2xl p-4 text-sm"
                     />
                   </div>
 
@@ -371,7 +371,7 @@ export default function CustomerDashboardPage() {
                     <input
                       value={profileCompany}
                       onChange={(e) => setProfileCompany(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+                      className="ui-input rounded-2xl p-4 text-sm"
                     />
                   </div>
 
@@ -382,14 +382,14 @@ export default function CustomerDashboardPage() {
                     <input
                       value={profilePhone}
                       onChange={(e) => setProfilePhone(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+                      className="ui-input rounded-2xl p-4 text-sm"
                     />
                   </div>
 
                   <button
                     onClick={saveProfile}
                     disabled={savingProfile}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50"
+                    className="ui-btn ui-btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm"
                   >
                     <Save size={17} />
                     {savingProfile ? "در حال ذخیره..." : "ذخیره تغییرات"}
@@ -398,13 +398,13 @@ export default function CustomerDashboardPage() {
               )}
 
               {profileMessage && (
-                <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
+                <div className="ui-alert ui-alert-info mt-4">
                   {profileMessage}
                 </div>
               )}
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-bold text-slate-500">
@@ -427,7 +427,7 @@ export default function CustomerDashboardPage() {
             </div>
           </aside>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="ui-card rounded-[32px] p-6 shadow-sm">
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-xl font-black text-slate-900">
@@ -443,7 +443,7 @@ export default function CustomerDashboardPage() {
                   <button
                     onClick={deleteAllSessions}
                     disabled={clearingAllSessions}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                    className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-center text-sm"
                   >
                     <Trash2 size={16} />
                     {clearingAllSessions ? "در حال حذف..." : "حذف همه گفتگوها"}
@@ -452,20 +452,25 @@ export default function CustomerDashboardPage() {
 
                 <Link
                   href="/assistant"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-white"
+                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-3 text-center text-sm"
                 >
                   شروع گفتگوی تازه
                 </Link>
               </div>
             </div>
             {sessionMessage && (
-              <div className="mb-5 rounded-2xl bg-blue-50 p-4 text-sm leading-7 text-blue-700">
+              <div className="ui-alert ui-alert-info mb-5">
                 {sessionMessage}
               </div>
             )}
             {loading ? (
-              <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
-                در حال دریافت گفتگوها...
+              <div className="rounded-3xl bg-slate-50 p-6">
+                <div className="ui-skeleton h-5 w-44" />
+                <div className="mt-4 space-y-3">
+                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
+                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
+                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
+                </div>
               </div>
             ) : sessions.length > 0 ? (
               <div className="space-y-3">
@@ -500,7 +505,7 @@ export default function CustomerDashboardPage() {
                             deleteOneSession(session.id);
                           }}
                           disabled={deletingSessionId === session.id}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                          className="ui-btn ui-btn-danger inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 p-0 text-red-600"
                           title="حذف گفتگو"
                         >
                           <Trash2 size={16} />
@@ -511,7 +516,7 @@ export default function CustomerDashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-3xl bg-slate-50 p-10 text-center">
+              <div className="ui-empty rounded-3xl p-10">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-blue-700 shadow-sm">
                   <MessageSquareText size={30} strokeWidth={1.8} />
                 </div>
@@ -527,7 +532,7 @@ export default function CustomerDashboardPage() {
 
                 <Link
                   href="/assistant"
-                  className="mt-6 inline-flex rounded-2xl bg-blue-700 px-6 py-3 font-bold text-white"
+                  className="ui-btn ui-btn-primary mt-6 inline-flex rounded-2xl px-6 py-3"
                 >
                   شروع گفتگو با آرتین
                 </Link>

@@ -137,7 +137,7 @@ function getToolIcon(action: ToolAction): LucideIcon {
 }
 function ToolMenu({ onSelect }: { onSelect: (action: ToolAction) => void }) {
   return (
-    <div className="w-[245px] overflow-hidden rounded-[18px] border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-300/40">
+    <div className="ui-card w-[245px] overflow-hidden rounded-[18px] py-1.5 shadow-xl shadow-slate-300/40">
       {tools.map((tool, index) => {
         const Icon = getToolIcon(tool.action);
 
@@ -1134,7 +1134,7 @@ ${cleanAnswer}`,
   if (checkingCustomerLogin) {
     return (
       <section className="flex h-full items-center justify-center bg-white px-6">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="ui-card rounded-[28px] p-8 text-center shadow-sm">
           <div className="text-lg font-bold text-slate-900">
             در حال بررسی ورود مشتری...
           </div>
@@ -1222,7 +1222,7 @@ ${cleanAnswer}`,
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
+              className="ui-select rounded-2xl px-4 py-3 text-sm shadow-sm"
             >
               <option value="auto">تشخیص خودکار</option>
               <option value="catalyst">کاتالیست</option>
@@ -1237,7 +1237,7 @@ ${cleanAnswer}`,
             <select
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:border-blue-500"
+              className="ui-select rounded-2xl px-4 py-3 text-sm shadow-sm"
             >
               <option value="auto">نوع پاسخ: هوشمند</option>
               <option value="brief">خلاصه و کاربردی</option>
@@ -1247,7 +1247,7 @@ ${cleanAnswer}`,
 
             <button
               onClick={clearChat}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="ui-btn ui-btn-ghost rounded-2xl px-4 py-3 text-sm shadow-sm"
             >
               گفتگوی جدید
             </button>
@@ -1257,7 +1257,7 @@ ${cleanAnswer}`,
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loadingSavedSession && (
-          <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-blue-50 p-4 text-center text-sm font-bold text-blue-700">
+          <div className="ui-alert ui-alert-info mx-auto mt-6 max-w-xl text-center text-sm font-bold">
             در حال بارگذاری گفتگوی ذخیره‌شده...
           </div>
         )}
@@ -1280,11 +1280,11 @@ ${cleanAnswer}`,
                   </div>
                 )}
 
-                <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
+                <div className="ui-card rounded-[32px] shadow-xl shadow-slate-200/70">
                   <div className="flex items-center gap-3 px-4 py-3">
                     <button
                       onClick={() => setShowTools((prev) => !prev)}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-2xl text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                      className="ui-btn ui-btn-ghost flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-2xl"
                     >
                       +
                     </button>
@@ -1302,7 +1302,7 @@ ${cleanAnswer}`,
                     <button
                       onClick={() => sendMessage()}
                       disabled={loading || !message.trim()}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xl text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-300"
+                      className="ui-btn ui-btn-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300"
                     >
                       ↑
                     </button>
@@ -1313,14 +1313,14 @@ ${cleanAnswer}`,
               <div className="mt-5 flex flex-wrap justify-center gap-3">
                 <button
                   onClick={() => handleToolClick("upload")}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+                  className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
                 >
                   آپلود فایل یا عکس
                 </button>
 
                 <button
                   onClick={() => handleToolClick("customer-request")}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50"
+                  className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
                 >
                   درخواست مشاوره
                 </button>
@@ -1380,11 +1380,11 @@ ${cleanAnswer}`,
                 </div>
               )}
 
-              <div className="rounded-[32px] border border-slate-200 bg-white shadow-xl shadow-slate-200/70">
+              <div className="ui-card rounded-[32px] shadow-xl shadow-slate-200/70">
                 <div className="flex items-end gap-3 px-3 py-3">
                   <button
                     onClick={() => setShowTools((prev) => !prev)}
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-2xl text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                    className="ui-btn ui-btn-ghost flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-50 p-0 text-2xl"
                   >
                     +
                   </button>
@@ -1402,7 +1402,7 @@ ${cleanAnswer}`,
                   <button
                     onClick={() => sendMessage()}
                     disabled={loading || !message.trim()}
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xl text-white shadow-sm transition hover:bg-blue-800 disabled:bg-slate-300"
+                    className="ui-btn ui-btn-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300"
                   >
                     ↑
                   </button>
@@ -1454,7 +1454,7 @@ function UploadModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-[36px] bg-white p-6 shadow-2xl">
+      <div className="ui-card w-full max-w-xl rounded-[36px] p-6 shadow-2xl">
         <div className="mb-5">
           <h2 className="text-2xl font-black text-slate-900">{title}</h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
@@ -1467,7 +1467,7 @@ function UploadModal({
         <select
           value={selectValue}
           onChange={(e) => onSelectChange(e.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none focus:border-blue-600"
+          className="ui-select rounded-2xl p-4 text-sm"
         >
           {options.map((item) => (
             <option key={item.value} value={item.value}>
@@ -1481,7 +1481,7 @@ function UploadModal({
         <textarea
           value={noteValue}
           onChange={(e) => onNoteChange(e.target.value)}
-          className="h-28 w-full rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none focus:border-blue-600"
+          className="ui-textarea h-28 w-full rounded-2xl p-4 leading-8"
           placeholder={placeholder}
         />
 
@@ -1494,14 +1494,14 @@ function UploadModal({
         <div className="mt-6 flex gap-3">
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white hover:bg-blue-800"
+            className="ui-btn ui-btn-primary flex-1 rounded-2xl px-5 py-4"
           >
             {confirmLabel}
           </button>
 
           <button
             onClick={onCancel}
-            className="rounded-2xl border border-slate-300 bg-white px-5 py-4 font-bold text-slate-700 hover:bg-slate-50"
+            className="ui-btn ui-btn-ghost rounded-2xl border-slate-300 px-5 py-4"
           >
             انصراف
           </button>
@@ -1691,35 +1691,35 @@ function MessageBubble({
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   onClick={() => onQuickAction("shorter", item.content)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                 >
                   خلاصه‌تر کن
                 </button>
 
                 <button
                   onClick={() => onQuickAction("technical", item.content)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                 >
                   فنی‌تر توضیح بده
                 </button>
 
                 <button
                   onClick={() => onQuickAction("table", item.content)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                 >
                   تبدیل به جدول
                 </button>
 
                 <button
                   onClick={() => onCopy(displayContent)}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm"
                 >
                   کپی پاسخ
                 </button>
 
                 <button
                   onClick={onRequest}
-                  className="rounded-2xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+                  className="ui-btn ui-btn-primary rounded-2xl px-4 py-2 text-sm"
                 >
                   ثبت درخواست مشاوره
                 </button>
@@ -1729,7 +1729,7 @@ function MessageBubble({
                   className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
                     feedbackValue === "approved"
                       ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                      : "ui-btn ui-btn-ghost border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
                   }`}
                 >
                   پاسخ خوب بود
@@ -1741,7 +1741,7 @@ function MessageBubble({
                   className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
                     feedbackValue === "needs_edit"
                       ? "border-amber-200 bg-amber-50 text-amber-700"
-                      : "border-slate-200 bg-white text-slate-700 hover:bg-amber-50 hover:text-amber-700"
+                      : "ui-btn ui-btn-ghost border-slate-200 bg-white text-slate-700 hover:bg-amber-50 hover:text-amber-700"
                   }`}
                 >
                   نیاز به اصلاح دارد

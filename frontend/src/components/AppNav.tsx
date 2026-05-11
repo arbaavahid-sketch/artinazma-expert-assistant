@@ -25,7 +25,7 @@ export default function AppNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-blue-700 hover:text-white"
+              className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm font-medium"
             >
               {item.label}
             </Link>

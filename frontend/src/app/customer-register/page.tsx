@@ -81,7 +81,7 @@ export default function CustomerRegisterPage() {
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center">
-        <div className="grid w-full overflow-hidden rounded-[40px] border border-slate-200 bg-white shadow-sm lg:grid-cols-[1fr_430px]">
+        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-slate-200 shadow-sm lg:grid-cols-[1fr_430px]">
           <div className="p-8 lg:p-12">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
               <UserPlus size={17} />
@@ -111,7 +111,7 @@ export default function CustomerRegisterPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="نام کامل"
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                   />
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function CustomerRegisterPage() {
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="نام شرکت"
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                   />
                 </div>
               </div>
@@ -147,7 +147,7 @@ export default function CustomerRegisterPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="شماره موبایل یا تلفن"
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                   />
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function CustomerRegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                   />
                 </div>
               </div>
@@ -185,7 +185,7 @@ export default function CustomerRegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="حداقل ۶ کاراکتر"
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") register();
                     }}
@@ -203,7 +203,7 @@ export default function CustomerRegisterPage() {
             <button
               onClick={register}
               disabled={loading}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+              className="ui-btn ui-btn-primary mt-6 inline-flex w-full gap-2 rounded-2xl px-5 py-4"
             >
               {loading ? "در حال ثبت‌نام..." : "ثبت‌نام و ورود"}
               <ArrowLeft size={18} />
@@ -222,7 +222,7 @@ export default function CustomerRegisterPage() {
           </div>
 
           <div className="flex items-center justify-center bg-gradient-to-b from-blue-50 via-white to-slate-50 p-8">
-            <div className="w-full max-w-md rounded-[32px] bg-white p-6 text-center shadow-sm">
+            <div className="ui-card w-full max-w-md rounded-[32px] p-6 text-center shadow-sm">
               <div className="mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-[34px] bg-slate-50 p-3">
                 <img
                   src="/images/artin-avatar.png"

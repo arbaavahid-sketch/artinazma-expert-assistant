@@ -326,7 +326,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                     return (
                       <div key={session.id}>
                         {renamingSessionId === session.id ? (
-                          <div className="rounded-2xl bg-white p-2 shadow-sm shadow-slate-200/70">
+                          <div className="ui-card rounded-2xl p-2 shadow-sm shadow-slate-200/70">
                             <input
                               value={renameTitle}
                               onChange={(e) => setRenameTitle(e.target.value)}
@@ -341,13 +341,13 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                 }
                               }}
                               autoFocus
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                              className="ui-input bg-slate-50"
                             />
 
                             <div className="mt-2 flex gap-2">
                               <button
                                 onClick={() => renameChatSession(session.id)}
-                                className="flex-1 rounded-xl bg-blue-700 px-3 py-2 text-xs font-bold text-white"
+                                className="ui-btn ui-btn-primary flex-1 text-xs"
                               >
                                 ذخیره
                               </button>
@@ -357,7 +357,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                   setRenamingSessionId(null);
                                   setRenameTitle("");
                                 }}
-                                className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600"
+                                className="ui-btn ui-btn-ghost flex-1 text-xs"
                               >
                                 انصراف
                               </button>
@@ -390,7 +390,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                     session.title || "گفتگوی جدید",
                                   );
                                 }}
-                                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"
+                                className="ui-btn ui-btn-ghost flex h-8 w-8 items-center justify-center p-0 text-slate-400 hover:text-blue-700"
                                 title="تغییر نام"
                               >
                                 <Pencil size={15} strokeWidth={2} />
@@ -400,7 +400,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                 onClick={() =>
                                   deleteCustomerChatSession(session.id)
                                 }
-                                className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                                className="ui-btn ui-btn-ghost flex h-8 w-8 items-center justify-center p-0 text-slate-400 hover:bg-red-50 hover:text-red-600"
                                 title="حذف گفتگو"
                               >
                                 <Trash2 size={15} strokeWidth={2} />
@@ -426,7 +426,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 <button
                   onClick={logoutCustomer}
                   title="خروج از حساب مشتری"
-                  className={`group mb-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm text-red-700 transition hover:bg-red-50 ${
+                  className={`ui-btn ui-btn-danger group mb-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm ${
                     sidebarCollapsed ? "justify-center px-2" : ""
                   }`}
                 >
@@ -509,7 +509,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         <section className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           <button
             onClick={() => setMobileSidebarOpen(true)}
-            className="fixed right-4 top-4 z-20 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm md:hidden"
+            className="ui-btn ui-btn-ghost fixed right-4 top-4 z-20 border-slate-300 shadow-sm md:hidden"
           >
             منو
           </button>

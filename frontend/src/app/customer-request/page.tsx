@@ -121,7 +121,7 @@ export default function CustomerRequestPage() {
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
+        <div className="ui-card mb-6 overflow-hidden rounded-[36px] border-slate-200 shadow-sm">
           <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
@@ -141,7 +141,7 @@ export default function CustomerRequestPage() {
                 </p>
               </div>
 
-              <div className="rounded-[28px] bg-white p-5 shadow-sm">
+              <div className="ui-card rounded-[28px] p-5 shadow-sm">
                 <div className="text-sm font-bold text-slate-500">
                   ایمیل رسمی شرکت
                 </div>
@@ -154,7 +154,7 @@ export default function CustomerRequestPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="ui-card rounded-[32px] p-6 shadow-sm">
             <div className="mb-6 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-700 text-white">
                 <MessageSquareText size={24} strokeWidth={1.8} />
@@ -183,7 +183,7 @@ export default function CustomerRequestPage() {
                   <input
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                     placeholder="نام کامل"
                   />
                 </div>
@@ -201,7 +201,7 @@ export default function CustomerRequestPage() {
                   <input
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                     placeholder="نام شرکت"
                   />
                 </div>
@@ -219,7 +219,7 @@ export default function CustomerRequestPage() {
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                     placeholder="شماره موبایل یا تلفن"
                   />
                 </div>
@@ -237,7 +237,7 @@ export default function CustomerRequestPage() {
                   <input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-blue-600"
+                    className="ui-input rounded-2xl py-4 pl-4 pr-11"
                     placeholder="email@example.com"
                   />
                 </div>
@@ -251,7 +251,7 @@ export default function CustomerRequestPage() {
             <select
               value={requestType}
               onChange={(e) => setRequestType(e.target.value)}
-              className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-blue-600"
+              className="ui-select rounded-2xl p-4"
             >
               {requestTypes.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -267,7 +267,7 @@ export default function CustomerRequestPage() {
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-blue-600"
+              className="ui-input rounded-2xl p-4"
               placeholder="مثلاً: انتخاب دستگاه برای آنالیز سولفور در LPG"
             />
 
@@ -278,14 +278,14 @@ export default function CustomerRequestPage() {
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="h-44 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none transition focus:border-blue-600"
+              className="ui-textarea h-44 w-full resize-none rounded-2xl p-4 leading-8"
               placeholder="نوع نمونه، کاربرد، مشکل، مدل دستگاه، محدوده اندازه‌گیری، فایل تست یا هر اطلاعات فنی مهم را وارد کنید..."
             />
 
             <button
               onClick={submitRequest}
               disabled={loading}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+              className="ui-btn ui-btn-primary mt-5 inline-flex w-full gap-2 rounded-2xl px-5 py-4"
             >
               <Send size={18} />
               {loading ? "در حال ثبت درخواست..." : "ثبت درخواست"}
@@ -295,8 +295,8 @@ export default function CustomerRequestPage() {
               <div
                 className={`mt-5 rounded-2xl p-4 leading-8 ${
                   resultType === "success"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-red-50 text-red-700"
+                    ? "ui-alert ui-alert-success"
+                    : "ui-alert ui-alert-error"
                 }`}
               >
                 <div className="flex items-start gap-2">
@@ -310,7 +310,7 @@ export default function CustomerRequestPage() {
           </div>
 
           <aside className="space-y-4">
-            <div className="rounded-[32px] border border-blue-100 bg-blue-50 p-6 text-blue-950">
+            <div className="ui-card rounded-[32px] border-blue-100 bg-blue-50 p-6 text-blue-950">
               <div className="mb-3 text-lg font-black">
                 چه زمانی درخواست ثبت کنم؟
               </div>
@@ -321,7 +321,7 @@ export default function CustomerRequestPage() {
               </p>
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-3 text-lg font-black text-slate-900">
                 اطلاعات مفید برای کارشناس
               </div>
@@ -342,7 +342,7 @@ export default function CustomerRequestPage() {
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-3 text-lg font-black text-slate-900">
                 راه ارتباط مستقیم
               </div>

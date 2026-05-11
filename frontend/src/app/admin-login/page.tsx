@@ -69,7 +69,7 @@ export default function AdminLoginPage() {
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center">
-        <div className="grid w-full overflow-hidden rounded-[40px] border border-slate-200 bg-white shadow-sm lg:grid-cols-[1fr_420px]">
+        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-slate-200 shadow-sm lg:grid-cols-[1fr_420px]">
           <div className="p-8 lg:p-12">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
               <ShieldCheck size={17} />
@@ -101,7 +101,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
+                  className="ui-input rounded-2xl py-4 pl-4 pr-11 focus:border-purple-600 focus:shadow-[0_0_0_3px_rgba(147,51,234,0.18)]"
                   placeholder="رمز را وارد کنید"
                 />
               </div>
@@ -116,7 +116,7 @@ export default function AdminLoginPage() {
             <button
               onClick={login}
               disabled={loading}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-4 font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
+              className="ui-btn mt-6 inline-flex w-full gap-2 rounded-2xl bg-purple-700 px-5 py-4 text-white hover:bg-purple-800"
             >
               {loading ? "در حال ورود..." : "ورود به پنل ادمین"}
               <ArrowLeft size={18} />
@@ -124,7 +124,7 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="flex items-center justify-center bg-gradient-to-b from-purple-50 via-white to-slate-50 p-8">
-            <div className="w-full max-w-md rounded-[32px] bg-white p-6 shadow-sm">
+            <div className="ui-card w-full max-w-md rounded-[32px] p-6 shadow-sm">
               <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[34px] bg-purple-50 text-purple-700">
                 <KeyRound size={42} strokeWidth={1.7} />
               </div>
