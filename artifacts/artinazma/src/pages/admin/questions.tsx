@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { Clock3, FileQuestion, RefreshCw, Search, ShieldCheck } from "lucide-react";
@@ -113,7 +114,7 @@ export default function QuestionsPage() {
           ) : filteredQuestions.length > 0 ? (
             <div className="space-y-3">
               {filteredQuestions.map((item) => (
-                <div key={item.id} className="group block rounded-[28px] border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm">
+                <Link key={item.id} href={`/admin/questions/${item.id}`} className="group block rounded-[28px] border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -129,7 +130,7 @@ export default function QuestionsPage() {
                     </div>
                     <span className="shrink-0 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-purple-700">#{item.id}</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

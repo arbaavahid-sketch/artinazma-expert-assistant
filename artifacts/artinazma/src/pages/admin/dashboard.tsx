@@ -180,13 +180,13 @@ export default function DashboardPage() {
               {recentQuestions.length > 0 ? (
                 <div className="space-y-3">
                   {recentQuestions.map((item) => (
-                    <div key={item.id} className="group block rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm">
+                    <Link key={item.id} href={`/admin/questions/${item.id}`} className="group block rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm">
                       <div className="line-clamp-2 font-bold leading-8 text-slate-900 group-hover:text-purple-700">{item.question}</div>
                       <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
                         <span className="rounded-full bg-white px-3 py-1 font-bold text-purple-700">{getDomainLabel(item.detected_domain)}</span>
                         <span className="inline-flex items-center gap-1"><Clock3 size={14} />{formatDate(item.created_at)}</span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : <EmptyState text="هنوز سوالی ثبت نشده است." />}
