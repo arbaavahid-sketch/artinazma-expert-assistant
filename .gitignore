@@ -72,3 +72,4 @@ frontend/node_modules/
 backend/google-service-account.json
 *.service-account.json
 backend/google_drive_files/
+node_modules
