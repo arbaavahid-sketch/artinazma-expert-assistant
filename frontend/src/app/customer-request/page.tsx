@@ -119,7 +119,7 @@ export default function CustomerRequestPage() {
   }
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="customer-request-page min-h-full bg-[#f7f7f8] px-6 py-8">
       <div className="mx-auto max-w-7xl">
         <div className="ui-card mb-6 overflow-hidden rounded-[36px] border-slate-200 shadow-sm">
           <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
