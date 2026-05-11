@@ -29,3 +29,15 @@ to = "/index.html"
 [services.env]
 PORT = "21810"
 BASE_PATH = "/"
+
+[[services]]
+name = "python-backend"
+paths = [ "/python-api" ]
+localPort = 8000
+
+[services.development]
+run = "cd /home/runner/workspace/backend && uvicorn main:app --host 0.0.0.0 --port 8000"
+
+[services.env]
+PORT = "8000"
+FRONTEND_ORIGINS = "*"
