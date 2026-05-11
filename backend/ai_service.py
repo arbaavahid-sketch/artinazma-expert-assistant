@@ -746,6 +746,9 @@ def ask_expert_assistant(
                 "type": "web_search_preview",
             }
         ]
+        kwargs["tool_choice"] = {
+            "type": "web_search_preview"
+        }
 
     response = client.responses.create(**kwargs)
 

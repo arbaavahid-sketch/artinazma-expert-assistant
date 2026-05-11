@@ -509,15 +509,24 @@ def chat(request: ChatRequest):
         resource_images = []
         artinazma_context = ""
 
-    allow_web_search = False
+    # حالت پاسخ تأییدشده:
+    # برای همه سؤال‌های تخصصی و فنی، وب‌سرچ فعال شود تا مدل جواب حدسی ندهد.
+    verified_answer_intents = [
+        "technical_general",
+        "equipment_recommendation",
+        "troubleshooting",
+        "lab_analysis",
+    ]
 
-    if specific_model_question:
+    allow_web_search = True
+    
+    if request.response_mode == "brief":
+        allow_web_search = False
+
+    if question_intent in verified_answer_intents:
         allow_web_search = True
-    elif has_astm_code:
-        allow_web_search = True
-    elif not related_docs:
-        allow_web_search = True
-    elif search_mode in ["ai_vector", "local_fallback"] and best_score < 0.35:
+
+    if specific_model_question or has_astm_code or not related_docs:
         allow_web_search = True
 
     if allow_web_search:
