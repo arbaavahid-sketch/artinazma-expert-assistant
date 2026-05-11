@@ -698,57 +698,58 @@ def ask_expert_assistant(
     domain: str = "auto",
     allow_web_search: bool = False,
 ) -> str:
-    user_content = build_user_content(
-        message=message,
-        context=context,
-        history=history,
-        domain=domain,
-        allow_web_search=allow_web_search,
+    history = history or []
+
+    user_content = f"""
+زمینه و دستور پاسخ:
+{context}
+
+سؤال کاربر:
+{message}
+""".strip()
+
+    input_messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        }
+    ]
+
+    for item in history[-6:]:
+        if item.get("role") in ["user", "assistant"] and item.get("content"):
+            input_messages.append(
+                {
+                    "role": item["role"],
+                    "content": item["content"],
+                }
+            )
+
+    input_messages.append(
+        {
+            "role": "user",
+            "content": user_content,
+        }
     )
 
-    tools = []
+    if allow_web_search:
+        response = client.responses.create(
+            model=MODEL,
+            input=input_messages,
+            tools=[
+                {
+                    "type": "web_search_preview",
+                }
+            ],
+            temperature=OPENAI_TEMPERATURE,
+        )
+    else:
+        response = client.responses.create(
+            model=MODEL,
+            input=input_messages,
+            temperature=OPENAI_TEMPERATURE,
+        )
 
-    web_enabled = (
-        allow_web_search
-        and os.getenv("OPENAI_WEB_SEARCH_ENABLED", "false").strip().lower() == "true"
-    )
-
-    if web_enabled:
-        tools.append({"type": "web_search_preview"})
-
-    request_payload = {
-        "model": MODEL,
-        "input": [
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT,
-            },
-            {
-                "role": "user",
-                "content": user_content,
-            },
-        ],
-        "max_output_tokens": int(os.getenv("OPENAI_MAX_OUTPUT_TOKENS", "3000")),
-        "temperature": OPENAI_TEMPERATURE,
-    }
-
-    if tools:
-        request_payload["tools"] = tools
-
-    try:
-        response = client.responses.create(**request_payload)
-        return clean_ai_answer(response.output_text)
-
-    except Exception as e:
-        if tools:
-            print("OpenAI web search failed, retrying without web search:", e)
-
-            request_payload.pop("tools", None)
-            response = client.responses.create(**request_payload)
-            return clean_ai_answer(response.output_text)
-
-        raise e
-
+    return response.output_text.strip()
 
 def prepare_image_for_ai(file_path: str) -> Tuple[str, str]:
     """
