@@ -548,11 +548,11 @@ def chat(request: ChatRequest):
     selected_domain = request.domain or "auto"
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
 
-    history = [
-        {"role": item.role, "content": item.content} for item in (request.history or [])
-    ]
+    history = []
+
     response_mode = request.response_mode or "auto"
     context = """
+    TEST_MODE_ACTIVE_3185
 سبک پاسخ:
 مثل ChatGPT Plus پاسخ بده.
 پاسخ باید کامل، آموزشی، تیتر‌دار، مرتب، با جدول، مثال و جمع‌بندی باشد.
