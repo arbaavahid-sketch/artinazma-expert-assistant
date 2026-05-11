@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "ArtinAzma Expert Assistant"
+version = "1.0.0"
+id = "artifacts/artinazma"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21810
+
+[services.development]
+run = "pnpm --filter @workspace/artinazma run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/artinazma", "run", "build" ]
+publicDir = "artifacts/artinazma/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21810"
+BASE_PATH = "/"
