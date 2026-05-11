@@ -28,6 +28,19 @@
     0 2px 8px rgba(15, 23, 42, 0.05) !important;
 }
 
+.assistant-visual-composer [class*="border-t"],
+.chat-composer [class*="border-t"],
+.assistant-composer [class*="border-t"] {
+  border-top: 0 !important;
+  border-top-color: transparent !important;
+}
+
+.assistant-visual-composer > *,
+.chat-composer > *,
+.assistant-composer > * {
+  border-top-color: transparent !important;
+}
+
 .assistant-visual-empty,
 .chat-empty-card,
 .assistant-empty-card {
