@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
+import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
 
 const vazirmatn = Vazirmatn({
