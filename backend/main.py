@@ -553,7 +553,11 @@ def chat(request: ChatRequest):
     selected_domain = request.domain or "auto"
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
 
-    history = []
+    history = [
+    {"role": item.role, "content": item.content}
+    for item in (request.history or [])[-6:]
+    if item.role in ["user", "assistant"] and item.content
+]
 
     response_mode = request.response_mode or "auto"
     context = """
