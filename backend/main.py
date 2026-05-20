@@ -6,7 +6,11 @@ from artinazma_index_service import rebuild_artinazma_index, load_index
 from intent_service import detect_question_intent
 from site_resource_service import find_artinazma_resources
 from local_search_service import local_search_knowledge_base, build_local_answer
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, Request, UploadFile, File, Form, Depends, HTTPException, Security
+from fastapi.security import APIKeyHeader
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 from pydantic import BaseModel
@@ -51,13 +55,23 @@ from db_service import (
 )
 
 app = FastAPI(title="ArtinAzma Expert Assistant API")
+_admin_key_header = APIKeyHeader(name="X-Admin-Key", auto_error=False)
+
+def require_admin(api_key: str = Security(_admin_key_header)):
+    expected = os.getenv("ADMIN_API_KEY", "").strip()
+    if not expected:
+        raise HTTPException(status_code=503, detail="ADMIN_API_KEY تنظیم نشده است.")
+    if api_key != expected:
+        raise HTTPException(status_code=401, detail="دسترسی غیرمجاز.")
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 init_db()
 frontend_origins = os.getenv(
     "FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
 )
-
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 allowed_origins = [
     origin.strip() for origin in frontend_origins.split(",") if origin.strip()
 ]
@@ -418,7 +432,8 @@ def review_question_patch(question_id: int, request: QuestionReviewRequest):
 
 
 @app.post("/chat")
-def chat(request: ChatRequest):
+@limiter.limit("20/minute")
+def chat(request: ChatRequest, req: Request):
     has_astm_code = bool(
         re.search(r"\bD\s*\d{3,5}\b", request.message, flags=re.IGNORECASE)
     )
@@ -591,7 +606,8 @@ def chat(request: ChatRequest):
 ]
 
     response_mode = request.response_mode or "auto"
-    context = """
+
+    style_instructions = """
 سبک پاسخ:
 پاسخ باید شبیه ChatGPT Plus باشد: کامل، دقیق، آموزشی، تیتر‌دار، مرتب، با جدول، مثال و جمع‌بندی.
 
@@ -628,7 +644,11 @@ def chat(request: ChatRequest):
 - هر ردیف باید دقیقاً تعداد ستون‌های برابر داشته باشد.
 - متن هر سلول کوتاه، تمیز و قابل نمایش در UI باشد.
 """.strip()
-
+# ترکیب context دانش + دستورالعمل سبک
+    if context:
+        context = f"{context}\n\n---\n\n{style_instructions}"
+    else:
+        context = style_instructions
     try:
         answer = ask_expert_assistant(
             message=request.message,
@@ -891,6 +911,7 @@ async def upload_knowledge_file(
     title: Optional[str] = Form(None),
     category: Optional[str] = Form("general"),
     replace_existing: bool = Form(False),
+    _=Depends(require_admin)
 ):
     upload_dir = "knowledge_files"
     os.makedirs(upload_dir, exist_ok=True)
@@ -938,12 +959,12 @@ def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
 
 
 @app.get("/knowledge/stats")
-def knowledge_stats():
+def knowledge_stats(): 
     return get_knowledge_stats()
 
 
 @app.delete("/knowledge/files/{file_name}")
-def knowledge_file_delete(file_name: str):
+def knowledge_file_delete(file_name: str, _=Depends(require_admin)):
     return delete_knowledge_file(file_name)
 
 
@@ -998,22 +1019,22 @@ def knowledge_search(request: ChatRequest):
 
 
 @app.get("/questions/recent")
-def questions_recent(limit: int = 20):
+def questions_recent(limit: int = 20, _=Depends(require_admin)):
     return {"questions": get_recent_questions(limit=limit)}
 
 
 @app.get("/questions/stats")
-def questions_stats():
+def questions_stats(_=Depends(require_admin)):
     return get_question_stats()
 
 
 @app.get("/questions")
-def questions_all(limit: int = 100):
+def questions_all(limit: int = 100, _=Depends(require_admin)):
     return {"questions": get_all_questions(limit=limit)}
 
 
 @app.get("/questions/{question_id}")
-def question_detail(question_id: int):
+def question_detail(question_id: int, _=Depends(require_admin)):
     question = get_question_by_id(question_id)
 
     if not question:
@@ -1175,7 +1196,7 @@ def create_customer_request(request: CustomerRequestCreate):
 
 
 @app.get("/customer-requests")
-def customer_requests(limit: int = 100):
+def customer_requests(limit: int = 100, _=Depends(require_admin)):
     return {"requests": get_customer_requests(limit=limit)}
 
 
@@ -1192,7 +1213,7 @@ def customer_request_status(request_id: int, request: CustomerRequestStatusUpdat
 
 
 @app.get("/customer-requests/stats")
-def customer_requests_stats():
+def customer_requests_stats(_=Depends(require_admin)):
     return get_customer_request_stats()
 
 
