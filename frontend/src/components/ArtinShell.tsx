@@ -14,11 +14,13 @@ import {
   LayoutDashboard,
   LogOut,
   MessagesSquare,
+  Moon,
   PanelRightClose,
   PanelRightOpen,
   PhoneCall,
   Settings,
   Sparkles,
+  Sun,
   Pencil,
   Trash2,
   Users,
@@ -69,7 +71,7 @@ const adminItems: SidebarItem[] = [
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
   const Icon = collapsed ? PanelRightOpen : PanelRightClose;
 
-  return <Icon size={21} strokeWidth={1.8} className="text-slate-700" />;
+  return <Icon size={21} strokeWidth={1.8} className="text-slate-700 dark:text-slate-300" />;
 }
 
 export default function ArtinShell({ children }: ArtinShellProps) {
@@ -88,6 +90,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [isOnline, setIsOnline] = useState(true);
   const [showReconnected, setShowReconnected] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   async function refreshCustomerSessions() {
     try {
@@ -223,6 +226,30 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     refreshCustomerSessions();
   }, [pathname, activeSessionId]);
 
+  // Dark mode init + toggle
+  useEffect(() => {
+    const saved = localStorage.getItem("artin_dark_mode");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldBeDark = saved !== null ? saved === "true" : prefersDark;
+    setDarkMode(shouldBeDark);
+    if (shouldBeDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  function toggleDarkMode() {
+    const next = !darkMode;
+    setDarkMode(next);
+    localStorage.setItem("artin_dark_mode", String(next));
+    if (next) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }
+
   // Online/offline detection
   useEffect(() => {
     const handleOffline = () => {
@@ -243,43 +270,41 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   }, []);
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f7f7f8] text-slate-900">
+    <main className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]">
       {/* Offline banner */}
       {!isOnline && (
-        <div className="fixed inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
+        <div className="absolute inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
           <span>📡</span>
           <span>اتصال اینترنت قطع شده است — پیام‌های جدید ارسال نمی‌شوند.</span>
         </div>
       )}
       {/* Reconnected flash */}
       {showReconnected && (
-        <div className="fixed inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
+        <div className="absolute inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
           <span>✅</span>
           <span>اتصال برقرار شد.</span>
         </div>
       )}
-      <div className="flex h-full overflow-hidden">
-        {mobileSidebarOpen && (
-          <button
-            onClick={() => setMobileSidebarOpen(false)}
-            className="fixed inset-0 z-30 bg-black/25 backdrop-blur-sm md:hidden"
-            aria-label="بستن منو"
-          />
-        )}
 
-        <aside
-          className={`fixed inset-y-0 right-0 z-40 flex flex-col border-l border-slate-200 bg-[#f3f4f6] transition-all duration-300 md:static md:translate-x-0 ${
-            mobileSidebarOpen
-              ? "translate-x-0"
-              : "translate-x-full md:translate-x-0"
-          } ${
-            sidebarCollapsed ? "w-[88px] md:w-[88px]" : "w-[300px] md:w-[300px]"
-          }`}
-        >
+      {/* Mobile backdrop — absolute within main (avoids fixed-in-overflow-hidden bug on iOS) */}
+      {mobileSidebarOpen && (
+        <button
+          onClick={() => setMobileSidebarOpen(false)}
+          className="absolute inset-0 z-30 bg-black/25 backdrop-blur-sm md:hidden"
+          aria-label="بستن منو"
+        />
+      )}
+
+      {/* Sidebar — absolute positioning, visibility controlled by display (translate unreliable in RTL) */}
+      <aside
+        className={`absolute inset-y-0 right-0 z-40 flex-col border-l border-[--border-soft] bg-[--sidebar-bg] transition-all duration-300 ${
+          sidebarCollapsed ? "w-[88px]" : "w-[300px]"
+        } ${mobileSidebarOpen ? "flex" : "hidden md:flex"}`}
+      >
           <div className="relative shrink-0 px-4 pb-7 pt-14">
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="absolute left-4 top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-blue-50 md:flex"
+              className="absolute left-4 top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-blue-50 dark:hover:bg-slate-800 md:flex"
               title={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
               aria-label={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
             >
@@ -322,7 +347,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
           <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2">
             {!sidebarCollapsed && (
-              <div className="mb-2 px-3 text-xs font-bold text-slate-500">
+              <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
                 بخش‌ها
               </div>
             )}
@@ -344,15 +369,15 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                     sidebarCollapsed ? "justify-center px-2" : ""
                   } ${
                     isActive
-                      ? "bg-white font-bold text-blue-700 shadow-sm shadow-slate-200/70"
-                      : "text-slate-700 hover:bg-white"
+                      ? "bg-[--surface] font-bold text-blue-700 shadow-sm shadow-slate-200/20"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-[--surface]"
                   }`}
                 >
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
                       isActive
-                        ? "bg-blue-50 text-blue-700"
-                        : "bg-white text-slate-500 group-hover:text-blue-700"
+                        ? "bg-blue-50 dark:bg-blue-950 text-blue-700"
+                        : "bg-[--surface] text-slate-500 dark:text-slate-400 group-hover:text-blue-700"
                     }`}
                   >
                     <item.Icon size={19} strokeWidth={1.9} />
@@ -365,7 +390,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
             {!sidebarCollapsed && customer && customerSessions.length > 0 && (
               <div className="mt-6">
-                <div className="mb-2 px-3 text-xs font-bold text-slate-500">
+                <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
                   گفتگوهای من
                 </div>
 
@@ -493,7 +518,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             {isAdminArea && (
               <div className="mt-6">
                 {!sidebarCollapsed && (
-                  <div className="mb-2 px-3 text-xs font-bold text-slate-500">
+                  <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
                     مدیریت
                   </div>
                 )}
@@ -520,15 +545,15 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                             sidebarCollapsed ? "justify-center px-2" : ""
                           } ${
                             isActive
-                              ? "bg-white font-bold text-purple-700 shadow-sm shadow-slate-200/70"
-                              : "text-slate-700 hover:bg-white"
+                              ? "bg-[--surface] font-bold text-purple-700 shadow-sm shadow-slate-200/20"
+                              : "text-slate-700 dark:text-slate-300 hover:bg-[--surface]"
                           }`}
                         >
                           <span
                             className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
                               isActive
-                                ? "bg-purple-50 text-purple-700"
-                                : "bg-white text-slate-500 group-hover:text-purple-700"
+                                ? "bg-purple-50 dark:bg-purple-950 text-purple-700"
+                                : "bg-[--surface] text-slate-500 dark:text-slate-400 group-hover:text-purple-700"
                             }`}
                           >
                             <item.Icon size={19} strokeWidth={1.9} />
@@ -539,7 +564,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                             )}
                           </span>
 
-                          {!sidebarCollapsed && <span className="flex-1">{item.label}</span>}
+                          {!sidebarCollapsed && <span className="flex-1 text-current">{item.label}</span>}
 
                           {!sidebarCollapsed && showBadge && (
                             <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-black text-white">
@@ -568,20 +593,55 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 )}
               </div>
             )}
+            {/* Dark mode toggle */}
+            <div className={`mt-4 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
+              <button
+                onClick={toggleDarkMode}
+                title={darkMode ? "حالت روشن" : "حالت تاریک"}
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-white dark:hover:bg-slate-800 ${
+                  sidebarCollapsed ? "justify-center px-2" : "w-full"
+                }`}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm">
+                  {darkMode ? <Sun size={19} strokeWidth={1.9} /> : <Moon size={19} strokeWidth={1.9} />}
+                </span>
+                {!sidebarCollapsed && (
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {darkMode ? "حالت روشن" : "حالت تاریک"}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </aside>
 
+      {/* Mobile menu toggle */}
+      {!mobileSidebarOpen && (
+        <button
+          onClick={() => setMobileSidebarOpen(true)}
+          className="absolute right-3 top-3 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/90 shadow-md backdrop-blur-sm transition hover:bg-slate-50 md:hidden"
+          aria-label="باز کردن منو"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="5" width="14" height="1.8" rx="0.9" fill="#475569"/>
+            <rect x="3" y="9.1" width="10" height="1.8" rx="0.9" fill="#475569"/>
+            <rect x="3" y="13.2" width="12" height="1.8" rx="0.9" fill="#475569"/>
+          </svg>
+        </button>
+      )}
+
+      {/* Content layout: spacer reserves sidebar space on desktop, section gets the rest */}
+      <div className="flex h-full">
+        {/* Desktop spacer — mirrors sidebar width so content doesn't go under sidebar */}
+        <div
+          className={`hidden md:block shrink-0 transition-all duration-300 ${
+            sidebarCollapsed ? "w-[88px]" : "w-[300px]"
+          }`}
+        />
         <section
           data-app-path={pathname}
-          className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+          className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden pt-14 md:pt-0"
         >
-          <button
-            onClick={() => setMobileSidebarOpen(true)}
-            className="ui-btn ui-btn-ghost fixed right-4 top-4 z-20 border-slate-300 shadow-sm md:hidden"
-          >
-            منو
-          </button>
-
           {children}
         </section>
       </div>

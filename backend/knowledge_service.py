@@ -350,12 +350,24 @@ def get_knowledge_stats() -> Dict[str, Any]:
 
     file_details.sort(key=lambda item: item["file_name"])
 
+    # Category breakdown: count chunks per category
+    cat_counts: Dict[str, int] = {}
+    for item in store:
+        cat = item.get("category") or "general"
+        cat_counts[cat] = cat_counts.get(cat, 0) + 1
+    total = len(store) or 1
+    category_breakdown = [
+        {"category": cat, "chunks": cnt, "percent": round(cnt / total * 100, 1)}
+        for cat, cnt in sorted(cat_counts.items(), key=lambda x: -x[1])
+    ]
+
     return {
         "total_chunks": len(store),
         "total_files": len(files),
         "files": files,
         "categories": categories,
         "file_details": file_details,
+        "category_breakdown": category_breakdown,
     }
 
 

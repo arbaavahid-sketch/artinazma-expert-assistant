@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiUrl } from "@/lib/api";
 import {
   Users,
   Search,
@@ -12,6 +11,9 @@ import {
   MessageSquareText,
   MessagesSquare,
   Clock3,
+  Send,
+  ShieldOff,
+  ShieldCheck,
 } from "lucide-react";
 
 type Customer = {
@@ -23,6 +25,8 @@ type Customer = {
   created_at: string;
   session_count: number;
   message_count: number;
+  last_active?: string | null;
+  is_blocked?: boolean;
 };
 
 function formatDate(value?: string) {
@@ -42,10 +46,36 @@ export default function AdminCustomersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Customer | null>(null);
+  const [emailModal, setEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [blockingId, setBlockingId] = useState<number | null>(null);
+
+  async function toggleBlock(customer: Customer) {
+    setBlockingId(customer.id);
+    const action = customer.is_blocked ? "unblock" : "block";
+    try {
+      const res = await fetch(`/api/admin/customers/${customer.id}/${action}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.id === customer.id ? { ...c, is_blocked: !customer.is_blocked } : c,
+          ),
+        );
+        if (selected?.id === customer.id) {
+          setSelected({ ...selected, is_blocked: !customer.is_blocked });
+        }
+      }
+    } catch {}
+    setBlockingId(null);
+  }
 
   useEffect(() => {
-    fetch(apiUrl("/admin/customers?limit=200"), {
-      headers: { "X-Admin-Key": "" },
+    fetch("/api/admin/customers?limit=200", {
       credentials: "include",
     })
       .then((r) => r.json())
@@ -177,8 +207,15 @@ export default function AdminCustomersPage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-black text-slate-900">
-                          {c.full_name}
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-black text-slate-900">
+                            {c.full_name}
+                          </span>
+                          {c.is_blocked && (
+                            <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-600">
+                              بلاک
+                            </span>
+                          )}
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                           <Mail size={12} />
@@ -192,15 +229,23 @@ export default function AdminCustomersPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-3 text-xs text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <MessageSquareText size={13} />
-                          {c.session_count}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessagesSquare size={13} />
-                          {c.message_count}
-                        </span>
+                      <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-slate-500">
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1">
+                            <MessageSquareText size={12} />
+                            {c.session_count}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessagesSquare size={12} />
+                            {c.message_count}
+                          </span>
+                        </div>
+                        {c.last_active && (
+                          <span className="flex items-center gap-1 text-emerald-600">
+                            <Clock3 size={11} />
+                            {formatDate(c.last_active)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -284,6 +329,21 @@ export default function AdminCustomersPage() {
                       </div>
                     </div>
                   </div>
+
+                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                    <MessageSquareText
+                      className="mt-0.5 shrink-0 text-emerald-600"
+                      size={16}
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-500">
+                        آخرین فعالیت
+                      </div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {selected.last_active ? formatDate(selected.last_active) : "هنوز پیامی ندارد"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
@@ -304,6 +364,39 @@ export default function AdminCustomersPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Actions */}
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setEmailSubject(`پیام از آرتین آزما به ${selected.full_name}`);
+                      setEmailBody("");
+                      setEmailModal(true);
+                    }}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
+                  >
+                    <Send size={15} />
+                    ارسال ایمیل
+                  </button>
+                  <button
+                    onClick={() => toggleBlock(selected)}
+                    disabled={blockingId === selected.id}
+                    className={`inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition disabled:opacity-50 ${
+                      selected.is_blocked
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                        : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                    }`}
+                  >
+                    {selected.is_blocked ? <ShieldCheck size={15} /> : <ShieldOff size={15} />}
+                    {blockingId === selected.id ? "..." : selected.is_blocked ? "رفع بلاک" : "بلاک مشتری"}
+                  </button>
+                </div>
+
+                {selected.is_blocked && (
+                  <div className="mt-3 rounded-2xl bg-red-50 border border-red-100 p-3 text-xs font-bold text-red-700 text-center">
+                    ⛔ این حساب مسدود است — مشتری نمی‌تواند وارد شود.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="ui-empty rounded-3xl p-10">
@@ -321,6 +414,67 @@ export default function AdminCustomersPage() {
           </div>
         </div>
       </div>
+
+      {/* Email Modal */}
+      {emailModal && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-[32px] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">ارسال ایمیل</h2>
+                <p className="mt-1 text-sm text-slate-500">به: {selected.full_name} — {selected.email}</p>
+              </div>
+              <button
+                onClick={() => setEmailModal(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="space-y-4 p-6">
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">موضوع</label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="ui-input"
+                  placeholder="موضوع ایمیل..."
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">متن ایمیل</label>
+                <textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  rows={6}
+                  className="ui-textarea w-full resize-none p-3"
+                  placeholder="متن پیام خود را بنویسید..."
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <a
+                  href={`mailto:${selected.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 font-bold text-white transition hover:bg-blue-800"
+                  onClick={() => setEmailModal(false)}
+                >
+                  <Send size={16} />
+                  باز کردن در ایمیل
+                </a>
+                <button
+                  onClick={() => setEmailModal(false)}
+                  className="ui-btn ui-btn-ghost px-5 py-3"
+                >
+                  انصراف
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 text-center">
+                این دکمه کلاینت ایمیل شما را با اطلاعات پر‌شده باز می‌کند.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

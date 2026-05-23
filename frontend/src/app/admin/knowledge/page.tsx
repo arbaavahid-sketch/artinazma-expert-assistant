@@ -9,7 +9,9 @@ import {
   Eye,
   FileText,
   FolderOpen,
+  Pencil,
   RefreshCw,
+  Save,
   Search,
   TestTube2,
   Trash2,
@@ -31,6 +33,7 @@ type KnowledgeStats = {
   files: string[];
   categories: string[];
   file_details?: KnowledgeFileDetail[];
+  category_breakdown?: { category: string; chunks: number; percent: number }[];
 };
 
 type KnowledgeSearchResult = {
@@ -114,6 +117,37 @@ export default function KnowledgePage() {
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [previewChunks, setPreviewChunks] = useState<ChunkPreview[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [editingChunkIndex, setEditingChunkIndex] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [savingChunk, setSavingChunk] = useState(false);
+  const [chunkSaveMsg, setChunkSaveMsg] = useState("");
+
+  async function saveChunk(chunk: ChunkPreview) {
+    if (!previewFile) return;
+    setSavingChunk(true);
+    setChunkSaveMsg("");
+    try {
+      const res = await fetch(apiUrl(`/knowledge/files/${encodeURIComponent(previewFile)}/chunks`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ chunk_index: chunk.index, content: editingContent }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPreviewChunks((prev) => prev.map((c) => c.index === chunk.index ? { ...c, content: editingContent } : c));
+        setChunkSaveMsg("ذخیره شد ✓");
+        setEditingChunkIndex(null);
+        setTimeout(() => setChunkSaveMsg(""), 3000);
+      } else {
+        setChunkSaveMsg("خطا در ذخیره");
+      }
+    } catch {
+      setChunkSaveMsg("خطا در اتصال");
+    } finally {
+      setSavingChunk(false);
+    }
+  }
 
   async function openPreview(fileName: string) {
     setPreviewFile(fileName);
@@ -452,6 +486,29 @@ export default function KnowledgePage() {
             </div>
           </div>
         </div>
+
+        {/* Category coverage breakdown */}
+        {stats?.category_breakdown && stats.category_breakdown.length > 0 && (
+          <div className="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 text-sm font-bold text-slate-700">پوشش دانش به تفکیک حوزه</div>
+            <div className="space-y-2.5">
+              {stats.category_breakdown.map((item) => (
+                <div key={item.category}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-700">{getCategoryLabel(item.category)}</span>
+                    <span className="text-slate-500">{item.chunks} chunk — {item.percent}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                      style={{ width: `${item.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {knowledgeResult && (
           <div
@@ -985,31 +1042,73 @@ export default function KnowledgePage() {
                   محتوایی یافت نشد.
                 </div>
               ) : (
+                <>
+                {chunkSaveMsg && (
+                  <div className="mb-4 rounded-2xl bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700">
+                    {chunkSaveMsg}
+                  </div>
+                )}
                 <div className="space-y-4">
                   {previewChunks.map((chunk) => (
                     <div
                       key={chunk.index}
                       className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                     >
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
-                          #{chunk.index + 1}
-                        </span>
-                        {chunk.category && (
-                          <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
-                            {getCategoryLabel(chunk.category)}
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
+                            #{chunk.index + 1}
                           </span>
+                          {chunk.category && (
+                            <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                              {getCategoryLabel(chunk.category)}
+                            </span>
+                          )}
+                        </div>
+                        {editingChunkIndex !== chunk.index ? (
+                          <button
+                            onClick={() => { setEditingChunkIndex(chunk.index); setEditingContent(chunk.content); }}
+                            className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-600 hover:border-blue-200 hover:text-blue-700 transition"
+                          >
+                            <Pencil size={12} /> ویرایش
+                          </button>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => saveChunk(chunk)}
+                              disabled={savingChunk}
+                              className="flex items-center gap-1 rounded-xl bg-blue-700 px-2 py-1 text-xs font-bold text-white hover:bg-blue-800 transition disabled:opacity-50"
+                            >
+                              <Save size={12} /> {savingChunk ? "..." : "ذخیره"}
+                            </button>
+                            <button
+                              onClick={() => setEditingChunkIndex(null)}
+                              className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
                         )}
                       </div>
-                      <p className="whitespace-pre-wrap break-words text-xs leading-7 text-slate-700">
-                        {chunk.content}
-                        {chunk.content.length >= 600 && (
-                          <span className="text-slate-400"> …</span>
-                        )}
-                      </p>
+                      {editingChunkIndex === chunk.index ? (
+                        <textarea
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          rows={8}
+                          className="w-full resize-y rounded-xl border border-blue-200 bg-white p-3 text-xs leading-7 text-slate-700 outline-none focus:border-blue-400"
+                        />
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words text-xs leading-7 text-slate-700">
+                          {chunk.content}
+                          {chunk.content.length >= 600 && (
+                            <span className="text-slate-400"> …</span>
+                          )}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
+                </>
               )}
             </div>
           </div>

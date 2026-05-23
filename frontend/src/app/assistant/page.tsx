@@ -1607,20 +1607,28 @@ ${msgHtml}
 
               {loading && (
                 <div className="flex justify-start">
-                  <div className="flex max-w-[80%] flex-row-reverse items-center gap-3 rounded-[28px] bg-white px-5 py-4 text-slate-600 shadow-sm">
-                    <img
-                      src="/images/artin-avatar.png"
-                      alt="آرتین"
-                      className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
-                    />
-                    <span className="font-persian">
-                      آرتین در حال تحلیل و آماده‌سازی پاسخ است...
-                    </span>
-                    <span className="flex gap-1">
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:120ms]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:240ms]" />
-                    </span>
+                  <div className="flex max-w-[80%] flex-row-reverse items-center gap-3 rounded-[28px] bg-[--surface] px-5 py-4 text-slate-600 dark:text-slate-300 shadow-sm border border-[--border-soft]">
+                    <div className="relative shrink-0">
+                      <img
+                        src="/images/artin-avatar.png"
+                        alt="آرتین"
+                        className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
+                      />
+                      <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900">
+                        <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white" />
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">آرتین</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-sm font-persian text-slate-500 dark:text-slate-400">در حال تایپ</span>
+                        <span className="flex gap-1 pb-1">
+                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "0ms"}} />
+                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "200ms"}} />
+                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "400ms"}} />
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}

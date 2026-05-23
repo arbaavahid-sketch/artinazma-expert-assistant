@@ -81,9 +81,15 @@ def init_db():
             password_hash TEXT NOT NULL,
             company TEXT DEFAULT '',
             phone TEXT DEFAULT '',
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            is_blocked INTEGER DEFAULT 0
         )
         """)
+
+    # Migrate: add is_blocked if missing
+    cust_cols = [r["name"] for r in cursor.execute("PRAGMA table_info(customers)").fetchall()]
+    if "is_blocked" not in cust_cols:
+        cursor.execute("ALTER TABLE customers ADD COLUMN is_blocked INTEGER DEFAULT 0")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -890,7 +896,7 @@ def authenticate_customer(email: str, password: str) -> Dict[str, Any] | None:
 
     cursor.execute(
         """
-        SELECT id, full_name, email, password_hash, company, phone, created_at
+        SELECT id, full_name, email, password_hash, company, phone, created_at, is_blocked
         FROM customers
         WHERE email = ?
         """,
@@ -905,6 +911,9 @@ def authenticate_customer(email: str, password: str) -> Dict[str, Any] | None:
 
     if not verify_password(password, row["password_hash"]):
         return None
+
+    if row["is_blocked"]:
+        return {"blocked": True}
 
     return {
         "id": row["id"],
@@ -958,8 +967,10 @@ def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]
             c.company,
             c.phone,
             c.created_at,
+            c.is_blocked,
             COUNT(DISTINCT cs.id) AS session_count,
-            COUNT(cm.id) AS message_count
+            COUNT(cm.id) AS message_count,
+            MAX(cm.created_at) AS last_active
         FROM customers c
         LEFT JOIN chat_sessions cs ON cs.customer_id = c.id
         LEFT JOIN chat_messages cm ON cm.session_id = cs.id
@@ -984,10 +995,26 @@ def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]
                 "created_at": r["created_at"],
                 "session_count": r["session_count"],
                 "message_count": r["message_count"],
+                "last_active": r["last_active"] or None,
+                "is_blocked": bool(r["is_blocked"]) if "is_blocked" in r.keys() else False,
             }
             for r in rows
         ],
     }
+
+
+def set_customer_blocked(customer_id: int, blocked: bool) -> bool:
+    """بلاک یا فعال‌سازی حساب مشتری."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE customers SET is_blocked = ? WHERE id = ?",
+            (1 if blocked else 0, customer_id),
+        )
+        conn.commit()
+        return conn.execute("SELECT changes()").fetchone()[0] > 0
+    finally:
+        conn.close()
 
 
 def update_customer_profile(

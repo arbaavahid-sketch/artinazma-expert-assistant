@@ -2,6 +2,7 @@ import os
 import re
 import threading
 import logging
+import logging.handlers
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 import shutil
@@ -63,12 +64,36 @@ from db_service import (
     get_connection,
     get_setting,
     set_setting,
+    set_customer_blocked,
 )
 
 _gdrive_timer: threading.Timer | None = None
 _gdrive_lock = threading.Lock()
 
 logger = logging.getLogger("artin_scheduler")
+
+# ── File-based error logging ──────────────────────────────────────────────────
+_LOG_DIR = os.path.join(os.path.dirname(__file__), "storage")
+os.makedirs(_LOG_DIR, exist_ok=True)
+_file_handler = logging.handlers.RotatingFileHandler(
+    os.path.join(_LOG_DIR, "app.log"),
+    maxBytes=5 * 1024 * 1024,  # 5 MB
+    backupCount=3,
+    encoding="utf-8",
+)
+_file_handler.setLevel(logging.WARNING)
+_file_handler.setFormatter(
+    logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+)
+# Attach to root logger so all warnings/errors across all modules are captured
+logging.getLogger().addHandler(_file_handler)
+logging.getLogger().setLevel(logging.INFO)
+# Also log to console at INFO level
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    force=False,
+)
 
 
 def _run_gdrive_sync():
@@ -463,6 +488,34 @@ class CustomerChatMessageCreateRequest(BaseModel):
 @app.get("/")
 def home():
     return {"message": "ArtinAzma Expert Assistant API is running"}
+
+
+@app.get("/health")
+def health_check():
+    """بررسی سلامت سرویس: دیتابیس + OpenAI."""
+    import time
+    start = time.monotonic()
+    status = {"ok": True, "timestamp": datetime.utcnow().isoformat(), "checks": {}}
+
+    # DB check
+    try:
+        conn = get_connection()
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        status["checks"]["database"] = {"ok": True}
+    except Exception as e:
+        status["checks"]["database"] = {"ok": False, "error": str(e)}
+        status["ok"] = False
+
+    # OpenAI key check
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    openai_ok = bool(openai_key and not openai_key.startswith("x-") and openai_key != "test_offline_mode")
+    status["checks"]["openai"] = {"ok": openai_ok, "configured": openai_ok}
+    if not openai_ok:
+        status["ok"] = False
+
+    status["response_ms"] = round((time.monotonic() - start) * 1000, 2)
+    return status
 
 
 def save_question_review(question_id: int, request: QuestionReviewRequest):
@@ -1223,6 +1276,39 @@ def knowledge_file_chunks(file_name: str, _=Depends(require_admin)):
     return {"file_name": file_name, "total": len(chunks), "chunks": chunks}
 
 
+class ChunkUpdateRequest(BaseModel):
+    chunk_index: int  # global index in store
+    content: str
+    title: str | None = None
+
+
+@app.patch("/knowledge/files/{file_name}/chunks")
+def update_knowledge_chunk(file_name: str, body: ChunkUpdateRequest, _=Depends(require_admin)):
+    """ویرایش محتوای یک chunk از بانک دانش."""
+    from knowledge_service import load_vector_store, save_vector_store, _vs_cache
+    store = load_vector_store()
+
+    # Find the nth chunk belonging to this file (body.chunk_index is the global store index)
+    idx = body.chunk_index
+    if idx < 0 or idx >= len(store):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="chunk not found")
+    if store[idx].get("file_name") != file_name:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="chunk does not belong to this file")
+
+    store[idx]["content"] = body.content
+    if body.title is not None:
+        store[idx]["title"] = body.title
+
+    save_vector_store(store)
+    # Bust the in-memory cache by touching the file mtime (save_vector_store already does atomic replace)
+    import knowledge_service as _ks
+    _ks._vector_cache = None
+    _ks._vector_cache_mtime = 0.0
+    return {"success": True, "index": idx}
+
+
 @app.delete("/knowledge/files/{file_name}")
 def knowledge_file_delete(file_name: str, _=Depends(require_admin)):
     return delete_knowledge_file(file_name)
@@ -1635,6 +1721,76 @@ def export_questions_csv(_=Depends(require_admin)):
     )
 
 
+@app.get("/admin/report/export")
+def admin_export_report(period: str = "week", _=Depends(require_admin)):
+    """گزارش خلاصه هفتگی/ماهانه: سوالات، مشتریان، درخواست‌ها — خروجی CSV."""
+    import csv, io
+    from datetime import timedelta
+
+    now = datetime.utcnow()
+    if period == "month":
+        cutoff = now - timedelta(days=30)
+        label = "ماهانه (۳۰ روز)"
+    else:
+        cutoff = now - timedelta(days=7)
+        label = "هفتگی (۷ روز)"
+
+    cutoff_str = cutoff.strftime("%Y-%m-%d")
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    # Questions by domain
+    c.execute("""
+        SELECT detected_domain, COUNT(*) as cnt
+        FROM expert_questions
+        WHERE created_at >= ?
+        GROUP BY detected_domain
+        ORDER BY cnt DESC
+    """, (cutoff_str,))
+    domain_rows = c.fetchall()
+
+    # Total questions
+    total_q = c.execute("SELECT COUNT(*) FROM expert_questions WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
+
+    # New customers
+    total_cust = c.execute("SELECT COUNT(*) FROM customers WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
+
+    # Requests
+    total_req = c.execute("SELECT COUNT(*) FROM customer_requests WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
+    pending_req = c.execute("SELECT COUNT(*) FROM customer_requests WHERE created_at >= ? AND status='new'", (cutoff_str,)).fetchone()[0]
+
+    # Chat messages
+    total_msg = c.execute("SELECT COUNT(*) FROM chat_messages WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
+
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(["گزارش آرتین آزما", label])
+    writer.writerow([])
+    writer.writerow(["خلاصه کلی", ""])
+    writer.writerow(["تعداد سوالات جدید", total_q])
+    writer.writerow(["تعداد مشتریان جدید", total_cust])
+    writer.writerow(["تعداد درخواست‌های جدید", total_req])
+    writer.writerow(["درخواست‌های در انتظار", pending_req])
+    writer.writerow(["تعداد پیام‌های چت", total_msg])
+    writer.writerow([])
+    writer.writerow(["سوالات بر اساس حوزه", "تعداد"])
+    for row in domain_rows:
+        writer.writerow([row["detected_domain"] or "نامشخص", row["cnt"]])
+
+    csv_bytes = output.getvalue().encode("utf-8-sig")
+    from fastapi.responses import Response
+    filename = f"artin-report-{period}-{now.strftime('%Y%m%d')}.csv"
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 @app.get("/admin/customers")
 def admin_list_customers(
     limit: int = 200,
@@ -1643,6 +1799,20 @@ def admin_list_customers(
 ):
     """لیست همه مشتریان برای ادمین."""
     return get_all_customers(limit=limit, offset=offset)
+
+
+@app.post("/admin/customers/{customer_id}/block")
+def admin_block_customer(customer_id: int, _=Depends(require_admin)):
+    """بلاک کردن حساب مشتری."""
+    ok = set_customer_blocked(customer_id, True)
+    return {"success": ok}
+
+
+@app.post("/admin/customers/{customer_id}/unblock")
+def admin_unblock_customer(customer_id: int, _=Depends(require_admin)):
+    """فعال‌سازی مجدد حساب مشتری."""
+    ok = set_customer_blocked(customer_id, False)
+    return {"success": ok}
 
 
 @app.get("/system/status")
@@ -1732,6 +1902,9 @@ def customer_login(request: CustomerLoginRequest):
 
     if not customer:
         return {"success": False, "message": "ایمیل یا رمز عبور اشتباه است."}
+
+    if customer.get("blocked"):
+        return {"success": False, "message": "حساب شما مسدود شده است. لطفاً با پشتیبانی تماس بگیرید."}
 
     return {
         "success": True,
