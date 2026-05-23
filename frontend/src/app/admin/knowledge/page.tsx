@@ -6,6 +6,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Database,
+  Eye,
   FileText,
   FolderOpen,
   RefreshCw,
@@ -13,6 +14,7 @@ import {
   TestTube2,
   Trash2,
   UploadCloud,
+  X,
 } from "lucide-react";
 
 type KnowledgeFileDetail = {
@@ -107,6 +109,26 @@ export default function KnowledgePage() {
   const [testResults, setTestResults] = useState<KnowledgeSearchResult[]>([]);
   const [testingSearch, setTestingSearch] = useState(false);
   const [testMessage, setTestMessage] = useState("");
+
+  type ChunkPreview = { index: number; title: string; category: string; content: string };
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
+  const [previewChunks, setPreviewChunks] = useState<ChunkPreview[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  async function openPreview(fileName: string) {
+    setPreviewFile(fileName);
+    setPreviewChunks([]);
+    setPreviewLoading(true);
+    try {
+      const res = await fetch(apiUrl(`/knowledge/files/${encodeURIComponent(fileName)}/chunks`), { cache: "no-store" });
+      const data = await res.json();
+      setPreviewChunks(data.chunks || []);
+    } catch {
+      setPreviewChunks([]);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
 
   async function loadKnowledgeStats() {
     try {
@@ -883,18 +905,27 @@ export default function KnowledgePage() {
                             </td>
 
                             <td className="p-4 align-top">
-                              <button
-                                onClick={() =>
-                                  deleteKnowledgeFile(item.file_name)
-                                }
-                                disabled={deletingFile === item.file_name}
-                                className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
-                              >
-                                <Trash2 size={15} />
-                                {deletingFile === item.file_name
-                                  ? "در حال حذف..."
-                                  : "حذف"}
-                              </button>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={() => openPreview(item.file_name)}
+                                  className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
+                                >
+                                  <Eye size={15} />
+                                  پیش‌نمایش
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    deleteKnowledgeFile(item.file_name)
+                                  }
+                                  disabled={deletingFile === item.file_name}
+                                  className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                                >
+                                  <Trash2 size={15} />
+                                  {deletingFile === item.file_name
+                                    ? "در حال حذف..."
+                                    : "حذف"}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -911,6 +942,79 @@ export default function KnowledgePage() {
           </div>
         </div>
       </div>
+
+      {/* Knowledge file preview slide-over */}
+      {previewFile && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="flex-1 bg-black/30"
+            onClick={() => setPreviewFile(null)}
+          />
+          {/* Panel */}
+          <div className="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl md:max-w-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 p-6">
+              <div>
+                <div className="text-sm font-bold text-blue-700">
+                  پیش‌نمایش بانک دانش
+                </div>
+                <div className="mt-1 break-all text-base font-black text-slate-900">
+                  {previewFile}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {previewChunks.length} بخش (chunk)
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewFile(null)}
+                className="ml-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 hover:bg-slate-50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {previewLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="ui-skeleton h-28 w-full rounded-2xl" />
+                  ))}
+                </div>
+              ) : previewChunks.length === 0 ? (
+                <div className="py-10 text-center text-sm text-slate-500">
+                  محتوایی یافت نشد.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {previewChunks.map((chunk) => (
+                    <div
+                      key={chunk.index}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
+                          #{chunk.index + 1}
+                        </span>
+                        {chunk.category && (
+                          <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                            {getCategoryLabel(chunk.category)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="whitespace-pre-wrap break-words text-xs leading-7 text-slate-700">
+                        {chunk.content}
+                        {chunk.content.length >= 600 && (
+                          <span className="text-slate-400"> …</span>
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -14,6 +14,9 @@ import {
   Inbox,
   MessageSquareText,
   RefreshCw,
+  Users,
+  MessagesSquare,
+  BookOpen,
 } from "lucide-react";
 
 type KnowledgeStats = {
@@ -64,6 +67,13 @@ type AnalyticsData = {
   top_keywords: Keyword[];
   feedback:     { status: string; count: number }[];
   hourly:       { hour: number; count: number }[];
+};
+
+type CustomerStats = {
+  total_customers: number;
+  total_sessions: number;
+  total_messages: number;
+  new_requests: number;
 };
 
 function getStatusLabel(status: string) {
@@ -126,43 +136,44 @@ function getStatusCount(stats: RequestStats | null, status: string) {
 }
 
 export default function DashboardPage() {
-  const [knowledgeStats, setKnowledgeStats] = useState<KnowledgeStats | null>(
-    null,
-  );
-  const [questionStats, setQuestionStats] = useState<QuestionStats | null>(
-    null,
-  );
+  const [knowledgeStats, setKnowledgeStats] = useState<KnowledgeStats | null>(null);
+  const [questionStats, setQuestionStats] = useState<QuestionStats | null>(null);
   const [requestStats, setRequestStats] = useState<RequestStats | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function loadStats() {
     setLoading(true);
 
     try {
-      const [knowledgeRes, questionRes, requestRes, analyticsRes] = await Promise.all([
+      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes] = await Promise.all([
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(apiUrl("/questions/stats"), { cache: "no-store" }),
         fetch(apiUrl("/customer-requests/stats"), { cache: "no-store" }),
         fetch(apiUrl("/questions/analytics?days=14"), { cache: "no-store" }),
+        fetch(apiUrl("/customers/stats"), { cache: "no-store" }),
       ]);
 
-      const [knowledgeData, questionData, requestData, analyticsJson] = await Promise.all([
+      const results = await Promise.allSettled([
         knowledgeRes.json(),
         questionRes.json(),
         requestRes.json(),
         analyticsRes.json(),
+        customerRes.json(),
       ]);
 
-      setKnowledgeStats(knowledgeData);
-      setQuestionStats(questionData);
-      setRequestStats(requestData);
-      setAnalyticsData(analyticsJson);
+      setKnowledgeStats(results[0].status === "fulfilled" ? results[0].value : null);
+      setQuestionStats(results[1].status === "fulfilled" ? results[1].value : null);
+      setRequestStats(results[2].status === "fulfilled" ? results[2].value : null);
+      setAnalyticsData(results[3].status === "fulfilled" ? results[3].value : null);
+      setCustomerStats(results[4].status === "fulfilled" ? results[4].value : null);
     } catch {
       setKnowledgeStats(null);
       setQuestionStats(null);
       setRequestStats(null);
       setAnalyticsData(null);
+      setCustomerStats(null);
     } finally {
       setLoading(false);
     }
@@ -220,7 +231,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <DashboardCard
             title="فایل‌های بانک دانش"
             value={knowledgeStats?.total_files ?? 0}
@@ -255,7 +266,7 @@ export default function DashboardPage() {
 
           <DashboardCard
             title="درخواست‌های جدید"
-            value={getStatusCount(requestStats, "new")}
+            value={customerStats?.new_requests ?? getStatusCount(requestStats, "new")}
             icon={<MessageSquareText size={24} />}
             tone="amber"
             href="/admin/requests"
@@ -267,6 +278,33 @@ export default function DashboardPage() {
             icon={<Activity size={24} />}
             tone="red"
             href="/admin/requests"
+          />
+        </div>
+
+        {/* ─── Customer Stats Row ─────────────────────────────────── */}
+        <div className="mb-6 grid gap-4 md:grid-cols-3">
+          <DashboardCard
+            title="مشتریان ثبت‌نام‌شده"
+            value={customerStats?.total_customers ?? 0}
+            icon={<Users size={24} />}
+            tone="purple"
+            href="/admin/dashboard"
+          />
+
+          <DashboardCard
+            title="جلسات گفتگوی مشتریان"
+            value={customerStats?.total_sessions ?? 0}
+            icon={<MessagesSquare size={24} />}
+            tone="blue"
+            href="/admin/dashboard"
+          />
+
+          <DashboardCard
+            title="کل پیام‌های مشتریان"
+            value={customerStats?.total_messages ?? 0}
+            icon={<BookOpen size={24} />}
+            tone="emerald"
+            href="/admin/dashboard"
           />
         </div>
 

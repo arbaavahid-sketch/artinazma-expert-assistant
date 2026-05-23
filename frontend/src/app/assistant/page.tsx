@@ -521,6 +521,8 @@ function AssistantPageInner() {
   const [chatImageType, setChatImageType] = useState("general");
   const [chatImageNote, setChatImageNote] = useState("");
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -766,6 +768,13 @@ ${cleanAnswer}`,
     }
   }, [router, sessionIdParam]);
 
+  // Rate limit countdown timer
+  useEffect(() => {
+    if (rateLimitCountdown <= 0) return;
+    const timer = setTimeout(() => setRateLimitCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [rateLimitCountdown]);
+
   function typeAssistantMessage(
     previousMessages: ChatMessage[],
     userMessage: ChatMessage,
@@ -827,98 +836,146 @@ ${cleanAnswer}`,
     setLoading(true);
     setShowTools(false);
 
+    setSuggestedQuestions([]);
+    // پیام placeholder خالی برای نمایش حین streaming
+    const placeholderMsg: ChatMessage = { role: "assistant", content: "" };
+    setMessages([...previousMessages, userMessage, placeholderMsg]);
+
+    const bodyPayload = {
+      message: finalMessage,
+      domain,
+      response_mode: responseMode,
+      user_id: userId,
+      history: previousMessages.map((item) => {
+        let content = item.content;
+        if (item.attachment) {
+          content += `\n\nاطلاعات فایل/عکس قبلی:\nنام: ${item.attachment.name}\nنوع: ${item.attachment.kind}\nدسته‌بندی تحلیل: ${item.attachment.analysisType || ""}\nتوضیح کاربر: ${item.attachment.note || ""}`;
+        }
+        return { role: item.role, content };
+      }),
+    };
+
     try {
-      const res = await fetch(apiUrl("/chat"), {
+      const res = await fetch(apiUrl("/chat/stream"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: finalMessage,
-          domain,
-          response_mode: responseMode,
-          user_id: userId,
-          history: previousMessages.map((item) => {
-            let content = item.content;
-
-            if (item.attachment) {
-              content += `
-
-اطلاعات فایل/عکس قبلی:
-نام: ${item.attachment.name}
-نوع: ${item.attachment.kind}
-دسته‌بندی تحلیل: ${item.attachment.analysisType || ""}
-توضیح کاربر: ${item.attachment.note || ""}
-`;
-            }
-
-            return {
-              role: item.role,
-              content,
-            };
-          }),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload),
       });
 
-      const rawText = await res.text();
-
-      if (!res.ok) {
-        let serverMessage = "خطا در دریافت پاسخ از سرور.";
-
-        try {
-          const errorData = JSON.parse(rawText);
-          serverMessage = errorData.message || errorData.error || serverMessage;
-        } catch {}
-
-        throw new Error(serverMessage);
+      if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get("Retry-After") || "60", 10);
+        setRateLimitCountdown(isNaN(retryAfter) ? 60 : retryAfter);
+        setMessages([
+          ...previousMessages,
+          userMessage,
+          {
+            role: "assistant",
+            content: "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً چند لحظه صبر کنید.",
+          },
+        ]);
+        return;
       }
 
-      let data;
-
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        throw new Error("پاسخ سرور معتبر نبود.");
+      if (!res.ok || !res.body) {
+        throw new Error("خطا در دریافت پاسخ از سرور.");
       }
 
-      const relatedDevices: DeviceAsset[] = [];
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulatedText = "";
+      let metaData: Record<string, unknown> = {};
+      let finalAssistantMsg: ChatMessage = { role: "assistant", content: "" };
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: data.answer || "پاسخی دریافت نشد.",
-        sources: data.sources || [],
-        detected_domain: data.detected_domain,
-        question_id: data.question_id,
-        relatedDevices,
-        resource_links: data.resource_links || [],
-        resource_images: data.resource_images || [],
-      };
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      await saveCustomerChatMessage(
-        customerSessionId,
-        "assistant",
-        assistantMessage.content,
-        {
-          sources: assistantMessage.sources || [],
-          detected_domain: assistantMessage.detected_domain,
-          question_id: assistantMessage.question_id,
-          relatedDevices,
-          resource_links: assistantMessage.resource_links || [],
-          resource_images: assistantMessage.resource_images || [],
-        },
-      );
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
 
-      typeAssistantMessage(previousMessages, userMessage, assistantMessage);
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+
+            if (event.type === "meta") {
+              metaData = event;
+              finalAssistantMsg = {
+                role: "assistant",
+                content: accumulatedText,
+                sources: (event.sources as Source[]) || [],
+                detected_domain: event.detected_domain as string,
+                resource_links: (event.resource_links as ResourceLink[]) || [],
+                resource_images: (event.resource_images as ResourceImage[]) || [],
+              };
+            } else if (event.type === "chunk") {
+              accumulatedText += event.text as string;
+              setMessages([
+                ...previousMessages,
+                userMessage,
+                { ...finalAssistantMsg, content: accumulatedText },
+              ]);
+            } else if (event.type === "done") {
+              finalAssistantMsg = {
+                ...finalAssistantMsg,
+                content: accumulatedText,
+                question_id: event.question_id as number,
+              };
+              setMessages([...previousMessages, userMessage, finalAssistantMsg]);
+
+              // ذخیره در session مشتری
+              await saveCustomerChatMessage(
+                customerSessionId,
+                "assistant",
+                finalAssistantMsg.content,
+                {
+                  sources: finalAssistantMsg.sources || [],
+                  detected_domain: finalAssistantMsg.detected_domain,
+                  question_id: finalAssistantMsg.question_id,
+                  resource_links: finalAssistantMsg.resource_links || [],
+                  resource_images: finalAssistantMsg.resource_images || [],
+                },
+              );
+            } else if (event.type === "error") {
+              throw new Error(event.message as string || "خطا در دریافت پاسخ.");
+            }
+          } catch (parseErr) {
+            // ادامه parsing خطوط دیگر
+          }
+        }
+      }
+
+      setLoading(false);
+      void metaData; // suppress unused warning
+
+      // پیشنهاد سوالات مرتبط (non-blocking)
+      if (accumulatedText.length > 100) {
+        fetch(apiUrl("/chat/suggest-questions"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: finalMessage,
+            answer: accumulatedText,
+            domain: finalAssistantMsg.detected_domain || "auto",
+          }),
+        })
+          .then((r) => r.json())
+          .then((d) => { if (d.questions?.length) setSuggestedQuestions(d.questions); })
+          .catch(() => {});
+      }
     } catch (error) {
       console.error("CHAT ERROR:", error);
-
+      const isOffline = !navigator.onLine;
       setMessages([
         ...previousMessages,
         userMessage,
         {
           role: "assistant",
-          content:
-            "در حال حاضر ارتباط با سرویس پاسخ‌گویی دچار اختلال شده است. لطفاً چند لحظه بعد دوباره تلاش کنید.",
+          content: isOffline
+            ? "اتصال اینترنت شما قطع است. پس از برقراری مجدد اتصال، دوباره تلاش کنید."
+            : "در حال حاضر ارتباط با سرویس پاسخ‌گویی دچار اختلال شده است. لطفاً چند لحظه بعد دوباره تلاش کنید.",
         },
       ]);
     } finally {
@@ -936,32 +993,66 @@ ${cleanAnswer}`,
 
   function exportChat() {
     if (messages.length === 0) return;
-    const lines: string[] = [];
-    const now = new Date().toLocaleDateString("fa-IR");
-    lines.push("=== گفتگو با آرتین - آرتین آزما مهر ===");
-    lines.push(`تاریخ: ${now}`);
-    lines.push("");
-    for (const msg of messages) {
+    const now = new Date().toLocaleDateString("fa-IR", {
+      year: "numeric", month: "long", day: "numeric",
+    });
+
+    const msgHtml = messages.map((msg) => {
       if (msg.role === "user") {
-        lines.push("[ کاربر ]");
-        if (msg.attachment) {
-          lines.push(`پیوست: ${msg.attachment.name} (${msg.attachment.analysisType || msg.attachment.kind})`);
-        }
-        lines.push(msg.content);
+        const attachLine = msg.attachment
+          ? `<div class="attachment">📎 پیوست: ${msg.attachment.name}</div>`
+          : "";
+        const content = msg.content
+          ? `<p>${msg.content.replace(/\n/g, "<br/>")}</p>`
+          : "";
+        return `<div class="bubble user"><div class="label">کاربر</div>${attachLine}${content}</div>`;
       } else {
-        lines.push("[ آرتین ]");
-        lines.push(msg.content);
+        const safe = msg.content
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.*?)\*/g, "<em>$1</em>")
+          .replace(/\n/g, "<br/>");
+        return `<div class="bubble artin"><div class="label">آرتین</div><p>${safe}</p></div>`;
       }
-      lines.push("");
-    }
-    lines.push("===========================================");
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `artin-chat-${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    }).join("");
+
+    const html = `<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="UTF-8"/>
+<title>گفتگو با آرتین — آرتین آزما</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; }
+  .header { border-bottom: 2px solid #7c3aed; padding-bottom: 16px; margin-bottom: 28px; }
+  .header h1 { font-size: 20px; font-weight: 900; color: #7c3aed; }
+  .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }
+  .bubble { margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; page-break-inside: avoid; }
+  .bubble.user { background: #ede9fe; border-right: 4px solid #7c3aed; }
+  .bubble.artin { background: #f1f5f9; border-right: 4px solid #0ea5e9; }
+  .label { font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.05em; }
+  .bubble.user .label { color: #7c3aed; }
+  .bubble.artin .label { color: #0ea5e9; }
+  p { line-height: 2; }
+  .attachment { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+  .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 10px; color: #94a3b8; text-align: center; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>گفتگو با آرتین — دستیار هوشمند آرتین آزما</h1>
+  <div class="meta">تاریخ: ${now}</div>
+</div>
+${msgHtml}
+<div class="footer">آرتین آزما مهر — artinazma.net</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body>
+</html>`;
+
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -1364,11 +1455,11 @@ ${cleanAnswer}`,
             {messages.length > 0 && (
               <button
                 onClick={exportChat}
-                title="دانلود مکالمه"
+                title="خروجی PDF گفتگو"
                 className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
               >
                 <Download size={13} />
-                خروجی
+                PDF
               </button>
             )}
             <button
@@ -1399,6 +1490,17 @@ ${cleanAnswer}`,
                 سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا درخواست
                 مشاوره ثبت کنید.
               </p>
+
+              {rateLimitCountdown > 0 && (
+                <div className="mb-3 flex w-full max-w-3xl items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-700">
+                  <span className="text-lg">⏳</span>
+                  <span>محدودیت ارسال فعال است — لطفاً</span>
+                  <span className="rounded-xl bg-amber-100 px-3 py-1 text-base font-black tabular-nums">
+                    {rateLimitCountdown}
+                  </span>
+                  <span>ثانیه دیگر تلاش کنید.</span>
+                </div>
+              )}
 
               <div className="relative mt-8 w-full max-w-3xl">
                 {showTools && (
@@ -1441,7 +1543,7 @@ ${cleanAnswer}`,
                     )}
                     <button
                       onClick={() => sendMessage()}
-                      disabled={loading || !message.trim()}
+                      disabled={loading || !message.trim() || rateLimitCountdown > 0}
                       className="ui-btn ui-btn-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300"
                     >
                       ↑
@@ -1484,6 +1586,24 @@ ${cleanAnswer}`,
                   }
                 />
               ))}
+
+              {/* سوالات پیشنهادی */}
+              {!loading && suggestedQuestions.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {suggestedQuestions.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setSuggestedQuestions([]);
+                        sendMessage(q, q);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {loading && (
                 <div className="flex justify-start">

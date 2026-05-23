@@ -958,12 +958,28 @@ IMAGE_ANALYSIS_PROMPT = """
 """
 
 
+_ocr_reader = None
+_ocr_reader_lock = __import__("threading").Lock()
+
+
+def _get_ocr_reader():
+    """OCR reader رو یه بار لود می‌کنه و cache می‌کنه (thread-safe)."""
+    global _ocr_reader
+    if _ocr_reader is not None:
+        return _ocr_reader
+    with _ocr_reader_lock:
+        if _ocr_reader is None:  # double-check after lock
+            import easyocr
+            print("[OCR] loading easyocr reader for the first time…")
+            _ocr_reader = easyocr.Reader(["en", "fa"], gpu=False, verbose=False)
+            print("[OCR] reader ready and cached.")
+    return _ocr_reader
+
+
 def _ocr_extract_text(file_path: str) -> str:
-    """Extract text from image using easyocr (works locally, no network needed)."""
+    """Extract text from image using easyocr (cached reader, no network needed)."""
     try:
-        import easyocr
-        print("[OCR] loading easyocr reader...")
-        reader = easyocr.Reader(["en", "fa"], gpu=False, verbose=False)
+        reader = _get_ocr_reader()
         print("[OCR] running readtext...")
         results = reader.readtext(file_path, detail=0, paragraph=True)
         text = "\n".join(results).strip()

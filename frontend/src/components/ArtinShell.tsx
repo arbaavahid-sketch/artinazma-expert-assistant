@@ -21,6 +21,7 @@ import {
   Sparkles,
   Pencil,
   Trash2,
+  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -60,6 +61,7 @@ const adminItems: SidebarItem[] = [
   { href: "/admin/knowledge", label: "بانک دانش", Icon: Database },
   { href: "/admin/questions", label: "سوالات کاربران", Icon: MessagesSquare },
   { href: "/admin/requests", label: "درخواست‌ها", Icon: Inbox },
+  { href: "/admin/customers", label: "مشتریان", Icon: Users },
   { href: "/admin/dashboard", label: "داشبورد", Icon: ChartBar },
   { href: "/admin/settings", label: "تنظیمات سیستم", Icon: Settings },
 ];
@@ -81,10 +83,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [customerSessions, setCustomerSessions] = useState<ChatSession[]>([]);
-  const [renamingSessionId, setRenamingSessionId] = useState<number | null>(
-    null,
-  );
+  const [renamingSessionId, setRenamingSessionId] = useState<number | null>(null);
   const [renameTitle, setRenameTitle] = useState("");
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [isOnline, setIsOnline] = useState(true);
+  const [showReconnected, setShowReconnected] = useState(false);
 
   async function refreshCustomerSessions() {
     try {
@@ -182,10 +185,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   useEffect(() => {
     async function checkAdminStatus() {
       try {
-        const res = await fetch("/api/admin-status", {
-          cache: "no-store",
-        });
-
+        const res = await fetch("/api/admin-status", { cache: "no-store" });
         const data = await res.json();
         setIsAdmin(Boolean(data.is_admin));
       } catch {
@@ -197,6 +197,24 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   }, [pathname]);
 
   useEffect(() => {
+    async function fetchPendingRequests() {
+      try {
+        const res = await fetch(apiUrl("/customers/stats"), { cache: "no-store" });
+        const data = await res.json();
+        setPendingRequestsCount(data.new_requests ?? 0);
+      } catch {
+        setPendingRequestsCount(0);
+      }
+    }
+
+    if (isAdminArea) {
+      fetchPendingRequests();
+      const interval = setInterval(fetchPendingRequests, 60_000);
+      return () => clearInterval(interval);
+    }
+  }, [isAdminArea, pathname]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setActiveSessionId(params.get("session_id"));
   }, [pathname]);
@@ -205,8 +223,41 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     refreshCustomerSessions();
   }, [pathname, activeSessionId]);
 
+  // Online/offline detection
+  useEffect(() => {
+    const handleOffline = () => {
+      setIsOnline(false);
+      setShowReconnected(false);
+    };
+    const handleOnline = () => {
+      setIsOnline(true);
+      setShowReconnected(true);
+      setTimeout(() => setShowReconnected(false), 3000);
+    };
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
+
   return (
     <main className="h-screen overflow-hidden bg-[#f7f7f8] text-slate-900">
+      {/* Offline banner */}
+      {!isOnline && (
+        <div className="fixed inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
+          <span>📡</span>
+          <span>اتصال اینترنت قطع شده است — پیام‌های جدید ارسال نمی‌شوند.</span>
+        </div>
+      )}
+      {/* Reconnected flash */}
+      {showReconnected && (
+        <div className="fixed inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
+          <span>✅</span>
+          <span>اتصال برقرار شد.</span>
+        </div>
+      )}
       <div className="flex h-full overflow-hidden">
         {mobileSidebarOpen && (
           <button
@@ -456,13 +507,16 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                           : pathname === item.href ||
                             pathname.startsWith(`${item.href}/`);
 
+                      const isRequestsItem = item.href === "/admin/requests";
+                      const showBadge = isRequestsItem && pendingRequestsCount > 0;
+
                       return (
                         <Link
                           key={item.href}
                           href={item.href}
                           onClick={() => setMobileSidebarOpen(false)}
                           title={item.label}
-                          className={`group mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
+                          className={`group relative mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
                             sidebarCollapsed ? "justify-center px-2" : ""
                           } ${
                             isActive
@@ -471,16 +525,27 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                           }`}
                         >
                           <span
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
+                            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
                               isActive
                                 ? "bg-purple-50 text-purple-700"
                                 : "bg-white text-slate-500 group-hover:text-purple-700"
                             }`}
                           >
                             <item.Icon size={19} strokeWidth={1.9} />
+                            {showBadge && sidebarCollapsed && (
+                              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white">
+                                {pendingRequestsCount > 9 ? "9+" : pendingRequestsCount}
+                              </span>
+                            )}
                           </span>
 
-                          {!sidebarCollapsed && <span>{item.label}</span>}
+                          {!sidebarCollapsed && <span className="flex-1">{item.label}</span>}
+
+                          {!sidebarCollapsed && showBadge && (
+                            <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-black text-white">
+                              {pendingRequestsCount}
+                            </span>
+                          )}
                         </Link>
                       );
                     })}

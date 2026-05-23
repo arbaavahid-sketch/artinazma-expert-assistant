@@ -1,12 +1,17 @@
 import os
 import re
+import threading
+import logging
+from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 import shutil
+from datetime import datetime as _dt
 from artinazma_index_service import rebuild_artinazma_index, load_index
 from intent_service import detect_question_intent
 from site_resource_service import find_artinazma_resources
 from local_search_service import local_search_knowledge_base, build_local_answer
 from fastapi import FastAPI, Request, UploadFile, File, Form, Depends, HTTPException, Security
+from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -23,7 +28,7 @@ from knowledge_service import (
     knowledge_file_exists,
     add_text_to_knowledge_base,
 )
-from ai_service import ask_expert_assistant, analyze_image_with_ai
+from ai_service import ask_expert_assistant, ask_expert_assistant_stream, analyze_image_with_ai
 from ai_service import client as ai_client
 from file_analyzer import analyze_excel_or_csv, read_pdf_text
 from db_service import (
@@ -54,9 +59,67 @@ from db_service import (
     update_chat_session_title,
     delete_chat_session,
     get_all_questions,
+    get_all_customers,
+    get_connection,
+    get_setting,
+    set_setting,
 )
 
-app = FastAPI(title="ArtinAzma Expert Assistant API")
+_gdrive_timer: threading.Timer | None = None
+_gdrive_lock = threading.Lock()
+
+logger = logging.getLogger("artin_scheduler")
+
+
+def _run_gdrive_sync():
+    """اجرای همزمان‌سازی Google Drive در پس‌زمینه."""
+    folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
+    if not folder_id:
+        logger.info("GOOGLE_DRIVE_ROOT_FOLDER_ID not set — skipping scheduled sync")
+        return
+    try:
+        logger.info("Starting scheduled Google Drive sync...")
+        result = sync_google_drive_folder(root_folder_id=folder_id, max_files=200, force_resync=False)
+        set_setting("gdrive_last_sync", _dt.utcnow().isoformat())
+        set_setting("gdrive_last_sync_result", str(result.get("synced_files", 0)) + " فایل")
+        logger.info("Scheduled Google Drive sync complete: %s", result)
+    except Exception as exc:
+        logger.error("Scheduled Google Drive sync failed: %s", exc)
+        set_setting("gdrive_last_sync_result", f"خطا: {exc}")
+
+
+def _schedule_gdrive(interval_hours: float):
+    """برنامه‌ریزی sync بعدی؛ اگر interval_hours=0 باشد، تایمر لغو می‌شود."""
+    global _gdrive_timer
+    with _gdrive_lock:
+        if _gdrive_timer is not None:
+            _gdrive_timer.cancel()
+            _gdrive_timer = None
+        if interval_hours <= 0:
+            return
+        def _fire():
+            _run_gdrive_sync()
+            _schedule_gdrive(float(get_setting("gdrive_sync_interval_hours", "0")))
+        _gdrive_timer = threading.Timer(interval_hours * 3600, _fire)
+        _gdrive_timer.daemon = True
+        _gdrive_timer.start()
+
+
+@asynccontextmanager
+async def _lifespan(app_instance):
+    # startup
+    interval = float(get_setting("gdrive_sync_interval_hours", "0"))
+    if interval > 0:
+        _schedule_gdrive(interval)
+        logger.info("Google Drive auto-sync scheduled every %.1f hours", interval)
+    yield
+    # shutdown
+    with _gdrive_lock:
+        if _gdrive_timer is not None:
+            _gdrive_timer.cancel()
+
+
+app = FastAPI(title="ArtinAzma Expert Assistant API", lifespan=_lifespan)
 _admin_key_header = APIKeyHeader(name="X-Admin-Key", auto_error=False)
 
 def require_admin(api_key: str = Security(_admin_key_header)):
@@ -730,6 +793,182 @@ def chat(body: ChatRequest, request: Request):
     }
 
 
+@app.post("/chat/stream")
+@limiter.limit("20/minute")
+def chat_stream(body: ChatRequest, request: Request):
+    """همان pipeline چت اما با پاسخ streaming (SSE)."""
+    import json as _json_local
+
+    # ── همان pipeline پیش‌پردازش /chat ──────────────────────────────
+    has_astm_code = bool(re.search(r"\bD\s*\d{3,5}\b", body.message, flags=re.IGNORECASE))
+    specific_model_question = is_specific_product_or_model_question(body.message)
+    allow_company_reference = is_artinazma_related_question(body.message)
+    is_transform_followup = is_followup_transform_request(body.message)
+    intent_data = detect_question_intent(message=body.message, domain=body.domain or "auto")
+    question_intent = intent_data["intent"]
+    question_intent_label = intent_data["label"]
+    local_docs = local_search_knowledge_base(body.message, top_k=12)
+
+    best_score = 0.0
+    related_docs = []
+    search_mode = "unknown"
+
+    if has_astm_code:
+        related_docs = []
+        search_mode = "gpt_astm_direct"
+    elif specific_model_question:
+        exact_local_match = context_has_exact_model_match(body.message, local_docs)
+        if exact_local_match and local_docs and float(local_docs[0].get("score", 0) or 0) >= 8:
+            related_docs = local_docs[:8]
+            search_mode = "local_exact_model"
+        else:
+            related_docs = []
+            search_mode = "no_exact_model_context"
+    else:
+        if local_docs and float(local_docs[0].get("score", 0) or 0) >= 10:
+            related_docs = local_docs[:8]
+            search_mode = "local_fast"
+        else:
+            try:
+                related_docs = search_knowledge_base(body.message, top_k=5)
+                search_mode = "ai_vector"
+            except Exception:
+                related_docs = local_docs[:8]
+                search_mode = "local_fallback"
+
+    if related_docs:
+        try:
+            best_score = float(related_docs[0].get("score", 0) or 0)
+        except Exception:
+            best_score = 0.0
+
+    if question_intent in ["technical_general", "equipment_recommendation", "troubleshooting", "lab_analysis"]:
+        if best_score < 14:
+            related_docs = []
+            best_score = 0.0
+
+    resource_links = []
+    resource_images = []
+    artinazma_context = ""
+
+    if allow_company_reference:
+        try:
+            artinazma_resources = find_artinazma_resources(message=body.message, max_results=2)
+            resource_links = artinazma_resources.get("links", [])
+            resource_images = artinazma_resources.get("images", [])
+            if resource_links:
+                artinazma_context = "نتیجه جست‌وجوی سایت رسمی آرتین آزما:\n"
+                for link in resource_links:
+                    artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}\nلینک صفحه: {link.get('url', '')}\n"
+        except Exception:
+            pass
+
+    allow_web_search = True
+    if body.response_mode == "brief":
+        allow_web_search = False
+    if question_intent in ["technical_general", "equipment_recommendation", "troubleshooting", "lab_analysis"]:
+        allow_web_search = True
+    if specific_model_question or has_astm_code or not related_docs:
+        allow_web_search = True
+    if is_transform_followup:
+        allow_web_search = False
+        related_docs = []
+        search_mode = "followup_transform"
+
+    context = ""
+    if related_docs:
+        parts = []
+        for doc in related_docs:
+            parts.append(f"منبع داخلی:\nعنوان: {doc.get('title','')}\nمتن:\n{doc.get('content','')}")
+        context = "\n\n".join(parts)
+    if artinazma_context:
+        context = f"{context}\n\n{artinazma_context}".strip()
+
+    auto_domain = detect_domain(body.message)
+    selected_domain = body.domain or "auto"
+    detected_domain = auto_domain if selected_domain == "auto" else selected_domain
+    history = [
+        {"role": item.role, "content": item.content}
+        for item in (body.history or [])[-6:]
+        if item.role in ["user", "assistant"] and item.content
+    ]
+
+    sources = [
+        {"title": doc.get("title",""), "file_name": doc.get("file_name",""),
+         "category": doc.get("category",""), "score": float(doc.get("score",0) or 0)}
+        for doc in related_docs
+    ]
+
+    style_instructions = "پاسخ فارسی، تخصصی، کامل و آموزشی باشد."
+    if context:
+        context = f"{context}\n\n---\n\n{style_instructions}"
+    else:
+        context = style_instructions
+
+    def event_generator():
+        # ابتدا metadata ارسال می‌شود
+        meta = {
+            "type": "meta",
+            "detected_domain": detected_domain,
+            "sources": sources,
+            "resource_links": resource_links if allow_company_reference else [],
+            "resource_images": resource_images if allow_company_reference else [],
+            "search_mode": search_mode,
+            "web_search_used": allow_web_search,
+            "question_intent": question_intent,
+            "question_intent_label": question_intent_label,
+        }
+        yield f"data: {_json_local.dumps(meta, ensure_ascii=False)}\n\n"
+
+        # سپس متن پاسخ chunk به chunk
+        full_answer = ""
+        try:
+            for chunk in ask_expert_assistant_stream(
+                message=body.message,
+                context=context,
+                history=history,
+                domain=detected_domain,
+                allow_web_search=allow_web_search,
+            ):
+                full_answer += chunk
+                payload = {"type": "chunk", "text": chunk}
+                yield f"data: {_json_local.dumps(payload, ensure_ascii=False)}\n\n"
+        except Exception as exc:
+            err = {"type": "error", "message": str(exc)}
+            yield f"data: {_json_local.dumps(err, ensure_ascii=False)}\n\n"
+            full_answer = "خطا در دریافت پاسخ."
+
+        # ذخیره در DB و ارسال event پایانی
+        try:
+            question_id = save_expert_question(
+                question=body.message,
+                answer=full_answer,
+                sources=sources,
+                detected_domain=detected_domain,
+            )
+            memory_id = None
+            if body.user_id and body.user_id != "anonymous":
+                memory_id = save_user_memory(
+                    user_id=body.user_id,
+                    question=body.message,
+                    answer=full_answer,
+                    detected_domain=detected_domain,
+                    memory_type="chat",
+                    metadata={"question_id": question_id, "sources": sources,
+                               "search_mode": search_mode, "web_search_used": allow_web_search},
+                )
+            done = {"type": "done", "question_id": question_id, "memory_id": memory_id}
+        except Exception:
+            done = {"type": "done", "question_id": None, "memory_id": None}
+        yield f"data: {_json_local.dumps(done, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @app.post("/analyze-file")
 def analyze_file(
     file: UploadFile = File(...),
@@ -964,6 +1203,24 @@ def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
 @app.get("/knowledge/stats")
 def knowledge_stats(): 
     return get_knowledge_stats()
+
+
+@app.get("/knowledge/files/{file_name}/chunks")
+def knowledge_file_chunks(file_name: str, _=Depends(require_admin)):
+    """پیش‌نمایش بخش‌های (chunks) یک فایل دانش."""
+    from knowledge_service import load_vector_store
+    store = load_vector_store()
+    chunks = [
+        {
+            "index": i,
+            "title": item.get("title", ""),
+            "category": item.get("category", ""),
+            "content": item.get("content", "")[:600],  # limit preview length
+        }
+        for i, item in enumerate(store)
+        if item.get("file_name") == file_name
+    ]
+    return {"file_name": file_name, "total": len(chunks), "chunks": chunks}
 
 
 @app.delete("/knowledge/files/{file_name}")
@@ -1246,6 +1503,148 @@ def customer_requests_stats(_=Depends(require_admin)):
     return get_customer_request_stats()
 
 
+@app.get("/customers/stats")
+def customers_stats():
+    """آمار مشتریان — بدون نیاز به احراز هویت ادمین."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        total_customers = cursor.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+        total_sessions = cursor.execute("SELECT COUNT(*) FROM chat_sessions").fetchone()[0]
+        total_messages = cursor.execute("SELECT COUNT(*) FROM chat_messages").fetchone()[0]
+        new_requests = cursor.execute(
+            "SELECT COUNT(*) FROM customer_requests WHERE status='new'"
+        ).fetchone()[0]
+    return {
+        "total_customers": total_customers,
+        "total_sessions": total_sessions,
+        "total_messages": total_messages,
+        "new_requests": new_requests,
+    }
+
+
+@app.get("/admin/dashboard-stats")
+def admin_dashboard_stats(_=Depends(require_admin)):
+    """آمار جامع برای داشبورد ادمین."""
+    q_stats = get_question_stats()
+    r_stats = get_customer_request_stats()
+    q_analytics = get_question_analytics(days=7)
+    knowledge_stats_data = get_knowledge_stats()
+
+    # تعداد مشتریان
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        total_customers = cursor.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+        total_sessions = cursor.execute("SELECT COUNT(*) FROM chat_sessions").fetchone()[0]
+        total_messages = cursor.execute("SELECT COUNT(*) FROM chat_messages").fetchone()[0]
+        new_requests = cursor.execute(
+            "SELECT COUNT(*) FROM customer_requests WHERE status='pending'"
+        ).fetchone()[0]
+
+    return {
+        "questions": {
+            "total": q_stats.get("total_questions", 0),
+            "today": q_analytics.get("questions_per_day", [{}])[-1].get("count", 0) if q_analytics.get("questions_per_day") else 0,
+            "by_intent": q_stats.get("by_intent", []),
+            "per_day": q_analytics.get("questions_per_day", []),
+            "top_keywords": q_analytics.get("top_keywords", []),
+        },
+        "customers": {
+            "total": total_customers,
+            "total_sessions": total_sessions,
+            "total_messages": total_messages,
+        },
+        "requests": {
+            "total": r_stats.get("total_requests", 0),
+            "pending": new_requests,
+            "by_type": r_stats.get("by_type", []),
+        },
+        "knowledge": {
+            "total_chunks": knowledge_stats_data.get("total_chunks", 0),
+            "total_files": knowledge_stats_data.get("total_files", 0),
+        },
+    }
+
+
+class GDriveSyncScheduleRequest(BaseModel):
+    interval_hours: float  # 0 = disabled
+
+
+@app.get("/admin/gdrive-schedule")
+def get_gdrive_schedule(_=Depends(require_admin)):
+    """وضعیت تنظیمات زمان‌بندی همزمان‌سازی Google Drive."""
+    interval = float(get_setting("gdrive_sync_interval_hours", "0"))
+    last_sync = get_setting("gdrive_last_sync", "")
+    last_result = get_setting("gdrive_last_sync_result", "")
+    return {
+        "interval_hours": interval,
+        "enabled": interval > 0,
+        "last_sync": last_sync,
+        "last_sync_result": last_result,
+        "folder_id_configured": bool(os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()),
+    }
+
+
+@app.post("/admin/gdrive-schedule")
+def set_gdrive_schedule(body: GDriveSyncScheduleRequest, _=Depends(require_admin)):
+    """تنظیم زمان‌بندی همزمان‌سازی Google Drive."""
+    hours = max(0.0, body.interval_hours)
+    set_setting("gdrive_sync_interval_hours", str(hours))
+    _schedule_gdrive(hours)
+    if hours == 0:
+        return {"success": True, "message": "زمان‌بندی همزمان‌سازی غیرفعال شد."}
+    return {"success": True, "message": f"همزمان‌سازی هر {hours:.0f} ساعت یک‌بار برنامه‌ریزی شد."}
+
+
+@app.post("/admin/gdrive-sync-now")
+def run_gdrive_sync_now(_=Depends(require_admin)):
+    """اجرای فوری همزمان‌سازی Google Drive."""
+    folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
+    if not folder_id:
+        raise HTTPException(status_code=400, detail="GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است.")
+    try:
+        result = sync_google_drive_folder(root_folder_id=folder_id, max_files=200, force_resync=False)
+        set_setting("gdrive_last_sync", _dt.utcnow().isoformat())
+        set_setting("gdrive_last_sync_result", str(result.get("synced_files", 0)) + " فایل")
+        return {"success": True, "result": result}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/admin/questions/export-csv")
+def export_questions_csv(_=Depends(require_admin)):
+    """خروجی CSV از همه سوالات برای دانلود Excel."""
+    import csv, io
+    questions = get_all_questions(limit=5000)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["شناسه", "سوال", "حوزه", "وضعیت بررسی", "تاریخ ثبت"])
+    for q in questions:
+        writer.writerow([
+            q.get("id", ""),
+            q.get("question", ""),
+            q.get("detected_domain", ""),
+            q.get("expert_status", "pending"),
+            q.get("created_at", ""),
+        ])
+    csv_bytes = output.getvalue().encode("utf-8-sig")  # utf-8-sig for Excel BOM
+    from fastapi.responses import Response
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=questions.csv"},
+    )
+
+
+@app.get("/admin/customers")
+def admin_list_customers(
+    limit: int = 200,
+    offset: int = 0,
+    _=Depends(require_admin),
+):
+    """لیست همه مشتریان برای ادمین."""
+    return get_all_customers(limit=limit, offset=offset)
+
+
 @app.get("/system/status")
 def system_status(check_ai: bool = False):
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
@@ -1456,6 +1855,44 @@ def customer_chat_session_delete(customer_id: int, session_id: int):
         return {"success": False, "message": "گفتگوی موردنظر پیدا نشد."}
 
     return {"success": True, "message": "گفتگو حذف شد."}
+
+
+class SuggestQuestionsRequest(BaseModel):
+    question: str
+    answer: str
+    domain: str = "auto"
+
+
+@app.post("/chat/suggest-questions")
+def suggest_questions(body: SuggestQuestionsRequest):
+    """سه سوال پیشنهادی مرتبط بر اساس سوال و پاسخ قبلی."""
+    prompt = f"""بر اساس سوال و پاسخ زیر، دقیقاً ۳ سوال کوتاه و مرتبط فنی/تخصصی در حوزه آزمایشگاه، صنعت نفت، پتروشیمی، کاتالیست یا تجهیزات پیشنهاد بده.
+
+سوال کاربر: {body.question}
+
+پاسخ آرتین (خلاصه): {body.answer[:500]}
+
+خروجی فقط یک JSON آرایه با ۳ رشته باشد، بدون توضیح اضافه:
+["سوال اول؟", "سوال دوم؟", "سوال سوم؟"]
+"""
+    try:
+        raw = ask_expert_assistant(
+            message=prompt,
+            context="",
+            history=[],
+            domain=body.domain,
+            allow_web_search=False,
+        )
+        # استخراج JSON از پاسخ
+        import re as _re
+        match = _re.search(r'\[.*?\]', raw, _re.DOTALL)
+        if match:
+            import json as _j
+            questions = _j.loads(match.group())
+            return {"questions": questions[:3]}
+        return {"questions": []}
+    except Exception:
+        return {"questions": []}
 
 
 @app.post("/knowledge/index-artinazma-site")

@@ -7,11 +7,14 @@ import {
   Beaker,
   CheckCircle2,
   ClipboardCopy,
+  Download,
   FileSpreadsheet,
   FileText,
   FlaskConical,
   ImageIcon,
   Loader2,
+  MessageSquare,
+  Send,
   ShieldCheck,
   UploadCloud,
 } from "lucide-react";
@@ -58,78 +61,233 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const PROGRESS_STEPS_IMAGE = [
+  "در حال آپلود تصویر…",
+  "استخراج متن با OCR…",
+  "ارسال به آرتین برای تحلیل…",
+  "در حال تحلیل تخصصی…",
+];
+const PROGRESS_STEPS_FILE = [
+  "در حال آپلود فایل…",
+  "پردازش و خواندن داده‌ها…",
+  "ارسال به آرتین برای تحلیل…",
+  "در حال تحلیل تخصصی…",
+];
+
+function friendlyError(raw: string): string {
+  if (!raw) return "خطای ناشناخته رخ داد.";
+  if (raw.includes("Connection") || raw.includes("RemoteDisconnected"))
+    return "اتصال به سرویس هوش مصنوعی برقرار نشد. لطفاً چند ثانیه صبر کنید و دوباره امتحان کنید.";
+  if (raw.includes("timeout") || raw.includes("Timeout"))
+    return "زمان پاسخ سرویس هوش مصنوعی به پایان رسید. لطفاً دوباره امتحان کنید.";
+  if (raw.includes("فرمت") || raw.includes("پشتیبانی نمی‌شود"))
+    return raw;
+  if (raw.startsWith("خطا در تحلیل"))
+    return raw.replace(/^خطا در تحلیل (تصویر|فایل): /, "مشکل در تحلیل: ");
+  return raw;
+}
+
 export default function AnalyzePage() {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [testType, setTestType] = useState("general");
   const [imageType, setImageType] = useState("general");
   const [userNote, setUserNote] = useState("");
   const [fileAnalysis, setFileAnalysis] = useState("");
   const [loading, setLoading] = useState(false);
+  const [progressStep, setProgressStep] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
   const [resultType, setResultType] = useState<"success" | "error" | "">("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [followUpQ, setFollowUpQ] = useState("");
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpHistory, setFollowUpHistory] = useState<{q: string; a: string}[]>([]);
 
-  const isImage = file ? isImageFile(file) : false;
+  const ALLOWED_EXTS = [...IMAGE_EXTS, "xlsx", "xls", "csv", "pdf"];
+  const allImages = files.length > 0 && files.every(isImageFile);
 
-  function handleFileChange(selected: File | null) {
-    setFile(selected);
+  function addFiles(incoming: FileList | File[]) {
+    const arr = Array.from(incoming);
+    const valid = arr.filter((f) => {
+      const ext = f.name.split(".").pop()?.toLowerCase() || "";
+      return ALLOWED_EXTS.includes(ext);
+    });
+    const invalid = arr.filter((f) => {
+      const ext = f.name.split(".").pop()?.toLowerCase() || "";
+      return !ALLOWED_EXTS.includes(ext);
+    });
+    if (invalid.length) {
+      setResultType("error");
+      setFileAnalysis(`فرمت پشتیبانی نمی‌شود: ${invalid.map((f) => f.name).join(", ")}`);
+    }
+    const next = [...files, ...valid].slice(0, 5); // max 5 files
+    setFiles(next);
     setFileAnalysis("");
     setResultType("");
-    if (selected && isImageFile(selected)) {
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
-      reader.readAsDataURL(selected);
-    } else {
-      setImagePreview(null);
+    setFollowUpHistory([]);
+
+    // generate previews for images
+    const previews: string[] = [];
+    next.forEach((f, i) => {
+      if (isImageFile(f)) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previews[i] = e.target?.result as string;
+          if (previews.filter(Boolean).length === next.filter(isImageFile).length) {
+            setImagePreviews([...previews]);
+          }
+        };
+        reader.readAsDataURL(f);
+      }
+    });
+    if (!next.some(isImageFile)) setImagePreviews([]);
+  }
+
+  function removeFile(idx: number) {
+    const next = files.filter((_, i) => i !== idx);
+    setFiles(next);
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+  }
+
+  async function analyzeSingleFile(f: File, idx: number, total: number): Promise<string> {
+    const img = isImageFile(f);
+    const steps = img ? PROGRESS_STEPS_IMAGE : PROGRESS_STEPS_FILE;
+    setProgressLabel(`فایل ${idx + 1} از ${total}: ${f.name}`);
+    setProgressStep(0);
+
+    const interval = setInterval(() => {
+      setProgressStep((s) => (s < steps.length - 1 ? s + 1 : s));
+    }, img ? 4000 : 2500);
+
+    const formData = new FormData();
+    formData.append("file", f);
+    formData.append("user_note", userNote);
+    const endpoint = img ? "/analyze-image" : "/analyze-file";
+    if (img) formData.append("image_type", imageType);
+    else formData.append("test_type", testType);
+
+    try {
+      const res = await fetch(apiUrl(endpoint), { method: "POST", body: formData });
+      const data = await res.json();
+      clearInterval(interval);
+      if (data.ai_analysis) return data.ai_analysis;
+      if (data.error) return `⚠️ خطا: ${friendlyError(data.error)}`;
+      return JSON.stringify(data, null, 2);
+    } catch {
+      clearInterval(interval);
+      return "⚠️ اتصال به سرور برقرار نشد.";
     }
   }
 
   async function uploadFile() {
-    if (!file) return;
-
+    if (!files.length) return;
     setLoading(true);
     setFileAnalysis("");
     setResultType("");
+    setFollowUpHistory([]);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("user_note", userNote);
-
-    const endpoint = isImage ? "/analyze-image" : "/analyze-file";
-    if (isImage) {
-      formData.append("image_type", imageType);
-    } else {
-      formData.append("test_type", testType);
+    const results: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const result = await analyzeSingleFile(files[i], i, files.length);
+      results.push(
+        files.length > 1
+          ? `━━━ فایل ${i + 1}: ${files[i].name} ━━━\n${result}`
+          : result
+      );
     }
 
-    try {
-      const res = await fetch(apiUrl(endpoint), {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (data.ai_analysis) {
-        setResultType("success");
-        setFileAnalysis(data.ai_analysis);
-      } else if (data.error) {
-        setResultType("error");
-        setFileAnalysis(data.error);
-      } else {
-        setResultType("success");
-        setFileAnalysis(JSON.stringify(data, null, 2));
-      }
-    } catch {
-      setResultType("error");
-      setFileAnalysis("خطا در آپلود یا تحلیل فایل.");
-    } finally {
-      setLoading(false);
-    }
+    const combined = results.join("\n\n");
+    const hasError = combined.includes("⚠️");
+    setResultType(hasError && results.every((r) => r.includes("⚠️")) ? "error" : "success");
+    setFileAnalysis(combined);
+    setLoading(false);
+    setProgressLabel("");
   }
 
   async function copyResult() {
     if (!fileAnalysis) return;
     await navigator.clipboard.writeText(fileAnalysis);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function exportPDF() {
+    if (!fileAnalysis) return;
+    const now = new Date().toLocaleString("fa-IR");
+    const fileNames = files.map((f) => f.name).join("، ");
+    const html = `<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="utf-8"/>
+<title>گزارش تحلیل آرتین</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
+  body { font-family: 'Vazirmatn', Tahoma, sans-serif; padding: 40px; color: #1e293b; line-height: 2; direction: rtl; }
+  h1 { font-size: 22px; font-weight: 900; color: #065f46; border-bottom: 2px solid #065f46; padding-bottom: 10px; }
+  .meta { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+  .content { white-space: pre-wrap; font-size: 14px; background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; }
+  .followup { margin-top: 32px; }
+  .followup h2 { font-size: 16px; font-weight: 900; color: #1e293b; }
+  .q { background: #f1f5f9; border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-weight: 700; font-size: 13px; }
+  .a { background: #ecfdf5; border-radius: 10px; padding: 10px 14px; margin-top: 6px; font-size: 13px; white-space: pre-wrap; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+<h1>گزارش تحلیل تخصصی آرتین</h1>
+<div class="meta">
+  <div>تاریخ: ${now}</div>
+  <div>فایل‌ها: ${fileNames}</div>
+</div>
+<div class="content">${fileAnalysis.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+${followUpHistory.length ? `
+<div class="followup">
+  <h2>سوالات پیگیری</h2>
+  ${followUpHistory.map((item) => `
+    <div class="q">سوال: ${item.q.replace(/</g, "&lt;")}</div>
+    <div class="a">${item.a.replace(/</g, "&lt;")}</div>
+  `).join("")}
+</div>` : ""}
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); }, 500);
+  }
+
+  async function sendFollowUp() {
+    if (!followUpQ.trim() || !fileAnalysis) return;
+    const question = followUpQ.trim();
+    setFollowUpLoading(true);
+    setFollowUpQ("");
+
+    const context = `تحلیل قبلی آرتین از فایل/تصویر:\n${fileAnalysis}`;
+    try {
+      const res = await fetch(apiUrl("/chat"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question, context, history: [] }),
+      });
+      const data = await res.json();
+      const answer = data.answer || data.response || "پاسخی دریافت نشد.";
+      setFollowUpHistory((prev) => [...prev, { q: question, a: answer }]);
+      setFollowUpA(answer);
+    } catch {
+      setFollowUpHistory((prev) => [...prev, { q: question, a: "خطا در دریافت پاسخ." }]);
+    } finally {
+      setFollowUpLoading(false);
+    }
   }
 
   return (
@@ -196,31 +354,21 @@ export default function AnalyzePage() {
               </div>
 
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                {isImage ? "نوع تصویر" : "نوع تست یا گزارش"}
+                {allImages ? "نوع تصویر" : "نوع تست یا گزارش"}
               </label>
 
-              {isImage ? (
-                <select
-                  value={imageType}
-                  onChange={(e) => setImageType(e.target.value)}
-                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
-                >
+              {allImages ? (
+                <select value={imageType} onChange={(e) => setImageType(e.target.value)}
+                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
                   {imageTypes.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
+                    <option key={item.value} value={item.value}>{item.label}</option>
                   ))}
                 </select>
               ) : (
-                <select
-                  value={testType}
-                  onChange={(e) => setTestType(e.target.value)}
-                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
-                >
+                <select value={testType} onChange={(e) => setTestType(e.target.value)}
+                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
                   {testTypes.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
+                    <option key={item.value} value={item.value}>{item.label}</option>
                   ))}
                 </select>
               )}
@@ -228,87 +376,92 @@ export default function AnalyzePage() {
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
                 توضیح اختیاری درباره نمونه یا شرایط تست
               </label>
-
               <textarea
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
-                className="ui-textarea h-36 resize-none rounded-2xl p-4 leading-8 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
-                placeholder="مثلاً: نمونه LPG است، هدف بررسی ترکیبات گوگردی است، یا تست کاتالیست در دمای 350 درجه انجام شده..."
+                className="ui-textarea h-28 resize-none rounded-2xl p-4 leading-8 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
+                placeholder="مثلاً: نمونه LPG است، هدف بررسی ترکیبات گوگردی است..."
               />
 
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
                 فایل یا تصویر
+                <span className="mr-2 font-normal text-slate-400">(تا ۵ فایل)</span>
               </label>
 
-              <label className="group block cursor-pointer rounded-[26px] border-2 border-dashed border-slate-300 bg-slate-50/80 p-6 text-center transition hover:border-emerald-300 hover:bg-emerald-50/60">
-                <input
-                  type="file"
-                  accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp"
-                  onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm transition group-hover:scale-105">
-                  <UploadCloud size={30} />
-                </div>
-
-                <div className="font-black text-slate-950">
-                  فایل را انتخاب کنید یا اینجا رها کنید
-                </div>
-                <div className="mt-2 text-sm leading-7 text-slate-500">
-                  PDF، Excel، CSV یا تصویر (JPG، PNG، WEBP)
-                </div>
-              </label>
-
-              {file && isImage && imagePreview && (
-                <div className="mt-4 overflow-hidden rounded-[24px] border border-emerald-100 bg-emerald-50">
-                  <img
-                    src={imagePreview}
-                    alt="پیش‌نمایش تصویر"
-                    className="max-h-52 w-full object-contain"
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={`relative rounded-[26px] border-2 border-dashed p-5 text-center transition ${
+                  isDragging ? "border-emerald-400 bg-emerald-50 scale-[1.01]"
+                  : "border-slate-300 bg-slate-50/80 hover:border-emerald-300 hover:bg-emerald-50/60"
+                }`}
+              >
+                <label className="group block cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp"
+                    multiple
+                    onChange={(e) => e.target.files && addFiles(e.target.files)}
+                    className="hidden"
                   />
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm transition group-hover:scale-105">
+                    <UploadCloud size={26} />
+                  </div>
+                  <div className="font-black text-slate-950">
+                    {isDragging ? "رها کنید…" : "فایل‌ها را انتخاب یا اینجا رها کنید"}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-500">
+                    PDF، Excel، CSV یا تصویر — تا ۵ فایل با هم
+                  </div>
+                </label>
+              </div>
+
+              {/* image previews grid */}
+              {imagePreviews.filter(Boolean).length > 0 && (
+                <div className={`mt-3 grid gap-2 ${imagePreviews.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                  {imagePreviews.map((src, i) => src && (
+                    <div key={i} className="overflow-hidden rounded-[18px] border border-emerald-100 bg-emerald-50">
+                      <img src={src} alt={`preview-${i}`} className="max-h-36 w-full object-contain" />
+                    </div>
+                  ))}
                 </div>
               )}
 
-              {file && (
-                <div className="mt-4 rounded-[24px] border border-emerald-100 bg-emerald-50 p-4">
-                  <div className="flex items-start gap-3">
-                    {isImage ? (
-                      <ImageIcon size={24} className="mt-1 shrink-0 text-emerald-700" />
-                    ) : (
-                      <FileSpreadsheet size={24} className="mt-1 shrink-0 text-emerald-700" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold text-emerald-700">
-                        {isImage ? "تصویر آماده تحلیل" : "فایل آماده تحلیل"}
+              {/* file list */}
+              {files.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                      {isImageFile(f)
+                        ? <ImageIcon size={18} className="shrink-0 text-emerald-700" />
+                        : <FileSpreadsheet size={18} className="shrink-0 text-emerald-700" />
+                      }
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-black text-slate-950">{f.name}</div>
+                        <div className="text-xs text-slate-500">{formatFileSize(f.size)}</div>
                       </div>
-                      <div className="mt-1 break-all text-sm font-black text-slate-950">
-                        {file.name}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-                        <span className="rounded-full bg-white px-3 py-1">
-                          {formatFileSize(file.size)}
-                        </span>
-                        <span className="rounded-full bg-white px-3 py-1">
-                          {isImage ? getImageTypeLabel(imageType) : getTestTypeLabel(testType)}
-                        </span>
-                      </div>
+                      <button
+                        onClick={() => removeFile(i)}
+                        className="shrink-0 rounded-xl p-1 text-slate-400 hover:bg-white hover:text-red-500"
+                      >
+                        ✕
+                      </button>
                     </div>
-                  </div>
+                  ))}
                 </div>
               )}
 
               <button
                 onClick={uploadFile}
-                disabled={loading || !file}
+                disabled={loading || !files.length}
                 className="ui-btn mt-5 w-full gap-2 rounded-2xl bg-gradient-to-l from-emerald-700 to-teal-700 px-5 py-4 text-white shadow-lg shadow-emerald-700/15 transition hover:from-emerald-800 hover:to-teal-800 disabled:opacity-50"
               >
-                {loading ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <Beaker size={18} />
-                )}
-                {loading ? "در حال تحلیل..." : "شروع تحلیل تخصصی"}
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <Beaker size={18} />}
+                {loading
+                  ? `در حال تحلیل ${files.length > 1 ? `(${files.length} فایل)` : ""}…`
+                  : `شروع تحلیل${files.length > 1 ? ` (${files.length} فایل)` : " تخصصی"}`
+                }
               </button>
             </div>
 
@@ -356,14 +509,23 @@ export default function AnalyzePage() {
                 </div>
               </div>
 
-              {fileAnalysis && (
-                <button
-                  onClick={copyResult}
-                  className="ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm"
-                >
-                  <ClipboardCopy size={16} />
-                  کپی نتیجه
-                </button>
+              {fileAnalysis && resultType === "success" && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={copyResult}
+                    className={`ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm transition-all ${copied ? "text-emerald-700" : ""}`}
+                  >
+                    {copied ? <CheckCircle2 size={16} /> : <ClipboardCopy size={16} />}
+                    {copied ? "کپی شد!" : "کپی"}
+                  </button>
+                  <button
+                    onClick={exportPDF}
+                    className="ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm"
+                  >
+                    <Download size={16} />
+                    PDF
+                  </button>
+                </div>
               )}
             </div>
 
@@ -388,45 +550,119 @@ export default function AnalyzePage() {
 
             {loading && (
               <div className="flex min-h-[520px] items-center justify-center rounded-[28px] bg-slate-50 p-8 text-center">
-                <div>
-                  <Loader2
-                    size={34}
-                    className="mx-auto mb-4 animate-spin text-emerald-700"
-                  />
+                <div className="w-full max-w-sm">
+                  <Loader2 size={34} className="mx-auto mb-5 animate-spin text-emerald-700" />
                   <h3 className="text-lg font-black text-slate-950">
-                    آرتین در حال تحلیل فایل است...
+                    آرتین در حال تحلیل است…
                   </h3>
-                  <p className="mt-3 leading-8 text-slate-500">
-                    بسته به حجم فایل، تحلیل ممکن است کمی زمان ببرد.
-                  </p>
+                  {progressLabel && (
+                    <p className="mt-1 text-sm text-slate-500">{progressLabel}</p>
+                  )}
+                  <div className="mt-6 space-y-2">
+                    {(isImage ? PROGRESS_STEPS_IMAGE : PROGRESS_STEPS_FILE).map((step, i) => (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
+                          i < progressStep
+                            ? "bg-emerald-50 text-emerald-700"
+                            : i === progressStep
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-400"
+                        }`}
+                      >
+                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
+                          i < progressStep
+                            ? "bg-emerald-600 text-white"
+                            : i === progressStep
+                            ? "bg-slate-900 text-white"
+                            : "bg-slate-200 text-slate-400"
+                        }`}>
+                          {i < progressStep ? "✓" : i + 1}
+                        </span>
+                        {step}
+                        {i === progressStep && (
+                          <Loader2 size={14} className="mr-auto animate-spin text-emerald-600" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
             {fileAnalysis && (
-              <div
-                className={`min-h-[520px] whitespace-pre-wrap rounded-[28px] border p-6 leading-9 shadow-inner ${
-                  resultType === "error"
-                    ? "border-red-100 bg-red-50 text-red-700"
-                    : "border-slate-200 bg-slate-50/90 text-slate-800"
-                }`}
-              >
-                <div className="mb-4 flex items-center gap-2 text-sm font-black">
-                  {resultType === "error" ? (
-                    <>
-                      <AlertCircle size={18} />
-                      خطا در تحلیل
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={18} className="text-emerald-700" />
-                      تحلیل آماده شد
-                    </>
-                  )}
+              <>
+                <div
+                  className={`whitespace-pre-wrap rounded-[28px] border p-6 leading-9 shadow-inner ${
+                    resultType === "error"
+                      ? "border-red-100 bg-red-50 text-red-700"
+                      : "border-slate-200 bg-slate-50/90 text-slate-800"
+                  }`}
+                >
+                  <div className="mb-4 flex items-center gap-2 text-sm font-black">
+                    {resultType === "error" ? (
+                      <>
+                        <AlertCircle size={18} />
+                        خطا در تحلیل
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={18} className="text-emerald-700" />
+                        تحلیل آماده شد
+                      </>
+                    )}
+                  </div>
+                  {fileAnalysis}
                 </div>
 
-                {fileAnalysis}
-              </div>
+                {resultType === "success" && (
+                  <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                        <MessageSquare size={20} />
+                      </div>
+                      <div>
+                        <div className="font-black text-slate-950">سوال پیگیری</div>
+                        <div className="text-sm text-slate-500">درباره این نتیجه از آرتین بپرسید</div>
+                      </div>
+                    </div>
+
+                    {followUpHistory.map((item, i) => (
+                      <div key={i} className="mb-4 space-y-2">
+                        <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700">
+                          {item.q}
+                        </div>
+                        <div className="whitespace-pre-wrap rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-8 text-slate-800">
+                          {item.a}
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="flex gap-2">
+                      <textarea
+                        value={followUpQ}
+                        onChange={(e) => setFollowUpQ(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            sendFollowUp();
+                          }
+                        }}
+                        placeholder="مثلاً: این نتیجه برای استاندارد ASTM قابل قبوله؟"
+                        className="ui-textarea h-14 flex-1 resize-none rounded-2xl p-3 text-sm leading-7 focus:border-emerald-600"
+                        disabled={followUpLoading}
+                      />
+                      <button
+                        onClick={sendFollowUp}
+                        disabled={followUpLoading || !followUpQ.trim()}
+                        className="ui-btn flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-700 text-white shadow disabled:opacity-40"
+                      >
+                        {followUpLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

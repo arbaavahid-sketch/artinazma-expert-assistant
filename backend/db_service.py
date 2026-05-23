@@ -122,8 +122,44 @@ def init_db():
             updated_at TEXT
         )
         """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """)
+
     conn.commit()
     conn.close()
+
+
+def get_setting(key: str, default: str = "") -> str:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT value FROM app_settings WHERE key = ?", (key,)
+        ).fetchone()
+        return row["value"] if row else default
+    finally:
+        conn.close()
+
+
+def set_setting(key: str, value: str) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            """
+            INSERT INTO app_settings (key, value, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+            """,
+            (key, value, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def detect_domain(question: str) -> str:
@@ -906,6 +942,51 @@ def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
         "company": row["company"] or "",
         "phone": row["phone"] or "",
         "created_at": row["created_at"],
+    }
+
+
+def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
+    """لیست همه مشتریان به همراه آمار جلسات و پیام‌ها."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT
+            c.id,
+            c.full_name,
+            c.email,
+            c.company,
+            c.phone,
+            c.created_at,
+            COUNT(DISTINCT cs.id) AS session_count,
+            COUNT(cm.id) AS message_count
+        FROM customers c
+        LEFT JOIN chat_sessions cs ON cs.customer_id = c.id
+        LEFT JOIN chat_messages cm ON cm.session_id = cs.id
+        GROUP BY c.id
+        ORDER BY c.created_at DESC
+        LIMIT ? OFFSET ?
+        """,
+        (limit, offset),
+    )
+    rows = cursor.fetchall()
+    total = cursor.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    conn.close()
+    return {
+        "total": total,
+        "customers": [
+            {
+                "id": r["id"],
+                "full_name": r["full_name"],
+                "email": r["email"],
+                "company": r["company"] or "",
+                "phone": r["phone"] or "",
+                "created_at": r["created_at"],
+                "session_count": r["session_count"],
+                "message_count": r["message_count"],
+            }
+            for r in rows
+        ],
     }
 
 

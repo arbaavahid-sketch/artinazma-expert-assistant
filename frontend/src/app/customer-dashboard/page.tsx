@@ -16,6 +16,11 @@ import {
   Save,
   X,
   Trash2,
+  FlaskConical,
+  PhoneCall,
+  Download,
+  Sparkles,
+  Search,
 } from "lucide-react";
 
 type Customer = {
@@ -56,11 +61,10 @@ export default function CustomerDashboardPage() {
   const [profilePhone, setProfilePhone] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
-  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(
-    null,
-  );
+  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
   const [clearingAllSessions, setClearingAllSessions] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
+  const [sessionSearch, setSessionSearch] = useState("");
   async function loadSessions(customerId: number) {
     try {
       const res = await fetch(
@@ -214,6 +218,69 @@ export default function CustomerDashboardPage() {
       setClearingAllSessions(false);
     }
   }
+  async function exportSessionPDF(session: ChatSession) {
+    if (!customer) return;
+    try {
+      const res = await fetch(
+        apiUrl(`/customers/${customer.id}/chat-sessions/${session.id}/messages`),
+        { cache: "no-store" },
+      );
+      const data = await res.json();
+      const msgs: { role: string; content: string }[] = data.messages || [];
+      const now = new Date().toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" });
+      const title = session.title || "گفتگوی بدون عنوان";
+
+      const msgHtml = msgs.map((msg) => {
+        const safe = (msg.content || "")
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.*?)\*/g, "<em>$1</em>")
+          .replace(/\n/g, "<br/>");
+        if (msg.role === "user") {
+          return `<div class="bubble user"><div class="label">کاربر</div><p>${safe}</p></div>`;
+        }
+        return `<div class="bubble artin"><div class="label">آرتین</div><p>${safe}</p></div>`;
+      }).join("");
+
+      const html = `<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="UTF-8"/>
+<title>${title} — آرتین آزما</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; }
+  .header { border-bottom: 2px solid #1d4ed8; padding-bottom: 16px; margin-bottom: 28px; }
+  .header h1 { font-size: 18px; font-weight: 900; color: #1d4ed8; }
+  .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }
+  .bubble { margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; page-break-inside: avoid; }
+  .bubble.user { background: #dbeafe; border-right: 4px solid #1d4ed8; }
+  .bubble.artin { background: #f1f5f9; border-right: 4px solid #0ea5e9; }
+  .label { font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.05em; }
+  .bubble.user .label { color: #1d4ed8; }
+  .bubble.artin .label { color: #0ea5e9; }
+  p { line-height: 2; }
+  .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 10px; color: #94a3b8; text-align: center; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>${title}</h1>
+  <div class="meta">مشتری: ${customer.full_name} | تاریخ: ${now}</div>
+</div>
+${msgHtml}
+<div class="footer">آرتین آزما مهر — artinazma.net</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body>
+</html>`;
+      const w = window.open("", "_blank");
+      if (w) { w.document.write(html); w.document.close(); }
+    } catch {
+      alert("خطا در بارگذاری پیام‌های گفتگو.");
+    }
+  }
+
   function logout() {
     localStorage.removeItem("artin_customer");
     document.cookie = "artin_customer_auth=; path=/; max-age=0";
@@ -281,6 +348,34 @@ export default function CustomerDashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Quick links */}
+          <div className="border-t border-slate-100 bg-slate-50 px-8 py-4">
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/assistant"
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
+              >
+                <Sparkles size={15} />
+                دستیار آرتین
+              </Link>
+              <Link
+                href="/analyze"
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
+              >
+                <FlaskConical size={15} />
+                تحلیل تست
+              </Link>
+              <Link
+                href="/customer-request"
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
+              >
+                <PhoneCall size={15} />
+                درخواست مشاوره
+              </Link>
+            </div>
+          </div>
+
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -458,6 +553,27 @@ export default function CustomerDashboardPage() {
                 </Link>
               </div>
             </div>
+
+            {sessions.length > 1 && (
+              <div className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <Search size={16} className="shrink-0 text-slate-400" />
+                <input
+                  type="text"
+                  value={sessionSearch}
+                  onChange={(e) => setSessionSearch(e.target.value)}
+                  placeholder="جستجو در گفتگوها..."
+                  className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                />
+                {sessionSearch && (
+                  <button
+                    onClick={() => setSessionSearch("")}
+                    className="shrink-0 text-slate-400 hover:text-slate-600"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+            )}
             {sessionMessage && (
               <div className="ui-alert ui-alert-info mb-5">
                 {sessionMessage}
@@ -472,9 +588,17 @@ export default function CustomerDashboardPage() {
                   <div className="ui-skeleton h-16 w-full rounded-2xl" />
                 </div>
               </div>
-            ) : sessions.length > 0 ? (
+            ) : sessions.length > 0 ? (() => {
+              const filteredSessions = sessionSearch.trim()
+                ? sessions.filter((s) =>
+                    (s.title || "گفتگوی جدید")
+                      .toLowerCase()
+                      .includes(sessionSearch.toLowerCase())
+                  )
+                : sessions;
+              return filteredSessions.length > 0 ? (
               <div className="space-y-3">
-                {sessions.map((session) => (
+                {filteredSessions.map((session) => (
                   <Link
                     key={session.id}
                     href={`/assistant?session_id=${session.id}`}
@@ -502,6 +626,18 @@ export default function CustomerDashboardPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            exportSessionPDF(session);
+                          }}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-blue-700"
+                          title="خروجی PDF این گفتگو"
+                        >
+                          <Download size={16} />
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             deleteOneSession(session.id);
                           }}
                           disabled={deletingSessionId === session.id}
@@ -516,6 +652,25 @@ export default function CustomerDashboardPage() {
                 ))}
               </div>
             ) : (
+              <div className="ui-empty rounded-3xl p-10">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-400 shadow-sm">
+                  <Search size={26} strokeWidth={1.8} />
+                </div>
+                <h3 className="mt-4 text-base font-black text-slate-700">
+                  نتیجه‌ای یافت نشد
+                </h3>
+                <p className="mt-2 text-sm text-slate-500">
+                  گفتگویی با عبارت «{sessionSearch}» پیدا نشد.
+                </p>
+                <button
+                  onClick={() => setSessionSearch("")}
+                  className="mt-4 text-sm font-bold text-blue-700 hover:underline"
+                >
+                  پاک کردن جستجو
+                </button>
+              </div>
+            );
+            })() : (
               <div className="ui-empty rounded-3xl p-10">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-blue-700 shadow-sm">
                   <MessageSquareText size={30} strokeWidth={1.8} />

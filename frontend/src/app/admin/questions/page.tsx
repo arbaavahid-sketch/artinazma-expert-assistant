@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Download,
 } from "lucide-react";
 
 type QuestionItem = {
@@ -73,6 +74,14 @@ export default function QuestionsPage() {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  function downloadCsv() {
+    const url = apiUrl("/admin/questions/export-csv");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "questions.csv";
+    a.click();
+  }
 
   async function loadQuestions() {
     setLoading(true);
@@ -154,17 +163,28 @@ export default function QuestionsPage() {
                 </p>
               </div>
 
-              <button
-                onClick={loadQuestions}
-                disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                <RefreshCw
-                  size={18}
-                  className={loading ? "animate-spin" : ""}
-                />
-                بروزرسانی
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={downloadCsv}
+                  disabled={questions.length === 0}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
+                >
+                  <Download size={18} />
+                  دانلود Excel
+                </button>
+
+                <button
+                  onClick={loadQuestions}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <RefreshCw
+                    size={18}
+                    className={loading ? "animate-spin" : ""}
+                  />
+                  بروزرسانی
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -13,6 +13,9 @@ import {
   Settings2,
   ShieldCheck,
   Wifi,
+  Cloud,
+  Play,
+  Clock,
 } from "lucide-react";
 
 type KnowledgeStats = {
@@ -69,11 +72,24 @@ function getCategoryLabel(category: string) {
   return category || "بدون دسته‌بندی";
 }
 
+type GDriveSchedule = {
+  interval_hours: number;
+  enabled: boolean;
+  last_sync: string;
+  last_sync_result: string;
+  folder_id_configured: boolean;
+};
+
 export default function AdminSettingsPage() {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkingAi, setCheckingAi] = useState(false);
   const [message, setMessage] = useState("");
+  const [gdriveSchedule, setGdriveSchedule] = useState<GDriveSchedule | null>(null);
+  const [gdriveIntervalInput, setGdriveIntervalInput] = useState("24");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [syncingNow, setSyncingNow] = useState(false);
+  const [gdriveMessage, setGdriveMessage] = useState("");
 
   async function loadStatus(checkAi = false) {
     if (checkAi) {
@@ -102,8 +118,61 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function loadGdriveSchedule() {
+    try {
+      const res = await fetch(apiUrl("/admin/gdrive-schedule"), { cache: "no-store" });
+      if (res.ok) {
+        const data: GDriveSchedule = await res.json();
+        setGdriveSchedule(data);
+        if (data.interval_hours > 0) {
+          setGdriveIntervalInput(String(data.interval_hours));
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function saveGdriveSchedule(enabled: boolean) {
+    setSavingSchedule(true);
+    setGdriveMessage("");
+    try {
+      const interval = enabled ? parseFloat(gdriveIntervalInput) || 24 : 0;
+      const res = await fetch(apiUrl("/admin/gdrive-schedule"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interval_hours: interval }),
+      });
+      const data = await res.json();
+      setGdriveMessage(data.message || "ذخیره شد.");
+      await loadGdriveSchedule();
+    } catch {
+      setGdriveMessage("خطا در اتصال به سرور.");
+    } finally {
+      setSavingSchedule(false);
+    }
+  }
+
+  async function runGdriveSyncNow() {
+    setSyncingNow(true);
+    setGdriveMessage("");
+    try {
+      const res = await fetch(apiUrl("/admin/gdrive-sync-now"), { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setGdriveMessage("همزمان‌سازی با موفقیت انجام شد.");
+      } else {
+        setGdriveMessage(data.detail || "خطا در همزمان‌سازی.");
+      }
+      await loadGdriveSchedule();
+    } catch {
+      setGdriveMessage("خطا در اتصال به سرور.");
+    } finally {
+      setSyncingNow(false);
+    }
+  }
+
   useEffect(() => {
     loadStatus(false);
+    loadGdriveSchedule();
   }, []);
 
   return (
@@ -289,8 +358,107 @@ export default function AdminSettingsPage() {
               </p>
             </div>
           </div>
+        {/* ─── Google Drive Scheduled Sync ──────────────────────── */}
+        <div className="mt-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <Cloud size={25} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-900">
+                همزمان‌سازی خودکار Google Drive
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                بانک دانش را به صورت زمان‌بندی‌شده با Google Drive همزمان کنید.
+              </p>
+            </div>
+          </div>
+
+          {!gdriveSchedule?.folder_id_configured && (
+            <div className="mb-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold text-amber-700">
+              متغیر محیطی GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است. برای فعال‌کردن این قابلیت، آن را در فایل .env تنظیم کنید.
+            </div>
+          )}
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">
+                  فاصله زمانی (ساعت)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="168"
+                  value={gdriveIntervalInput}
+                  onChange={(e) => setGdriveIntervalInput(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-blue-400 focus:outline-none"
+                  placeholder="۲۴"
+                />
+                <p className="mt-1 text-xs text-slate-500">مثلاً ۲۴ = هر روز یک‌بار</p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => saveGdriveSchedule(true)}
+                  disabled={savingSchedule || !gdriveSchedule?.folder_id_configured}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                >
+                  <Clock size={16} />
+                  {savingSchedule ? "ذخیره..." : "فعال‌کردن زمان‌بندی"}
+                </button>
+
+                <button
+                  onClick={() => saveGdriveSchedule(false)}
+                  disabled={savingSchedule}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-white disabled:opacity-50"
+                >
+                  غیرفعال
+                </button>
+              </div>
+
+              <button
+                onClick={runGdriveSyncNow}
+                disabled={syncingNow || !gdriveSchedule?.folder_id_configured}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+              >
+                <Play size={16} />
+                {syncingNow ? "در حال همزمان‌سازی..." : "همزمان‌سازی فوری"}
+              </button>
+
+              {gdriveMessage && (
+                <div className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-700">
+                  {gdriveMessage}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <div className="text-xs font-bold text-slate-500 mb-1">وضعیت زمان‌بندی</div>
+                <div className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${gdriveSchedule?.enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>
+                  {gdriveSchedule?.enabled
+                    ? `هر ${gdriveSchedule.interval_hours} ساعت یک‌بار`
+                    : "غیرفعال"}
+                </div>
+              </div>
+
+              {gdriveSchedule?.last_sync && (
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="text-xs font-bold text-slate-500 mb-1">آخرین همزمان‌سازی</div>
+                  <div className="text-sm text-slate-700">
+                    {new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(gdriveSchedule.last_sync))}
+                  </div>
+                  {gdriveSchedule.last_sync_result && (
+                    <div className="mt-1 text-xs text-slate-500">{gdriveSchedule.last_sync_result}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+    </div>
     </section>
   );
 }
