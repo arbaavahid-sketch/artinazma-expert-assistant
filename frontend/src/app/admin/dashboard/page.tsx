@@ -57,6 +57,15 @@ type RequestStats = {
   types: RequestType[];
 };
 
+type DailyCount = { day: string; count: number };
+type Keyword    = { word: string; count: number };
+type AnalyticsData = {
+  daily:        DailyCount[];
+  top_keywords: Keyword[];
+  feedback:     { status: string; count: number }[];
+  hourly:       { hour: number; count: number }[];
+};
+
 function getStatusLabel(status: string) {
   if (status === "in_progress") return "در حال پیگیری";
   if (status === "done") return "انجام شده";
@@ -124,31 +133,36 @@ export default function DashboardPage() {
     null,
   );
   const [requestStats, setRequestStats] = useState<RequestStats | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function loadStats() {
     setLoading(true);
 
     try {
-      const [knowledgeRes, questionRes, requestRes] = await Promise.all([
+      const [knowledgeRes, questionRes, requestRes, analyticsRes] = await Promise.all([
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(apiUrl("/questions/stats"), { cache: "no-store" }),
         fetch(apiUrl("/customer-requests/stats"), { cache: "no-store" }),
+        fetch(apiUrl("/questions/analytics?days=14"), { cache: "no-store" }),
       ]);
 
-      const [knowledgeData, questionData, requestData] = await Promise.all([
+      const [knowledgeData, questionData, requestData, analyticsJson] = await Promise.all([
         knowledgeRes.json(),
         questionRes.json(),
         requestRes.json(),
+        analyticsRes.json(),
       ]);
 
       setKnowledgeStats(knowledgeData);
       setQuestionStats(questionData);
       setRequestStats(requestData);
+      setAnalyticsData(analyticsJson);
     } catch {
       setKnowledgeStats(null);
       setQuestionStats(null);
       setRequestStats(null);
+      setAnalyticsData(null);
     } finally {
       setLoading(false);
     }
@@ -398,26 +412,85 @@ export default function DashboardPage() {
               </div>
 
               {topDomains.length > 0 ? (
-                <div className="space-y-3">
-                  {topDomains.map((item) => (
-                    <div
-                      key={item.domain}
-                      className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"
-                    >
-                      <span className="font-bold text-slate-700">
-                        {getDomainLabel(item.domain)}
-                      </span>
-
-                      <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-blue-700">
-                        {item.count}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-2.5">
+                  {(() => {
+                    const maxCount = Math.max(...topDomains.map(d => d.count), 1);
+                    return topDomains.map((item) => (
+                      <div key={item.domain}>
+                        <div className="mb-1 flex items-center justify-between text-sm">
+                          <span className="font-bold text-slate-700">{getDomainLabel(item.domain)}</span>
+                          <span className="font-black text-blue-700">{item.count}</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
+                            style={{ width: `${Math.round((item.count / maxCount) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
               ) : (
                 <EmptyState text="هنوز سوالی ثبت نشده است." />
               )}
             </div>
+
+            {/* ─── Daily Activity Chart ─────────────────────────────── */}
+            {analyticsData?.daily && analyticsData.daily.length > 0 && (
+              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-5">
+                  <h2 className="text-xl font-black text-slate-900">فعالیت ۱۴ روز اخیر</h2>
+                  <p className="mt-2 text-sm text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز.</p>
+                </div>
+                <div className="flex h-32 items-end gap-1" dir="ltr">
+                  {(() => {
+                    const maxVal = Math.max(...(analyticsData?.daily ?? []).map(d => d.count), 1);
+                    return analyticsData.daily.map((d) => {
+                      const pct = Math.max(4, Math.round((d.count / maxVal) * 100));
+                      const shortDay = d.day.slice(5); // MM-DD
+                      return (
+                        <div key={d.day} className="group relative flex flex-1 flex-col items-center gap-1">
+                          <div
+                            className="w-full rounded-t-md bg-blue-500 transition-all group-hover:bg-indigo-600"
+                            style={{ height: `${pct}%` }}
+                          />
+                          <span className="text-[9px] text-slate-400">{shortDay}</span>
+                          {d.count > 0 && (
+                            <span className="absolute -top-5 hidden rounded bg-slate-800 px-1 py-0.5 text-[10px] text-white group-hover:block">
+                              {d.count}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* ─── Trending Keywords ────────────────────────────────────── */}
+            {analyticsData?.top_keywords && analyticsData.top_keywords.length > 0 && (
+              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-5">
+                  <h2 className="text-xl font-black text-slate-900">کلمات پرتکرار ۱۴ روز اخیر</h2>
+                  <p className="mt-2 text-sm text-slate-500">موضوعاتی که کاربران بیشتر جستجو کرده‌اند.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {analyticsData.top_keywords.map((kw) => (
+                    <span
+                      key={kw.word}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-bold text-indigo-700"
+                    >
+                      {kw.word}
+                      <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-xs font-black text-indigo-600">
+                        {kw.count}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex items-center justify-between gap-3">

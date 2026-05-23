@@ -338,6 +338,98 @@ def get_question_stats() -> Dict[str, Any]:
     }
 
 
+def get_question_analytics(days: int = 7) -> Dict[str, Any]:
+    """Return daily counts, top keywords, feedback and hourly activity for the admin dashboard."""
+    import re
+    from datetime import date, timedelta
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Daily counts for the last N days
+    cursor.execute(
+        """
+        SELECT DATE(created_at) AS day, COUNT(*) AS count
+        FROM expert_questions
+        WHERE created_at >= DATE('now', ?)
+        GROUP BY day
+        ORDER BY day ASC
+        """,
+        (f"-{days} days",),
+    )
+    daily_rows = cursor.fetchall()
+
+    # Keyword frequency from recent questions
+    cursor.execute(
+        """
+        SELECT question FROM expert_questions
+        WHERE created_at >= DATE('now', ?)
+        ORDER BY id DESC
+        LIMIT 200
+        """,
+        (f"-{days} days",),
+    )
+    question_rows = cursor.fetchall()
+
+    stopwords = {
+        "و", "در", "به", "از", "که", "این", "را", "با", "است", "یا",
+        "برای", "می", "هم", "آیا", "چه", "چطور", "چگونه", "کدام",
+        "the", "a", "an", "of", "in", "is", "for", "how", "what",
+    }
+    word_freq: Dict[str, int] = {}
+    for row in question_rows:
+        words = re.findall(r"[؀-ۿ]{3,}|[a-zA-Z]{4,}", row["question"] or "")
+        for w in words:
+            w_lower = w.lower()
+            if w_lower not in stopwords:
+                word_freq[w_lower] = word_freq.get(w_lower, 0) + 1
+    top_keywords = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:12]
+
+    # Feedback stats
+    cursor.execute(
+        """
+        SELECT expert_status, COUNT(*) AS count
+        FROM expert_questions
+        WHERE expert_status IS NOT NULL
+        GROUP BY expert_status
+        """
+    )
+    feedback_rows = cursor.fetchall()
+
+    # Hourly activity heatmap
+    cursor.execute(
+        """
+        SELECT CAST(strftime('%H', created_at) AS INTEGER) AS hour, COUNT(*) AS count
+        FROM expert_questions
+        GROUP BY hour
+        ORDER BY hour
+        """
+    )
+    hour_rows = cursor.fetchall()
+
+    conn.close()
+
+    # Fill missing days with 0
+    day_map: Dict[str, int] = {row["day"]: row["count"] for row in daily_rows}
+    filled_days = []
+    for i in range(days - 1, -1, -1):
+        d = (date.today() - timedelta(days=i)).isoformat()
+        filled_days.append({"day": d, "count": day_map.get(d, 0)})
+
+    return {
+        "daily": filled_days,
+        "top_keywords": [{"word": w, "count": c} for w, c in top_keywords],
+        "feedback": [
+            {"status": row["expert_status"], "count": row["count"]}
+            for row in feedback_rows
+        ],
+        "hourly": [
+            {"hour": row["hour"], "count": row["count"]}
+            for row in hour_rows
+        ],
+    }
+
+
 def get_question_by_id(question_id: int) -> Dict[str, Any] | None:
     conn = get_connection()
     cursor = conn.cursor()

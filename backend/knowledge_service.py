@@ -1,8 +1,10 @@
 import os
 import json
 import math
+import time
+import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import numpy as np
 from dotenv import load_dotenv
@@ -10,6 +12,8 @@ from openai import OpenAI
 from pypdf import PdfReader
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -19,6 +23,12 @@ STORAGE_DIR = Path("storage")
 VECTOR_STORE_PATH = STORAGE_DIR / "knowledge_vectors.json"
 
 STORAGE_DIR.mkdir(exist_ok=True)
+
+# ── In-memory cache for knowledge vectors ──────────────────────
+# Instead of reading the 394 MB JSON file on every request,
+# we keep a single cached copy and only reload when the file changes.
+_vector_cache: Optional[List[Dict[str, Any]]] = None
+_vector_cache_mtime: float = 0.0
 
 
 def read_text_from_file(file_path: str) -> str:
@@ -70,11 +80,45 @@ def create_embedding(text: str) -> List[float]:
 
 
 def load_vector_store() -> List[Dict[str, Any]]:
+    """Load the vector store with in-memory caching.
+
+    The JSON file is only re-read when its mtime changes, which avoids
+    parsing ~394 MB of JSON on every single API call.
+    """
+    global _vector_cache, _vector_cache_mtime
+
     if not VECTOR_STORE_PATH.exists():
+        _vector_cache = []
+        _vector_cache_mtime = 0.0
         return []
 
+    try:
+        current_mtime = VECTOR_STORE_PATH.stat().st_mtime
+    except OSError:
+        current_mtime = 0.0
+
+    if _vector_cache is not None and current_mtime == _vector_cache_mtime:
+        return _vector_cache
+
+    logger.info("Reloading knowledge vectors from disk (%.1f MB)...",
+                VECTOR_STORE_PATH.stat().st_size / 1_048_576)
+    start = time.time()
+
     with open(VECTOR_STORE_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+        _vector_cache = json.load(f)
+
+    _vector_cache_mtime = current_mtime
+    logger.info("Knowledge vectors loaded in %.2fs (%d chunks)",
+                time.time() - start, len(_vector_cache))
+
+    return _vector_cache
+
+
+def invalidate_vector_cache() -> None:
+    """Force a reload on next access (call after writes)."""
+    global _vector_cache, _vector_cache_mtime
+    _vector_cache = None
+    _vector_cache_mtime = 0.0
 
 
 def save_vector_store(data: List[Dict[str, Any]]) -> None:
@@ -94,6 +138,9 @@ def save_vector_store(data: List[Dict[str, Any]]) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     os.replace(temp_path, VECTOR_STORE_PATH)
+
+    # Invalidate the in-memory cache so the next read picks up changes
+    invalidate_vector_cache()
 
 
 def knowledge_file_exists(file_name: str) -> bool:
@@ -227,14 +274,30 @@ def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
 
     query_embedding = create_embedding(query)
 
+    # ── Vectorised cosine similarity (much faster than per-item loop) ──
+    query_vec = np.array(query_embedding, dtype=np.float32)
+    embeddings = np.array(
+        [item["embedding"] for item in store], dtype=np.float32
+    )
+    # dot products and norms in one shot
+    dots = embeddings @ query_vec
+    norms = np.linalg.norm(embeddings, axis=1) * np.linalg.norm(query_vec)
+    norms[norms == 0] = 1.0  # avoid division by zero
+    scores = dots / norms
+
+    # Get top-k indices without full sort (O(n) vs O(n log n))
+    if len(scores) > top_k:
+        top_indices = np.argpartition(scores, -top_k)[-top_k:]
+        top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
+    else:
+        top_indices = np.argsort(scores)[::-1]
+
     results = []
-
-    for item in store:
-        score = cosine_similarity(query_embedding, item["embedding"])
-
+    for idx in top_indices:
+        item = store[idx]
         results.append(
             {
-                "score": score,
+                "score": float(scores[idx]),
                 "title": item["title"],
                 "category": item["category"],
                 "file_name": item["file_name"],
@@ -243,9 +306,7 @@ def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
             }
         )
 
-    results.sort(key=lambda x: x["score"], reverse=True)
-
-    return results[:top_k]
+    return results
 
 
 def get_knowledge_stats() -> Dict[str, Any]:

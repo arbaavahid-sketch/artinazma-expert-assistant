@@ -1,16 +1,25 @@
 "use client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { apiUrl } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
+  Loader,
   Paperclip,
   Wrench,
   Settings,
   FlaskConical,
   UserRound,
+  Copy,
+  ThumbsUp,
+  ThumbsDown,
+  RefreshCw,
+  Plus,
+  Mic,
+  MicOff,
+  Download,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
@@ -411,9 +420,88 @@ function ArtinazmaResourceCards({
     </div>
   );
 }
-export default function AssistantPage() {
+
+// Voice Input Hook — uses MediaRecorder + OpenAI Whisper (works without Google services)
+type VoiceState = "idle" | "listening" | "processing" | "unsupported";
+
+function useVoiceInput(onTranscript: (text: string) => void) {
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const isSupported =
+    typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+
+  const stopAndTranscribe = useCallback(async () => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder) return;
+    recorder.stop();
+    // transcription happens in onstop
+  }, []);
+
+  const startListening = useCallback(async () => {
+    if (!isSupported) { setVoiceState("unsupported"); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/ogg";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setVoiceState("processing");
+        try {
+          const blob = new Blob(chunksRef.current, { type: mimeType });
+          const ext = mimeType.includes("ogg") ? "ogg" : "webm";
+          const formData = new FormData();
+          formData.append("file", blob, `recording.${ext}`);
+          const res = await fetch(
+            (process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000") + "/transcribe",
+            { method: "POST", body: formData }
+          );
+          if (res.ok) {
+            const data = await res.json() as { transcript?: string };
+            if (data.transcript?.trim()) onTranscript(data.transcript.trim());
+          }
+        } catch (err) {
+          console.error("Whisper transcription failed:", err);
+        } finally {
+          setVoiceState("idle");
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setVoiceState("listening");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("Permission") || msg.includes("NotAllowed")) {
+        alert("دسترسی به میکروفون رد شده. لطفاً از تنظیمات مرورگر مجوز میکروفون را فعال کنید.");
+      }
+      setVoiceState("idle");
+    }
+  }, [isSupported, onTranscript]);
+
+  const toggleVoice = useCallback(() => {
+    if (voiceState === "listening") stopAndTranscribe();
+    else if (voiceState === "idle") startListening();
+  }, [voiceState, startListening, stopAndTranscribe]);
+
+  return { voiceState, toggleVoice, isSupported };
+}
+
+function AssistantPageInner() {
   const router = useRouter();
-  const [sessionIdParam, setSessionIdParam] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const sessionIdParam = searchParams.get("session_id");
   const [message, setMessage] = useState("");
   const [domain, setDomain] = useState("auto");
   const [responseMode, setResponseMode] = useState("auto");
@@ -435,6 +523,10 @@ export default function AssistantPage() {
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+
+  const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(
+    (transcript) => setMessage((prev) => prev ? prev + " " + transcript : transcript)
+  );
 
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
@@ -655,11 +747,6 @@ ${cleanAnswer}`,
   }
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setSessionIdParam(params.get("session_id"));
-  }, []);
-
-  useEffect(() => {
     const savedCustomer = getSavedCustomer();
 
     if (!savedCustomer) {
@@ -845,6 +932,36 @@ ${cleanAnswer}`,
     setShowTools(false);
     setActiveSessionId(null);
     router.replace("/assistant");
+  }
+
+  function exportChat() {
+    if (messages.length === 0) return;
+    const lines: string[] = [];
+    const now = new Date().toLocaleDateString("fa-IR");
+    lines.push("=== گفتگو با آرتین - آرتین آزما مهر ===");
+    lines.push(`تاریخ: ${now}`);
+    lines.push("");
+    for (const msg of messages) {
+      if (msg.role === "user") {
+        lines.push("[ کاربر ]");
+        if (msg.attachment) {
+          lines.push(`پیوست: ${msg.attachment.name} (${msg.attachment.analysisType || msg.attachment.kind})`);
+        }
+        lines.push(msg.content);
+      } else {
+        lines.push("[ آرتین ]");
+        lines.push(msg.content);
+      }
+      lines.push("");
+    }
+    lines.push("===========================================");
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `artin-chat-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -1192,37 +1309,38 @@ ${cleanAnswer}`,
         />
       )}
 
-      <header className="shrink-0 border-b border-slate-200/70 bg-white/70 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute -inset-1 rounded-3xl bg-blue-200 blur-lg" />
-              <img
-                src="/images/artin-avatar.png"
-                alt="آرتین"
-                className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
-              />
-            </div>
+      {voiceState === "listening" && (
+        <div className="flex items-center justify-center gap-2 bg-red-50 py-2 text-sm font-medium text-red-600" dir="rtl">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+          </span>
+          در حال ضبط صدا... صحبت کنید
+        </div>
+      )}
 
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-slate-900">آرتین</h1>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                  آنلاین
-                </span>
-              </div>
-
-              <p className="mt-1 text-sm text-slate-500">
-                دستیار تخصصی آرتین آزما برای تحلیل، پاسخ‌گویی و مشاوره فنی
-              </p>
-            </div>
+      <header className="shrink-0 border-b border-slate-100 bg-white">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/images/artin-avatar.png"
+              alt="آرتین"
+              className="h-8 w-8 shrink-0 rounded-full border border-slate-200 object-cover shadow-sm"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+            <span className="text-[15px] font-bold text-slate-800">آرتین</span>
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
+              آنلاین
+            </span>
           </div>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="flex items-center gap-2">
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="ui-select rounded-2xl px-4 py-3 text-sm shadow-sm"
+              className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
             >
               <option value="auto">تشخیص خودکار</option>
               <option value="catalyst">کاتالیست</option>
@@ -1233,23 +1351,32 @@ ${cleanAnswer}`,
               <option value="troubleshooting">عیب‌یابی</option>
               <option value="analysis">آنالیز و تست</option>
             </select>
-
             <select
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
-              className="ui-select rounded-2xl px-4 py-3 text-sm shadow-sm"
+              className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
             >
-              <option value="auto">نوع پاسخ: هوشمند</option>
-              <option value="brief">خلاصه و کاربردی</option>
+              <option value="auto">پاسخ هوشمند</option>
+              <option value="brief">خلاصه</option>
               <option value="technical">فنی کامل</option>
-              <option value="checklist">چک‌لیست عملیاتی</option>
+              <option value="checklist">چک‌لیست</option>
             </select>
-
+            {messages.length > 0 && (
+              <button
+                onClick={exportChat}
+                title="دانلود مکالمه"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+              >
+                <Download size={13} />
+                خروجی
+              </button>
+            )}
             <button
               onClick={clearChat}
-              className="ui-btn ui-btn-ghost rounded-2xl px-4 py-3 text-sm shadow-sm"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
             >
-              گفتگوی جدید
+              <Plus size={13} />
+              جدید
             </button>
           </div>
         </div>
@@ -1299,6 +1426,19 @@ ${cleanAnswer}`,
                       onKeyDown={handleKeyDown}
                     />
 
+                    {isVoiceSupported && (
+                      <button
+                        onClick={toggleVoice}
+                        title={voiceState === "listening" ? "توقف ضبط" : "ورودی صوتی"}
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
+                          voiceState === "listening"
+                            ? "animate-pulse bg-red-100 text-red-500"
+                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        }`}
+                      >
+                        {voiceState === "listening" ? <MicOff size={18} /> : voiceState === "processing" ? <Loader size={18} /> : <Mic size={18} />}
+                      </button>
+                    )}
                     <button
                       onClick={() => sendMessage()}
                       disabled={loading || !message.trim()}
@@ -1371,53 +1511,77 @@ ${cleanAnswer}`,
         </div>
       </div>
       {messages.length > 0 && (
-        <footer className="shrink-0 border-t border-slate-200/70 bg-white/75 backdrop-blur-xl">
-          <div className="mx-auto w-full max-w-6xl px-6 py-3">
-            <div className="relative mx-auto max-w-4xl">
+        <footer className="shrink-0 border-t border-slate-100 bg-white pb-2 pt-3">
+          <div className="mx-auto w-full max-w-3xl px-4">
+            <div className="relative">
               {showTools && (
                 <div className="absolute bottom-full left-0 right-auto z-50 mb-2 md:left-auto md:right-0">
                   <ToolMenu onSelect={handleToolClick} />
                 </div>
               )}
 
-              <div className="ui-card rounded-[32px] shadow-xl shadow-slate-200/70">
-                <div className="flex items-end gap-3 px-3 py-3">
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-end gap-2 px-3 py-2.5">
                   <button
                     onClick={() => setShowTools((prev) => !prev)}
-                    className="ui-btn ui-btn-ghost flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-50 p-0 text-2xl"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
                   >
-                    +
+                    <Paperclip size={18} />
                   </button>
 
                   <textarea
                     dir="auto"
                     style={{ fontFamily: getTextFont(message || "فارسی") }}
-                    className="max-h-40 min-h-[52px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[18px] leading-8 outline-none"
+                    className="max-h-40 min-h-[44px] flex-1 resize-none border-none bg-transparent px-1 py-2 text-[15px] leading-7 text-slate-800 placeholder-slate-400 outline-none"
                     placeholder="از آرتین بپرسید..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
                   />
 
+                  {isVoiceSupported && (
+                    <button
+                      onClick={toggleVoice}
+                      title={voiceState === "listening" ? "توقف ضبط" : "ورودی صوتی"}
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition ${
+                        voiceState === "listening"
+                          ? "animate-pulse bg-red-100 text-red-500"
+                          : voiceState === "processing"
+                          ? "animate-spin text-emerald-500"
+                          : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      }`}
+                    >
+                      {voiceState === "listening" ? <MicOff size={18} /> : voiceState === "processing" ? <Loader size={18} /> : <Mic size={18} />}
+                    </button>
+                  )}
+
                   <button
                     onClick={() => sendMessage()}
                     disabled={loading || !message.trim()}
-                    className="ui-btn ui-btn-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800 text-white shadow-sm transition hover:bg-slate-700 disabled:bg-slate-200 disabled:text-slate-400"
                   >
-                    ↑
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
                   </button>
                 </div>
               </div>
 
-              <p className="mt-2 text-center text-xs leading-5 text-slate-500">
-                آرتین پاسخ را بر اساس بانک دانش و تحلیل فنی ارائه می‌کند؛ برای
-                تصمیم‌های مهم، امکان ثبت درخواست مشاوره وجود دارد.
+              <p className="mt-2 text-center text-[11px] text-slate-400">
+                آرتین ممکن است اشتباه کند. برای تصمیم‌های مهم مشاوره کارشناسی ثبت کنید.
               </p>
             </div>
           </div>
         </footer>
       )}
     </section>
+  );
+}
+
+
+export default function AssistantPage() {
+  return (
+    <Suspense fallback={null}>
+      <AssistantPageInner />
+    </Suspense>
   );
 }
 
@@ -1534,6 +1698,7 @@ function MessageBubble({
   ) => void;
   feedbackValue?: string;
 }) {
+  const [copied, setCopied] = useState(false);
   const isUser = item.role === "user";
   const displayContent = isUser
     ? item.content
@@ -1541,9 +1706,15 @@ function MessageBubble({
   const direction = getTextDirection(displayContent);
   const fontFamily = getTextFont(displayContent);
 
+  function handleCopy(text: string) {
+    onCopy(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  }
+
   return (
     <div
-      className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
+      className={`group flex w-full ${isUser ? "justify-end" : "justify-start"}`}
       dir="ltr"
     >
       <div
@@ -1686,67 +1857,72 @@ function MessageBubble({
               images={item.resource_images}
             />
           )}
-          {!isUser && (
-            <div className="mt-4 space-y-3">
-              <div className="flex flex-wrap gap-2 pt-1">
-                <button
-                  onClick={() => onQuickAction("shorter", item.content)}
-                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                >
-                  خلاصه‌تر کن
-                </button>
+          {!isUser && !loading && (
+            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                onClick={() => handleCopy(displayContent)}
+                className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <Copy size={13} />
+                {copied ? "کپی شد" : "کپی"}
+              </button>
 
-                <button
-                  onClick={() => onQuickAction("technical", item.content)}
-                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                >
-                  فنی‌تر توضیح بده
-                </button>
+              <div className="mx-1 h-3.5 w-px bg-slate-200" />
 
-                <button
-                  onClick={() => onQuickAction("table", item.content)}
-                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-                >
-                  تبدیل به جدول
-                </button>
+              <button
+                onClick={() => onQuickAction("shorter", item.content)}
+                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                خلاصه‌تر
+              </button>
+              <button
+                onClick={() => onQuickAction("technical", item.content)}
+                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                فنی‌تر
+              </button>
+              <button
+                onClick={() => onQuickAction("table", item.content)}
+                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                جدول
+              </button>
 
-                <button
-                  onClick={() => onCopy(displayContent)}
-                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2 text-sm"
-                >
-                  کپی پاسخ
-                </button>
+              <div className="mx-1 h-3.5 w-px bg-slate-200" />
 
-                <button
-                  onClick={onRequest}
-                  className="ui-btn ui-btn-primary rounded-2xl px-4 py-2 text-sm"
-                >
-                  ثبت درخواست مشاوره
-                </button>
-                <button
-                  onClick={() => onFeedback(item.question_id, "approved")}
-                  disabled={feedbackValue === "approved"}
-                  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
-                    feedbackValue === "approved"
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "ui-btn ui-btn-ghost border-slate-200 bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-                  }`}
-                >
-                  پاسخ خوب بود
-                </button>
+              <button
+                onClick={() => onFeedback(item.question_id, "approved")}
+                disabled={feedbackValue === "approved"}
+                className={`rounded-lg p-1.5 transition ${
+                  feedbackValue === "approved"
+                    ? "text-emerald-600"
+                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                }`}
+                title="پاسخ خوب بود"
+              >
+                <ThumbsUp size={13} />
+              </button>
+              <button
+                onClick={() => onFeedback(item.question_id, "needs_edit")}
+                disabled={feedbackValue === "needs_edit"}
+                className={`rounded-lg p-1.5 transition ${
+                  feedbackValue === "needs_edit"
+                    ? "text-amber-600"
+                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                }`}
+                title="نیاز به اصلاح دارد"
+              >
+                <ThumbsDown size={13} />
+              </button>
 
-                <button
-                  onClick={() => onFeedback(item.question_id, "needs_edit")}
-                  disabled={feedbackValue === "needs_edit"}
-                  className={`rounded-2xl border px-4 py-2 text-sm font-bold transition ${
-                    feedbackValue === "needs_edit"
-                      ? "border-amber-200 bg-amber-50 text-amber-700"
-                      : "ui-btn ui-btn-ghost border-slate-200 bg-white text-slate-700 hover:bg-amber-50 hover:text-amber-700"
-                  }`}
-                >
-                  نیاز به اصلاح دارد
-                </button>
-              </div>
+              <div className="mx-1 h-3.5 w-px bg-slate-200" />
+
+              <button
+                onClick={onRequest}
+                className="rounded-lg px-2.5 py-1.5 text-[12px] text-blue-600 transition hover:bg-blue-50"
+              >
+                ثبت مشاوره
+              </button>
             </div>
           )}
         </div>

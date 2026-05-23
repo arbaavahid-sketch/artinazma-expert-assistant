@@ -4,7 +4,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const password = body.password || "";
 
-  const adminPassword = process.env.ADMIN_PASSWORD || "artin-admin";
+  const adminPassword = process.env.ADMIN_PASSWORD || "ArtinAzma1*2#amzanitra!@#";
   const sessionToken =
     process.env.ADMIN_SESSION_TOKEN || "artin-local-admin-session";
 
