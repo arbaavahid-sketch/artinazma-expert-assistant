@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   FileText,
   FlaskConical,
+  ImageIcon,
   Loader2,
   ShieldCheck,
   UploadCloud,
@@ -24,11 +25,31 @@ const testTypes = [
   { value: "metals", label: "آنالیز عنصری / فلزات" },
 ];
 
+const imageTypes = [
+  { value: "general", label: "تصویر عمومی" },
+  { value: "device-error", label: "خطای دستگاه" },
+  { value: "chromatogram", label: "کروماتوگرام" },
+  { value: "chart", label: "نمودار تست" },
+  { value: "software-screen", label: "صفحه نرم‌افزار دستگاه" },
+  { value: "lab-report", label: "گزارش تصویری آزمایشگاهی" },
+];
+
+const IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
+
 function getTestTypeLabel(value: string) {
   return (
     testTypes.find((item) => item.value === value)?.label ||
     "گزارش عمومی آزمایشگاهی"
   );
+}
+
+function getImageTypeLabel(value: string) {
+  return imageTypes.find((item) => item.value === value)?.label || "تصویر عمومی";
+}
+
+function isImageFile(file: File) {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  return IMAGE_EXTS.includes(ext);
 }
 
 function formatFileSize(size: number) {
@@ -40,10 +61,27 @@ function formatFileSize(size: number) {
 export default function AnalyzePage() {
   const [file, setFile] = useState<File | null>(null);
   const [testType, setTestType] = useState("general");
+  const [imageType, setImageType] = useState("general");
   const [userNote, setUserNote] = useState("");
   const [fileAnalysis, setFileAnalysis] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultType, setResultType] = useState<"success" | "error" | "">("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const isImage = file ? isImageFile(file) : false;
+
+  function handleFileChange(selected: File | null) {
+    setFile(selected);
+    setFileAnalysis("");
+    setResultType("");
+    if (selected && isImageFile(selected)) {
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target?.result as string);
+      reader.readAsDataURL(selected);
+    } else {
+      setImagePreview(null);
+    }
+  }
 
   async function uploadFile() {
     if (!file) return;
@@ -54,11 +92,17 @@ export default function AnalyzePage() {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("test_type", testType);
     formData.append("user_note", userNote);
 
+    const endpoint = isImage ? "/analyze-image" : "/analyze-file";
+    if (isImage) {
+      formData.append("image_type", imageType);
+    } else {
+      formData.append("test_type", testType);
+    }
+
     try {
-      const res = await fetch(apiUrl("/analyze-file"), {
+      const res = await fetch(apiUrl(endpoint), {
         method: "POST",
         body: formData,
       });
@@ -117,7 +161,7 @@ export default function AnalyzePage() {
                     فرمت‌های قابل تحلیل
                   </div>
                   <div className="mt-2 font-black text-slate-950">
-                    PDF، Excel، CSV
+                    PDF، Excel، CSV، JPG، PNG
                   </div>
                 </div>
                 <div className="rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-sm">
@@ -152,20 +196,34 @@ export default function AnalyzePage() {
               </div>
 
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                نوع تست یا گزارش
+                {isImage ? "نوع تصویر" : "نوع تست یا گزارش"}
               </label>
 
-              <select
-                value={testType}
-                onChange={(e) => setTestType(e.target.value)}
-                className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
-              >
-                {testTypes.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
+              {isImage ? (
+                <select
+                  value={imageType}
+                  onChange={(e) => setImageType(e.target.value)}
+                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
+                >
+                  {imageTypes.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <select
+                  value={testType}
+                  onChange={(e) => setTestType(e.target.value)}
+                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
+                >
+                  {testTypes.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
                 توضیح اختیاری درباره نمونه یا شرایط تست
@@ -179,14 +237,14 @@ export default function AnalyzePage() {
               />
 
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
-                فایل تست
+                فایل یا تصویر
               </label>
 
               <label className="group block cursor-pointer rounded-[26px] border-2 border-dashed border-slate-300 bg-slate-50/80 p-6 text-center transition hover:border-emerald-300 hover:bg-emerald-50/60">
                 <input
                   type="file"
-                  accept=".xlsx,.xls,.csv,.pdf"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp"
+                  onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
                   className="hidden"
                 />
 
@@ -198,20 +256,31 @@ export default function AnalyzePage() {
                   فایل را انتخاب کنید یا اینجا رها کنید
                 </div>
                 <div className="mt-2 text-sm leading-7 text-slate-500">
-                  PDF، Excel یا CSV برای تحلیل تخصصی آرتین
+                  PDF، Excel، CSV یا تصویر (JPG، PNG، WEBP)
                 </div>
               </label>
+
+              {file && isImage && imagePreview && (
+                <div className="mt-4 overflow-hidden rounded-[24px] border border-emerald-100 bg-emerald-50">
+                  <img
+                    src={imagePreview}
+                    alt="پیش‌نمایش تصویر"
+                    className="max-h-52 w-full object-contain"
+                  />
+                </div>
+              )}
 
               {file && (
                 <div className="mt-4 rounded-[24px] border border-emerald-100 bg-emerald-50 p-4">
                   <div className="flex items-start gap-3">
-                    <FileSpreadsheet
-                      size={24}
-                      className="mt-1 shrink-0 text-emerald-700"
-                    />
+                    {isImage ? (
+                      <ImageIcon size={24} className="mt-1 shrink-0 text-emerald-700" />
+                    ) : (
+                      <FileSpreadsheet size={24} className="mt-1 shrink-0 text-emerald-700" />
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-bold text-emerald-700">
-                        فایل آماده تحلیل
+                        {isImage ? "تصویر آماده تحلیل" : "فایل آماده تحلیل"}
                       </div>
                       <div className="mt-1 break-all text-sm font-black text-slate-950">
                         {file.name}
@@ -221,7 +290,7 @@ export default function AnalyzePage() {
                           {formatFileSize(file.size)}
                         </span>
                         <span className="rounded-full bg-white px-3 py-1">
-                          {getTestTypeLabel(testType)}
+                          {isImage ? getImageTypeLabel(imageType) : getTestTypeLabel(testType)}
                         </span>
                       </div>
                     </div>
@@ -256,6 +325,9 @@ export default function AnalyzePage() {
               <div className="space-y-3 text-sm leading-7 text-slate-600">
                 <div className="rounded-2xl bg-slate-50 p-3">
                   نوع نمونه، ماتریس و هدف آزمون را در توضیحات بنویسید.
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-3">
+                  برای عکس دستگاه، نوع تصویر مناسب را از منوی بالا انتخاب کنید.
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
                   اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را اضافه کنید.

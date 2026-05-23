@@ -24,6 +24,7 @@ from knowledge_service import (
     add_text_to_knowledge_base,
 )
 from ai_service import ask_expert_assistant, analyze_image_with_ai
+from ai_service import client as ai_client
 from file_analyzer import analyze_excel_or_csv, read_pdf_text
 from db_service import (
     init_db,
@@ -31,6 +32,7 @@ from db_service import (
     save_expert_question,
     get_recent_questions,
     get_question_stats,
+    get_question_analytics,
     get_question_by_id,
     update_question_review,
     save_user_memory,
@@ -433,22 +435,22 @@ def review_question_patch(question_id: int, request: QuestionReviewRequest):
 
 @app.post("/chat")
 @limiter.limit("20/minute")
-def chat(request: ChatRequest, req: Request):
+def chat(body: ChatRequest, request: Request):
     has_astm_code = bool(
-        re.search(r"\bD\s*\d{3,5}\b", request.message, flags=re.IGNORECASE)
+        re.search(r"\bD\s*\d{3,5}\b", body.message, flags=re.IGNORECASE)
     )
 
-    specific_model_question = is_specific_product_or_model_question(request.message)
-    allow_company_reference = is_artinazma_related_question(request.message)
-    is_transform_followup = is_followup_transform_request(request.message)
+    specific_model_question = is_specific_product_or_model_question(body.message)
+    allow_company_reference = is_artinazma_related_question(body.message)
+    is_transform_followup = is_followup_transform_request(body.message)
     intent_data = detect_question_intent(
-        message=request.message, domain=request.domain or "auto"
+        message=body.message, domain=body.domain or "auto"
     )
 
     question_intent = intent_data["intent"]
     question_intent_label = intent_data["label"]
     intent_instruction = intent_data["instruction"]
-    local_docs = local_search_knowledge_base(request.message, top_k=12)
+    local_docs = local_search_knowledge_base(body.message, top_k=12)
 
     best_score = 0.0
     related_docs = []
@@ -459,7 +461,7 @@ def chat(request: ChatRequest, req: Request):
         search_mode = "gpt_astm_direct"
 
     elif specific_model_question:
-        exact_local_match = context_has_exact_model_match(request.message, local_docs)
+        exact_local_match = context_has_exact_model_match(body.message, local_docs)
 
         if (
             exact_local_match
@@ -478,7 +480,7 @@ def chat(request: ChatRequest, req: Request):
             search_mode = "local_fast"
         else:
             try:
-                related_docs = search_knowledge_base(request.message, top_k=5)
+                related_docs = search_knowledge_base(body.message, top_k=5)
                 search_mode = "ai_vector"
             except Exception as e:
                 print("AI vector search failed, using local search:", e)
@@ -511,7 +513,7 @@ def chat(request: ChatRequest, req: Request):
     if allow_company_reference:
         try:
             artinazma_resources = find_artinazma_resources(
-                message=request.message,
+                message=body.message,
                 max_results=2,
             )
 
@@ -554,7 +556,7 @@ def chat(request: ChatRequest, req: Request):
 
     allow_web_search = True
     
-    if request.response_mode == "brief":
+    if body.response_mode == "brief":
         allow_web_search = False
 
     if question_intent in verified_answer_intents:
@@ -595,17 +597,17 @@ def chat(request: ChatRequest, req: Request):
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
 
-    auto_domain = detect_domain(request.message)
-    selected_domain = request.domain or "auto"
+    auto_domain = detect_domain(body.message)
+    selected_domain = body.domain or "auto"
     detected_domain = auto_domain if selected_domain == "auto" else selected_domain
 
     history = [
     {"role": item.role, "content": item.content}
-    for item in (request.history or [])[-6:]
+    for item in (body.history or [])[-6:]
     if item.role in ["user", "assistant"] and item.content
 ]
 
-    response_mode = request.response_mode or "auto"
+    response_mode = body.response_mode or "auto"
 
     style_instructions = """
 سبک پاسخ:
@@ -651,7 +653,7 @@ def chat(request: ChatRequest, req: Request):
         context = style_instructions
     try:
         answer = ask_expert_assistant(
-            message=request.message,
+            message=body.message,
             context=context,
             history=history,
             domain=detected_domain,
@@ -663,9 +665,10 @@ def chat(request: ChatRequest, req: Request):
         answer_mode = "ai"
 
     except Exception as e:
-        print("AI answer failed, using local answer:", e)
+        import traceback; traceback.print_exc()
+        print("AI answer failed, using local answer:", type(e).__name__, e)
 
-        answer = build_local_answer(request.message, related_docs)
+        answer = build_local_answer(body.message, related_docs)
         # answer = format_answer_for_ui(answer)
 
         answer_mode = "local"
@@ -682,7 +685,7 @@ def chat(request: ChatRequest, req: Request):
     ]
 
     question_id = save_expert_question(
-        question=request.message,
+        question=body.message,
         answer=answer,
         sources=sources,
         detected_domain=detected_domain,
@@ -690,10 +693,10 @@ def chat(request: ChatRequest, req: Request):
 
     memory_id = None
 
-    if request.user_id and request.user_id != "anonymous":
+    if body.user_id and body.user_id != "anonymous":
         memory_id = save_user_memory(
-            user_id=request.user_id,
-            question=request.message,
+            user_id=body.user_id,
+            question=body.message,
             answer=answer,
             detected_domain=detected_domain,
             memory_type="chat",
@@ -728,7 +731,7 @@ def chat(request: ChatRequest, req: Request):
 
 
 @app.post("/analyze-file")
-async def analyze_file(
+def analyze_file(
     file: UploadFile = File(...),
     test_type: str = Form("general"),
     user_note: str = Form(""),
@@ -1028,6 +1031,11 @@ def questions_stats(_=Depends(require_admin)):
     return get_question_stats()
 
 
+@app.get("/questions/analytics")
+def questions_analytics(days: int = 7):
+    return get_question_analytics(days=days)
+
+
 @app.get("/questions")
 def questions_all(limit: int = 100, _=Depends(require_admin)):
     return {"questions": get_all_questions(limit=limit)}
@@ -1099,8 +1107,29 @@ def question_add_to_knowledge(question_id: int):
     return result
 
 
+@app.post("/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    """Transcribe audio using OpenAI Whisper - works in Iran unlike Web Speech API."""
+    try:
+        audio_bytes = await file.read()
+        # Use the original filename/extension so Whisper knows the format
+        filename = file.filename or "audio.webm"
+        import io as _io
+        audio_file = _io.BytesIO(audio_bytes)
+        audio_file.name = filename
+        transcript = ai_client.audio.transcriptions.create(
+            model="whisper-1",
+            file=(filename, audio_bytes, file.content_type or "audio/webm"),
+            language="fa",
+        )
+        return {"transcript": transcript.text}
+    except Exception as e:
+        print("Transcription error:", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/analyze-image")
-async def analyze_image(
+def analyze_image(
     file: UploadFile = File(...),
     image_type: str = Form("general"),
     user_note: str = Form(""),

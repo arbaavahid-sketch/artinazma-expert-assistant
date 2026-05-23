@@ -2,21 +2,117 @@ import os
 import re
 import io
 import base64
-from typing import Optional, List, Dict, Tuple
+import json as _json
+import urllib.request
+import time
+from typing import Optional, List, Dict, Tuple, Generator
 
+import requests as _requests
 from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image, ImageOps
 
 load_dotenv()
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    timeout=float(os.getenv("OPENAI_TIMEOUT", "120")),
-    max_retries=int(os.getenv("OPENAI_MAX_RETRIES", "3")),
-)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+def _pick_proxy() -> str | None:
+    """
+    پروکسی مناسب برای اتصال به OpenAI رو انتخاب می‌کنه.
+    اولویت: OPENAI_PROXY env > SOCKS5 سیستمی > HTTPS سیستمی
+    SOCKS5 برای اتصال‌های رمزنگاری‌شده بهتر از HTTP proxy عمل می‌کنه.
+    """
+    # اجازه override دستی
+    explicit = os.getenv("OPENAI_PROXY")
+    if explicit:
+        return explicit
+
+    sys_proxies = urllib.request.getproxies()
+    # ترجیح: all (SOCKS5) > socks5 > socks > https > http
+    for key in ("all", "socks5", "socks", "https", "http"):
+        val = sys_proxies.get(key)
+        if val:
+            return val
+    return None
+
+
+def _get_session() -> _requests.Session:
+    """Session با پروکسی بهینه برای اتصال به OpenAI."""
+    session = _requests.Session()
+    proxy = _pick_proxy()
+    if proxy:
+        print(f"[PROXY] using proxy: {proxy.split('@')[-1]}")  # بدون password
+        session.proxies.update({"http": proxy, "https": proxy})
+    return session
+
+
+_session = _get_session()
+
+
+def _make_client():
+    import httpx
+    base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
+    proxy = _pick_proxy()
+
+    http_client = None
+    if proxy:
+        try:
+            http_client = httpx.Client(proxy=proxy)
+        except Exception as e:
+            print(f"[PROXY] httpx client failed: {e}")
+
+    kwargs = dict(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        timeout=float(os.getenv("OPENAI_TIMEOUT", "120")),
+        max_retries=2,
+    )
+    if base_url:
+        kwargs["base_url"] = base_url
+    if http_client:
+        kwargs["http_client"] = http_client
+
+    return OpenAI(**kwargs)
+
+
+client = _make_client()
+
+OPENAI_API_URL = (
+    os.getenv("OPENAI_BASE_URL")
+    or os.getenv("OPENAI_API_BASE")
+    or "https://api.openai.com/v1"
+).rstrip("/")
+
+
+def _chat_via_requests(messages: list, model: str, temperature: float) -> str:
+    key = os.getenv("OPENAI_API_KEY", "")
+    body = {"model": model, "messages": messages, "temperature": temperature}
+    _size = len(_json.dumps(body, ensure_ascii=False).encode("utf-8"))
+    print(f"[OPENAI] request body size: {_size} bytes ({_size//1024} KB)")
+
+    url = f"{OPENAI_API_URL}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
+    timeout = float(os.getenv("OPENAI_TIMEOUT", "120"))
+
+    last_err = None
+    for attempt in range(3):
+        try:
+            resp = _session.post(url, headers=headers, json=body, timeout=timeout)
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"] or ""
+        except (_requests.exceptions.ConnectionError,
+                _requests.exceptions.ChunkedEncodingError) as e:
+            last_err = e
+            print(f"[OPENAI] attempt {attempt+1} failed: {e} — retrying…")
+            time.sleep(1.5 * (attempt + 1))
+        except Exception as e:
+            raise
+
+    raise last_err
+
+
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.1")
 OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 
 
@@ -700,13 +796,15 @@ def ask_expert_assistant(
 ) -> str:
     history = history or []
 
-    user_content = f"""
-زمینه و دستور پاسخ:
-{context}
-
-سؤال کاربر:
-{message}
-""".strip()
+    # Use the full build_user_content pipeline (language detection,
+    # query classification, specialised protocol, formatting rules).
+    user_content = build_user_content(
+        message=message,
+        context=context,
+        history=history,
+        domain=domain,
+        allow_web_search=allow_web_search,
+    )
 
     input_messages = [
         {
@@ -736,23 +834,60 @@ def ask_expert_assistant(
 
     kwargs = {
         "model": MODEL,
-        "input": input_messages,
+        "messages": input_messages,
         "temperature": OPENAI_TEMPERATURE,
     }
 
-    if allow_web_search:
-        kwargs["tools"] = [
-            {
-                "type": "web_search_preview",
-            }
-        ]
-        kwargs["tool_choice"] = {
-            "type": "web_search_preview"
-        }
+    return _chat_via_requests(
+        messages=kwargs["messages"],
+        model=kwargs["model"],
+        temperature=kwargs["temperature"],
+    ).strip()
 
-    response = client.responses.create(**kwargs)
 
-    return response.output_text.strip()
+def ask_expert_assistant_stream(
+    message: str,
+    context: str = "",
+    history: Optional[List[Dict[str, str]]] = None,
+    domain: str = "auto",
+    allow_web_search: bool = False,
+) -> Generator[str, None, None]:
+    history = history or []
+
+    user_content = build_user_content(
+        message=message,
+        context=context,
+        history=history,
+        domain=domain,
+        allow_web_search=allow_web_search,
+    )
+
+    input_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+    for item in history[-6:]:
+        role = item.get("role")
+        item_content = item.get("content")
+        if role in ["user", "assistant"] and item_content:
+            input_messages.append({"role": role, "content": item_content})
+
+    input_messages.append({"role": "user", "content": user_content})
+
+    kwargs: Dict = {
+        "model": MODEL,
+        "messages": input_messages,
+        "temperature": OPENAI_TEMPERATURE,
+        "stream": True,
+    }
+
+    text = _chat_via_requests(
+        messages=kwargs["messages"],
+        model=kwargs["model"],
+        temperature=kwargs["temperature"],
+    )
+    chunk_size = 40
+    for i in range(0, len(text), chunk_size):
+        yield text[i:i + chunk_size]
+
 
 def prepare_image_for_ai(file_path: str) -> Tuple[str, str]:
     """
@@ -765,10 +900,10 @@ def prepare_image_for_ai(file_path: str) -> Tuple[str, str]:
         if image.mode not in ["RGB", "L"]:
             image = image.convert("RGB")
 
-        image.thumbnail((1280, 1280))
+        image.thumbnail((400, 400))
 
         buffer = io.BytesIO()
-        image.save(buffer, format="JPEG", quality=75, optimize=True)
+        image.save(buffer, format="JPEG", quality=30, optimize=True)
 
         encoded_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
@@ -823,14 +958,40 @@ IMAGE_ANALYSIS_PROMPT = """
 """
 
 
+def _ocr_extract_text(file_path: str) -> str:
+    """Extract text from image using easyocr (works locally, no network needed)."""
+    try:
+        import easyocr
+        print("[OCR] loading easyocr reader...")
+        reader = easyocr.Reader(["en", "fa"], gpu=False, verbose=False)
+        print("[OCR] running readtext...")
+        results = reader.readtext(file_path, detail=0, paragraph=True)
+        text = "\n".join(results).strip()
+        print(f"[OCR] extracted {len(text)} chars")
+        return text
+    except Exception as e:
+        print(f"[OCR] failed: {e}")
+        return ""
+
+
 def analyze_image_with_ai(
     file_path: str, user_note: str = "", web_context: str = ""
 ) -> str:
-    encoded_image, mime_type = prepare_image_for_ai(file_path)
+    # Step 1: extract text locally with OCR (no network needed)
+    ocr_text = _ocr_extract_text(file_path)
 
     prompt = IMAGE_ANALYSIS_PROMPT.format(
         user_note=user_note if user_note else "توضیحی ارائه نشده است."
     )
+
+    if ocr_text:
+        prompt += f"""
+
+متن استخراج‌شده از تصویر (OCR):
+---
+{ocr_text}
+---
+"""
 
     if web_context:
         prompt += f"""
@@ -843,30 +1004,12 @@ def analyze_image_with_ai(
 - به کاربر نگو این زمینه از کجا آمده است.
 """
 
-    response = client.responses.create(
-        model=MODEL,
-        input=[
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT,
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": prompt,
-                    },
-                    {
-                        "type": "input_image",
-                        "image_url": f"data:{mime_type};base64,{encoded_image}",
-                        "detail": "high",
-                    },
-                ],
-            },
+    # Step 2: send extracted text to OpenAI
+    return _chat_via_requests(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
         ],
-        max_output_tokens=int(os.getenv("OPENAI_IMAGE_MAX_OUTPUT_TOKENS", "1600")),
+        model=MODEL,
         temperature=OPENAI_TEMPERATURE,
     )
-
-    return clean_ai_answer(response.output_text)
