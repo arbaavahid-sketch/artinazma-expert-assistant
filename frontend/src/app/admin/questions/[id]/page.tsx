@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiUrl } from "@/lib/api";
+import { adminUrl } from "@/lib/api";
 import {
   ArrowRight,
   BookOpenCheck,
@@ -112,7 +112,7 @@ export default function QuestionDetailPage() {
     setAddKnowledgeMessage("");
 
     try {
-      const res = await fetch(apiUrl(`/questions/${questionId}`), {
+      const res = await fetch(adminUrl(`/questions/${questionId}`), {
         cache: "no-store",
       });
 
@@ -139,7 +139,7 @@ export default function QuestionDetailPage() {
     setSaveMessageType("");
 
     try {
-      const res = await fetch(apiUrl(`/questions/${questionId}/review`), {
+      const res = await fetch(adminUrl(`/questions/${questionId}/review`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export default function QuestionDetailPage() {
 
     try {
       const res = await fetch(
-        apiUrl(`/questions/${questionId}/add-to-knowledge`),
+        adminUrl(`/questions/${questionId}/add-to-knowledge`),
         {
           method: "POST",
         },

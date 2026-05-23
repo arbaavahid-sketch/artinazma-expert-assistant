@@ -615,35 +615,40 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           </div>
         </aside>
 
-      {/* Mobile menu toggle */}
-      {!mobileSidebarOpen && (
-        <button
-          onClick={() => setMobileSidebarOpen(true)}
-          className="absolute right-3 top-3 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/90 shadow-md backdrop-blur-sm transition hover:bg-slate-50 md:hidden"
-          aria-label="باز کردن منو"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="5" width="14" height="1.8" rx="0.9" fill="#475569"/>
-            <rect x="3" y="9.1" width="10" height="1.8" rx="0.9" fill="#475569"/>
-            <rect x="3" y="13.2" width="12" height="1.8" rx="0.9" fill="#475569"/>
-          </svg>
-        </button>
-      )}
+      {/* Main content wrapper — column on mobile (topbar + content), row on desktop (spacer + content) */}
+      <div className="flex h-full flex-col md:flex-row">
 
-      {/* Content layout: spacer reserves sidebar space on desktop, section gets the rest */}
-      <div className="flex h-full">
-        {/* Desktop spacer — mirrors sidebar width so content doesn't go under sidebar */}
-        <div
-          className={`hidden md:block shrink-0 transition-all duration-300 ${
-            sidebarCollapsed ? "w-[88px]" : "w-[300px]"
-          }`}
-        />
-        <section
-          data-app-path={pathname}
-          className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden pt-14 md:pt-0"
-        >
-          {children}
-        </section>
+        {/* Mobile topbar — part of layout flow, never overlaps page content */}
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-2 md:hidden dark:bg-slate-900 dark:border-slate-800">
+          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">آرتین آزما</span>
+          <button
+            onClick={() => setMobileSidebarOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+            aria-label="باز کردن منو"
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="5" width="14" height="1.8" rx="0.9" fill="currentColor" className="text-slate-600"/>
+              <rect x="3" y="9.1" width="10" height="1.8" rx="0.9" fill="currentColor" className="text-slate-600"/>
+              <rect x="3" y="13.2" width="12" height="1.8" rx="0.9" fill="currentColor" className="text-slate-600"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Horizontal layout for desktop: spacer + content */}
+        <div className="flex min-h-0 flex-1">
+          {/* Desktop spacer — mirrors sidebar width */}
+          <div
+            className={`hidden md:block shrink-0 transition-all duration-300 ${
+              sidebarCollapsed ? "w-[88px]" : "w-[300px]"
+            }`}
+          />
+          <section
+            data-app-path={pathname}
+            className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+          >
+            {children}
+          </section>
+        </div>
       </div>
     </main>
   );

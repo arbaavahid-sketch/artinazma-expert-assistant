@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { adminUrl } from "@/lib/api";
 import { apiUrl } from "@/lib/api";
 import {
   Activity,
@@ -8,7 +9,10 @@ import {
   Bot,
   CheckCircle2,
   Database,
+  Mail,
   RefreshCw,
+  Save,
+  Send,
   Server,
   Settings2,
   ShieldCheck,
@@ -91,6 +95,20 @@ export default function AdminSettingsPage() {
   const [syncingNow, setSyncingNow] = useState(false);
   const [gdriveMessage, setGdriveMessage] = useState("");
 
+  // Qdrant status
+  type QdrantStatus = { enabled: boolean; backend: string; points_count?: number; vectors_count?: number; status?: string; error?: string };
+  const [qdrantStatus, setQdrantStatus] = useState<QdrantStatus | null>(null);
+
+  // Email settings state
+  const [emailSettings, setEmailSettings] = useState({
+    smtp_host: "", smtp_port: 587, smtp_user: "", smtp_pass: "",
+    from_addr: "", to_addr: "", weekly_enabled: false,
+  });
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailMessageType, setEmailMessageType] = useState<"success" | "error">("success");
+
   async function loadStatus(checkAi = false) {
     if (checkAi) {
       setCheckingAi(true);
@@ -120,7 +138,7 @@ export default function AdminSettingsPage() {
 
   async function loadGdriveSchedule() {
     try {
-      const res = await fetch(apiUrl("/admin/gdrive-schedule"), { cache: "no-store" });
+      const res = await fetch(adminUrl("/admin/gdrive-schedule"), { cache: "no-store" });
       if (res.ok) {
         const data: GDriveSchedule = await res.json();
         setGdriveSchedule(data);
@@ -136,7 +154,7 @@ export default function AdminSettingsPage() {
     setGdriveMessage("");
     try {
       const interval = enabled ? parseFloat(gdriveIntervalInput) || 24 : 0;
-      const res = await fetch(apiUrl("/admin/gdrive-schedule"), {
+      const res = await fetch(adminUrl("/admin/gdrive-schedule"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ interval_hours: interval }),
@@ -155,7 +173,7 @@ export default function AdminSettingsPage() {
     setSyncingNow(true);
     setGdriveMessage("");
     try {
-      const res = await fetch(apiUrl("/admin/gdrive-sync-now"), { method: "POST" });
+      const res = await fetch(adminUrl("/admin/gdrive-sync-now"), { method: "POST" });
       const data = await res.json();
       if (data.success) {
         setGdriveMessage("همزمان‌سازی با موفقیت انجام شد.");
@@ -170,9 +188,66 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function loadEmailSettings() {
+    try {
+      const res = await fetch(adminUrl("/admin/email-settings"), { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setEmailSettings((prev) => ({ ...prev, ...data }));
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function saveEmailSettings() {
+    setSavingEmail(true);
+    setEmailMessage("");
+    try {
+      const res = await fetch(adminUrl("/admin/email-settings"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emailSettings),
+      });
+      const data = await res.json();
+      setEmailMessageType(data.success ? "success" : "error");
+      setEmailMessage(data.message || "ذخیره شد.");
+    } catch {
+      setEmailMessageType("error");
+      setEmailMessage("خطا در اتصال به سرور.");
+    } finally {
+      setSavingEmail(false);
+    }
+  }
+
+  async function sendWeeklyReport() {
+    setSendingReport(true);
+    setEmailMessage("");
+    try {
+      const res = await fetch(adminUrl("/admin/send-weekly-report"), { method: "POST" });
+      const data = await res.json();
+      setEmailMessageType(data.success ? "success" : "error");
+      setEmailMessage(data.message || (data.success ? "ارسال شد." : "خطا در ارسال."));
+    } catch {
+      setEmailMessageType("error");
+      setEmailMessage("خطا در اتصال به سرور.");
+    } finally {
+      setSendingReport(false);
+    }
+  }
+
+  async function loadQdrantStatus() {
+    try {
+      const res = await fetch(adminUrl("/admin/qdrant-status"), { cache: "no-store" });
+      if (res.ok) setQdrantStatus(await res.json());
+    } catch {
+      // non-critical
+    }
+  }
+
   useEffect(() => {
     loadStatus(false);
     loadGdriveSchedule();
+    loadEmailSettings();
+    loadQdrantStatus();
   }, []);
 
   return (
@@ -250,6 +325,32 @@ export default function AdminSettingsPage() {
             description={`${status?.knowledge_stats?.total_chunks ?? 0} بخش متنی ذخیره شده`}
             icon={<Database size={24} />}
             tone="purple"
+          />
+
+          <StatusCard
+            title="Qdrant Vector DB"
+            value={
+              qdrantStatus === null
+                ? "در حال بررسی…"
+                : qdrantStatus.enabled
+                ? qdrantStatus.error
+                  ? "خطا در اتصال"
+                  : `${(qdrantStatus.points_count ?? 0).toLocaleString()} بردار`
+                : "غیرفعال (JSON)"
+            }
+            description={
+              qdrantStatus?.enabled
+                ? qdrantStatus.error
+                  ? qdrantStatus.error
+                  : `وضعیت: ${qdrantStatus.status ?? "ok"} | backend: qdrant`
+                : "متغیر QDRANT_URL تنظیم نشده — از فایل JSON استفاده می‌شود"
+            }
+            icon={<Server size={24} />}
+            tone={
+              qdrantStatus?.enabled && !qdrantStatus.error
+                ? "blue"
+                : "slate"
+            }
           />
         </div>
 
@@ -455,6 +556,123 @@ export default function AdminSettingsPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* ─── Email Report Settings ────────────────────────────────────────── */}
+        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <Mail size={22} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-900">گزارش هفتگی ایمیل</h2>
+              <p className="mt-1 text-sm text-slate-500">تنظیمات SMTP برای ارسال خودکار گزارش به ادمین</p>
+            </div>
+          </div>
+
+          {emailMessage && (
+            <div className={`mb-5 flex items-center gap-2 rounded-2xl p-4 text-sm font-bold ${
+              emailMessageType === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+            }`}>
+              {emailMessageType === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              {emailMessage}
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">SMTP Host</label>
+              <input
+                value={emailSettings.smtp_host}
+                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_host: e.target.value }))}
+                placeholder="smtp.gmail.com"
+                dir="ltr"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">Port</label>
+              <select
+                value={emailSettings.smtp_port}
+                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_port: Number(e.target.value) }))}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+              >
+                <option value={587}>587 (STARTTLS)</option>
+                <option value={465}>465 (SSL)</option>
+                <option value={25}>25</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">نام کاربری SMTP</label>
+              <input
+                value={emailSettings.smtp_user}
+                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_user: e.target.value }))}
+                placeholder="your@email.com"
+                dir="ltr"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">رمز عبور SMTP</label>
+              <input
+                type="password"
+                value={emailSettings.smtp_pass}
+                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_pass: e.target.value }))}
+                placeholder="App password یا رمز عبور"
+                dir="ltr"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">آدرس فرستنده</label>
+              <input
+                value={emailSettings.from_addr}
+                onChange={(e) => setEmailSettings((s) => ({ ...s, from_addr: e.target.value }))}
+                placeholder="artin@artinazma.ir"
+                dir="ltr"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">ایمیل گیرنده (ادمین)</label>
+              <input
+                value={emailSettings.to_addr}
+                onChange={(e) => setEmailSettings((s) => ({ ...s, to_addr: e.target.value }))}
+                placeholder="admin@artinazma.ir"
+                dir="ltr"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={emailSettings.weekly_enabled}
+              onChange={(e) => setEmailSettings((s) => ({ ...s, weekly_enabled: e.target.checked }))}
+            />
+            <span className="font-bold">ارسال خودکار گزارش هر هفته یک‌بار</span>
+          </label>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              onClick={saveEmailSettings}
+              disabled={savingEmail}
+              className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+            >
+              <Save size={16} />
+              {savingEmail ? "در حال ذخیره..." : "ذخیره تنظیمات"}
+            </button>
+
+            <button
+              onClick={sendWeeklyReport}
+              disabled={sendingReport || !emailSettings.to_addr}
+              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+            >
+              <Send size={16} />
+              {sendingReport ? "در حال ارسال..." : "ارسال گزارش الان"}
+            </button>
           </div>
         </div>
       </div>

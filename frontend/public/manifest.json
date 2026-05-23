@@ -1,0 +1,41 @@
+{
+  "name": "دستیار هوشمند آرتین آزما",
+  "short_name": "آرتین",
+  "description": "دستیار هوشمند تخصصی آرتین آزما مهر — تجهیزات آزمایشگاهی و صنعتی",
+  "start_url": "/assistant",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait-primary",
+  "lang": "fa",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/images/artinazma-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/artinazma-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "گفتگو با آرتین",
+      "short_name": "چت",
+      "url": "/assistant",
+      "icons": [{ "src": "/images/artin-avatar.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "تحلیل فایل",
+      "short_name": "تحلیل",
+      "url": "/analyze",
+      "icons": [{ "src": "/images/artinazma-logo.png", "sizes": "96x96" }]
+    }
+  ]
+}

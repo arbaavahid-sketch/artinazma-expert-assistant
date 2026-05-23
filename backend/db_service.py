@@ -137,6 +137,19 @@ def init_db():
         )
         """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS knowledge_audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            action TEXT NOT NULL,
+            file_name TEXT,
+            title TEXT,
+            category TEXT,
+            detail TEXT,
+            performed_by TEXT DEFAULT 'admin',
+            created_at TEXT NOT NULL
+        )
+        """)
+
     conn.commit()
     conn.close()
 
@@ -1269,16 +1282,164 @@ def delete_all_customer_chat_sessions(customer_id: int) -> int:
     )
 
     cursor.execute(
-        """
-        DELETE FROM chat_sessions
-        WHERE customer_id = ?
-        """,
+        "DELETE FROM chat_sessions WHERE customer_id = ?",
         (customer_id,),
     )
 
-    deleted_sessions = cursor.rowcount
-
+    deleted_count = cursor.rowcount
     conn.commit()
     conn.close()
+    return deleted_count
 
-    return deleted_sessions
+
+# ─── Knowledge Audit Log ───────────────────────────────────────────────────────
+
+def log_knowledge_action(
+    action: str,
+    file_name: str = "",
+    title: str = "",
+    category: str = "",
+    detail: str = "",
+    performed_by: str = "admin",
+) -> None:
+    """Log a knowledge base operation to the audit log."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            """
+            INSERT INTO knowledge_audit_log
+                (action, file_name, title, category, detail, performed_by, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                action,
+                file_name,
+                title,
+                category,
+                detail,
+                performed_by,
+                datetime.utcnow().isoformat(),
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_knowledge_audit_log(limit: int = 100, action_filter: str = "") -> List[Dict[str, Any]]:
+    """Return recent knowledge audit log entries."""
+    conn = get_connection()
+    try:
+        if action_filter:
+            rows = conn.execute(
+                """
+                SELECT id, action, file_name, title, category, detail, performed_by, created_at
+                FROM knowledge_audit_log
+                WHERE action = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (action_filter, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT id, action, file_name, title, category, detail, performed_by, created_at
+                FROM knowledge_audit_log
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def clear_knowledge_audit_log() -> int:
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM knowledge_audit_log")
+        conn.commit()
+        return conn.execute("SELECT changes()").fetchone()[0]
+    finally:
+        conn.close()
+
+
+# ─── Customer Cross-Session Memory ────────────────────────────────────────────
+
+def get_customer_cross_session_context(customer_id: int) -> str:
+    """
+    Build a Persian context string summarising what Artin knows about this
+    customer so it can be injected into the system prompt.
+
+    Includes:
+    - Name, company, phone from the customers table
+    - Top domains they have asked about (from user_memories)
+    - Their three most recent questions (for continuity)
+    """
+    conn = get_connection()
+    try:
+        # 1. Customer profile
+        row = conn.execute(
+            "SELECT full_name, company, phone FROM customers WHERE id = ?",
+            (customer_id,),
+        ).fetchone()
+
+        if not row:
+            return ""
+
+        name = row["full_name"] or ""
+        company = row["company"] or ""
+        phone = row["phone"] or ""
+
+        # 2. Top domains from past conversations
+        user_id_str = f"customer_{customer_id}"
+        domain_rows = conn.execute(
+            """
+            SELECT detected_domain, COUNT(*) AS cnt
+            FROM user_memories
+            WHERE user_id = ? AND detected_domain IS NOT NULL AND detected_domain != ''
+            GROUP BY detected_domain
+            ORDER BY cnt DESC
+            LIMIT 5
+            """,
+            (user_id_str,),
+        ).fetchall()
+        top_domains = [r["detected_domain"] for r in domain_rows]
+
+        # 3. Last 3 questions
+        recent_rows = conn.execute(
+            """
+            SELECT question FROM user_memories
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 3
+            """,
+            (user_id_str,),
+        ).fetchall()
+        recent_questions = [r["question"] for r in recent_rows]
+
+    finally:
+        conn.close()
+
+    # Build context block
+    lines = ["--- اطلاعات کاربر فعلی ---"]
+    lines.append(f"نام: {name}")
+    if company:
+        lines.append(f"شرکت: {company}")
+    if phone:
+        lines.append(f"تلفن: {phone}")
+    if top_domains:
+        lines.append(f"حوزه‌های مورد علاقه: {', '.join(top_domains)}")
+    if recent_questions:
+        lines.append("آخرین سوالات:")
+        for q in recent_questions:
+            lines.append(f"  - {q[:120]}")
+    lines.append(
+        "توجه: این کاربر ثبت‌نام کرده است. پاسخ‌ها را با نام او آغاز نکن، "
+        "اما اطلاعات شرکت و حوزه کاری‌اش را در پاسخ‌های فنی مد نظر داشته باش."
+    )
+    lines.append("--- پایان اطلاعات کاربر ---")
+
+    return "\n".join(lines)

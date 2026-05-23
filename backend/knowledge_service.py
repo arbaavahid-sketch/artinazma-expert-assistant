@@ -150,15 +150,14 @@ def knowledge_file_exists(file_name: str) -> bool:
 
 
 def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
+    import qdrant_service as _qs
+
     store = load_vector_store()
-
     before_count = len(store)
-
     new_store = [item for item in store if item.get("file_name") != file_name]
-
     removed_chunks = before_count - len(new_store)
 
-    if removed_chunks == 0:
+    if removed_chunks == 0 and not (_qs.is_enabled() and _qs.file_exists(file_name)):
         return {
             "success": False,
             "message": "فایلی با این نام در بانک دانش پیدا نشد.",
@@ -166,7 +165,14 @@ def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
             "removed_chunks": 0,
         }
 
-    save_vector_store(new_store)
+    if removed_chunks > 0:
+        save_vector_store(new_store)
+
+    if _qs.is_enabled():
+        try:
+            _qs.delete_by_file(file_name)
+        except Exception as e:
+            logger.warning("Qdrant delete failed for '%s': %s", file_name, e)
 
     return {
         "success": True,
@@ -209,6 +215,8 @@ def add_file_to_knowledge_base(
     category: str = "general",
     replace_existing: bool = False,
 ) -> Dict[str, Any]:
+    import qdrant_service as _qs
+
     file_name = Path(file_path).name
 
     if knowledge_file_exists(file_name):
@@ -233,17 +241,14 @@ def add_file_to_knowledge_base(
         }
 
     chunks = chunk_text(text)
+    effective_title = title or file_name
 
-    store = load_vector_store()
-
-    added_chunks = 0
-
+    chunk_dicts = []
     for index, chunk in enumerate(chunks):
         embedding = create_embedding(chunk)
-
-        store.append(
+        chunk_dicts.append(
             {
-                "title": title or file_name,
+                "title": effective_title,
                 "category": category,
                 "file_name": file_name,
                 "chunk_index": index,
@@ -252,9 +257,22 @@ def add_file_to_knowledge_base(
             }
         )
 
-        added_chunks += 1
+    added_chunks = len(chunk_dicts)
 
-    save_vector_store(store)
+    if _qs.is_enabled():
+        # Qdrant path — delete old chunks first, then upsert new ones
+        if removed_chunks == 0:
+            _qs.delete_by_file(file_name)  # ensure clean state on replace
+        _qs.upsert_chunks(chunk_dicts)
+        # Also persist to JSON store as a local backup
+        store = load_vector_store()
+        store.extend(chunk_dicts)
+        save_vector_store(store)
+    else:
+        # JSON-only path
+        store = load_vector_store()
+        store.extend(chunk_dicts)
+        save_vector_store(store)
 
     return {
         "success": True,
@@ -263,29 +281,46 @@ def add_file_to_knowledge_base(
         "chunks_added": added_chunks,
         "replaced": replace_existing,
         "removed_old_chunks": removed_chunks,
+        "backend": "qdrant" if _qs.is_enabled() else "json",
     }
 
 
-def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+def search_knowledge_base(
+    query: str,
+    top_k: int = 5,
+    category_filter: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    import qdrant_service as _qs
+
+    query_embedding = create_embedding(query)
+
+    if _qs.is_enabled():
+        try:
+            return _qs.search(query_embedding, top_k=top_k, category_filter=category_filter)
+        except Exception as e:
+            logger.warning("Qdrant search failed, falling back to JSON: %s", e)
+
+    # ── JSON / numpy fallback ──────────────────────────────────────────────
     store = load_vector_store()
 
     if not store:
         return []
 
-    query_embedding = create_embedding(query)
+    if category_filter:
+        store = [item for item in store if item.get("category") == category_filter]
+        if not store:
+            return []
 
-    # ── Vectorised cosine similarity (much faster than per-item loop) ──
+    # Vectorised cosine similarity (much faster than per-item loop)
     query_vec = np.array(query_embedding, dtype=np.float32)
     embeddings = np.array(
         [item["embedding"] for item in store], dtype=np.float32
     )
-    # dot products and norms in one shot
     dots = embeddings @ query_vec
     norms = np.linalg.norm(embeddings, axis=1) * np.linalg.norm(query_vec)
-    norms[norms == 0] = 1.0  # avoid division by zero
+    norms[norms == 0] = 1.0
     scores = dots / norms
 
-    # Get top-k indices without full sort (O(n) vs O(n log n))
     if len(scores) > top_k:
         top_indices = np.argpartition(scores, -top_k)[-top_k:]
         top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
@@ -297,7 +332,7 @@ def search_knowledge_base(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         item = store[idx]
         results.append(
             {
-                "score": float(scores[idx]),
+                "score": round(float(scores[idx]) * 100, 2),  # 0-100 scale
                 "title": item["title"],
                 "category": item["category"],
                 "file_name": item["file_name"],

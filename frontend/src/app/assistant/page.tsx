@@ -20,6 +20,8 @@ import {
   Mic,
   MicOff,
   Download,
+  ImagePlus,
+  X as XIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
@@ -523,12 +525,56 @@ function AssistantPageInner() {
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
+  const [stagedImage, setStagedImage] = useState<File | null>(null);
+  const [stagedImageUrl, setStagedImageUrl] = useState<string>("");
+  const [isDragOver, setIsDragOver] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(
     (transcript) => setMessage((prev) => prev ? prev + " " + transcript : transcript)
   );
+
+  function stageImageFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    setStagedImage(file);
+    const url = URL.createObjectURL(file);
+    setStagedImageUrl(url);
+  }
+
+  function clearStagedImage() {
+    setStagedImage(null);
+    if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+    setStagedImageUrl("");
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = Array.from(e.clipboardData?.items || []);
+    const imageItem = items.find((item) => item.type.startsWith("image/"));
+    if (imageItem) {
+      const file = imageItem.getAsFile();
+      if (file) {
+        e.preventDefault();
+        stageImageFile(file);
+      }
+    }
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    const hasImage = Array.from(e.dataTransfer.types).includes("Files");
+    if (hasImage) { e.preventDefault(); setIsDragOver(true); }
+  }
+
+  function handleDragLeave() { setIsDragOver(false); }
+
+  function handleDrop(e: React.DragEvent) {
+    setIsDragOver(false);
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      stageImageFile(file);
+    }
+  }
 
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
@@ -810,6 +856,16 @@ ${cleanAnswer}`,
   }
 
   async function sendMessage(customMessage?: string, displayMessage?: string) {
+    // If there's a staged image, route to image analysis instead
+    if (stagedImage && !customMessage) {
+      const imgFile = stagedImage;
+      const note = message.trim();
+      clearStagedImage();
+      setMessage("");
+      uploadAndAnalyzeImage(imgFile, note, "general");
+      return;
+    }
+
     const finalMessage = customMessage || message;
     const visibleMessage = displayMessage || finalMessage;
 
@@ -841,11 +897,14 @@ ${cleanAnswer}`,
     const placeholderMsg: ChatMessage = { role: "assistant", content: "" };
     setMessages([...previousMessages, userMessage, placeholderMsg]);
 
+    const activeCustomer = customer || getSavedCustomer();
+
     const bodyPayload = {
       message: finalMessage,
       domain,
       response_mode: responseMode,
-      user_id: userId,
+      user_id: activeCustomer ? `customer_${activeCustomer.id}` : userId,
+      customer_id: activeCustomer ? activeCustomer.id : undefined,
       history: previousMessages.map((item) => {
         let content = item.content;
         if (item.attachment) {
@@ -1156,19 +1215,21 @@ ${msgHtml}
     }
   }
 
-  async function uploadAndAnalyzeImage(file: File) {
+  async function uploadAndAnalyzeImage(file: File, noteOverride?: string, typeOverride?: string) {
     setShowTools(false);
 
+    const note = noteOverride !== undefined ? noteOverride : chatImageNote;
+    const imgType = typeOverride || chatImageType;
     const previewUrl = URL.createObjectURL(file);
 
     const userMessage: ChatMessage = {
       role: "user",
-      content: "عکس برای تحلیل ارسال شد.",
+      content: note ? `عکس برای تحلیل ارسال شد — توضیح: ${note}` : "عکس برای تحلیل ارسال شد.",
       attachment: {
         name: file.name,
         kind: "image",
-        analysisType: getImageTypeLabel(chatImageType),
-        note: chatImageNote,
+        analysisType: getImageTypeLabel(imgType),
+        note,
         status: "analyzing",
         previewUrl,
       },
@@ -1192,8 +1253,8 @@ ${msgHtml}
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("image_type", chatImageType);
-    formData.append("user_note", chatImageNote);
+    formData.append("image_type", imgType);
+    formData.append("user_note", note);
 
     try {
       const res = await fetch(apiUrl("/analyze-image"), {
@@ -1204,11 +1265,11 @@ ${msgHtml}
       const data = await res.json();
 
       const relatedDevices = shouldShowRelatedDeviceCards(
-        `${file.name}\n${chatImageNote}`,
+        `${file.name}\n${note}`,
         domain,
       )
         ? findRelatedDevices(
-            `${file.name}\n${chatImageNote}\n${data.ai_analysis || data.error || ""}`,
+            `${file.name}\n${note}\n${data.ai_analysis || data.error || ""}`,
             2,
           )
         : [];
@@ -1355,7 +1416,20 @@ ${msgHtml}
     );
   }
   return (
-    <section className="flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff]">
+    <section
+      className={`flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff] transition-colors ${isDragOver ? "ring-2 ring-inset ring-blue-400 bg-blue-50/30" : ""}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragOver && (
+        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 rounded-[32px] border-2 border-dashed border-blue-400 bg-white/90 px-10 py-8 shadow-xl">
+            <ImagePlus size={40} className="text-blue-500" />
+            <span className="text-lg font-black text-blue-600">عکس را اینجا رها کنید</span>
+          </div>
+        </div>
+      )}
       <input
         ref={uploadInputRef}
         type="file"
@@ -1648,7 +1722,27 @@ ${msgHtml}
                 </div>
               )}
 
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className={`rounded-2xl border bg-white shadow-sm transition-colors ${isDragOver ? "border-blue-400 bg-blue-50/20" : "border-slate-200"}`}>
+                {/* Staged image preview strip */}
+                {stagedImage && (
+                  <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-2">
+                    <img
+                      src={stagedImageUrl}
+                      alt="پیش‌نمایش عکس"
+                      className="h-12 w-12 rounded-xl border border-slate-200 object-cover shadow-sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate text-xs font-bold text-slate-700">{stagedImage.name}</div>
+                      <div className="text-[11px] text-slate-400">عکس آماده ارسال — پیام خود را بنویسید یا مستقیم ارسال کنید</div>
+                    </div>
+                    <button
+                      onClick={clearStagedImage}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    >
+                      <XIcon size={14} />
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-end gap-2 px-3 py-2.5">
                   <button
                     onClick={() => setShowTools((prev) => !prev)}
@@ -1657,14 +1751,33 @@ ${msgHtml}
                     <Paperclip size={18} />
                   </button>
 
+                  {/* Quick image button */}
+                  <button
+                    onClick={() => {
+                      const inp = document.createElement("input");
+                      inp.type = "file";
+                      inp.accept = "image/*";
+                      inp.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) stageImageFile(file);
+                      };
+                      inp.click();
+                    }}
+                    title="ارسال عکس (یا Ctrl+V برای Paste)"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-blue-600"
+                  >
+                    <ImagePlus size={18} />
+                  </button>
+
                   <textarea
                     dir="auto"
                     style={{ fontFamily: getTextFont(message || "فارسی") }}
                     className="max-h-40 min-h-[44px] flex-1 resize-none border-none bg-transparent px-1 py-2 text-[15px] leading-7 text-slate-800 placeholder-slate-400 outline-none"
-                    placeholder="از آرتین بپرسید..."
+                    placeholder={stagedImage ? "توضیحی برای عکس بنویسید (اختیاری)..." : "از آرتین بپرسید..."}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
                   />
 
                   {isVoiceSupported && (
@@ -1685,8 +1798,8 @@ ${msgHtml}
 
                   <button
                     onClick={() => sendMessage()}
-                    disabled={loading || !message.trim()}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800 text-white shadow-sm transition hover:bg-slate-700 disabled:bg-slate-200 disabled:text-slate-400"
+                    disabled={loading || (!message.trim() && !stagedImage)}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition disabled:bg-slate-200 disabled:text-slate-400 ${stagedImage ? "bg-blue-600 hover:bg-blue-700" : "bg-slate-800 hover:bg-slate-700"}`}
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
                   </button>
@@ -1986,7 +2099,7 @@ function MessageBubble({
             />
           )}
           {!isUser && !loading && (
-            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
               <button
                 onClick={() => handleCopy(displayContent)}
                 className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"

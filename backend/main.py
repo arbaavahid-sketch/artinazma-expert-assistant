@@ -65,6 +65,10 @@ from db_service import (
     get_setting,
     set_setting,
     set_customer_blocked,
+    log_knowledge_action,
+    get_knowledge_audit_log,
+    clear_knowledge_audit_log,
+    get_customer_cross_session_context,
 )
 
 _gdrive_timer: threading.Timer | None = None
@@ -420,6 +424,7 @@ class ChatRequest(BaseModel):
     domain: Optional[str] = "auto"
     response_mode: Optional[str] = "auto"
     user_id: Optional[str] = "anonymous"
+    customer_id: Optional[int] = None
 
 
 class MemorySearchRequest(BaseModel):
@@ -514,8 +519,36 @@ def health_check():
     if not openai_ok:
         status["ok"] = False
 
+    # Qdrant check
+    import qdrant_service as _qs
+    if _qs.is_enabled():
+        try:
+            qdrant_stats = _qs.collection_stats()
+            status["checks"]["qdrant"] = {"ok": True, **qdrant_stats}
+        except Exception as e:
+            status["checks"]["qdrant"] = {"ok": False, "error": str(e)}
+    else:
+        status["checks"]["qdrant"] = {"ok": True, "enabled": False, "backend": "json"}
+
     status["response_ms"] = round((time.monotonic() - start) * 1000, 2)
     return status
+
+
+@app.get("/admin/qdrant-status")
+def qdrant_status(_=Depends(require_admin)):
+    """وضعیت اتصال به Qdrant و آمار collection."""
+    import qdrant_service as _qs
+    if not _qs.is_enabled():
+        return {
+            "enabled": False,
+            "message": "Qdrant فعال نیست. متغیر محیطی QDRANT_URL را تنظیم کنید.",
+            "backend": "json",
+        }
+    try:
+        stats = _qs.collection_stats()
+        return {"enabled": True, "backend": "qdrant", **stats}
+    except Exception as e:
+        return {"enabled": True, "backend": "qdrant", "error": str(e), "ok": False}
 
 
 def save_question_review(question_id: int, request: QuestionReviewRequest):
@@ -767,6 +800,17 @@ def chat(body: ChatRequest, request: Request):
         context = f"{context}\n\n---\n\n{style_instructions}"
     else:
         context = style_instructions
+    # Build cross-session customer context if a logged-in customer is chatting
+    _cust_ctx = ""
+    if body.customer_id:
+        try:
+            _cust_ctx = get_customer_cross_session_context(body.customer_id)
+            # Also normalise user_id so memories are linked to the customer
+            if not body.user_id or body.user_id == "anonymous":
+                body.user_id = f"customer_{body.customer_id}"
+        except Exception as _e:
+            print("customer_context load failed:", _e)
+
     try:
         answer = ask_expert_assistant(
             message=body.message,
@@ -774,6 +818,7 @@ def chat(body: ChatRequest, request: Request):
             history=history,
             domain=detected_domain,
             allow_web_search=allow_web_search,
+            customer_context=_cust_ctx,
         )
 
         # answer = format_answer_for_ui(answer)
@@ -958,6 +1003,16 @@ def chat_stream(body: ChatRequest, request: Request):
     else:
         context = style_instructions
 
+    # Cross-session customer context
+    _cust_ctx_stream = ""
+    if body.customer_id:
+        try:
+            _cust_ctx_stream = get_customer_cross_session_context(body.customer_id)
+            if not body.user_id or body.user_id == "anonymous":
+                body.user_id = f"customer_{body.customer_id}"
+        except Exception as _e:
+            print("customer_context (stream) load failed:", _e)
+
     def event_generator():
         # ابتدا metadata ارسال می‌شود
         meta = {
@@ -982,6 +1037,7 @@ def chat_stream(body: ChatRequest, request: Request):
                 history=history,
                 domain=detected_domain,
                 allow_web_search=allow_web_search,
+                customer_context=_cust_ctx_stream,
             ):
                 full_answer += chunk
                 payload = {"type": "chunk", "text": chunk}
@@ -1224,6 +1280,15 @@ async def upload_knowledge_file(
         replace_existing=replace_existing,
     )
 
+    if result.get("success"):
+        log_knowledge_action(
+            action="upload",
+            file_name=result.get("file_name", safe_filename),
+            title=title or safe_filename,
+            category=category or "general",
+            detail=f"{result.get('chunks_added', 0)} chunk اضافه شد" + (" (جایگزین)" if replace_existing else ""),
+        )
+
     return result
 
 
@@ -1241,11 +1306,22 @@ def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
         }
 
     try:
-        return sync_google_drive_folder(
+        result = sync_google_drive_folder(
             root_folder_id=folder_id,
             max_files=request.max_files,
             force_resync=request.force_resync,
         )
+        if result.get("success"):
+            log_knowledge_action(
+                action="drive_sync",
+                detail=(
+                    f"پردازش‌شده: {result.get('processed_files', 0)}, "
+                    f"اضافه‌شده: {result.get('added_files', 0)}, "
+                    f"chunk: {result.get('chunks_added', 0)}"
+                    + (" (force resync)" if request.force_resync else "")
+                ),
+            )
+        return result
     except Exception as e:
         return {
             "success": False,
@@ -1306,12 +1382,40 @@ def update_knowledge_chunk(file_name: str, body: ChunkUpdateRequest, _=Depends(r
     import knowledge_service as _ks
     _ks._vector_cache = None
     _ks._vector_cache_mtime = 0.0
+
+    log_knowledge_action(
+        action="chunk_edit",
+        file_name=file_name,
+        title=store[idx].get("title", ""),
+        category=store[idx].get("category", ""),
+        detail=f"chunk #{idx} ویرایش شد",
+    )
+
     return {"success": True, "index": idx}
 
 
 @app.delete("/knowledge/files/{file_name}")
 def knowledge_file_delete(file_name: str, _=Depends(require_admin)):
-    return delete_knowledge_file(file_name)
+    result = delete_knowledge_file(file_name)
+    if result.get("success"):
+        log_knowledge_action(
+            action="delete",
+            file_name=file_name,
+            detail=f"{result.get('removed_chunks', 0)} chunk حذف شد",
+        )
+    return result
+
+
+@app.get("/knowledge/audit-log")
+def knowledge_audit_log(limit: int = 100, action: str = "", _=Depends(require_admin)):
+    entries = get_knowledge_audit_log(limit=limit, action_filter=action)
+    return {"total": len(entries), "entries": entries}
+
+
+@app.delete("/knowledge/audit-log")
+def knowledge_audit_log_clear(_=Depends(require_admin)):
+    deleted = clear_knowledge_audit_log()
+    return {"success": True, "deleted": deleted}
 
 
 @app.delete("/customers/{customer_id}/chat-sessions")
@@ -1330,27 +1434,43 @@ def customer_chat_sessions_delete_all(customer_id: int):
     }
 
 
+class KnowledgeSearchRequest(BaseModel):
+    message: str
+    domain: Optional[str] = "auto"
+    history: Optional[List[ChatHistoryMessage]] = None
+    category: Optional[str] = None   # filter by category (None = all)
+    top_k: Optional[int] = 10        # number of results
+
+
 @app.post("/knowledge/search")
-def knowledge_search(request: ChatRequest):
+def knowledge_search(request: KnowledgeSearchRequest):
     query = request.message
+    top_k = max(1, min(request.top_k or 10, 30))
 
     has_astm_code = bool(re.search(r"\bD\s*\d{3,5}\b", query, flags=re.IGNORECASE))
 
     if has_astm_code:
-        local_results = local_search_knowledge_base(query, top_k=10)
-
+        local_results = local_search_knowledge_base(query, top_k=top_k)
         if local_results:
             results = local_results
         else:
-            results = search_knowledge_base(query, top_k=10)
+            results = search_knowledge_base(query, top_k=top_k)
     else:
         try:
-            results = search_knowledge_base(query, top_k=10)
+            results = search_knowledge_base(query, top_k=top_k)
         except Exception:
-            results = local_search_knowledge_base(query, top_k=10)
+            results = local_search_knowledge_base(query, top_k=top_k)
+
+    # Filter by category if specified
+    if request.category and request.category != "all":
+        results = [
+            item for item in results
+            if item.get("category") == request.category
+        ]
 
     return {
         "query": query,
+        "total": len(results),
         "results": [
             {
                 "title": item["title"],
@@ -1696,6 +1816,70 @@ def run_gdrive_sync_now(_=Depends(require_admin)):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+class EmailSettingsRequest(BaseModel):
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_pass: str = ""
+    from_addr: str = ""
+    to_addr: str = ""
+    weekly_enabled: bool = False
+
+
+@app.get("/admin/email-settings")
+def get_email_settings_endpoint(_=Depends(require_admin)):
+    from email_service import get_email_settings
+    settings = get_email_settings(get_setting)
+    # Never expose smtp_pass in plain text — mask it
+    safe = {k: v for k, v in settings.items()}
+    if safe.get("smtp_pass"):
+        safe["smtp_pass"] = "••••••••"
+    return safe
+
+
+@app.post("/admin/email-settings")
+def save_email_settings_endpoint(body: EmailSettingsRequest, _=Depends(require_admin)):
+    from email_service import get_email_settings, save_email_settings
+    existing = get_email_settings(get_setting)
+    new_settings = {
+        "smtp_host": body.smtp_host,
+        "smtp_port": body.smtp_port,
+        "smtp_user": body.smtp_user,
+        "from_addr": body.from_addr,
+        "to_addr": body.to_addr,
+        "weekly_enabled": body.weekly_enabled,
+        # Keep existing password if new one is masked placeholder or empty
+        "smtp_pass": body.smtp_pass if body.smtp_pass and body.smtp_pass != "••••••••" else existing.get("smtp_pass", ""),
+    }
+    save_email_settings(set_setting, new_settings)
+    return {"success": True, "message": "تنظیمات ایمیل ذخیره شد."}
+
+
+@app.post("/admin/send-weekly-report")
+def send_weekly_report_now(_=Depends(require_admin)):
+    from email_service import get_email_settings, send_weekly_report
+    settings = get_email_settings(get_setting)
+
+    # Gather stats
+    q_stats = get_question_stats()
+    r_stats = get_customer_request_stats()
+    k_stats = get_knowledge_stats()
+
+    stats = {
+        "total_questions": q_stats.get("total_questions", 0),
+        "top_domains": q_stats.get("domains", [])[:5],
+        "new_requests": next((s["count"] for s in r_stats.get("statuses", []) if s["status"] == "new"), 0),
+        "total_requests": r_stats.get("total_requests", 0),
+        "total_files": k_stats.get("total_files", 0),
+        "total_chunks": k_stats.get("total_chunks", 0),
+    }
+
+    success, message = send_weekly_report(settings, stats)
+    if success:
+        set_setting("email_last_sent", _dt.utcnow().isoformat())
+    return {"success": success, "message": message}
+
+
 @app.get("/admin/questions/export-csv")
 def export_questions_csv(_=Depends(require_admin)):
     """خروجی CSV از همه سوالات برای دانلود Excel."""
@@ -1866,7 +2050,8 @@ def system_status(check_ai: bool = False):
 
 
 @app.post("/customers/register")
-def customer_register(request: CustomerRegisterRequest):
+@limiter.limit("5/minute")
+def customer_register(request: CustomerRegisterRequest, http_request: Request):
     if not request.full_name.strip():
         return {"success": False, "message": "نام و نام خانوادگی الزامی است."}
 
@@ -1897,7 +2082,8 @@ def customer_register(request: CustomerRegisterRequest):
 
 
 @app.post("/customers/login")
-def customer_login(request: CustomerLoginRequest):
+@limiter.limit("10/minute")
+def customer_login(request: CustomerLoginRequest, http_request: Request):
     customer = authenticate_customer(email=request.email, password=request.password)
 
     if not customer:

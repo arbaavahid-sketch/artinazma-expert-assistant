@@ -793,6 +793,7 @@ def ask_expert_assistant(
     history: Optional[List[Dict[str, str]]] = None,
     domain: str = "auto",
     allow_web_search: bool = False,
+    customer_context: str = "",
 ) -> str:
     history = history or []
 
@@ -806,10 +807,14 @@ def ask_expert_assistant(
         allow_web_search=allow_web_search,
     )
 
+    system_content = SYSTEM_PROMPT
+    if customer_context:
+        system_content = SYSTEM_PROMPT + "\n\n" + customer_context
+
     input_messages = [
         {
             "role": "system",
-            "content": SYSTEM_PROMPT,
+            "content": system_content,
         }
     ]
 
@@ -851,6 +856,7 @@ def ask_expert_assistant_stream(
     history: Optional[List[Dict[str, str]]] = None,
     domain: str = "auto",
     allow_web_search: bool = False,
+    customer_context: str = "",
 ) -> Generator[str, None, None]:
     history = history or []
 
@@ -862,7 +868,11 @@ def ask_expert_assistant_stream(
         allow_web_search=allow_web_search,
     )
 
-    input_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    system_content = SYSTEM_PROMPT
+    if customer_context:
+        system_content = SYSTEM_PROMPT + "\n\n" + customer_context
+
+    input_messages = [{"role": "system", "content": system_content}]
 
     for item in history[-6:]:
         role = item.get("role")

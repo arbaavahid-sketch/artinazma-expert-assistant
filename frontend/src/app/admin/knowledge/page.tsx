@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, adminUrl } from "@/lib/api";
 import {
   AlertCircle,
   CheckCircle2,
+  ClipboardList,
   Database,
   Eye,
   FileText,
@@ -51,6 +52,17 @@ type GroupedKnowledgeSearchResult = {
   bestScore: number;
   chunks: KnowledgeSearchResult[];
 };
+type AuditEntry = {
+  id: number;
+  action: string;
+  file_name: string;
+  title: string;
+  category: string;
+  detail: string;
+  performed_by: string;
+  created_at: string;
+};
+
 type DriveSyncResult = {
   success: boolean;
   status?: "added" | "unchanged" | "skipped";
@@ -112,6 +124,13 @@ export default function KnowledgePage() {
   const [testResults, setTestResults] = useState<KnowledgeSearchResult[]>([]);
   const [testingSearch, setTestingSearch] = useState(false);
   const [testMessage, setTestMessage] = useState("");
+  const [searchCategory, setSearchCategory] = useState("all");
+  const [searchTopK, setSearchTopK] = useState(10);
+
+  const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditFilter, setAuditFilter] = useState("all");
+  const [showAuditLog, setShowAuditLog] = useState(false);
 
   type ChunkPreview = { index: number; title: string; category: string; content: string };
   const [previewFile, setPreviewFile] = useState<string | null>(null);
@@ -127,10 +146,9 @@ export default function KnowledgePage() {
     setSavingChunk(true);
     setChunkSaveMsg("");
     try {
-      const res = await fetch(apiUrl(`/knowledge/files/${encodeURIComponent(previewFile)}/chunks`), {
+      const res = await fetch(adminUrl(`/knowledge/files/${encodeURIComponent(previewFile)}/chunks`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ chunk_index: chunk.index, content: editingContent }),
       });
       const data = await res.json();
@@ -154,7 +172,7 @@ export default function KnowledgePage() {
     setPreviewChunks([]);
     setPreviewLoading(true);
     try {
-      const res = await fetch(apiUrl(`/knowledge/files/${encodeURIComponent(fileName)}/chunks`), { cache: "no-store" });
+      const res = await fetch(adminUrl(`/knowledge/files/${encodeURIComponent(fileName)}/chunks`), { cache: "no-store" });
       const data = await res.json();
       setPreviewChunks(data.chunks || []);
     } catch {
@@ -162,6 +180,27 @@ export default function KnowledgePage() {
     } finally {
       setPreviewLoading(false);
     }
+  }
+
+  async function loadAuditLog(filter = auditFilter) {
+    setAuditLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: "100" });
+      if (filter !== "all") params.set("action", filter);
+      const res = await fetch(adminUrl(`/knowledge/audit-log?${params}`), { cache: "no-store" });
+      const data = await res.json();
+      setAuditLog(data.entries || []);
+    } catch {
+      setAuditLog([]);
+    } finally {
+      setAuditLoading(false);
+    }
+  }
+
+  async function clearAuditLog() {
+    if (!window.confirm("آیا مطمئنید که می‌خواهید همه لاگ‌ها را پاک کنید؟")) return;
+    await fetch(adminUrl("/knowledge/audit-log"), { method: "DELETE" });
+    setAuditLog([]);
   }
 
   async function loadKnowledgeStats() {
@@ -181,6 +220,11 @@ export default function KnowledgePage() {
     loadKnowledgeStats();
   }, []);
 
+  useEffect(() => {
+    if (showAuditLog) loadAuditLog(auditFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAuditLog, auditFilter]);
+
   async function uploadKnowledgeFile() {
     if (!knowledgeFile) return;
 
@@ -195,7 +239,7 @@ export default function KnowledgePage() {
     formData.append("replace_existing", replaceExisting ? "true" : "false");
 
     try {
-      const res = await fetch(apiUrl("/knowledge/upload"), {
+      const res = await fetch(adminUrl("/knowledge/upload"), {
         method: "POST",
         body: formData,
       });
@@ -241,6 +285,8 @@ export default function KnowledgePage() {
           message: testQuery,
           domain: "auto",
           history: [],
+          category: searchCategory === "all" ? null : searchCategory,
+          top_k: searchTopK,
         }),
       });
 
@@ -264,7 +310,7 @@ export default function KnowledgePage() {
     setDriveSyncResults([]);
 
     try {
-      const res = await fetch(apiUrl("/knowledge/sync-google-drive"), {
+      const res = await fetch(adminUrl("/knowledge/sync-google-drive"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -308,7 +354,7 @@ export default function KnowledgePage() {
 
     try {
       const res = await fetch(
-        apiUrl(`/knowledge/files/${encodeURIComponent(fileName)}`),
+        adminUrl(`/knowledge/files/${encodeURIComponent(fileName)}`),
         {
           method: "DELETE",
         },
@@ -715,18 +761,17 @@ export default function KnowledgePage() {
               </button>
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-blue-100 bg-gradient-to-b from-blue-50 to-white p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
-                  <TestTube2 size={24} />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
+                  <TestTube2 size={22} />
                 </div>
-
                 <div>
                   <h2 className="text-xl font-black text-slate-900">
-                    تست جست‌وجوی بانک دانش
+                    جست‌وجوی معنایی (Semantic Search)
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    ببین آرتین برای یک سوال چه فایل‌هایی را پیدا می‌کند.
+                    با AI vector search در بانک دانش جست‌وجو کن.
                   </p>
                 </div>
               </div>
@@ -734,18 +779,52 @@ export default function KnowledgePage() {
               <textarea
                 value={testQuery}
                 onChange={(e) => setTestQuery(e.target.value)}
-                className="h-28 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm leading-7 outline-none transition focus:border-blue-600"
+                onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) testKnowledgeSearch(); }}
+                className="h-24 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm leading-7 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 placeholder="مثلاً: ASTM D 1151 یا آنالیز سولفور در LPG"
               />
+
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                    فیلتر دسته‌بندی
+                  </label>
+                  <select
+                    value={searchCategory}
+                    onChange={(e) => setSearchCategory(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none transition focus:border-blue-500"
+                  >
+                    <option value="all">همه دسته‌ها</option>
+                    {(stats?.categories || []).map((cat) => (
+                      <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                    تعداد نتایج: <span className="text-blue-700">{searchTopK}</span>
+                  </label>
+                  <input
+                    type="range" min={5} max={25} step={5}
+                    value={searchTopK}
+                    onChange={(e) => setSearchTopK(Number(e.target.value))}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+              </div>
 
               <button
                 onClick={testKnowledgeSearch}
                 disabled={testingSearch || !testQuery.trim()}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3.5 font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
               >
-                <Search size={18} />
-                {testingSearch ? "در حال جست‌وجو..." : "جست‌وجو در بانک دانش"}
+                {testingSearch ? (
+                  <><RefreshCw size={16} className="animate-spin" /> در حال جست‌وجو...</>
+                ) : (
+                  <><Search size={16} /> جست‌وجوی معنایی</>
+                )}
               </button>
+              <p className="mt-2 text-center text-xs text-slate-400">Ctrl+Enter برای جست‌وجوی سریع</p>
 
               {testMessage && (
                 <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
@@ -761,18 +840,14 @@ export default function KnowledgePage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-black text-slate-900">
-                      نتیجه تست جست‌وجو
+                      نتایج جست‌وجوی معنایی
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      نتایج بر اساس فایل گروه‌بندی شده‌اند.
+                      {testResults.length} chunk از {groupedTestResults.length} فایل — مرتب‌شده بر اساس شباهت معنایی
                     </p>
                   </div>
-
                   <button
-                    onClick={() => {
-                      setTestResults([]);
-                      setTestMessage("");
-                    }}
+                    onClick={() => { setTestResults([]); setTestMessage(""); }}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
                   >
                     پاک کردن
@@ -780,53 +855,78 @@ export default function KnowledgePage() {
                 </div>
 
                 <div className="space-y-4">
-                  {groupedTestResults.map((group) => (
-                    <div
-                      key={group.file_name}
-                      className="rounded-3xl border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                        <div className="min-w-0">
-                          <div className="text-lg font-black text-slate-900">
-                            {group.title || "بدون عنوان"}
+                  {groupedTestResults.map((group, gi) => {
+                    const scoreColor =
+                      group.bestScore >= 0.7 ? "bg-emerald-500" :
+                      group.bestScore >= 0.4 ? "bg-blue-500" :
+                      group.bestScore >= 0.2 ? "bg-amber-500" : "bg-slate-400";
+                    const scorePct = Math.min(100, Math.round(group.bestScore * 100));
+                    return (
+                      <div
+                        key={group.file_name}
+                        className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                      >
+                        {/* Header row */}
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700">
+                                {gi + 1}
+                              </span>
+                              <span className="text-base font-black text-slate-900 leading-snug">
+                                {group.title || "بدون عنوان"}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
+                              <span className="break-all">{group.file_name}</span>
+                              <span className="rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-700">
+                                {getCategoryLabel(group.category)}
+                              </span>
+                              <span className="font-bold text-slate-600">{group.chunks.length} chunk</span>
+                            </div>
                           </div>
-
-                          <div className="mt-1 break-all text-xs leading-6 text-slate-500">
-                            فایل: {group.file_name}
-                          </div>
-
-                          <div className="text-xs leading-6 text-slate-500">
-                            دسته‌بندی: {getCategoryLabel(group.category)}
-                          </div>
-
-                          <div className="mt-2 text-xs font-bold text-slate-600">
-                            تعداد بخش‌های مرتبط: {group.chunks.length}
+                          {/* Score badge */}
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            <span className="text-xs font-bold text-slate-500">شباهت معنایی</span>
+                            <span className="text-lg font-black text-slate-800">
+                              {(group.bestScore * 100).toFixed(1)}٪
+                            </span>
                           </div>
                         </div>
-
-                        <span className="shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                          {Number(group.bestScore || 0).toFixed(3)}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 space-y-3">
-                        {group.chunks.slice(0, 3).map((chunk, index) => (
+                        {/* Score bar */}
+                        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                           <div
-                            key={`${group.file_name}-${index}`}
-                            className="rounded-2xl bg-white p-4 text-sm leading-7 text-slate-700"
-                          >
-                            <div className="mb-2 text-xs font-bold text-slate-400">
-                              بخش مرتبط {index + 1}
+                            className={`h-full rounded-full transition-all ${scoreColor}`}
+                            style={{ width: `${scorePct}%` }}
+                          />
+                        </div>
+                        {/* Chunks */}
+                        <div className="mt-4 space-y-3">
+                          {group.chunks.slice(0, 3).map((chunk, index) => (
+                            <div
+                              key={`${group.file_name}-${index}`}
+                              className="rounded-2xl bg-white p-4 text-sm leading-7 text-slate-700"
+                            >
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold text-slate-400">بخش {index + 1}</span>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
+                                  {(Number(chunk.score) * 100).toFixed(1)}٪
+                                </span>
+                              </div>
+                              <div className="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-7">
+                                {chunk.content}
+                              </div>
                             </div>
-
-                            <div className="max-h-40 overflow-y-auto whitespace-pre-wrap">
-                              {chunk.content}
+                          ))}
+                          {group.chunks.length > 3 && (
+                            <div className="text-center text-xs text-slate-400">
+                              +{group.chunks.length - 3} chunk دیگر در این فایل
                             </div>
-                          </div>
-                        ))}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -998,6 +1098,122 @@ export default function KnowledgePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ─── Audit Log Section ───────────────────────────────────────── */}
+      <div className="mt-6 rounded-[32px] border border-slate-200 bg-white shadow-sm">
+        <button
+          onClick={() => setShowAuditLog((v) => !v)}
+          className="flex w-full items-center justify-between gap-4 px-6 py-5 text-right transition hover:bg-slate-50 rounded-[32px]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+              <ClipboardList size={20} />
+            </div>
+            <div>
+              <div className="text-base font-black text-slate-900">تاریخچه عملیات بانک دانش</div>
+              <div className="text-sm text-slate-500">آپلود، حذف، ویرایش chunk، و همگام‌سازی Drive</div>
+            </div>
+          </div>
+          <span className="text-slate-400">{showAuditLog ? "▲" : "▼"}</span>
+        </button>
+
+        {showAuditLog && (
+          <div className="border-t border-slate-100 px-6 pb-6 pt-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex gap-2">
+                {["all", "upload", "delete", "chunk_edit", "drive_sync"].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setAuditFilter(f)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                      auditFilter === f
+                        ? "bg-amber-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700"
+                    }`}
+                  >
+                    {f === "all" ? "همه" : f === "upload" ? "آپلود" : f === "delete" ? "حذف" : f === "chunk_edit" ? "ویرایش chunk" : "Drive Sync"}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => loadAuditLog(auditFilter)}
+                  disabled={auditLoading}
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  <RefreshCw size={12} className={auditLoading ? "animate-spin" : ""} />
+                  بروزرسانی
+                </button>
+                <button
+                  onClick={clearAuditLog}
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100"
+                >
+                  <Trash2 size={12} />
+                  پاک کردن
+                </button>
+              </div>
+            </div>
+
+            {auditLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => <div key={i} className="h-12 w-full animate-pulse rounded-2xl bg-slate-100" />)}
+              </div>
+            ) : auditLog.length === 0 ? (
+              <div className="rounded-3xl bg-slate-50 p-8 text-center text-sm text-slate-500">
+                هنوز عملیاتی ثبت نشده است.
+              </div>
+            ) : (
+              <div className="max-h-[500px] overflow-y-auto rounded-3xl border border-slate-200">
+                <table className="w-full border-collapse text-right text-sm">
+                  <thead className="sticky top-0 bg-slate-50">
+                    <tr className="border-b border-slate-200">
+                      <th className="p-3 text-xs font-bold text-slate-600">عملیات</th>
+                      <th className="p-3 text-xs font-bold text-slate-600">فایل / عنوان</th>
+                      <th className="p-3 text-xs font-bold text-slate-600">جزئیات</th>
+                      <th className="p-3 text-xs font-bold text-slate-600">زمان</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLog.map((entry) => (
+                      <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="p-3 align-top">
+                          <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${
+                            entry.action === "upload" ? "bg-emerald-50 text-emerald-700" :
+                            entry.action === "delete" ? "bg-red-50 text-red-700" :
+                            entry.action === "chunk_edit" ? "bg-blue-50 text-blue-700" :
+                            "bg-purple-50 text-purple-700"
+                          }`}>
+                            {entry.action === "upload" ? "آپلود" :
+                             entry.action === "delete" ? "حذف" :
+                             entry.action === "chunk_edit" ? "ویرایش chunk" : "Drive Sync"}
+                          </span>
+                        </td>
+                        <td className="p-3 align-top">
+                          <div className="font-bold text-slate-800">{entry.title || entry.file_name || "—"}</div>
+                          {entry.file_name && entry.title && entry.file_name !== entry.title && (
+                            <div className="text-xs text-slate-400">{entry.file_name}</div>
+                          )}
+                          {entry.category && (
+                            <div className="mt-0.5">
+                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">{getCategoryLabel(entry.category)}</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3 align-top text-xs text-slate-500">{entry.detail || "—"}</td>
+                        <td className="p-3 align-top text-xs text-slate-400 whitespace-nowrap">
+                          {entry.created_at
+                            ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "short", timeStyle: "short" }).format(new Date(entry.created_at + "Z"))
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Knowledge file preview slide-over */}

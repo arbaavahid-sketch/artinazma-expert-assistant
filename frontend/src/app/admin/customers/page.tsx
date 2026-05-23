@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { adminUrl } from "@/lib/api";
 import {
   Users,
   Search,
@@ -55,9 +56,8 @@ export default function AdminCustomersPage() {
     setBlockingId(customer.id);
     const action = customer.is_blocked ? "unblock" : "block";
     try {
-      const res = await fetch(`/api/admin/customers/${customer.id}/${action}`, {
+      const res = await fetch(adminUrl(`/admin/customers/${customer.id}/${action}`), {
         method: "POST",
-        credentials: "include",
       });
       const data = await res.json();
       if (data.success) {
@@ -75,9 +75,7 @@ export default function AdminCustomersPage() {
   }
 
   useEffect(() => {
-    fetch("/api/admin/customers?limit=200", {
-      credentials: "include",
-    })
+    fetch(adminUrl("/admin/customers?limit=200"))
       .then((r) => r.json())
       .then((d) => {
         setCustomers(d.customers || []);

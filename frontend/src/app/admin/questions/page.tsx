@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { apiUrl } from "@/lib/api";
+import { adminUrl } from "@/lib/api";
 import {
   Clock3,
   FileQuestion,
@@ -76,7 +76,7 @@ export default function QuestionsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   function downloadCsv() {
-    const url = apiUrl("/admin/questions/export-csv");
+    const url = adminUrl("/admin/questions/export-csv");
     const a = document.createElement("a");
     a.href = url;
     a.download = "questions.csv";
@@ -87,7 +87,7 @@ export default function QuestionsPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(apiUrl("/questions?limit=100"), {
+      const res = await fetch(adminUrl("/questions?limit=100"), {
         cache: "no-store",
       });
 

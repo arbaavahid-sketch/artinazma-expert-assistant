@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiUrl } from "@/lib/api";
+import { adminUrl } from "@/lib/api";
 import {
   Building2,
   CheckCircle2,
@@ -127,7 +127,7 @@ export default function AdminRequestsPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(apiUrl("/customer-requests?limit=100"), {
+      const res = await fetch(adminUrl("/customer-requests?limit=100"), {
         cache: "no-store",
       });
 
@@ -145,7 +145,7 @@ export default function AdminRequestsPage() {
 
     try {
       const res = await fetch(
-        apiUrl(`/customer-requests/${requestId}/status`),
+        adminUrl(`/customer-requests/${requestId}/status`),
         {
           method: "PATCH",
           headers: {

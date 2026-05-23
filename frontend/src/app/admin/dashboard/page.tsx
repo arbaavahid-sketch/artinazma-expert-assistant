@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, adminUrl } from "@/lib/api";
 import {
   Activity,
   ArrowUpRight,
@@ -150,8 +150,8 @@ export default function DashboardPage() {
     try {
       const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes] = await Promise.all([
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
-        fetch(apiUrl("/questions/stats"), { cache: "no-store" }),
-        fetch(apiUrl("/customer-requests/stats"), { cache: "no-store" }),
+        fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
+        fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
         fetch(apiUrl("/questions/analytics?days=14"), { cache: "no-store" }),
         fetch(apiUrl("/customers/stats"), { cache: "no-store" }),
       ]);
@@ -221,14 +221,14 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2">
                   <span className="text-xs font-bold text-purple-700">دانلود گزارش:</span>
                   <a
-                    href={apiUrl("/admin/report/export?period=week")}
+                    href={adminUrl("/admin/report/export?period=week")}
                     download
                     className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm border border-purple-200 hover:bg-purple-100 transition"
                   >
                     <Download size={13} /> هفتگی
                   </a>
                   <a
-                    href={apiUrl("/admin/report/export?period=month")}
+                    href={adminUrl("/admin/report/export?period=month")}
                     download
                     className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm border border-purple-200 hover:bg-purple-100 transition"
                   >
@@ -494,37 +494,14 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* ─── Daily Activity Chart ─────────────────────────────── */}
+            {/* ─── Daily Activity Line Chart ────────────────────────── */}
             {analyticsData?.daily && analyticsData.daily.length > 0 && (
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-5">
-                  <h2 className="text-xl font-black text-slate-900">فعالیت ۱۴ روز اخیر</h2>
-                  <p className="mt-2 text-sm text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز.</p>
-                </div>
-                <div className="flex h-32 items-end gap-1" dir="ltr">
-                  {(() => {
-                    const maxVal = Math.max(...(analyticsData?.daily ?? []).map(d => d.count), 1);
-                    return analyticsData.daily.map((d) => {
-                      const pct = Math.max(4, Math.round((d.count / maxVal) * 100));
-                      const shortDay = d.day.slice(5); // MM-DD
-                      return (
-                        <div key={d.day} className="group relative flex flex-1 flex-col items-center gap-1">
-                          <div
-                            className="w-full rounded-t-md bg-blue-500 transition-all group-hover:bg-indigo-600"
-                            style={{ height: `${pct}%` }}
-                          />
-                          <span className="text-[9px] text-slate-400">{shortDay}</span>
-                          {d.count > 0 && (
-                            <span className="absolute -top-5 hidden rounded bg-slate-800 px-1 py-0.5 text-[10px] text-white group-hover:block">
-                              {d.count}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
+              <DailyLineChart data={analyticsData.daily} />
+            )}
+
+            {/* ─── Domain Pie Chart ─────────────────────────────────── */}
+            {topDomains.length > 0 && (
+              <DomainPieChart domains={topDomains} />
             )}
 
             {/* ─── Trending Keywords ────────────────────────────────────── */}
@@ -617,6 +594,160 @@ export default function DashboardPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+// ─── Line Chart: daily questions ────────────────────────────────────────────
+function DailyLineChart({ data }: { data: DailyCount[] }) {
+  const W = 360, H = 110, PAD = { top: 12, right: 8, bottom: 28, left: 28 };
+  const innerW = W - PAD.left - PAD.right;
+  const innerH = H - PAD.top - PAD.bottom;
+
+  const maxVal = Math.max(...data.map(d => d.count), 1);
+  const n = data.length;
+
+  const xOf = (i: number) => PAD.left + (i / Math.max(n - 1, 1)) * innerW;
+  const yOf = (v: number) => PAD.top + innerH - (v / maxVal) * innerH;
+
+  // Build SVG polyline points
+  const points = data.map((d, i) => `${xOf(i)},${yOf(d.count)}`).join(" ");
+
+  // Area fill path
+  const area = [
+    `M ${xOf(0)},${yOf(data[0].count)}`,
+    ...data.map((d, i) => `L ${xOf(i)},${yOf(d.count)}`),
+    `L ${xOf(n - 1)},${PAD.top + innerH}`,
+    `L ${xOf(0)},${PAD.top + innerH}`,
+    "Z",
+  ].join(" ");
+
+  // Y-axis ticks (0, half, max)
+  const yTicks = [0, Math.round(maxVal / 2), maxVal].filter((v, i, arr) => arr.indexOf(v) === i);
+
+  // X-axis labels: show ~5 evenly spaced
+  const labelStep = Math.max(1, Math.floor(n / 5));
+  const xLabels = data
+    .map((d, i) => ({ i, label: d.day.slice(5) }))
+    .filter(({ i }) => i % labelStep === 0 || i === n - 1);
+
+  return (
+    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4">
+        <h2 className="text-xl font-black text-slate-900">فعالیت ۱۴ روز اخیر</h2>
+        <p className="mt-1 text-sm text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز</p>
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        style={{ direction: "ltr", fontFamily: "inherit" }}
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="lineArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {/* Grid lines */}
+        {yTicks.map((v) => (
+          <g key={v}>
+            <line
+              x1={PAD.left} y1={yOf(v)} x2={PAD.left + innerW} y2={yOf(v)}
+              stroke="#e2e8f0" strokeWidth="1"
+            />
+            <text x={PAD.left - 4} y={yOf(v) + 4} textAnchor="end" fontSize="8" fill="#94a3b8">
+              {v}
+            </text>
+          </g>
+        ))}
+        {/* Area fill */}
+        <path d={area} fill="url(#lineArea)" />
+        {/* Line */}
+        <polyline
+          points={points}
+          fill="none"
+          stroke="#3b82f6"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        {/* Data points */}
+        {data.map((d, i) => (
+          <g key={d.day}>
+            <circle cx={xOf(i)} cy={yOf(d.count)} r="3.5" fill="white" stroke="#3b82f6" strokeWidth="2" />
+            {d.count > 0 && (
+              <title>{`${d.day}: ${d.count} سوال`}</title>
+            )}
+          </g>
+        ))}
+        {/* X labels */}
+        {xLabels.map(({ i, label }) => (
+          <text key={i} x={xOf(i)} y={H - 4} textAnchor="middle" fontSize="8" fill="#94a3b8">
+            {label}
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+// ─── Pie Chart: question domains ─────────────────────────────────────────────
+const PIE_COLORS = ["#6366f1", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+
+function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
+  const total = domains.reduce((s, d) => s + d.count, 0);
+  if (total === 0) return null;
+
+  const CX = 80, CY = 80, R = 64, IR = 38; // donut
+  let startAngle = -Math.PI / 2;
+
+  const slices = domains.map((d, i) => {
+    const angle = (d.count / total) * 2 * Math.PI;
+    const endAngle = startAngle + angle;
+    const x1 = CX + R * Math.cos(startAngle);
+    const y1 = CY + R * Math.sin(startAngle);
+    const x2 = CX + R * Math.cos(endAngle);
+    const y2 = CY + R * Math.sin(endAngle);
+    const ix1 = CX + IR * Math.cos(endAngle);
+    const iy1 = CY + IR * Math.sin(endAngle);
+    const ix2 = CX + IR * Math.cos(startAngle);
+    const iy2 = CY + IR * Math.sin(startAngle);
+    const large = angle > Math.PI ? 1 : 0;
+    const path = `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${IR} ${IR} 0 ${large} 0 ${ix2} ${iy2} Z`;
+    const color = PIE_COLORS[i % PIE_COLORS.length];
+    const pct = Math.round((d.count / total) * 100);
+    const midAngle = startAngle + angle / 2;
+    startAngle = endAngle;
+    return { path, color, pct, midAngle, label: getDomainLabel(d.domain), count: d.count };
+  });
+
+  return (
+    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4">
+        <h2 className="text-xl font-black text-slate-900">توزیع حوزه‌های سوالات</h2>
+        <p className="mt-1 text-sm text-slate-500">سهم هر حوزه از کل سوالات دریافتی</p>
+      </div>
+      <div className="flex items-center gap-4" style={{ direction: "ltr" }}>
+        <svg viewBox="0 0 160 160" className="w-36 shrink-0" aria-hidden="true">
+          {slices.map((s, i) => (
+            <path key={i} d={s.path} fill={s.color} stroke="white" strokeWidth="2">
+              <title>{`${s.label}: ${s.count} (${s.pct}%)`}</title>
+            </path>
+          ))}
+          <text x={CX} y={CY - 4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">{total}</text>
+          <text x={CX} y={CY + 10} textAnchor="middle" fontSize="7.5" fill="#64748b">سوال</text>
+        </svg>
+        <div className="flex flex-col gap-1.5" style={{ direction: "rtl" }}>
+          {slices.map((s, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+              <span className="font-bold text-slate-700">{s.label}</span>
+              <span className="text-slate-400">{s.pct}٪</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
