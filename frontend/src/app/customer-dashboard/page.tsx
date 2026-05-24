@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { useToast } from "@/components/Toast";
+import Tooltip from "@/components/Tooltip";
 import {
   Bell,
   CircleUserRound,
@@ -811,30 +812,32 @@ ${msgHtml}
                           ادامه گفتگو
                         </span>
 
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            exportSessionPDF(session);
-                          }}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-blue-700"
-                          title="خروجی PDF این گفتگو"
-                        >
-                          <Download size={16} />
-                        </button>
+                        <Tooltip label="خروجی PDF" position="top">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              exportSessionPDF(session);
+                            }}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-blue-700"
+                          >
+                            <Download size={16} />
+                          </button>
+                        </Tooltip>
 
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            deleteOneSession(session.id);
-                          }}
-                          disabled={deletingSessionId === session.id}
-                          className="ui-btn ui-btn-danger inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 p-0 text-red-600"
-                          title="حذف گفتگو"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <Tooltip label="حذف گفتگو" position="top">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              deleteOneSession(session.id);
+                            }}
+                            disabled={deletingSessionId === session.id}
+                            className="ui-btn ui-btn-danger inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 p-0 text-red-600"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
                   </Link>

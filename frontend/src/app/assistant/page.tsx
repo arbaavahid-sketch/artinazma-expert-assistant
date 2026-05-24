@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
+import Tooltip from "@/components/Tooltip";
 type Source = {
   title: string;
   file_name: string;
@@ -2691,38 +2692,40 @@ function MessageBubble({
                 جدول
               </button>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
-              <button
-                onClick={() => onFeedback(item.question_id, "up")}
-                disabled={!!feedbackValue}
-                className={`rounded-lg p-1.5 transition ${
-                  feedbackValue === "up"
-                    ? "text-emerald-600 bg-emerald-50"
-                    : feedbackValue === "down"
-                    ? "text-slate-300 cursor-default"
-                    : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
-                }`}
-                title="پاسخ مفید بود"
-              >
-                <ThumbsUp size={13} />
-              </button>
-              <div className="relative">
+              <Tooltip label="مفید بود" position="top">
                 <button
-                  onClick={() => {
-                    if (feedbackValue) return;
-                    setShowFeedbackMenu((v) => !v);
-                  }}
+                  onClick={() => onFeedback(item.question_id, "up")}
                   disabled={!!feedbackValue}
                   className={`rounded-lg p-1.5 transition ${
-                    feedbackValue === "down"
-                      ? "text-red-500 bg-red-50"
-                      : feedbackValue === "up"
+                    feedbackValue === "up"
+                      ? "text-emerald-600 bg-emerald-50"
+                      : feedbackValue === "down"
                       ? "text-slate-300 cursor-default"
-                      : "text-slate-400 hover:bg-red-50 hover:text-red-500"
+                      : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
                   }`}
-                  title="پاسخ نیاز به بهبود دارد"
                 >
-                  <ThumbsDown size={13} />
+                  <ThumbsUp size={13} />
                 </button>
+              </Tooltip>
+              <div className="relative">
+                <Tooltip label="نیاز به بهبود" position="top">
+                  <button
+                    onClick={() => {
+                      if (feedbackValue) return;
+                      setShowFeedbackMenu((v) => !v);
+                    }}
+                    disabled={!!feedbackValue}
+                    className={`rounded-lg p-1.5 transition ${
+                      feedbackValue === "down"
+                        ? "text-red-500 bg-red-50"
+                        : feedbackValue === "up"
+                        ? "text-slate-300 cursor-default"
+                        : "text-slate-400 hover:bg-red-50 hover:text-red-500"
+                    }`}
+                  >
+                    <ThumbsDown size={13} />
+                  </button>
+                </Tooltip>
                 {showFeedbackMenu && !feedbackValue && (
                   <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800">
                     <p className="mb-1.5 px-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
