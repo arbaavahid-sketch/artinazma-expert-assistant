@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import Tooltip from "@/components/Tooltip";
 import {
   Bell,
@@ -25,6 +26,7 @@ import {
   Sparkles,
   Search,
   Hash,
+  Loader2,
 } from "lucide-react";
 
 type Customer = {
@@ -73,7 +75,11 @@ export default function CustomerDashboardPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
+  const [renamingSessionId, setRenamingSessionId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [savingRename, setSavingRename] = useState(false);
   const [clearingAllSessions, setClearingAllSessions] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
   const [sessionSearch, setSessionSearch] = useState("");
@@ -219,7 +225,7 @@ export default function CustomerDashboardPage() {
   async function deleteOneSession(sessionId: number) {
     if (!customer) return;
 
-    const confirmed = window.confirm("این گفتگو حذف شود؟");
+    const confirmed = await confirm({ message: "این گفتگو حذف شود؟", variant: "danger", confirmLabel: "حذف", title: "حذف گفتگو" });
 
     if (!confirmed) return;
 
@@ -253,9 +259,7 @@ export default function CustomerDashboardPage() {
   async function deleteAllSessions() {
     if (!customer) return;
 
-    const confirmed = window.confirm(
-      "همه گفتگوهای شما حذف شود؟ این عملیات قابل بازگشت نیست.",
-    );
+    const confirmed = await confirm({ message: "همه گفتگوهای شما حذف شود؟ این عملیات قابل بازگشت نیست.", variant: "danger", confirmLabel: "حذف همه", title: "حذف همه گفتگوها" });
 
     if (!confirmed) return;
 
@@ -285,6 +289,34 @@ export default function CustomerDashboardPage() {
       setClearingAllSessions(false);
     }
   }
+  async function renameSession(sessionId: number) {
+    const title = renameValue.trim();
+    if (!title || !customer) return;
+    setSavingRename(true);
+    try {
+      const res = await fetch(apiUrl(`/customers/chat-sessions/${sessionId}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: customer.id, title }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSessions((prev) =>
+          prev.map((s) => (s.id === sessionId ? { ...s, title } : s))
+        );
+        toast("نام گفتگو تغییر کرد", "success");
+      } else {
+        toast(data.message || "خطا در تغییر نام", "error");
+      }
+    } catch {
+      toast("خطا در اتصال به سرور", "error");
+    } finally {
+      setSavingRename(false);
+      setRenamingSessionId(null);
+      setRenameValue("");
+    }
+  }
+
   async function exportSessionPDF(session: ChatSession) {
     if (!customer) return;
     try {
@@ -782,12 +814,55 @@ ${msgHtml}
                     className="group block rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-200 hover:bg-white hover:shadow-sm"
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-base font-black text-slate-900 group-hover:text-blue-700">
-                          {session.title || "گفتگوی جدید"}
-                        </div>
+                      <div className="min-w-0 flex-1" onClick={(e) => e.preventDefault()}>
+                        {renamingSessionId === session.id ? (
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              autoFocus
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") renameSession(session.id);
+                                if (e.key === "Escape") { setRenamingSessionId(null); setRenameValue(""); }
+                              }}
+                              className="flex-1 rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-300"
+                              maxLength={120}
+                            />
+                            <button
+                              onClick={() => renameSession(session.id)}
+                              disabled={savingRename}
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {savingRename ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                            </button>
+                            <button
+                              onClick={() => { setRenamingSessionId(null); setRenameValue(""); }}
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="truncate text-base font-black text-slate-900 group-hover:text-blue-700">
+                              {session.title || "گفتگوی جدید"}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setRenamingSessionId(session.id);
+                                setRenameValue(session.title || "");
+                              }}
+                              className="shrink-0 rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
+                              title="تغییر نام"
+                            >
+                              <Pencil size={13} />
+                            </button>
+                          </div>
+                        )}
 
-                        {session.last_message_preview && (
+                        {session.last_message_preview && renamingSessionId !== session.id && (
                           <p className="mt-1 truncate text-sm leading-6 text-slate-500">
                             {session.last_message_preview}
                           </p>

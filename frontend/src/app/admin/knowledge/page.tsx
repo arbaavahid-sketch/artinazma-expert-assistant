@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, adminUrl } from "@/lib/api";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   AlertCircle,
   CheckCircle2,
@@ -110,6 +111,7 @@ export default function KnowledgePage() {
   );
   const [driveMaxFiles, setDriveMaxFiles] = useState(20);
   const [forceDriveResync, setForceDriveResync] = useState(false);
+  const { confirm } = useConfirm();
   const [knowledgeResult, setKnowledgeResult] = useState("");
   const [knowledgeResultType, setKnowledgeResultType] = useState<
     "success" | "error" | ""
@@ -200,7 +202,7 @@ export default function KnowledgePage() {
   }
 
   async function clearAuditLog() {
-    if (!window.confirm("آیا مطمئنید که می‌خواهید همه لاگ‌ها را پاک کنید؟")) return;
+    if (!await confirm({ message: "آیا مطمئنید که می‌خواهید همه لاگ‌ها را پاک کنید؟", variant: "warning", confirmLabel: "پاک کردن", title: "پاک کردن لاگ‌ها" })) return;
     await fetch(adminUrl("/knowledge/audit-log"), { method: "DELETE" });
     setAuditLog([]);
   }
@@ -371,11 +373,7 @@ export default function KnowledgePage() {
     }
   }
   async function deleteKnowledgeFile(fileName: string) {
-    const confirmed = window.confirm(
-      `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`,
-    );
-
-    if (!confirmed) return;
+    if (!await confirm({ message: `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`, variant: "danger", confirmLabel: "حذف", title: "حذف فایل دانش" })) return;
 
     setDeletingFile(fileName);
     setKnowledgeResult("");
