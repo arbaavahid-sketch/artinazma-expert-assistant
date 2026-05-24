@@ -61,6 +61,13 @@ def init_db():
 
     if "updated_at" not in existing_columns:
         cursor.execute("ALTER TABLE expert_questions ADD COLUMN updated_at TEXT")
+
+    if "user_rating" not in existing_columns:
+        cursor.execute("ALTER TABLE expert_questions ADD COLUMN user_rating TEXT DEFAULT NULL")
+
+    if "user_rating_comment" not in existing_columns:
+        cursor.execute("ALTER TABLE expert_questions ADD COLUMN user_rating_comment TEXT DEFAULT ''")
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_memories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,8 +157,74 @@ def init_db():
         )
         """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS customer_notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            sender TEXT DEFAULT 'admin',
+            is_read INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (customer_id) REFERENCES customers(id)
+        )
+        """)
+
     conn.commit()
     conn.close()
+
+
+# ─── Customer Notifications ────────────────────────────────────────────────
+
+def save_customer_notification(customer_id: int, message: str, sender: str = "admin") -> int:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO customer_notifications (customer_id, message, sender, is_read, created_at) VALUES (?, ?, ?, 0, ?)",
+            (customer_id, message, sender, datetime.utcnow().isoformat()),
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_customer_notifications(customer_id: int, unread_only: bool = False) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    try:
+        query = "SELECT * FROM customer_notifications WHERE customer_id = ?"
+        params: List[Any] = [customer_id]
+        if unread_only:
+            query += " AND is_read = 0"
+        query += " ORDER BY id DESC LIMIT 50"
+        rows = conn.execute(query, params).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def mark_notifications_read(customer_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE customer_notifications SET is_read = 1 WHERE customer_id = ?",
+            (customer_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_unread_notification_count(customer_id: int) -> int:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM customer_notifications WHERE customer_id = ? AND is_read = 0",
+            (customer_id,),
+        ).fetchone()
+        return row["cnt"] if row else 0
+    finally:
+        conn.close()
 
 
 def get_setting(key: str, default: str = "") -> str:
@@ -554,18 +627,50 @@ def update_question_review(
     return updated
 
 
-def get_all_questions(limit: int = 100) -> List[Dict[str, Any]]:
+def get_all_questions(
+    limit: int = 200,
+    domain: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    rating: str | None = None,
+) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
 
+    conditions: List[str] = []
+    params: List[Any] = []
+
+    if domain:
+        conditions.append("detected_domain = ?")
+        params.append(domain)
+
+    if date_from:
+        conditions.append("date(created_at) >= date(?)")
+        params.append(date_from)
+
+    if date_to:
+        conditions.append("date(created_at) <= date(?)")
+        params.append(date_to)
+
+    if rating == "up":
+        conditions.append("user_rating = 'up'")
+    elif rating == "down":
+        conditions.append("user_rating = 'down'")
+    elif rating == "unrated":
+        conditions.append("(user_rating IS NULL OR user_rating = '')")
+
+    where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    params.append(limit)
+
     cursor.execute(
-        """
-        SELECT id, question, detected_domain, expert_status, created_at, updated_at
+        f"""
+        SELECT id, question, detected_domain, expert_status, user_rating, created_at, updated_at
         FROM expert_questions
+        {where_clause}
         ORDER BY id DESC
         LIMIT ?
         """,
-        (limit,),
+        params,
     )
 
     rows = cursor.fetchall()
@@ -577,6 +682,7 @@ def get_all_questions(limit: int = 100) -> List[Dict[str, Any]]:
             "question": row["question"],
             "detected_domain": row["detected_domain"],
             "expert_status": row["expert_status"] or "pending",
+            "user_rating": row["user_rating"] or "",
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         }
@@ -1443,3 +1549,55 @@ def get_customer_cross_session_context(customer_id: int) -> str:
     lines.append("--- پایان اطلاعات کاربر ---")
 
     return "\n".join(lines)
+
+
+# ─── Question Feedback (👍👎) ──────────────────────────────────────────────────
+
+def save_question_feedback(question_id: int, rating: str, comment: str = "") -> bool:
+    """Save user rating ('up' or 'down') for a question. Returns True if saved."""
+    if rating not in ("up", "down"):
+        return False
+    conn = get_connection()
+    try:
+        conn.execute(
+            """
+            UPDATE expert_questions
+            SET user_rating = ?, user_rating_comment = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (rating, comment, datetime.utcnow().isoformat(), question_id),
+        )
+        conn.commit()
+        return conn.execute("SELECT changes()").fetchone()[0] > 0
+    finally:
+        conn.close()
+
+
+def get_feedback_stats() -> Dict[str, Any]:
+    """Return aggregate feedback stats for the admin dashboard."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN user_rating = 'up' THEN 1 ELSE 0 END) AS up_count,
+                SUM(CASE WHEN user_rating = 'down' THEN 1 ELSE 0 END) AS down_count,
+                SUM(CASE WHEN user_rating IS NULL THEN 1 ELSE 0 END) AS unrated
+            FROM expert_questions
+            """
+        ).fetchone()
+        total = rows["total"] or 0
+        up = rows["up_count"] or 0
+        down = rows["down_count"] or 0
+        rated = up + down
+        return {
+            "total_questions": total,
+            "rated": rated,
+            "up": up,
+            "down": down,
+            "unrated": rows["unrated"] or 0,
+            "satisfaction_pct": round(up / rated * 100, 1) if rated > 0 else None,
+        }
+    finally:
+        conn.close()

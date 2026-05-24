@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Database,
+  Download,
   Eye,
   FileText,
   FolderOpen,
@@ -100,6 +101,7 @@ export default function KnowledgePage() {
   const [knowledgeFile, setKnowledgeFile] = useState<File | null>(null);
   const [knowledgeTitle, setKnowledgeTitle] = useState("");
   const [knowledgeCategory, setKnowledgeCategory] = useState("general");
+  const [categorySuggested, setCategorySuggested] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [syncingDrive, setSyncingDrive] = useState(false);
   const [driveSyncMessage, setDriveSyncMessage] = useState("");
@@ -225,6 +227,31 @@ export default function KnowledgePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAuditLog, auditFilter]);
 
+  function suggestCategoryFromFileName(name: string): string {
+    const n = name.toLowerCase();
+    if (/astm|d\d{3,5}/.test(n)) return "ASTM Standards";
+    if (/catalyst|کاتالیست|catal/.test(n)) return "catalyst";
+    if (/chrom|hplc|gc[-_]|gas.?chrom/.test(n)) return "chromatography";
+    if (/mercury|جیوه|hg/.test(n)) return "mercury-analysis";
+    if (/sulfur|سولفور|sulph/.test(n)) return "sulfur-analysis";
+    if (/troubleshoot|fault|عیب|repair/.test(n)) return "troubleshooting";
+    if (/equipment|device|دستگاه|instrument/.test(n)) return "equipment";
+    if (/application.?note|app.?note/.test(n)) return "application-note";
+    if (/faq|expert/.test(n)) return "expert-faq";
+    return "general";
+  }
+
+  function handleFileSelect(file: File | null) {
+    setKnowledgeFile(file);
+    setCategorySuggested(false);
+    if (!file) return;
+    const suggested = suggestCategoryFromFileName(file.name);
+    if (suggested !== "general") {
+      setKnowledgeCategory(suggested);
+      setCategorySuggested(true);
+    }
+  }
+
   async function uploadKnowledgeFile() {
     if (!knowledgeFile) return;
 
@@ -255,6 +282,8 @@ export default function KnowledgePage() {
         setKnowledgeFile(null);
         setKnowledgeTitle("");
         setReplaceExisting(false);
+        setCategorySuggested(false);
+        setKnowledgeCategory("general");
         await loadKnowledgeStats();
       } else {
         setKnowledgeResultType("error");
@@ -495,6 +524,20 @@ export default function KnowledgePage() {
                 </button>
 
                 <button
+                  onClick={() => {
+                    const a = document.createElement("a");
+                    a.href = adminUrl("/admin/knowledge/export-csv");
+                    a.download = "knowledge_base.csv";
+                    a.click();
+                  }}
+                  disabled={!stats || stats.total_files === 0}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
+                >
+                  <Download size={18} />
+                  دانلود CSV
+                </button>
+
+                <button
                   onClick={loadKnowledgeStats}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
                 >
@@ -696,7 +739,7 @@ export default function KnowledgePage() {
               <input
                 type="file"
                 accept=".pdf,.txt,.md"
-                onChange={(e) => setKnowledgeFile(e.target.files?.[0] || null)}
+                onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
                 className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
               />
 
@@ -725,7 +768,10 @@ export default function KnowledgePage() {
 
               <select
                 value={knowledgeCategory}
-                onChange={(e) => setKnowledgeCategory(e.target.value)}
+                onChange={(e) => {
+                  setKnowledgeCategory(e.target.value);
+                  setCategorySuggested(false);
+                }}
                 className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
               >
                 {categoryOptions
@@ -736,6 +782,12 @@ export default function KnowledgePage() {
                     </option>
                   ))}
               </select>
+
+              {categorySuggested && (
+                <p className="mt-2 text-xs text-purple-600">
+                  ✨ دسته‌بندی بر اساس نام فایل پیشنهاد شد — در صورت نیاز تغییر دهید.
+                </p>
+              )}
 
               <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
                 <input

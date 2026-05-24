@@ -4,9 +4,11 @@ import threading
 import logging
 import logging.handlers
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import shutil
 from datetime import datetime as _dt
+from datetime import datetime
 from artinazma_index_service import rebuild_artinazma_index, load_index
 from intent_service import detect_question_intent
 from site_resource_service import find_artinazma_resources
@@ -69,7 +71,14 @@ from db_service import (
     get_knowledge_audit_log,
     clear_knowledge_audit_log,
     get_customer_cross_session_context,
+    save_question_feedback,
+    get_feedback_stats,
+    save_customer_notification,
+    get_customer_notifications,
+    mark_notifications_read,
+    get_unread_notification_count,
 )
+from telegram_service import notify_new_customer, notify_new_request
 
 _gdrive_timer: threading.Timer | None = None
 _gdrive_lock = threading.Lock()
@@ -160,6 +169,15 @@ def require_admin(api_key: str = Security(_admin_key_header)):
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 init_db()
+
+# Load Telegram settings from DB into env so telegram_service picks them up
+_tg_token = get_setting("telegram_bot_token") or ""
+_tg_chat = get_setting("telegram_chat_id") or ""
+if _tg_token and not os.getenv("TELEGRAM_BOT_TOKEN"):
+    os.environ["TELEGRAM_BOT_TOKEN"] = _tg_token
+if _tg_chat and not os.getenv("TELEGRAM_CHAT_ID"):
+    os.environ["TELEGRAM_CHAT_ID"] = _tg_chat
+
 frontend_origins = os.getenv(
     "FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
 )
@@ -425,6 +443,7 @@ class ChatRequest(BaseModel):
     response_mode: Optional[str] = "auto"
     user_id: Optional[str] = "anonymous"
     customer_id: Optional[int] = None
+    context: Optional[str] = None  # External context (e.g. from analyze page)
 
 
 class MemorySearchRequest(BaseModel):
@@ -580,6 +599,26 @@ def review_question_put(question_id: int, request: QuestionReviewRequest):
 @app.patch("/questions/{question_id}/review")
 def review_question_patch(question_id: int, request: QuestionReviewRequest):
     return save_question_review(question_id, request)
+
+
+class FeedbackRequest(BaseModel):
+    rating: str  # "up" or "down"
+    comment: str = ""
+
+
+@app.post("/questions/{question_id}/feedback")
+def question_feedback(question_id: int, body: FeedbackRequest):
+    """ذخیره امتیاز کاربر (👍👎) برای یک پاسخ آرتین."""
+    ok = save_question_feedback(question_id, body.rating, body.comment)
+    if not ok:
+        return {"success": False, "message": "سوال پیدا نشد یا امتیاز نامعتبر است."}
+    return {"success": True, "rating": body.rating}
+
+
+@app.get("/admin/feedback-stats")
+def feedback_stats(_=Depends(require_admin)):
+    """آمار کلی امتیازات کاربران برای داشبورد ادمین."""
+    return get_feedback_stats()
 
 
 @app.post("/chat")
@@ -745,6 +784,10 @@ def chat(body: ChatRequest, request: Request):
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
+
+    # Inject external context from request (e.g. file analysis from /analyze page)
+    if body.context:
+        context = f"اطلاعات خارجی ارائه‌شده توسط کاربر:\n{body.context}\n\n---\n\n{context}".strip()
 
     auto_domain = detect_domain(body.message)
     selected_domain = body.domain or "auto"
@@ -981,6 +1024,10 @@ def chat_stream(body: ChatRequest, request: Request):
         context = "\n\n".join(parts)
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
+
+    # Inject external context from request (e.g. file analysis from /analyze page)
+    if body.context:
+        context = f"اطلاعات خارجی ارائه‌شده توسط کاربر:\n{body.context}\n\n---\n\n{context}".strip()
 
     auto_domain = detect_domain(body.message)
     selected_domain = body.domain or "auto"
@@ -1330,8 +1377,103 @@ def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
 
 
 @app.get("/knowledge/stats")
-def knowledge_stats(): 
+def knowledge_stats():
     return get_knowledge_stats()
+
+
+# ─── Database Backup ────────────────────────────────────────────────────────
+
+BACKUP_DIR = Path("storage/backups")
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@app.post("/admin/backup/create")
+def create_backup(_=Depends(require_admin)):
+    """یک نسخه پشتیبان از دیتابیس SQLite ایجاد می‌کند."""
+    import sqlite3 as _sqlite3
+    from db_service import DB_PATH
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    backup_name = f"app_backup_{timestamp}.db"
+    backup_path = BACKUP_DIR / backup_name
+
+    try:
+        src = _sqlite3.connect(DB_PATH)
+        dst = _sqlite3.connect(backup_path)
+        src.backup(dst)
+        src.close()
+        dst.close()
+        size_kb = round(backup_path.stat().st_size / 1024, 1)
+        return {"success": True, "file_name": backup_name, "size_kb": size_kb}
+    except Exception as e:
+        logger.error("Backup failed: %s", e)
+        return {"success": False, "message": str(e)}
+
+
+@app.get("/admin/backup/list")
+def list_backups(_=Depends(require_admin)):
+    """فهرست فایل‌های پشتیبان موجود را برمی‌گرداند."""
+    backups = []
+    for f in sorted(BACKUP_DIR.glob("*.db"), reverse=True):
+        backups.append({
+            "file_name": f.name,
+            "size_kb": round(f.stat().st_size / 1024, 1),
+            "created_at": datetime.utcfromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+        })
+    return {"backups": backups}
+
+
+@app.get("/admin/backup/download/{file_name}")
+def download_backup(file_name: str, _=Depends(require_admin)):
+    """دانلود یک فایل پشتیبان مشخص."""
+    from fastapi.responses import FileResponse
+    # security: only allow simple filenames (no path traversal)
+    safe_name = Path(file_name).name
+    backup_path = BACKUP_DIR / safe_name
+    if not backup_path.exists() or not backup_path.suffix == ".db":
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="فایل پیدا نشد.")
+    return FileResponse(
+        path=backup_path,
+        filename=safe_name,
+        media_type="application/octet-stream",
+    )
+
+
+@app.delete("/admin/backup/{file_name}")
+def delete_backup(file_name: str, _=Depends(require_admin)):
+    """حذف یک فایل پشتیبان."""
+    safe_name = Path(file_name).name
+    backup_path = BACKUP_DIR / safe_name
+    if not backup_path.exists():
+        return {"success": False, "message": "فایل پیدا نشد."}
+    backup_path.unlink()
+    return {"success": True}
+
+
+@app.get("/admin/knowledge/export-csv")
+def export_knowledge_csv(_=Depends(require_admin)):
+    """خروجی CSV از فایل‌های بانک دانش برای دانلود Excel."""
+    import csv, io
+    stats = get_knowledge_stats()
+    file_details = stats.get("file_details") or []
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["نام فایل", "عنوان", "دسته‌بندی", "تعداد Chunk"])
+    for item in file_details:
+        writer.writerow([
+            item.get("file_name", ""),
+            item.get("title", ""),
+            item.get("category", ""),
+            item.get("chunks", 0),
+        ])
+    csv_bytes = output.getvalue().encode("utf-8-sig")
+    from fastapi.responses import Response
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=knowledge_base.csv"},
+    )
 
 
 @app.get("/knowledge/files/{file_name}/chunks")
@@ -1500,8 +1642,23 @@ def questions_analytics(days: int = 7):
 
 
 @app.get("/questions")
-def questions_all(limit: int = 100, _=Depends(require_admin)):
-    return {"questions": get_all_questions(limit=limit)}
+def questions_all(
+    limit: int = 200,
+    domain: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    rating: Optional[str] = None,
+    _=Depends(require_admin),
+):
+    return {
+        "questions": get_all_questions(
+            limit=limit,
+            domain=domain,
+            date_from=date_from,
+            date_to=date_to,
+            rating=rating,
+        )
+    }
 
 
 @app.get("/questions/{question_id}")
@@ -1680,6 +1837,15 @@ def create_customer_request(request: CustomerRequestCreate):
         message=request.message,
     )
 
+    # Telegram notification (fire-and-forget)
+    notify_new_request(
+        full_name=request.full_name,
+        company=request.company or "",
+        phone=request.phone or "",
+        subject=request.subject or "",
+        request_type=request.request_type or "",
+    )
+
     return {
         "success": True,
         "request_id": request_id,
@@ -1855,6 +2021,51 @@ def save_email_settings_endpoint(body: EmailSettingsRequest, _=Depends(require_a
     return {"success": True, "message": "تنظیمات ایمیل ذخیره شد."}
 
 
+class TelegramSettingsRequest(BaseModel):
+    bot_token: str = ""
+    chat_id: str = ""
+
+
+@app.get("/admin/telegram-settings")
+def get_telegram_settings(_=Depends(require_admin)):
+    token = get_setting("telegram_bot_token") or ""
+    chat_id = get_setting("telegram_chat_id") or ""
+    return {
+        "bot_token": "••••••••" if token else "",
+        "chat_id": chat_id,
+        "enabled": bool(token and chat_id),
+    }
+
+
+@app.post("/admin/telegram-settings")
+def save_telegram_settings(body: TelegramSettingsRequest, _=Depends(require_admin)):
+    existing_token = get_setting("telegram_bot_token") or ""
+    new_token = body.bot_token if body.bot_token and body.bot_token != "••••••••" else existing_token
+    set_setting("telegram_bot_token", new_token)
+    set_setting("telegram_chat_id", body.chat_id)
+    # Update in-process env so telegram_service picks it up immediately
+    import os as _os
+    _os.environ["TELEGRAM_BOT_TOKEN"] = new_token
+    _os.environ["TELEGRAM_CHAT_ID"] = body.chat_id
+    return {"success": True, "message": "تنظیمات تلگرام ذخیره شد."}
+
+
+@app.post("/admin/telegram-test")
+def test_telegram(_=Depends(require_admin)):
+    from telegram_service import send_message, is_enabled
+    # Also try loading from DB in case env not set
+    token = get_setting("telegram_bot_token") or ""
+    chat_id = get_setting("telegram_chat_id") or ""
+    if token:
+        import os as _os
+        _os.environ["TELEGRAM_BOT_TOKEN"] = token
+        _os.environ["TELEGRAM_CHAT_ID"] = chat_id or ""
+    if not is_enabled():
+        return {"success": False, "message": "تلگرام فعال نیست. ابتدا توکن و Chat ID را وارد کنید."}
+    send_message("✅ <b>تست اتصال تلگرام آرتین آزما</b>\nاتصال برقرار است!")
+    return {"success": True, "message": "پیام آزمایشی ارسال شد."}
+
+
 @app.post("/admin/send-weekly-report")
 def send_weekly_report_now(_=Depends(require_admin)):
     from email_service import get_email_settings, send_weekly_report
@@ -1999,6 +2210,34 @@ def admin_unblock_customer(customer_id: int, _=Depends(require_admin)):
     return {"success": ok}
 
 
+class CustomerNotifyRequest(BaseModel):
+    message: str
+
+
+@app.post("/admin/customers/{customer_id}/notify")
+def admin_notify_customer(customer_id: int, body: CustomerNotifyRequest, _=Depends(require_admin)):
+    """ارسال اعلان داخل اپ برای یک مشتری."""
+    if not body.message.strip():
+        return {"success": False, "message": "متن پیام نمی‌تواند خالی باشد."}
+    nid = save_customer_notification(customer_id, body.message.strip())
+    return {"success": True, "notification_id": nid}
+
+
+@app.get("/customers/{customer_id}/notifications")
+def customer_notifications(customer_id: int, unread_only: bool = False):
+    """فهرست اعلان‌های یک مشتری (نیازی به ادمین نیست — مشتری با ID خودش می‌خواند)."""
+    notifs = get_customer_notifications(customer_id, unread_only=unread_only)
+    unread_count = get_unread_notification_count(customer_id)
+    return {"notifications": notifs, "unread_count": unread_count}
+
+
+@app.post("/customers/{customer_id}/notifications/read")
+def mark_customer_notifications_read(customer_id: int):
+    """علامت‌گذاری همه اعلان‌های یک مشتری به عنوان خوانده‌شده."""
+    mark_notifications_read(customer_id)
+    return {"success": True}
+
+
 @app.get("/system/status")
 def system_status(check_ai: bool = False):
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
@@ -2051,28 +2290,35 @@ def system_status(check_ai: bool = False):
 
 @app.post("/customers/register")
 @limiter.limit("5/minute")
-def customer_register(request: CustomerRegisterRequest, http_request: Request):
-    if not request.full_name.strip():
+def customer_register(body: CustomerRegisterRequest, request: Request):
+    if not body.full_name.strip():
         return {"success": False, "message": "نام و نام خانوادگی الزامی است."}
 
-    if not request.email.strip():
+    if not body.email.strip():
         return {"success": False, "message": "ایمیل الزامی است."}
 
-    if len(request.password) < 6:
+    if len(body.password) < 6:
         return {"success": False, "message": "رمز عبور باید حداقل ۶ کاراکتر باشد."}
 
     result = create_customer(
-        full_name=request.full_name,
-        email=request.email,
-        password=request.password,
-        company=request.company,
-        phone=request.phone,
+        full_name=body.full_name,
+        email=body.email,
+        password=body.password,
+        company=body.company,
+        phone=body.phone,
     )
 
     if not result.get("success"):
         return result
 
     customer = get_customer_by_id(result["customer_id"])
+
+    # Telegram notification (fire-and-forget)
+    notify_new_customer(
+        full_name=body.full_name,
+        email=body.email,
+        company=body.company or "",
+    )
 
     return {
         "success": True,
@@ -2083,8 +2329,8 @@ def customer_register(request: CustomerRegisterRequest, http_request: Request):
 
 @app.post("/customers/login")
 @limiter.limit("10/minute")
-def customer_login(request: CustomerLoginRequest, http_request: Request):
-    customer = authenticate_customer(email=request.email, password=request.password)
+def customer_login(body: CustomerLoginRequest, request: Request):
+    customer = authenticate_customer(email=body.email, password=body.password)
 
     if not customer:
         return {"success": False, "message": "ایمیل یا رمز عبور اشتباه است."}

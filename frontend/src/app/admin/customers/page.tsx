@@ -5,6 +5,7 @@ import { adminUrl } from "@/lib/api";
 import {
   Users,
   Search,
+  Bell,
   X,
   Building2,
   Phone,
@@ -51,6 +52,35 @@ export default function AdminCustomersPage() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [blockingId, setBlockingId] = useState<number | null>(null);
+  const [notifyModal, setNotifyModal] = useState(false);
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [notifyStatus, setNotifyStatus] = useState<{ text: string; ok: boolean } | null>(null);
+  const [sendingNotify, setSendingNotify] = useState(false);
+
+  async function sendNotification() {
+    if (!selected || !notifyMessage.trim()) return;
+    setSendingNotify(true);
+    setNotifyStatus(null);
+    try {
+      const res = await fetch(adminUrl(`/admin/customers/${selected.id}/notify`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: notifyMessage.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotifyStatus({ text: "اعلان با موفقیت ارسال شد.", ok: true });
+        setNotifyMessage("");
+        setTimeout(() => { setNotifyModal(false); setNotifyStatus(null); }, 1500);
+      } else {
+        setNotifyStatus({ text: data.message || "خطا در ارسال.", ok: false });
+      }
+    } catch {
+      setNotifyStatus({ text: "خطا در اتصال به سرور.", ok: false });
+    } finally {
+      setSendingNotify(false);
+    }
+  }
 
   async function toggleBlock(customer: Customer) {
     setBlockingId(customer.id);
@@ -364,22 +394,35 @@ export default function AdminCustomersPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="mt-4 flex gap-3">
+                <div className="mt-4 grid grid-cols-2 gap-3">
                   <button
                     onClick={() => {
                       setEmailSubject(`پیام از آرتین آزما به ${selected.full_name}`);
                       setEmailBody("");
                       setEmailModal(true);
                     }}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
                   >
                     <Send size={15} />
                     ارسال ایمیل
                   </button>
+
+                  <button
+                    onClick={() => {
+                      setNotifyMessage("");
+                      setNotifyStatus(null);
+                      setNotifyModal(true);
+                    }}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 transition hover:bg-amber-100"
+                  >
+                    <Bell size={15} />
+                    اعلان داخل اپ
+                  </button>
+
                   <button
                     onClick={() => toggleBlock(selected)}
                     disabled={blockingId === selected.id}
-                    className={`inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition disabled:opacity-50 ${
+                    className={`col-span-2 inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition disabled:opacity-50 ${
                       selected.is_blocked
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
                         : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
@@ -469,6 +512,61 @@ export default function AdminCustomersPage() {
               <p className="text-xs text-slate-400 text-center">
                 این دکمه کلاینت ایمیل شما را با اطلاعات پر‌شده باز می‌کند.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notify Modal */}
+      {notifyModal && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-[32px] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">ارسال اعلان داخل اپ</h2>
+                <p className="mt-1 text-sm text-slate-500">برای: {selected.full_name}</p>
+              </div>
+              <button
+                onClick={() => setNotifyModal(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="space-y-4 p-6">
+              {notifyStatus && (
+                <div className={`rounded-2xl p-4 text-sm font-bold ${
+                  notifyStatus.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                }`}>
+                  {notifyStatus.text}
+                </div>
+              )}
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-700">متن پیام</label>
+                <textarea
+                  value={notifyMessage}
+                  onChange={(e) => setNotifyMessage(e.target.value)}
+                  rows={4}
+                  className="w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm leading-7 outline-none transition focus:border-amber-500"
+                  placeholder="پیام اعلان برای مشتری..."
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={sendNotification}
+                  disabled={sendingNotify || !notifyMessage.trim()}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-amber-600 px-5 py-3 font-bold text-white transition hover:bg-amber-700 disabled:opacity-50"
+                >
+                  <Bell size={16} />
+                  {sendingNotify ? "در حال ارسال..." : "ارسال اعلان"}
+                </button>
+                <button
+                  onClick={() => setNotifyModal(false)}
+                  className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  انصراف
+                </button>
+              </div>
             </div>
           </div>
         </div>

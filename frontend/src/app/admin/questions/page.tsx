@@ -10,6 +10,10 @@ import {
   Search,
   ShieldCheck,
   Download,
+  ThumbsUp,
+  ThumbsDown,
+  Filter,
+  X,
 } from "lucide-react";
 
 type QuestionItem = {
@@ -17,6 +21,7 @@ type QuestionItem = {
   question: string;
   detected_domain: string;
   expert_status: string;
+  user_rating: string;
   created_at: string;
   updated_at: string | null;
 };
@@ -27,6 +32,24 @@ const statusOptions = [
   { value: "approved", label: "تایید شده" },
   { value: "needs_edit", label: "نیازمند اصلاح" },
   { value: "rejected", label: "رد شده" },
+];
+
+const domainOptions = [
+  { value: "all", label: "همه حوزه‌ها" },
+  { value: "catalyst", label: "کاتالیست" },
+  { value: "equipment", label: "تجهیزات" },
+  { value: "chromatography", label: "کروماتوگرافی" },
+  { value: "mercury-analysis", label: "آنالیز جیوه" },
+  { value: "sulfur-analysis", label: "آنالیز سولفور" },
+  { value: "troubleshooting", label: "عیب‌یابی" },
+  { value: "analysis", label: "آنالیز و تست" },
+];
+
+const ratingOptions = [
+  { value: "all", label: "همه امتیازها" },
+  { value: "up", label: "👍 پسندیده شده" },
+  { value: "down", label: "👎 نپسندیده شده" },
+  { value: "unrated", label: "بدون امتیاز" },
 ];
 
 function getStatusLabel(status: string) {
@@ -46,19 +69,13 @@ function getStatusClass(status: string) {
 }
 
 function getDomainLabel(domain: string) {
-  if (domain === "catalyst") return "کاتالیست";
-  if (domain === "equipment") return "تجهیزات";
-  if (domain === "chromatography") return "کروماتوگرافی";
-  if (domain === "mercury-analysis") return "آنالیز جیوه";
-  if (domain === "sulfur-analysis") return "آنالیز سولفور";
-  if (domain === "troubleshooting") return "عیب‌یابی";
-  if (domain === "analysis") return "آنالیز و تست";
+  const found = domainOptions.find((d) => d.value === domain);
+  if (found && found.value !== "all") return found.label;
   return domain || "تشخیص خودکار";
 }
 
 function formatDate(value?: string | null) {
   if (!value) return "نامشخص";
-
   try {
     return new Intl.DateTimeFormat("fa-IR", {
       dateStyle: "medium",
@@ -74,6 +91,11 @@ export default function QuestionsPage() {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [domainFilter, setDomainFilter] = useState("all");
+  const [ratingFilter, setRatingFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   function downloadCsv() {
     const url = adminUrl("/admin/questions/export-csv");
@@ -85,12 +107,16 @@ export default function QuestionsPage() {
 
   async function loadQuestions() {
     setLoading(true);
-
     try {
-      const res = await fetch(adminUrl("/questions?limit=100"), {
+      const params = new URLSearchParams({ limit: "200" });
+      if (domainFilter !== "all") params.set("domain", domainFilter);
+      if (ratingFilter !== "all") params.set("rating", ratingFilter);
+      if (dateFrom) params.set("date_from", dateFrom);
+      if (dateTo) params.set("date_to", dateTo);
+
+      const res = await fetch(adminUrl(`/questions?${params.toString()}`), {
         cache: "no-store",
       });
-
       const data = await res.json();
       setQuestions(data.questions || []);
     } catch {
@@ -102,7 +128,8 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     loadQuestions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domainFilter, ratingFilter, dateFrom, dateTo]);
 
   const filteredQuestions = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -129,21 +156,41 @@ export default function QuestionsPage() {
     });
   }, [questions, searchText, statusFilter]);
 
+  const activeFilterCount = [
+    domainFilter !== "all",
+    ratingFilter !== "all",
+    !!dateFrom,
+    !!dateTo,
+    statusFilter !== "all",
+  ].filter(Boolean).length;
+
+  function clearFilters() {
+    setDomainFilter("all");
+    setRatingFilter("all");
+    setDateFrom("");
+    setDateTo("");
+    setStatusFilter("all");
+    setSearchText("");
+  }
+
   const pendingCount = questions.filter(
     (item) => !item.expert_status || item.expert_status === "pending",
   ).length;
-
   const approvedCount = questions.filter(
     (item) => item.expert_status === "approved",
   ).length;
-
   const needsEditCount = questions.filter(
     (item) => item.expert_status === "needs_edit",
+  ).length;
+  const upCount = questions.filter((item) => item.user_rating === "up").length;
+  const downCount = questions.filter(
+    (item) => item.user_rating === "down",
   ).length;
 
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
       <div className="mx-auto max-w-7xl">
+        {/* Header */}
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -152,14 +199,12 @@ export default function QuestionsPage() {
                   <FileQuestion size={17} />
                   پایش کیفیت پاسخ‌های آرتین
                 </div>
-
                 <h1 className="text-3xl font-black text-slate-900">
                   سوالات کاربران
                 </h1>
-
                 <p className="mt-4 max-w-3xl leading-8 text-slate-600">
-                  سوالات ثبت‌شده کاربران، حوزه تشخیص داده‌شده و وضعیت بررسی
-                  کارشناسی در این بخش نمایش داده می‌شود.
+                  سوالات ثبت‌شده کاربران، حوزه تشخیص داده‌شده، وضعیت بررسی
+                  کارشناسی و امتیاز کاربران در این بخش نمایش داده می‌شود.
                 </p>
               </div>
 
@@ -170,7 +215,7 @@ export default function QuestionsPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
                 >
                   <Download size={18} />
-                  دانلود Excel
+                  دانلود CSV
                 </button>
 
                 <button
@@ -189,7 +234,8 @@ export default function QuestionsPage() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-4">
+        {/* Stats */}
+        <div className="mb-6 grid gap-4 md:grid-cols-5">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-bold text-slate-500">کل سوالات</div>
             <div className="mt-2 text-3xl font-black text-slate-900">
@@ -221,34 +267,159 @@ export default function QuestionsPage() {
               {needsEditCount}
             </div>
           </div>
+
+          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="text-sm font-bold text-slate-500">امتیاز کاربران</div>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="flex items-center gap-1 text-lg font-black text-emerald-600">
+                <ThumbsUp size={16} />
+                {upCount}
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="flex items-center gap-1 text-lg font-black text-red-500">
+                <ThumbsDown size={16} />
+                {downCount}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_240px]">
-            <div className="relative">
-              <Search
-                size={18}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
-                placeholder="جستجو در متن سوال، حوزه، شناسه یا وضعیت..."
-              />
+        {/* Search + Filters */}
+        <div className="mb-4 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-3">
+            {/* Search + filter toggle row */}
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <Search
+                  size={18}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
+                  placeholder="جستجو در متن سوال، حوزه، شناسه یا وضعیت..."
+                />
+              </div>
+
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`relative inline-flex items-center gap-2 rounded-2xl border px-5 py-3 text-sm font-bold transition ${
+                  showFilters || activeFilterCount > 0
+                    ? "border-purple-300 bg-purple-50 text-purple-700"
+                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <Filter size={17} />
+                فیلترها
+                {activeFilterCount > 0 && (
+                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[11px] font-black text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                >
+                  <X size={16} />
+                  پاک‌کردن
+                </button>
+              )}
             </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-purple-600"
-            >
-              {statusOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+            {/* Expandable filter panel */}
+            {showFilters && (
+              <div className="grid gap-3 rounded-2xl bg-slate-50 p-4 md:grid-cols-2 lg:grid-cols-4">
+                {/* Status */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                    وضعیت بررسی
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                  >
+                    {statusOptions.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Domain */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                    حوزه تخصصی
+                  </label>
+                  <select
+                    value={domainFilter}
+                    onChange={(e) => setDomainFilter(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                  >
+                    {domainOptions.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Rating */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                    امتیاز کاربر
+                  </label>
+                  <select
+                    value={ratingFilter}
+                    onChange={(e) => setRatingFilter(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                  >
+                    {ratingOptions.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Date range */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                    بازه تاریخ
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                      title="از تاریخ"
+                    />
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                      title="تا تاریخ"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Questions list */}
+        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="text-sm font-bold text-slate-500">
+              {filteredQuestions.length} سوال
+            </div>
           </div>
 
           {loading ? (
@@ -264,7 +435,7 @@ export default function QuestionsPage() {
                   className="group block rounded-[28px] border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="mb-3 flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-700">
                           #{item.id}
@@ -281,6 +452,19 @@ export default function QuestionsPage() {
                         <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
                           {getDomainLabel(item.detected_domain)}
                         </span>
+
+                        {item.user_rating === "up" && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                            <ThumbsUp size={12} />
+                            پسندیده شده
+                          </span>
+                        )}
+                        {item.user_rating === "down" && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
+                            <ThumbsDown size={12} />
+                            نپسندیده شده
+                          </span>
+                        )}
                       </div>
 
                       <div className="line-clamp-2 text-base font-bold leading-8 text-slate-900 group-hover:text-purple-700">

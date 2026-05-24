@@ -272,17 +272,25 @@ ${followUpHistory.length ? `
     setFollowUpLoading(true);
     setFollowUpQ("");
 
-    const context = `تحلیل قبلی آرتین از فایل/تصویر:\n${fileAnalysis}`;
+    const fileNames = files.map((f) => f.name).join("، ");
+    // Build context: file analysis result as system context
+    const context = `آرتین، فایل(های) زیر توسط کاربر آپلود و قبلاً تحلیل شده‌اند:\nنام فایل: ${fileNames}\n\nخلاصه تحلیل:\n${fileAnalysis.slice(0, 3000)}`;
+
+    // Build conversation history from previous follow-up exchanges
+    const history = followUpHistory.flatMap((item) => [
+      { role: "user", content: item.q },
+      { role: "assistant", content: item.a },
+    ]);
+
     try {
       const res = await fetch(apiUrl("/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question, context, history: [] }),
+        body: JSON.stringify({ message: question, context, history }),
       });
       const data = await res.json();
       const answer = data.answer || data.response || "پاسخی دریافت نشد.";
       setFollowUpHistory((prev) => [...prev, { q: question, a: answer }]);
-      setFollowUpA(answer);
     } catch {
       setFollowUpHistory((prev) => [...prev, { q: question, a: "خطا در دریافت پاسخ." }]);
     } finally {
@@ -559,7 +567,7 @@ ${followUpHistory.length ? `
                     <p className="mt-1 text-sm text-slate-500">{progressLabel}</p>
                   )}
                   <div className="mt-6 space-y-2">
-                    {(isImage ? PROGRESS_STEPS_IMAGE : PROGRESS_STEPS_FILE).map((step, i) => (
+                    {(allImages ? PROGRESS_STEPS_IMAGE : PROGRESS_STEPS_FILE).map((step, i) => (
                       <div
                         key={i}
                         className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${

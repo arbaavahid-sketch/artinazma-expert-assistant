@@ -22,6 +22,8 @@ import {
   Download,
   ImagePlus,
   X as XIcon,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
@@ -484,6 +486,10 @@ function useVoiceInput(onTranscript: (text: string) => void) {
       recorder.start();
       setVoiceState("listening");
     } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") {
+        // User chose undo — state already restored in undoSend()
+        return;
+      }
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("Permission") || msg.includes("NotAllowed")) {
         alert("دسترسی به میکروفون رد شده. لطفاً از تنظیمات مرورگر مجوز میکروفون را فعال کنید.");
@@ -528,6 +534,12 @@ function AssistantPageInner() {
   const [stagedImage, setStagedImage] = useState<File | null>(null);
   const [stagedImageUrl, setStagedImageUrl] = useState<string>("");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
+  const [ttsNote, setTtsNote] = useState<string>("");
+  const [canUndo, setCanUndo] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedMsgRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -622,38 +634,141 @@ ${cleanAnswer}`,
     return clean.length > 42 ? `${clean.slice(0, 42)}...` : clean;
   }
 
+  // Undo send — abort in-flight request and restore message
+  function undoSend() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+    setCanUndo(false);
+    setLoading(false);
+    setMessage(savedMsgRef.current);
+    setMessages((prev) => prev.slice(0, -2)); // remove user msg + placeholder
+  }
+
+  const _ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function _clearTtsKeepAlive() {
+    if (_ttsKeepAliveRef.current) {
+      clearInterval(_ttsKeepAliveRef.current);
+      _ttsKeepAliveRef.current = null;
+    }
+  }
+
+  function speakMessage(text: string, index: number) {
+    if (!("speechSynthesis" in window)) {
+      setTtsNote("مرورگر شما از قابلیت خواندن متن پشتیبانی نمی‌کند.");
+      setTimeout(() => setTtsNote(""), 5000);
+      return;
+    }
+
+    // Toggle off if already speaking this message
+    if (speakingIndex === index) {
+      window.speechSynthesis.cancel();
+      _clearTtsKeepAlive();
+      setSpeakingIndex(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    _clearTtsKeepAlive();
+
+    // Strip markdown for cleaner TTS
+    const clean = text
+      .replace(/#{1,6}\s/g, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/`{1,3}[^`]*`{1,3}/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/[-*_]{3,}/g, "")
+      .replace(/\n+/g, " ")
+      .trim()
+      .slice(0, 3000);
+
+    const doSpeak = (voices: SpeechSynthesisVoice[]) => {
+      const utter = new SpeechSynthesisUtterance(clean);
+
+      // Prefer Persian → Arabic → default → any available voice
+      const bestVoice =
+        voices.find((v) => v.lang.startsWith("fa")) ||
+        voices.find((v) => v.lang.startsWith("ar")) ||
+        voices.find((v) => v.default) ||
+        voices[0];
+
+      if (bestVoice) utter.voice = bestVoice;
+      // Use voice's own lang to prevent Chrome from rejecting utterance
+      // (forcing fa-IR with no Persian voice causes immediate error)
+      utter.lang = bestVoice?.lang ?? "fa-IR";
+      utter.rate = 0.85;
+      utter.pitch = 1;
+
+      utter.onstart = () => {
+        // Clear any previous note once speech actually starts
+        setTtsNote("");
+      };
+      utter.onend = () => {
+        _clearTtsKeepAlive();
+        setSpeakingIndex(null);
+      };
+      utter.onerror = (e) => {
+        _clearTtsKeepAlive();
+        setSpeakingIndex(null);
+        if (e.error !== "interrupted") {
+          setTtsNote(
+            "صدای فارسی روی سیستم شما نصب نیست. برای نصب: Settings → Time & Language → Speech → Add voices → Persian"
+          );
+          setTimeout(() => setTtsNote(""), 12000);
+        }
+      };
+
+      setSpeakingIndex(index);
+      window.speechSynthesis.speak(utter);
+
+      // Chrome bug: pauses itself after ~15s — keep alive with pause/resume
+      _ttsKeepAliveRef.current = setInterval(() => {
+        if (!window.speechSynthesis.speaking) {
+          _clearTtsKeepAlive();
+          setSpeakingIndex(null);
+          return;
+        }
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }, 10000);
+    };
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      doSpeak(voices);
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        doSpeak(window.speechSynthesis.getVoices());
+      };
+      // Fallback: some browsers never fire onvoiceschanged
+      setTimeout(() => {
+        const v = window.speechSynthesis.getVoices();
+        if (v.length > 0) doSpeak(v);
+      }, 600);
+    }
+  }
+
   async function sendAnswerFeedback(
     questionId: number | undefined,
-    status: "approved" | "needs_edit",
+    rating: "up" | "down",
   ) {
     if (!questionId) return;
-
-    const expertNote =
-      status === "approved"
-        ? "کاربر پاسخ را مفید اعلام کرد."
-        : "کاربر اعلام کرد پاسخ نیاز به اصلاح دارد.";
-
+    // Optimistic update
+    setFeedbackStatus((prev) => ({ ...prev, [questionId]: rating }));
     try {
-      const res = await fetch(apiUrl(`/questions/${questionId}/review`), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          expert_status: status,
-          expert_note: expertNote,
-          reviewed_answer: "",
-        }),
+      await fetch(apiUrl(`/questions/${questionId}/feedback`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating }),
       });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setFeedbackStatus((prev) => ({
-          ...prev,
-          [questionId]: status,
-        }));
-      }
     } catch {
       // خطای بازخورد نباید چت را خراب کند
     }
@@ -887,10 +1002,15 @@ ${cleanAnswer}`,
       actual_prompt: displayMessage ? finalMessage : undefined,
     });
 
+    savedMsgRef.current = finalMessage;
     setMessages([...previousMessages, userMessage]);
     setMessage("");
     setLoading(true);
     setShowTools(false);
+    // Undo window: 5 seconds before Artin responds
+    abortControllerRef.current = new AbortController();
+    setCanUndo(true);
+    undoTimerRef.current = setTimeout(() => { setCanUndo(false); }, 5000);
 
     setSuggestedQuestions([]);
     // پیام placeholder خالی برای نمایش حین streaming
@@ -919,6 +1039,7 @@ ${cleanAnswer}`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyPayload),
+        signal: abortControllerRef.current?.signal,
       });
 
       if (res.status === 429) {
@@ -1007,6 +1128,9 @@ ${cleanAnswer}`,
       }
 
       setLoading(false);
+      setCanUndo(false);
+      if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
+      abortControllerRef.current = null;
       void metaData; // suppress unused warning
 
       // پیشنهاد سوالات مرتبط (non-blocking)
@@ -1648,6 +1772,7 @@ ${msgHtml}
                 <MessageBubble
                   key={index}
                   item={item}
+                  index={index}
                   loading={loading}
                   onCopy={copyText}
                   onRequest={() => router.push("/customer-request")}
@@ -1658,8 +1783,19 @@ ${msgHtml}
                       ? feedbackStatus[item.question_id]
                       : undefined
                   }
+                  onSpeak={speakMessage}
+                  isSpeaking={speakingIndex === index}
                 />
               ))}
+
+              {/* راهنمای نصب صدای TTS */}
+              {ttsNote && (
+                <div className="mx-2 mt-1 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                  <Volume2 size={14} className="mt-0.5 shrink-0 text-amber-500" />
+                  <span>{ttsNote}</span>
+                  <button onClick={() => setTtsNote("")} className="mr-auto shrink-0 text-amber-400 hover:text-amber-600">✕</button>
+                </div>
+              )}
 
               {/* سوالات پیشنهادی */}
               {!loading && suggestedQuestions.length > 0 && (
@@ -1676,6 +1812,18 @@ ${msgHtml}
                       {q}
                     </button>
                   ))}
+                </div>
+              )}
+
+              {canUndo && (
+                <div className="flex justify-end px-1">
+                  <button
+                    onClick={undoSend}
+                    className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                    لغو ارسال
+                  </button>
                 </div>
               )}
 
@@ -1764,7 +1912,7 @@ ${msgHtml}
                       inp.click();
                     }}
                     title="ارسال عکس (یا Ctrl+V برای Paste)"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-blue-600"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blue-500 transition hover:bg-blue-50 hover:text-blue-700"
                   >
                     <ImagePlus size={18} />
                   </button>
@@ -1918,12 +2066,15 @@ function UploadModal({
 
 function MessageBubble({
   item,
+  index,
   loading,
   onCopy,
   onRequest,
   onQuickAction,
   onFeedback,
   feedbackValue,
+  onSpeak,
+  isSpeaking,
 }: {
   item: ChatMessage;
   loading: boolean;
@@ -1935,9 +2086,12 @@ function MessageBubble({
   ) => void;
   onFeedback: (
     questionId: number | undefined,
-    status: "approved" | "needs_edit",
+    rating: "up" | "down",
   ) => void;
   feedbackValue?: string;
+  onSpeak: (text: string, index: number) => void;
+  isSpeaking?: boolean;
+  index: number;
 }) {
   const [copied, setCopied] = useState(false);
   const isUser = item.role === "user";
@@ -2022,16 +2176,36 @@ function MessageBubble({
                   code: ({ children }) => (
                     <code className="ai-md-code">{children}</code>
                   ),
-                  a: ({ href, children }) => (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
-                    >
-                      {children}
-                    </a>
-                  ),
+                  a: ({ href, children }) => {
+                    const isArtinLink = href && (
+                      href.includes("artinazma.net") ||
+                      href.includes("artinazma.com")
+                    );
+                    if (isArtinLink) {
+                      return (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="not-prose my-1 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100 hover:text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                          <span className="flex-1 truncate">{children || href}</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                        </a>
+                      );
+                    }
+                    return (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
+                      >
+                        {children}
+                      </a>
+                    );
+                  },
                   table: ({ children }) => (
                     <div className="ai-md-table-wrap">
                       <table className="ai-md-table">{children}</table>
@@ -2061,14 +2235,12 @@ function MessageBubble({
                     ? "تصویر پیوست‌شده"
                     : "فایل پیوست‌شده"}
                 </div>
-
                 <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
                   {loading && item.attachment.status === "analyzing"
                     ? "در حال تحلیل"
                     : "ارسال شد"}
                 </span>
               </div>
-
               {item.attachment.kind === "image" &&
                 item.attachment.previewUrl && (
                   <div className="mb-3 overflow-hidden rounded-2xl bg-black/10">
@@ -2079,19 +2251,15 @@ function MessageBubble({
                     />
                   </div>
                 )}
-
               <div>نام: {item.attachment.name}</div>
-
               {item.attachment.analysisType && (
                 <div>نوع تحلیل: {item.attachment.analysisType}</div>
               )}
-
               {item.attachment.note && (
                 <div>توضیح کاربر: {item.attachment.note}</div>
               )}
             </div>
           )}
-
           {!isUser && (
             <ArtinazmaResourceCards
               links={item.resource_links}
@@ -2099,7 +2267,7 @@ function MessageBubble({
             />
           )}
           {!isUser && !loading && (
-            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-100 transition-opacity">
               <button
                 onClick={() => handleCopy(displayContent)}
                 className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
@@ -2107,9 +2275,19 @@ function MessageBubble({
                 <Copy size={13} />
                 {copied ? "کپی شد" : "کپی"}
               </button>
-
+              <button
+                onClick={() => onSpeak(displayContent, index)}
+                className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] transition ${
+                  isSpeaking
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                }`}
+                title={isSpeaking ? "توقف" : "پخش صوتی"}
+              >
+                {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                {isSpeaking ? "توقف" : "بخوان"}
+              </button>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
-
               <button
                 onClick={() => onQuickAction("shorter", item.content)}
                 className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
@@ -2128,36 +2306,36 @@ function MessageBubble({
               >
                 جدول
               </button>
-
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
-
               <button
-                onClick={() => onFeedback(item.question_id, "approved")}
-                disabled={feedbackValue === "approved"}
+                onClick={() => onFeedback(item.question_id, "up")}
+                disabled={!!feedbackValue}
                 className={`rounded-lg p-1.5 transition ${
-                  feedbackValue === "approved"
-                    ? "text-emerald-600"
-                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  feedbackValue === "up"
+                    ? "text-emerald-600 bg-emerald-50"
+                    : feedbackValue === "down"
+                    ? "text-slate-300 cursor-default"
+                    : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
                 }`}
-                title="پاسخ خوب بود"
+                title="پاسخ مفید بود"
               >
                 <ThumbsUp size={13} />
               </button>
               <button
-                onClick={() => onFeedback(item.question_id, "needs_edit")}
-                disabled={feedbackValue === "needs_edit"}
+                onClick={() => onFeedback(item.question_id, "down")}
+                disabled={!!feedbackValue}
                 className={`rounded-lg p-1.5 transition ${
-                  feedbackValue === "needs_edit"
-                    ? "text-amber-600"
-                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  feedbackValue === "down"
+                    ? "text-red-500 bg-red-50"
+                    : feedbackValue === "up"
+                    ? "text-slate-300 cursor-default"
+                    : "text-slate-400 hover:bg-red-50 hover:text-red-500"
                 }`}
-                title="نیاز به اصلاح دارد"
+                title="پاسخ نیاز به بهبود دارد"
               >
                 <ThumbsDown size={13} />
               </button>
-
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
-
               <button
                 onClick={onRequest}
                 className="rounded-lg px-2.5 py-1.5 text-[12px] text-blue-600 transition hover:bg-blue-50"

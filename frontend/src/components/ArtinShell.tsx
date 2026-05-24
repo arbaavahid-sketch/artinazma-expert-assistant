@@ -9,6 +9,7 @@ import {
   CircleUserRound,
   Database,
   FlaskConical,
+  HardDrive,
   Home,
   Inbox,
   LayoutDashboard,
@@ -65,6 +66,7 @@ const adminItems: SidebarItem[] = [
   { href: "/admin/requests", label: "درخواست‌ها", Icon: Inbox },
   { href: "/admin/customers", label: "مشتریان", Icon: Users },
   { href: "/admin/dashboard", label: "داشبورد", Icon: ChartBar },
+  { href: "/admin/backup", label: "پشتیبان‌گیری", Icon: HardDrive },
   { href: "/admin/settings", label: "تنظیمات سیستم", Icon: Settings },
 ];
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import {
+  Bell,
   CircleUserRound,
   LogOut,
   Mail,
@@ -65,6 +66,12 @@ export default function CustomerDashboardPage() {
   const [clearingAllSessions, setClearingAllSessions] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
   const [sessionSearch, setSessionSearch] = useState("");
+
+  // Notifications
+  type Notification = { id: number; message: string; sender: string; is_read: number; created_at: string };
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
   async function loadSessions(customerId: number) {
     try {
       const res = await fetch(
@@ -78,6 +85,27 @@ export default function CustomerDashboardPage() {
       setSessions(data.sessions || []);
     } catch {
       setSessions([]);
+    }
+  }
+
+  async function loadNotifications(customerId: number) {
+    try {
+      const res = await fetch(apiUrl(`/customers/${customerId}/notifications`), { cache: "no-store" });
+      const data = await res.json();
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unread_count || 0);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function markNotificationsRead(customerId: number) {
+    try {
+      await fetch(apiUrl(`/customers/${customerId}/notifications/read`), { method: "POST" });
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
+    } catch {
+      /* ignore */
     }
   }
 
@@ -96,6 +124,7 @@ export default function CustomerDashboardPage() {
     setProfileCompany(parsed.company || "");
     setProfilePhone(parsed.phone || "");
     loadSessions(parsed.id).finally(() => setLoading(false));
+    loadNotifications(parsed.id);
   }, []);
   async function saveProfile() {
     if (!customer) return;
@@ -330,6 +359,25 @@ ${msgHtml}
               </div>
 
               <div className="flex flex-wrap gap-3">
+                {/* Notification bell */}
+                <button
+                  onClick={() => {
+                    setShowNotifications((v) => !v);
+                    if (!showNotifications && customer && unreadCount > 0) {
+                      markNotificationsRead(customer.id);
+                    }
+                  }}
+                  className="relative inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  <Bell size={18} />
+                  اعلان‌ها
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-black text-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
                 <Link
                   href="/assistant"
                   className="ui-btn ui-btn-primary inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm"
@@ -348,6 +396,55 @@ ${msgHtml}
               </div>
             </div>
           </div>
+
+          {/* Notifications panel */}
+          {showNotifications && (
+            <div className="border-t border-blue-100 bg-blue-50 px-8 py-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-bold text-blue-700">
+                  <Bell size={16} />
+                  پیام‌های تیم آرتین آزما
+                </div>
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              {notifications.length === 0 ? (
+                <div className="rounded-2xl bg-white px-5 py-4 text-center text-sm text-slate-500">
+                  پیامی از تیم ما دریافت نکرده‌اید.
+                </div>
+              ) : (
+                <div className="max-h-64 space-y-2 overflow-y-auto">
+                  {notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`rounded-2xl border px-5 py-3 text-sm leading-7 ${
+                        n.is_read
+                          ? "border-slate-100 bg-white text-slate-600"
+                          : "border-blue-200 bg-white font-bold text-slate-800"
+                      }`}
+                    >
+                      <div>{n.message}</div>
+                      <div className="mt-1 text-xs text-slate-400">
+                        {new Intl.DateTimeFormat("fa-IR", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        }).format(new Date(n.created_at + "Z"))}
+                        {!n.is_read && (
+                          <span className="mr-2 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                            جدید
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Quick links */}
           <div className="border-t border-slate-100 bg-slate-50 px-8 py-4">
