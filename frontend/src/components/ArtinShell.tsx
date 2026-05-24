@@ -6,6 +6,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { ToastProvider } from "@/components/Toast";
 import AdminGlobalSearch from "@/components/AdminGlobalSearch";
+import ServerStatus from "@/components/ServerStatus";
 import {
   ChartBar,
   CircleUserRound,
@@ -603,6 +604,12 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 )}
               </div>
             )}
+            {/* Server status indicator */}
+            {!sidebarCollapsed && (
+              <div className="mt-3 px-3">
+                <ServerStatus />
+              </div>
+            )}
             {/* Dark mode toggle */}
             <div className={`mt-4 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
               <button
@@ -630,7 +637,10 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
         {/* Mobile topbar — part of layout flow, never overlaps page content */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-2 md:hidden dark:bg-slate-900 dark:border-slate-800">
-          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">آرتین آزما</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">آرتین آزما</span>
+            <ServerStatus />
+          </div>
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
