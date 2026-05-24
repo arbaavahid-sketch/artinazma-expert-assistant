@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LiveStats from "@/components/LiveStats";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -211,18 +212,8 @@ export default function Home() {
                   دستیار تخصصی شما برای سوالات فنی، تحلیل تست و انتخاب تجهیزات.
                 </p>
 
-                {/* Stats */}
-                <div className="mt-5 grid grid-cols-2 gap-2">
-                  {stats.map((s) => (
-                    <div
-                      key={s.label}
-                      className="rounded-2xl border border-slate-100 bg-white/95 px-3 py-3 shadow-sm"
-                    >
-                      <div className="text-xl font-black text-blue-700">{s.value}</div>
-                      <div className="mt-0.5 text-[11px] font-bold text-slate-500">{s.label}</div>
-                    </div>
-                  ))}
-                </div>
+                {/* Stats — live data from API */}
+                <LiveStats />
 
                 <div className="mt-4 grid gap-2 text-right">
                   <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-white p-2.5 text-sm font-extrabold text-slate-700 shadow-sm">
