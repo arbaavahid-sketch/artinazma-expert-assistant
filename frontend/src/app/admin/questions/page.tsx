@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useToast } from "@/components/Toast";
 import Link from "next/link";
 import { adminUrl } from "@/lib/api";
 import {
@@ -92,7 +91,6 @@ function formatDate(value?: string | null) {
 }
 
 export default function QuestionsPage() {
-  const { toast } = useToast();
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -195,10 +193,8 @@ export default function QuestionsPage() {
           q.id === id ? { ...q, expert_status: status } : q,
         ),
       );
-      const label = status === "approved" ? "تایید شد" : status === "needs_edit" ? "نیازمند اصلاح ثبت شد" : "رد شد";
-      toast(`سوال #${id} — ${label}`, status === "approved" ? "success" : status === "rejected" ? "error" : "warning");
     } catch {
-      toast("خطا در ثبت وضعیت — دوباره تلاش کنید", "error");
+      // silent fail
     } finally {
       setReviewingId(null);
     }
