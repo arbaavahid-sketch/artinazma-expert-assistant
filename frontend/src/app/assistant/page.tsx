@@ -1909,6 +1909,9 @@ ${printScript}
                   درخواست مشاوره
                 </button>
               </div>
+
+              {/* سوال‌های پیشنهادی آماده */}
+              <StarterQuestions onSelect={(q) => sendMessage(q, q)} />
             </div>
           ) : (
             <div className="mx-auto w-full max-w-5xl space-y-5 pb-4 md:space-y-7">
@@ -2110,6 +2113,98 @@ ${printScript}
   );
 }
 
+
+const STARTER_QUESTIONS: { category: string; icon: string; questions: string[] }[] = [
+  {
+    category: "کروماتوگرافی",
+    icon: "📊",
+    questions: [
+      "تفاوت GC-FID و GC-TCD در آنالیز گاز طبیعی چیست؟",
+      "علت نوسان baseline در کروماتوگراف چیست و چطور رفع می‌شود؟",
+    ],
+  },
+  {
+    category: "کاتالیست",
+    icon: "⚗️",
+    questions: [
+      "کاتالیست مناسب فرایند ریفرمینگ نفتا چه ویژگی‌هایی دارد؟",
+      "روش ارزیابی فعالیت کاتالیست هیدروکراکینگ چیست؟",
+    ],
+  },
+  {
+    category: "استانداردها",
+    icon: "📋",
+    questions: [
+      "استاندارد ASTM D5453 برای اندازه‌گیری سولفور را توضیح دهید",
+      "برای تعیین آروماتیک‌ها در بنزین کدام استاندارد ASTM مناسب است؟",
+    ],
+  },
+  {
+    category: "تجهیزات",
+    icon: "🔬",
+    questions: [
+      "برای اندازه‌گیری جیوه در نفت خام چه دستگاهی پیشنهاد می‌کنید؟",
+      "تفاوت XRF و ICP-OES در آنالیز عنصری چیست؟",
+    ],
+  },
+];
+
+function StarterQuestions({ onSelect }: { onSelect: (q: string) => void }) {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const allQuestions = STARTER_QUESTIONS.flatMap((c) => c.questions);
+  const displayQuestions =
+    activeCategory
+      ? (STARTER_QUESTIONS.find((c) => c.category === activeCategory)?.questions ?? [])
+      : allQuestions.slice(0, 4);
+
+  return (
+    <div className="mt-8 w-full max-w-3xl px-1 md:px-0" dir="rtl">
+      <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
+        <span className="text-xs font-bold text-slate-400 ml-1">موضوع:</span>
+        {STARTER_QUESTIONS.map((cat) => (
+          <button
+            key={cat.category}
+            onClick={() => setActiveCategory(activeCategory === cat.category ? null : cat.category)}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+              activeCategory === cat.category
+                ? "bg-violet-100 text-violet-700"
+                : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+            }`}
+          >
+            {cat.icon} {cat.category}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        {displayQuestions.map((q, i) => (
+          <button
+            key={i}
+            onClick={() => onSelect(q)}
+            className="group flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right text-sm font-medium text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800"
+          >
+            <svg
+              className="mt-0.5 shrink-0 text-slate-300 transition group-hover:text-violet-400"
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            <span className="leading-6">{q}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function AssistantPage() {
   return (
@@ -2594,3 +2689,4 @@ function MessageBubble({
     </div>
   );
 }
+ 
