@@ -650,4 +650,9 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
           >
             {children}
-  
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}

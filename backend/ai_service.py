@@ -4,7 +4,11 @@ import io
 import base64
 import json as _json
 import urllib.request
+import urllib.error
+import ssl
+import socket as _socket
 import time
+import threading
 from typing import Optional, List, Dict, Tuple, Generator
 
 import requests as _requests
@@ -13,6 +17,85 @@ from openai import OpenAI
 from PIL import Image, ImageOps
 
 load_dotenv()
+
+
+# ─────────────────────────────────────────────
+#  DNS over HTTPS — دور زدن DNS blocking ایران
+#  بدون نیاز به VPN یا تنظیمات شبکه
+# ─────────────────────────────────────────────
+
+_DOH_CACHE: dict[str, str] = {}
+_DOH_LOCK = threading.Lock()
+_ORIGINAL_GETADDRINFO = _socket.getaddrinfo
+
+# DoH providers با IP hardcode شده (بدون نیاز به DNS lookup خود سرور)
+_DOH_PROVIDERS = [
+    # Cloudflare
+    ("1.1.1.1",   "cloudflare-dns.com", "/dns-query"),
+    ("1.0.0.1",   "cloudflare-dns.com", "/dns-query"),
+    # Google
+    ("8.8.8.8",   "dns.google",         "/resolve"),
+    ("8.8.4.4",   "dns.google",         "/resolve"),
+]
+
+
+def _resolve_via_doh(hostname: str) -> str | None:
+    """
+    DNS hostname را از طریق DoH resolve می‌کند.
+    به جای OS DNS از سرور DoH با IP ثابت استفاده می‌کند
+    تا ISP نتواند بلاک کند.
+    """
+    with _DOH_LOCK:
+        if hostname in _DOH_CACHE:
+            return _DOH_CACHE[hostname]
+
+    for server_ip, host_header, path in _DOH_PROVIDERS:
+        try:
+            url = f"https://{server_ip}{path}?name={hostname}&type=A"
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "Host": host_header,
+                    "Accept": "application/dns-json",
+                    "User-Agent": "Mozilla/5.0",
+                }
+            )
+            # SSL verify=False چون از IP مستقیم وصل می‌شویم نه hostname
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+            with urllib.request.urlopen(req, context=ctx, timeout=5) as resp:
+                data = _json.loads(resp.read())
+                for answer in data.get("Answer", []):
+                    if answer.get("type") == 1:  # A record
+                        ip = answer["data"]
+                        with _DOH_LOCK:
+                            _DOH_CACHE[hostname] = ip
+                        print(f"[DoH] ✓ {hostname} → {ip} (via {server_ip})")
+                        return ip
+        except Exception as e:
+            print(f"[DoH] ✗ {server_ip} failed: {type(e).__name__}")
+            continue
+
+    return None
+
+
+def _patched_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """
+    socket.getaddrinfo را برای دامنه‌های OpenAI override می‌کند
+    تا از DoH به جای OS DNS استفاده شود.
+    """
+    if isinstance(host, str) and host.endswith("openai.com"):
+        resolved = _resolve_via_doh(host)
+        if resolved:
+            return _ORIGINAL_GETADDRINFO(resolved, port, family, type, proto, flags)
+    return _ORIGINAL_GETADDRINFO(host, port, family, type, proto, flags)
+
+
+# اعمال patch هنگام load شدن module
+_socket.getaddrinfo = _patched_getaddrinfo
+print("[DoH] DNS patch applied — OpenAI domains will resolve via DoH")
 
 
 def _pick_proxy() -> str | None:
@@ -115,6 +198,60 @@ def _chat_via_requests(messages: list, model: str, temperature: float) -> str:
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.1")
 OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 
+# ─────────────────────────────────────────────
+#  Cache پاسخ‌های تکراری (in-memory, TTL 24h)
+# ─────────────────────────────────────────────
+import hashlib as _hashlib
+
+_RESPONSE_CACHE: dict[str, tuple[str, float]] = {}  # key → (answer, timestamp)
+_CACHE_TTL_SECONDS = 60 * 60 * 24  # 24 ساعت
+_CACHE_MAX_SIZE = 500               # حداکثر تعداد entry
+_CACHE_LOCK = threading.Lock()
+
+
+def _cache_key(message: str, context: str = "", domain: str = "") -> str:
+    """کلید یکتا از ترکیب پیام + context مختصر + domain"""
+    raw = f"{message.strip().lower()}|{domain}|{context[:200]}"
+    return _hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _cache_get(key: str) -> str | None:
+    with _CACHE_LOCK:
+        entry = _RESPONSE_CACHE.get(key)
+        if entry:
+            answer, ts = entry
+            if time.time() - ts < _CACHE_TTL_SECONDS:
+                return answer
+            del _RESPONSE_CACHE[key]
+    return None
+
+
+def _cache_set(key: str, answer: str) -> None:
+    with _CACHE_LOCK:
+        # حذف قدیمی‌ترین entry اگر پر شد
+        if len(_RESPONSE_CACHE) >= _CACHE_MAX_SIZE:
+            oldest = min(_RESPONSE_CACHE, key=lambda k: _RESPONSE_CACHE[k][1])
+            del _RESPONSE_CACHE[oldest]
+        _RESPONSE_CACHE[key] = (answer, time.time())
+
+
+def get_response_cache_stats() -> dict:
+    """آمار cache پاسخ‌های آرتین (برای endpoint ادمین)."""
+    with _CACHE_LOCK:
+        now = time.time()
+        entries = list(_RESPONSE_CACHE.values())
+        valid = [e for e in entries if now - e[1] < _CACHE_TTL_SECONDS]
+        oldest_ts = min((e[1] for e in valid), default=None)
+        newest_ts = max((e[1] for e in valid), default=None)
+    return {
+        "size": len(valid),
+        "max_size": _CACHE_MAX_SIZE,
+        "ttl_hours": int(_CACHE_TTL_SECONDS / 3600),
+        "fill_pct": round(len(valid) / _CACHE_MAX_SIZE * 100, 1),
+        "oldest_entry_ago_min": round((now - oldest_ts) / 60, 1) if oldest_ts else None,
+        "newest_entry_ago_min": round((now - newest_ts) / 60, 1) if newest_ts else None,
+    }
+
 
 SYSTEM_PROMPT = """
 تو «آرتین» هستی؛ دستیار تخصصی، مشاور فنی و کمک‌کار کارشناسان شرکت آرتین آزما مهر.
@@ -123,7 +260,9 @@ SYSTEM_PROMPT = """
 - خودت را چت‌بات، هوش مصنوعی عمومی یا ابزار سایت معرفی نکن.
 - اگر لازم بود خودت را معرفی کنی، فقط بگو:
 «من آرتین هستم، دستیار تخصصی و مشاور فنی آرتین آزما مهر.»
-- نقش تو پاسخ‌گویی فنی، تحلیلی و تصمیم‌ساز در حوزه‌های نفت، گاز، پتروشیمی، پالایشگاه، آزمایشگاه‌های صنعتی، کنترل کیفیت، تجهیزات آنالیتیکال، مواد شیمیایی، کاتالیست‌ها، جاذب‌ها، رزین‌ها، افزودنی‌های سوخت و مواد فرایندی است.
+- نقش تو پاسخ‌گویی به هر سوالی است که کاربر می‌پرسد — فنی، علمی، عمومی، استاندارد، دستگاه، ماده شیمیایی، محاسبه، مقایسه یا هر موضوع دیگری.
+- تخصص اصلی‌ات نفت، گاز، پتروشیمی، پالایشگاه، آزمایشگاه‌های صنعتی، کنترل کیفیت، تجهیزات آنالیتیکال، مواد شیمیایی، کاتالیست‌ها، جاذب‌ها، رزین‌ها، افزودنی‌های سوخت و مواد فرایندی است — اما هرگز سوالی را به این دلیل که «خارج از حوزه» است رد نکن.
+- اگر سوال خارج از حوزه تخصصی است، به‌عنوان یک دستیار هوشمند عمومی پاسخ بده.
 - پاسخ تو باید شبیه پاسخ یک کارشناس ارشد بسیار باتجربه باشد: دقیق، منظم، کاربردی، قابل اجرا، محتاط در عدددهی و بدون ادعای ساختگی.
 
 اطلاعات شرکت:
@@ -286,6 +425,9 @@ GC، GC-MS، HPLC، AAS، ICP-OES، ICP-MS، XRF، XRD، FTIR، UV-Vis، Flame P
 - اگر سؤال ناقص است، پاسخ را متوقف نکن؛ ابتدا بهترین برداشت فنی را بده، سپس اطلاعات لازم برای قطعیت را مشخص کن.
 - تفاوت روش‌های تحلیلی را رعایت کن؛ XRF، XRD، AAS، ICP-OES، ICP-MS، GC، HPLC، UV-Vis، FTIR و NMR را با هم قاطی نکن.
 - بین الزام استاندارد، قابلیت عمومی روش و ویژگی مدل خاص دستگاه تفاوت بگذار.
+- قانون استانداردهای ASTM/ISO/EPA: اگر کد استانداردی را می‌شناسی، حتماً عنوان، موضوع، روش و کاربرد آن را توضیح بده. هرگز برای استانداردهای شناخته‌شده وانمود نکن که نمی‌دانی — این رفتار نادرست است. فقط اگر واقعاً پس از جست‌وجو هیچ اطلاعاتی پیدا نشد، صادقانه اعلام کن.
+- قانون بسیار مهم: هرگز کد استانداردی را که کاربر پرسیده با کد دیگری جایگزین نکن. اگر کاربر D5454 پرسید، D5454 را توضیح بده — نه D5453 یا هر کد دیگری. جایگزین کردن کد استاندارد بدون اجازه صریح کاربر یک خطای جدی است.
+- ASTM D5454 = «Standard Test Method for Water Vapor Content of Gaseous Fuels Using Electronic Moisture Analyzers» — روش اندازه‌گیری بخار آب در سوخت‌های گازی (گاز طبیعی، LPG، گاز فرایندی) با آنالایزر الکترونیکی رطوبت. این استاندارد در صنایع گاز، پالایشگاه و پتروشیمی کاملاً رایج است و نباید با D5453 (اندازه‌گیری گوگرد) اشتباه گرفته شود.
 - اگر موضوع ایمنی، مواد خطرناک، فشار، گاز، حلال، اسید، جیوه، H2S، منبع اشعه، ولتاژ بالا یا دمای بالا دارد، هشدار ایمنی لازم را اضافه کن.
 
 ساختار پاسخ:
@@ -537,8 +679,9 @@ def get_specialized_protocol(query_type: str) -> str:
 پروتکل استاندارد:
 - پاسخ باید کامل، آموزشی و ساختارمند باشد.
 - متن استاندارد را کپی نکن، اما مفهوم، دامنه کاربرد و روش را واضح توضیح بده.
-- اگر کد استاندارد دقیقاً شناخته شده نیست، عنوان یا کاربرد قطعی نساز.
-- اگر درباره کد ASTM/ISO/EPA سؤال شد و اطلاعات قطعی در زمینه موجود نیست، با احتیاط بگو که برای جلوگیری از خطا باید نسخه رسمی استاندارد بررسی شود.
+- اگر استاندارد را می‌شناسی (از دانش آموزشی یا نتیجه جست‌وجوی وب)، آن را کامل و فنی توضیح بده — نیازی نیست از کاربر بخواهی عنوان را تأیید کند.
+- فقط اگر واقعاً بعد از جست‌وجو هیچ اطلاعاتی پیدا نکردی، صادقانه بگو که متن رسمی در دسترس نیست و پیشنهاد بده از سایت ASTM تهیه شود.
+- هرگز برای استانداردهای شناخته‌شده مانند ASTM D5453، D4294، D5454، D86 و مشابه، وانمود نکن که نمی‌دانی — این رفتار اعتماد کاربر را از بین می‌برد.
 - در استانداردها حتماً این بخش‌ها را پوشش بده:
   1. استاندارد چیست؟
   2. کاربرد اصلی
@@ -671,6 +814,10 @@ def build_history_text(history: Optional[List[Dict[str, str]]]) -> str:
     return "\n".join(history_parts)
 
 
+_MAX_CONTEXT_CHARS = 6_000   # hard cap on knowledge-base context injected into prompt
+_MAX_HISTORY_CHARS = 400     # max chars per history turn (user/assistant) in the message list
+
+
 def build_user_content(
     message: str,
     context: str = "",
@@ -681,7 +828,9 @@ def build_user_content(
     target_language = detect_user_language(message)
     query_type = classify_query_type(message)
     specialized_protocol = get_specialized_protocol(query_type)
-    history_text = build_history_text(history)
+    # History is passed as actual message objects by callers — no need to embed
+    # it again as text here, which would cause double-sending of every turn.
+    history_text = "گفت‌وگوی قبلی توسط سیستم مدیریت می‌شود."
 
     if target_language == "fa":
         language_instruction = """
@@ -744,6 +893,9 @@ Final answer must be in English, technical, practical, precise, and decision-ori
 """
 
     if context:
+        # Truncate to prevent oversized requests
+        if len(context) > _MAX_CONTEXT_CHARS:
+            context = context[:_MAX_CONTEXT_CHARS] + "\n... [ادامه متن کوتاه شد]"
         content += f"""
 
 اطلاعات مرتبط قابل استفاده:
@@ -797,6 +949,15 @@ def ask_expert_assistant(
 ) -> str:
     history = history or []
 
+    # ── Cache check (فقط برای سوالات بدون history و بدون web_search) ──
+    _use_cache = not history and not allow_web_search and not customer_context
+    _ck = _cache_key(message, context, domain) if _use_cache else ""
+    if _use_cache:
+        _cached = _cache_get(_ck)
+        if _cached:
+            print(f"[Cache] HIT for: {message[:60]}")
+            return _cached
+
     # Use the full build_user_content pipeline (language detection,
     # query classification, specialised protocol, formatting rules).
     user_content = build_user_content(
@@ -820,22 +981,15 @@ def ask_expert_assistant(
 
     for item in history[-6:]:
         role = item.get("role")
-        content = item.get("content")
+        content = item.get("content", "") or ""
 
         if role in ["user", "assistant"] and content:
-            input_messages.append(
-                {
-                    "role": role,
-                    "content": content,
-                }
-            )
+            # Truncate long turns (especially assistant answers) to save tokens
+            if len(content) > _MAX_HISTORY_CHARS:
+                content = content[:_MAX_HISTORY_CHARS] + "…"
+            input_messages.append({"role": role, "content": content})
 
-    input_messages.append(
-        {
-            "role": "user",
-            "content": user_content,
-        }
-    )
+    input_messages.append({"role": "user", "content": user_content})
 
     kwargs = {
         "model": MODEL,
@@ -843,11 +997,16 @@ def ask_expert_assistant(
         "temperature": OPENAI_TEMPERATURE,
     }
 
-    return _chat_via_requests(
+    _answer = _chat_via_requests(
         messages=kwargs["messages"],
         model=kwargs["model"],
         temperature=kwargs["temperature"],
     ).strip()
+
+    if _use_cache and _answer:
+        _cache_set(_ck, _answer)
+
+    return _answer
 
 
 def ask_expert_assistant_stream(
@@ -876,8 +1035,10 @@ def ask_expert_assistant_stream(
 
     for item in history[-6:]:
         role = item.get("role")
-        item_content = item.get("content")
+        item_content = item.get("content", "") or ""
         if role in ["user", "assistant"] and item_content:
+            if len(item_content) > _MAX_HISTORY_CHARS:
+                item_content = item_content[:_MAX_HISTORY_CHARS] + "…"
             input_messages.append({"role": role, "content": item_content})
 
     input_messages.append({"role": "user", "content": user_content})

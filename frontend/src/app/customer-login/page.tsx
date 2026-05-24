@@ -189,4 +189,13 @@ export default function CustomerLoginPage() {
 
                 <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
                   <Sparkles size={18} className="text-blue-700" />
-                  پاسخ‌گویی تخصصی بر اساس �
+                  پاسخ‌گویی تخصصی بر اساس بانک دانش آرتین.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

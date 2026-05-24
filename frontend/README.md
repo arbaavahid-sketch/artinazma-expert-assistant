@@ -35,4 +35,5 @@ src/
 │   ├── api.ts            # URL builder برای backend
 │   ├── user.ts           # مدیریت user ID
 │   └── device-assets.ts  # اطلاعات دستگاه‌ها
-└── middlew
+└── middleware.ts          # محافظت از route‌ها (auth guard)
+```

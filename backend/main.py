@@ -36,6 +36,7 @@ from knowledge_service import (
 )
 from ai_service import ask_expert_assistant, ask_expert_assistant_stream, analyze_image_with_ai
 from ai_service import client as ai_client
+from ai_service import get_response_cache_stats as _get_ai_cache_stats
 from file_analyzer import analyze_excel_or_csv, read_pdf_text
 from db_service import (
     init_db,
@@ -438,6 +439,55 @@ _LOCAL_SCORE_THRESHOLD = 10      # local search score >= this → use local
 _MODEL_LOCAL_SCORE_THRESHOLD = 8 # model question: exact local match threshold
 _WEAK_CONTEXT_THRESHOLD = 14     # below this → discard internal context for tech intents
 
+# ─── دیکشنری استانداردهای ASTM/ISO شناخته‌شده ───────────────────────────────
+# اگر کاربر یک کد استاندارد بپرسد، عنوان صحیح مستقیم به context inject می‌شود
+# تا مدل نتواند کد را با کد دیگری قاطی کند یا وانمود کند نمی‌داند.
+_ASTM_KNOWN_STANDARDS: dict[str, str] = {
+    # ── گوگرد ──
+    "D4294":  "ASTM D4294 — Standard Test Method for Sulfur in Petroleum and Petroleum Products by Energy-Dispersive X-ray Fluorescence Spectrometry",
+    "D2622":  "ASTM D2622 — Standard Test Method for Sulfur in Petroleum Products by Wavelength-Dispersive X-ray Fluorescence Spectrometry",
+    "D5453":  "ASTM D5453 — Standard Test Method for Determination of Total Sulfur in Light Hydrocarbons, Spark Ignition Engine Fuel, Diesel Engine Fuel, and Engine Oil by Ultraviolet Fluorescence",
+    "D7039":  "ASTM D7039 — Standard Test Method for Sulfur in Gasoline, Diesel Fuel, Jet Fuel, Kerosine, Biodiesel, Biodiesel Blends, and Related Products by Monochromatic Wavelength Dispersive X-ray Fluorescence Spectrometry",
+    "D1266":  "ASTM D1266 — Standard Test Method for Sulfur in Petroleum Products (Lamp Method)",
+    "D1552":  "ASTM D1552 — Standard Test Method for Sulfur in Petroleum Products by High-Temperature Combustion and Infrared (IR) Detection or Thermal Conductivity Detection (TCD)",
+    # ── رطوبت و آب ──
+    "D5454":  "ASTM D5454 — Standard Test Method for Water Vapor Content of Gaseous Fuels Using Electronic Moisture Analyzers (اندازه‌گیری بخار آب در سوخت‌های گازی با آنالایزر الکترونیکی رطوبت)",
+    "D95":    "ASTM D95 — Standard Test Method for Water in Petroleum Products and Bituminous Materials by Distillation",
+    "D6304":  "ASTM D6304 — Standard Test Method for Determination of Water in Petroleum Products, Lubricating Oils, and Additives by Coulometric Karl Fischer Titration",
+    "D1744":  "ASTM D1744 — Standard Test Method for Determination of Water in Liquid Petroleum Products by Karl Fischer Reagent",
+    # ── تقطیر و خواص فیزیکی ──
+    "D86":    "ASTM D86 — Standard Test Method for Distillation of Petroleum Products and Liquid Fuels at Atmospheric Pressure",
+    "D1160":  "ASTM D1160 — Standard Test Method for Distillation of Petroleum Products at Reduced Pressure",
+    "D7169":  "ASTM D7169 — Standard Test Method for Boiling Point Distribution of Samples with Residues Such as Crude Oils and Atmospheric and Vacuum Residues by High Temperature Gas Chromatography",
+    "D445":   "ASTM D445 — Standard Test Method for Kinematic Viscosity of Transparent and Opaque Liquids",
+    "D7042":  "ASTM D7042 — Standard Test Method for Dynamic Viscosity and Density of Liquids by Stabinger Viscometer",
+    "D1298":  "ASTM D1298 — Standard Test Method for Density, Relative Density, or API Gravity of Crude Petroleum and Liquid Petroleum Products by Hydrometer Method",
+    "D4052":  "ASTM D4052 — Standard Test Method for Density, Relative Density, and API Gravity of Liquids by Digital Density Meter",
+    "D97":    "ASTM D97 — Standard Test Method for Pour Point of Petroleum Products",
+    "D2500":  "ASTM D2500 — Standard Test Method for Cloud Point of Petroleum Products and Liquid Fuels",
+    "D93":    "ASTM D93 — Standard Test Methods for Flash Point by Pensky-Martens Closed Cup Tester",
+    "D56":    "ASTM D56 — Standard Test Method for Flash Point by Tag Closed Cup Tester",
+    # ── اکتان و سوخت ──
+    "D2699":  "ASTM D2699 — Standard Test Method for Research Octane Number of Spark-Ignition Engine Fuel",
+    "D2700":  "ASTM D2700 — Standard Test Method for Motor Octane Number of Spark-Ignition Engine Fuel",
+    "D4737":  "ASTM D4737 — Standard Test Method for Calculated Cetane Index by Four Variable Equation",
+    "D613":   "ASTM D613 — Standard Test Method for Cetane Number of Diesel Fuel Oil",
+    # ── جیوه ──
+    "D5765":  "ASTM D5765 — Standard Test Method for Total Mercury in Crude Petroleum and Residual Fuel Oil",
+    "D6350":  "ASTM D6350 — Standard Test Method for Mercury Sampling and Analysis in Natural Gas by Atomic Fluorescence Spectroscopy",
+    # ── فلزات ──
+    "D5185":  "ASTM D5185 — Standard Test Method for Multielement Determination of Used and Unused Lubricating Oils and Base Oils by Inductively Coupled Plasma Atomic Emission Spectrometry (ICP-AES)",
+    "D7111":  "ASTM D7111 — Standard Test Method for Determination of Trace Elements in Middle Distillate Fuels by Inductively Coupled Plasma Atomic Emission Spectrometry (ICP-AES)",
+    # ── کربن و باقیمانده ──
+    "D4530":  "ASTM D4530 — Standard Test Method for Determination of Carbon Residue (Micro Method)",
+    "D524":   "ASTM D524 — Standard Test Method for Ramsbottom Carbon Residue of Petroleum Products",
+    # ── خوردگی ──
+    "D130":   "ASTM D130 — Standard Test Method for Corrosiveness to Copper from Petroleum Products by Copper Strip Test",
+    # ── گاز طبیعی ──
+    "D1945":  "ASTM D1945 — Standard Test Method for Analysis of Natural Gas by Gas Chromatography",
+    "D1946":  "ASTM D1946 — Standard Practice for Analysis of Reformed Gas by Gas Chromatography",
+}
+
 # ─── Upload limits ───────────────────────────────────────────────────────────
 _MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 _ALLOWED_FILE_EXTS = {"xlsx", "xls", "csv", "pdf", "txt"}
@@ -471,6 +521,22 @@ def _build_chat_pipeline(body: "ChatRequest") -> dict:
     best_score = 0.0
     related_docs: list = []
     search_mode = "unknown"
+
+    # ── استخراج عنوان استاندارد ASTM از دیکشنری داخلی ──
+    _astm_inject: str = ""
+    if has_astm_code:
+        _astm_matches = re.findall(r"\bD\s*(\d{3,5})\b", body.message, flags=re.IGNORECASE)
+        _injected_titles = [
+            _ASTM_KNOWN_STANDARDS[f"D{n}"]
+            for n in _astm_matches
+            if f"D{n}" in _ASTM_KNOWN_STANDARDS
+        ]
+        if _injected_titles:
+            _astm_inject = (
+                "اطلاعات دقیق استاندارد (از پایگاه دانش داخلی):\n"
+                + "\n".join(f"• {t}" for t in _injected_titles)
+                + "\n⚠️ قانون مطلق: دقیقاً همین استاندارد(ها) را توضیح بده. هرگز کد را با کد دیگری جایگزین نکن."
+            )
 
     if has_astm_code:
         related_docs = []
@@ -514,7 +580,7 @@ def _build_chat_pipeline(body: "ChatRequest") -> dict:
     # ── Site resource lookup ──
     resource_links: list = []
     resource_images: list = []
-    artinazma_context = ""
+    artinazma_context = _astm_inject  # inject عنوان صحیح استاندارد اگر وجود داشت
 
     if allow_company_reference:
         try:
@@ -1088,9 +1154,24 @@ def chat_stream(body: ChatRequest, request: Request):
                 payload = {"type": "chunk", "text": chunk}
                 yield f"data: {_json_local.dumps(payload, ensure_ascii=False)}\n\n"
         except Exception as exc:
-            err = {"type": "error", "message": str(exc)}
+            _exc_str = str(exc).lower()
+            if "nameresolution" in _exc_str or "getaddrinfo" in _exc_str or "name or service not known" in _exc_str:
+                _err_msg = "⚠️ خطای اتصال: سرور نمی‌تواند به OpenAI متصل شود (مشکل DNS). لطفاً VPN یا پروکسی را فعال کنید و دوباره امتحان کنید."
+            elif "remotedisconnected" in _exc_str or "connection aborted" in _exc_str or "connectionreset" in _exc_str:
+                _err_msg = "⚠️ خطای شبکه: اتصال به OpenAI قطع شد. ممکن است IP سرور توسط OpenAI مسدود باشد. لطفاً VPN یا پروکسی را فعال کنید."
+            elif "timeout" in _exc_str:
+                _err_msg = "⚠️ خطای timeout: پاسخ از OpenAI خیلی دیر رسید. لطفاً دوباره امتحان کنید."
+            elif "401" in _exc_str or "authentication" in _exc_str or "invalid api key" in _exc_str:
+                _err_msg = "⚠️ خطای احراز هویت: کلید API معتبر نیست. لطفاً OPENAI_API_KEY را در فایل .env بررسی کنید."
+            elif "429" in _exc_str or "rate limit" in _exc_str:
+                _err_msg = "⚠️ محدودیت درخواست: تعداد درخواست‌ها از حد مجاز بیشتر شده. لطفاً چند دقیقه صبر کنید."
+            elif "insufficient_quota" in _exc_str or "quota" in _exc_str:
+                _err_msg = "⚠️ اعتبار API تمام شده. لطفاً حساب OpenAI را شارژ کنید."
+            else:
+                _err_msg = f"⚠️ خطای غیرمنتظره در دریافت پاسخ. لطفاً دوباره امتحان کنید."
+            err = {"type": "error", "message": _err_msg}
             yield f"data: {_json_local.dumps(err, ensure_ascii=False)}\n\n"
-            full_answer = "خطا در دریافت پاسخ."
+            full_answer = _err_msg
 
         # ذخیره در DB و ارسال event پایانی
         question_id = None
@@ -2530,8 +2611,18 @@ def artinazma_site_index_status():
 
 @app.get("/admin/cache/stats")
 def cache_stats(_=Depends(require_admin)):
-    """آمار cache پاسخ‌های آرتین."""
-    return _response_cache.stats()
+    """آمار cache پاسخ‌های آرتین (هر دو لایه)."""
+    stream_stats = _response_cache.stats()          # stream/pipeline cache (main.py)
+    ai_stats     = _get_ai_cache_stats()            # ai_service response cache
+    return {
+        "stream_cache":  stream_stats,
+        "response_cache": ai_stats,
+        # aggregate for quick display
+        "total_entries":  ai_stats["size"],
+        "max_entries":    ai_stats["max_size"],
+        "fill_pct":       ai_stats["fill_pct"],
+        "ttl_hours":      ai_stats["ttl_hours"],
+    }
 
 
 @app.post("/admin/cache/clear")

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import "./assistant-polish.css";
+import Script from "next/script";
 import ArtinShell from "@/components/ArtinShell";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -49,7 +50,19 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/images/artinazma-logo.png" />
         <meta name="theme-color" content="#1d4ed8" />
-        <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}` }} />
+        <Script
+          id="sw-register"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+          }}
+        />
       </head>
       <body className={vazirmatn.variable}>
         <ErrorBoundary>
+          <ArtinShell>{children}</ArtinShell>
+        </ErrorBoundary>
+      </body>
+    </html>
+  );
+}

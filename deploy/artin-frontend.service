@@ -1,0 +1,36 @@
+[Unit]
+Description=ArtinAzma Expert Assistant — Next.js Frontend
+After=network.target artin-backend.service
+Wants=artin-backend.service
+
+[Service]
+Type=simple
+User=artin
+Group=artin
+WorkingDirectory=/opt/artinazma/frontend
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# Set the production API URL — nginx proxies /api/ to the backend
+Environment=NEXT_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN_HERE
+
+ExecStart=/usr/bin/node /opt/artinazma/frontend/.next/standalone/server.js
+
+# Auto-restart on crash
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/artinazma/frontend/.next/cache
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=artin-frontend
+
+[Install]
+WantedBy=multi-user.target

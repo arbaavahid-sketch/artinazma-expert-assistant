@@ -1374,4 +1374,25 @@ export default function KnowledgePage() {
                           value={editingContent}
                           onChange={(e) => setEditingContent(e.target.value)}
                           rows={8}
-                          className="w-full resize-y rounded-xl border border-blue
+                          className="w-full resize-y rounded-xl border border-blue-200 bg-white p-3 text-xs leading-7 text-slate-700 outline-none focus:border-blue-400"
+                        />
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words text-xs leading-7 text-slate-700">
+                          {chunk.content}
+                          {chunk.content.length >= 600 && (
+                            <span className="text-slate-400"> …</span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

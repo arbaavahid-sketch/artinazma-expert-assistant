@@ -27,3 +27,16 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({
     success: true,
+    message: "ورود موفق بود.",
+  });
+
+  response.cookies.set("artin_admin", sessionToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24,
+  });
+
+  return response;
+}

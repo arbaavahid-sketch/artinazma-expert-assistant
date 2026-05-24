@@ -69,3 +69,24 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 .idea/
+.vscode/
+*.swp
+*.swo
+
+# --------------------
+# Certificates / Secrets
+# --------------------
+*.pem
+*.key
+*.p12
+*.pfx
+
+# --------------------
+# Temp / Debug files (already tracked — use git rm --cached to untrack)
+# --------------------
+node_modules/
+frontend/answer.txt
+frontend/tsconfig.tsbuildinfo
+
+# Sitemap XMLs belong on the web server, not in source code
+backend/*.xml

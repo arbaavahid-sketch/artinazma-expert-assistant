@@ -253,4 +253,13 @@ export default function CustomerRegisterPage() {
 
                 <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
                   <Sparkles size={18} className="text-blue-700" />
-                  پیگیری بهتر د
+                  پیگیری بهتر درخواست‌های فنی
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

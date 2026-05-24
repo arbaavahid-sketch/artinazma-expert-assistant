@@ -24,6 +24,7 @@ import {
   X as XIcon,
   Volume2,
   VolumeX,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
@@ -537,6 +538,8 @@ function AssistantPageInner() {
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const [ttsNote, setTtsNote] = useState<string>("");
   const [canUndo, setCanUndo] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedMsgRef = useRef<string>("");
@@ -1185,45 +1188,54 @@ ${cleanAnswer}`,
 
   function exportChat() {
     if (messages.length === 0) return;
+    const html = _buildExportHtml(false);
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); }
+    setShowExportMenu(false);
+  }
+
+  function _buildExportHtml(forWord: boolean): string {
     const now = new Date().toLocaleDateString("fa-IR", {
       year: "numeric", month: "long", day: "numeric",
     });
-
     const msgHtml = messages.map((msg) => {
       if (msg.role === "user") {
         const attachLine = msg.attachment
           ? `<div class="attachment">📎 پیوست: ${msg.attachment.name}</div>`
           : "";
-        const content = msg.content
+        const body = msg.content
           ? `<p>${msg.content.replace(/\n/g, "<br/>")}</p>`
           : "";
-        return `<div class="bubble user"><div class="label">کاربر</div>${attachLine}${content}</div>`;
+        return `<div class="bubble user"><div class="label">کاربر</div>${attachLine}${body}</div>`;
       } else {
         const safe = msg.content
           .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
           .replace(/\*(.*?)\*/g, "<em>$1</em>")
+          .replace(/^#{1,3}\s+(.+)$/gm, "<b>$1</b><br/>")
           .replace(/\n/g, "<br/>");
         return `<div class="bubble artin"><div class="label">آرتین</div><p>${safe}</p></div>`;
       }
     }).join("");
-
-    const html = `<!DOCTYPE html>
+    const font = forWord ? "Arial, sans-serif" : "'Vazirmatn', sans-serif";
+    const fontLink = forWord ? "" : `<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>`;
+    const printScript = forWord ? "" : `<script>window.onload=function(){window.print();}\u003c/script>`;
+    return `<!DOCTYPE html>
 <html dir="rtl" lang="fa">
 <head>
 <meta charset="UTF-8"/>
 <title>گفتگو با آرتین — آرتین آزما</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>
+${fontLink}
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; }
+  body { font-family: ${font}; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: rtl; }
   .header { border-bottom: 2px solid #7c3aed; padding-bottom: 16px; margin-bottom: 28px; }
   .header h1 { font-size: 20px; font-weight: 900; color: #7c3aed; }
   .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }
   .bubble { margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; page-break-inside: avoid; }
   .bubble.user { background: #ede9fe; border-right: 4px solid #7c3aed; }
   .bubble.artin { background: #f1f5f9; border-right: 4px solid #0ea5e9; }
-  .label { font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.05em; }
+  .label { font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; }
   .bubble.user .label { color: #7c3aed; }
   .bubble.artin .label { color: #0ea5e9; }
   p { line-height: 2; }
@@ -1235,16 +1247,62 @@ ${cleanAnswer}`,
 <body>
 <div class="header">
   <h1>گفتگو با آرتین — دستیار هوشمند آرتین آزما</h1>
-  <div class="meta">تاریخ: ${now}</div>
+  <div class="meta">تاریخ: ${now} | تعداد پیام: ${messages.length}</div>
 </div>
 ${msgHtml}
 <div class="footer">آرتین آزما مهر — artinazma.net</div>
-<script>window.onload=function(){window.print();}<\/script>
+${printScript}
 </body>
 </html>`;
+  }
 
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); }
+  function exportChatWord() {
+    if (messages.length === 0) return;
+    const html = _buildExportHtml(true);
+    const blob = new Blob([html], { type: "application/msword;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `گفتگو-آرتین-${new Date().toISOString().slice(0, 10)}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  }
+
+  function exportChatText() {
+    if (messages.length === 0) return;
+    const now = new Date().toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" });
+    const lines: string[] = [
+      "گفتگو با آرتین — دستیار هوشمند آرتین آزما",
+      `تاریخ: ${now}`,
+      "═══════════════════════════════════════",
+      "",
+    ];
+    messages.forEach((msg, i) => {
+      if (msg.role === "user") {
+        lines.push(`── کاربر [${i + 1}] ──`);
+        if (msg.attachment) lines.push(`📎 پیوست: ${msg.attachment.name}`);
+        lines.push(msg.content);
+      } else {
+        lines.push(`── آرتین [${i + 1}] ──`);
+        lines.push(msg.content.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/#{1,6}\s/g, ""));
+      }
+      lines.push("");
+    });
+    lines.push("───────────────────────────────────────");
+    lines.push("آرتین آزما مهر — artinazma.net");
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `گفتگو-آرتین-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -1635,6 +1693,7 @@ ${msgHtml}
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Domain + mode — visible on desktop, hidden on mobile */}
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
@@ -1659,15 +1718,57 @@ ${msgHtml}
               <option value="technical">فنی کامل</option>
               <option value="checklist">چک‌لیست</option>
             </select>
+            {/* Mobile settings toggle — only on mobile */}
+            <button
+              onClick={() => setShowMobileSettings((v) => !v)}
+              title="تنظیمات"
+              className={`flex h-8 w-8 items-center justify-center rounded-xl border transition md:hidden ${
+                showMobileSettings
+                  ? "border-blue-300 bg-blue-50 text-blue-600"
+                  : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <SlidersHorizontal size={15} />
+            </button>
             {messages.length > 0 && (
-              <button
-                onClick={exportChat}
-                title="خروجی PDF گفتگو"
-                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-              >
-                <Download size={13} />
-                PDF
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportMenu((v) => !v)}
+                  title="خروجی گفتگو"
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                >
+                  <Download size={13} />
+                  دانلود
+                </button>
+                {showExportMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+                    <div className="absolute left-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 md:left-0 max-[400px]:left-auto max-[400px]:right-0">
+                      <button
+                        onClick={exportChat}
+                        className="flex w-full items-center gap-2.5 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-purple-50 hover:text-purple-700"
+                      >
+                        <span className="text-base">📄</span>
+                        PDF (چاپ)
+                      </button>
+                      <button
+                        onClick={exportChatWord}
+                        className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                      >
+                        <span className="text-base">📝</span>
+                        Word (.doc)
+                      </button>
+                      <button
+                        onClick={exportChatText}
+                        className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        <span className="text-base">📋</span>
+                        متن ساده (.txt)
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
             <button
               onClick={clearChat}
@@ -1680,13 +1781,47 @@ ${msgHtml}
         </div>
       </header>
 
+      {/* Mobile settings panel — slides in below header on small screens */}
+      {showMobileSettings && (
+        <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-3 md:hidden" dir="rtl">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs font-bold text-slate-500">حوزه:</label>
+            <select
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="auto">تشخیص خودکار</option>
+              <option value="catalyst">کاتالیست</option>
+              <option value="equipment">تجهیزات</option>
+              <option value="chromatography">کروماتوگرافی</option>
+              <option value="mercury-analysis">آنالیز جیوه</option>
+              <option value="sulfur-analysis">آنالیز سولفور</option>
+              <option value="troubleshooting">عیب‌یابی</option>
+              <option value="analysis">آنالیز و تست</option>
+            </select>
+            <label className="text-xs font-bold text-slate-500">پاسخ:</label>
+            <select
+              value={responseMode}
+              onChange={(e) => setResponseMode(e.target.value)}
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="auto">پاسخ هوشمند</option>
+              <option value="brief">خلاصه</option>
+              <option value="technical">فنی کامل</option>
+              <option value="checklist">چک‌لیست</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loadingSavedSession && (
           <div className="ui-alert ui-alert-info mx-auto mt-6 max-w-xl text-center text-sm font-bold">
             در حال بارگذاری گفتگوی ذخیره‌شده...
           </div>
         )}
-        <div className="mx-auto w-full max-w-6xl px-6 pb-6 pt-6">
+        <div className="mx-auto w-full max-w-6xl px-3 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6">
           {messages.length === 0 ? (
             <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
               <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
@@ -1709,7 +1844,7 @@ ${msgHtml}
                 </div>
               )}
 
-              <div className="relative mt-8 w-full max-w-3xl">
+              <div className="relative mt-5 w-full max-w-3xl px-1 md:mt-8 md:px-0">
                 {showTools && (
                   <div className="absolute top-full right-0 z-50 mt-2">
                     <ToolMenu onSelect={handleToolClick} />
@@ -1759,7 +1894,7 @@ ${msgHtml}
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <div className="mt-4 flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 md:mt-5 md:flex-wrap md:justify-center md:gap-3">
                 <button
                   onClick={() => handleToolClick("upload")}
                   className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
@@ -1776,7 +1911,7 @@ ${msgHtml}
               </div>
             </div>
           ) : (
-            <div className="mx-auto w-full max-w-5xl space-y-7 pb-4">
+            <div className="mx-auto w-full max-w-5xl space-y-5 pb-4 md:space-y-7">
               {messages.map((item, index) => (
                 <MessageBubble
                   key={index}
@@ -1809,7 +1944,7 @@ ${msgHtml}
 
               {/* سوالات پیشنهادی */}
               {!loading && suggestedQuestions.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
+                <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pt-1 md:flex-wrap">
                   {suggestedQuestions.map((q, i) => (
                     <button
                       key={i}
@@ -2347,7 +2482,7 @@ function MessageBubble({
             />
           )}
           {!isUser && !loading && (
-            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-100 transition-opacity">
+            <div className="mt-2 flex flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 opacity-100 transition-opacity md:flex-wrap">
               <button
                 onClick={() => handleCopy(displayContent)}
                 className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
