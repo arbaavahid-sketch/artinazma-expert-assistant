@@ -14,6 +14,10 @@ import {
   ThumbsDown,
   Filter,
   X,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 
 type QuestionItem = {
@@ -96,6 +100,7 @@ export default function QuestionsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [reviewingId, setReviewingId] = useState<number | null>(null);
 
   function downloadCsv() {
     const url = adminUrl("/admin/questions/export-csv");
@@ -171,6 +176,28 @@ export default function QuestionsPage() {
     setDateTo("");
     setStatusFilter("all");
     setSearchText("");
+  }
+
+  async function quickReview(e: React.MouseEvent, id: number, status: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setReviewingId(id);
+    try {
+      await fetch(adminUrl(`/questions/${id}/review`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expert_status: status, expert_notes: "" }),
+      });
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === id ? { ...q, expert_status: status } : q,
+        ),
+      );
+    } catch {
+      // silent fail
+    } finally {
+      setReviewingId(null);
+    }
   }
 
   const pendingCount = questions.filter(
@@ -486,8 +513,50 @@ export default function QuestionsPage() {
                       </div>
                     </div>
 
-                    <div className="shrink-0 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-purple-700">
-                      مشاهده و بررسی
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      {reviewingId === item.id ? (
+                        <Loader2 size={18} className="animate-spin text-slate-400" />
+                      ) : (
+                        <div className="flex gap-1.5" onClick={(e) => e.preventDefault()}>
+                          <button
+                            onClick={(e) => quickReview(e, item.id, "approved")}
+                            title="تایید"
+                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                              item.expert_status === "approved"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-white text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200"
+                            }`}
+                          >
+                            <CheckCircle2 size={13} />
+                            تایید
+                          </button>
+                          <button
+                            onClick={(e) => quickReview(e, item.id, "needs_edit")}
+                            title="نیازمند اصلاح"
+                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                              item.expert_status === "needs_edit"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-700 border border-slate-200"
+                            }`}
+                          >
+                            <AlertCircle size={13} />
+                            اصلاح
+                          </button>
+                          <button
+                            onClick={(e) => quickReview(e, item.id, "rejected")}
+                            title="رد"
+                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                              item.expert_status === "rejected"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200"
+                            }`}
+                          >
+                            <XCircle size={13} />
+                            رد
+                          </button>
+                        </div>
+                      )}
+                      <span className="text-xs text-purple-600 group-hover:underline">مشاهده جزئیات ←</span>
                     </div>
                   </div>
                 </Link>
