@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import { ToastProvider } from "@/components/Toast";
 import {
   ChartBar,
   CircleUserRound,
@@ -272,6 +273,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   }, []);
 
   return (
+    <ToastProvider>
     <main className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]">
       {/* Offline banner */}
       {!isOnline && (
@@ -653,5 +655,6 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         </div>
       </div>
     </main>
+  </ToastProvider>
   );
 }
