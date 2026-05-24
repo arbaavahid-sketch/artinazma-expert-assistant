@@ -17,6 +17,8 @@ import {
   Send,
   ShieldCheck,
   UploadCloud,
+  FileDown,
+  Table2,
 } from "lucide-react";
 
 const testTypes = [
@@ -85,6 +87,137 @@ function friendlyError(raw: string): string {
   if (raw.startsWith("خطا در تحلیل"))
     return raw.replace(/^خطا در تحلیل (تصویر|فایل): /, "مشکل در تحلیل: ");
   return raw;
+}
+
+
+// ─── Markdown → React renderer ────────────────────────────────────────────────
+function AnalysisRenderer({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  function parseInline(raw: string): React.ReactNode {
+    // Bold **text**
+    const parts = raw.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((p, idx) =>
+      p.startsWith("**") && p.endsWith("**")
+        ? <strong key={idx} className="font-black text-slate-900">{p.slice(2, -2)}</strong>
+        : p
+    );
+  }
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Blank line
+    if (!line.trim()) { i++; continue; }
+
+    // Horizontal rule
+    if (/^[-─═]{3,}$/.test(line.trim())) {
+      elements.push(<hr key={i} className="my-4 border-slate-200" />);
+      i++; continue;
+    }
+
+    // Header ##
+    const hMatch = line.match(/^(#{1,3})\s+(.+)/);
+    if (hMatch) {
+      const level = hMatch[1].length;
+      const cls = level === 1
+        ? "text-xl font-black text-slate-900 mt-5 mb-2 border-b border-slate-200 pb-1"
+        : level === 2
+        ? "text-lg font-black text-slate-800 mt-4 mb-1"
+        : "text-base font-black text-slate-700 mt-3 mb-1";
+      elements.push(<div key={i} className={cls}>{parseInline(hMatch[2])}</div>);
+      i++; continue;
+    }
+
+    // Markdown table
+    if (line.trim().startsWith("|") && i + 1 < lines.length && lines[i+1].trim().startsWith("|---")) {
+      const headers = line.split("|").filter(c => c.trim()).map(c => c.trim());
+      i += 2; // skip separator
+      const rows: string[][] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        rows.push(lines[i].split("|").filter(c => c.trim()).map(c => c.trim()));
+        i++;
+      }
+      elements.push(
+        <div key={`tbl-${i}`} className="my-4 overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="bg-slate-100">
+                {headers.map((h, hi) => (
+                  <th key={hi} className="px-4 py-2.5 text-right font-black text-slate-700 border-b border-slate-200">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-slate-50/70"}>
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="px-4 py-2.5 text-right text-slate-700 border-b border-slate-100">
+                      {parseInline(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+
+    // Bullet list
+    if (/^[-•*]\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-•*]\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-•*]\s/, ""));
+        i++;
+      }
+      elements.push(
+        <ul key={`ul-${i}`} className="my-2 space-y-1 pr-4">
+          {items.map((item, ii) => (
+            <li key={ii} className="flex gap-2 text-slate-700 leading-8">
+              <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+              <span>{parseInline(item)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // Numbered list
+    if (/^\d+[.)]\s/.test(line)) {
+      const items: string[] = [];
+      let num = 1;
+      while (i < lines.length && /^\d+[.)]\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+[.)]\s/, ""));
+        i++; num++;
+      }
+      elements.push(
+        <ol key={`ol-${i}`} className="my-2 space-y-1 pr-4">
+          {items.map((item, ii) => (
+            <li key={ii} className="flex gap-2 text-slate-700 leading-8">
+              <span className="shrink-0 font-black text-emerald-700">{ii + 1}.</span>
+              <span>{parseInline(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // Normal paragraph
+    elements.push(
+      <p key={i} className="leading-9 text-slate-700">{parseInline(line)}</p>
+    );
+    i++;
+  }
+
+  return <div className="space-y-1">{elements}</div>;
 }
 
 export default function AnalyzePage() {
@@ -264,6 +397,38 @@ ${followUpHistory.length ? `
     win.document.close();
     win.focus();
     setTimeout(() => { win.print(); }, 500);
+  }
+
+  function exportWord() {
+    if (!fileAnalysis) return;
+    const now = new Date().toLocaleString("fa-IR");
+    const fileNames = files.map((f) => f.name).join("، ");
+    const htmlBody = fileAnalysis
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+      .replace(/^#{3}\s+(.+)/gm, "<h3>$1</h3>")
+      .replace(/^#{2}\s+(.+)/gm, "<h2>$1</h2>")
+      .replace(/^#{1}\s+(.+)/gm, "<h1>$1</h1>")
+      .replace(/\n/g, "<br/>");
+    const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+<head><meta charset='utf-8'/><style>
+  body{font-family:Tahoma,Arial,sans-serif;direction:rtl;padding:40px;font-size:13pt;}
+  h1,h2,h3{color:#065f46;} table{border-collapse:collapse;width:100%;}
+  td,th{border:1px solid #ccc;padding:6px 10px;}
+</style></head>
+<body>
+<h1>گزارش تحلیل آرتین آزما</h1>
+<p><b>تاریخ:</b> ${now} &nbsp;&nbsp; <b>فایل‌ها:</b> ${fileNames}</p>
+<hr/>
+${htmlBody}
+</body></html>`;
+    const blob = new Blob([html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "artin-analysis.doc";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function sendFollowUp() {
@@ -533,6 +698,13 @@ ${followUpHistory.length ? `
                     <Download size={16} />
                     PDF
                   </button>
+                  <button
+                    onClick={exportWord}
+                    className="ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm"
+                  >
+                    <FileDown size={16} />
+                    Word
+                  </button>
                 </div>
               )}
             </div>
@@ -601,7 +773,7 @@ ${followUpHistory.length ? `
             {fileAnalysis && (
               <>
                 <div
-                  className={`whitespace-pre-wrap rounded-[28px] border p-6 leading-9 shadow-inner ${
+                  className={`rounded-[28px] border p-6 leading-9 shadow-inner ${
                     resultType === "error"
                       ? "border-red-100 bg-red-50 text-red-700"
                       : "border-slate-200 bg-slate-50/90 text-slate-800"
@@ -620,7 +792,10 @@ ${followUpHistory.length ? `
                       </>
                     )}
                   </div>
-                  {fileAnalysis}
+                  {resultType === "error"
+                    ? <p className="leading-9 text-red-700">{fileAnalysis}</p>
+                    : <AnalysisRenderer text={fileAnalysis} />
+                  }
                 </div>
 
                 {resultType === "success" && (
