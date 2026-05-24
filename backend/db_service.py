@@ -1255,10 +1255,24 @@ def get_customer_chat_sessions(
 
     cursor.execute(
         """
-        SELECT id, title, created_at, updated_at
-        FROM chat_sessions
-        WHERE customer_id = ?
-        ORDER BY COALESCE(updated_at, created_at) DESC
+        SELECT
+            s.id,
+            s.title,
+            s.created_at,
+            s.updated_at,
+            COUNT(m.id) AS message_count,
+            (
+                SELECT m2.content
+                FROM chat_messages m2
+                WHERE m2.session_id = s.id
+                ORDER BY m2.id DESC
+                LIMIT 1
+            ) AS last_message
+        FROM chat_sessions s
+        LEFT JOIN chat_messages m ON m.session_id = s.id
+        WHERE s.customer_id = ?
+        GROUP BY s.id
+        ORDER BY COALESCE(s.updated_at, s.created_at) DESC
         LIMIT ?
         """,
         (customer_id, limit),
@@ -1267,15 +1281,22 @@ def get_customer_chat_sessions(
     rows = cursor.fetchall()
     conn.close()
 
-    return [
-        {
-            "id": row["id"],
-            "title": row["title"],
-            "created_at": row["created_at"],
-            "updated_at": row["updated_at"],
-        }
-        for row in rows
-    ]
+    result = []
+    for row in rows:
+        last_msg = row["last_message"] or ""
+        # Truncate to 120 chars for preview
+        preview = last_msg[:120] + ("…" if len(last_msg) > 120 else "")
+        result.append(
+            {
+                "id": row["id"],
+                "title": row["title"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+                "message_count": row["message_count"],
+                "last_message_preview": preview,
+            }
+        )
+    return result
 
 
 def get_chat_messages(session_id: int, customer_id: int) -> List[Dict[str, Any]]:
