@@ -548,6 +548,7 @@ function AssistantPageInner() {
   const isAtBottomRef = useRef(true);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(
     (transcript) => setMessage((prev) => prev ? prev + " " + transcript : transcript)
@@ -958,6 +959,31 @@ ${cleanAnswer}`,
     }
   }, [messages]);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    function onGlobalKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      const isEditable =
+        tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable;
+
+      // "/" → focus chat input (only when not already typing)
+      if (e.key === "/" && !isEditable && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        chatInputRef.current?.focus();
+        return;
+      }
+
+      // Escape → abort in-flight request
+      if (e.key === "Escape" && abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+        return;
+      }
+    }
+    window.addEventListener("keydown", onGlobalKeyDown);
+    return () => window.removeEventListener("keydown", onGlobalKeyDown);
+  }, []);
+
   function handleChatScroll() {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -1332,6 +1358,11 @@ ${printScript}
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+    // Ctrl+Enter or Cmd+Enter also sends
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       sendMessage();
     }
@@ -1890,6 +1921,7 @@ ${printScript}
                     </button>
 
                     <textarea
+                      ref={chatInputRef}
                       dir="auto"
                       style={{ fontFamily: getTextFont(message || "فارسی") }}
                       className="max-h-32 min-h-[46px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[17px] leading-7 outline-none"
@@ -2107,6 +2139,7 @@ ${printScript}
                   </button>
 
                   <textarea
+                    ref={chatInputRef}
                     dir="auto"
                     style={{ fontFamily: getTextFont(message || "فارسی") }}
                     className="max-h-40 min-h-[44px] flex-1 resize-none border-none bg-transparent px-1 py-2 text-[15px] leading-7 text-slate-800 placeholder-slate-400 outline-none"

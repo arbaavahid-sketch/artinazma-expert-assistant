@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
-import { useToast } from "@/components/Toast";
 import {
   Bell,
   CircleUserRound,
@@ -63,12 +62,6 @@ export default function CustomerDashboardPage() {
   const [profilePhone, setProfilePhone] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [savingPassword, setSavingPassword] = useState(false);
-  const { toast } = useToast();
   const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
   const [clearingAllSessions, setClearingAllSessions] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
@@ -168,38 +161,11 @@ export default function CustomerDashboardPage() {
       setCustomer(data.customer);
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
       setEditingProfile(false);
-      setProfileMessage("");
-      toast("اطلاعات حساب با موفقیت بروزرسانی شد.", "success");
+      setProfileMessage("اطلاعات حساب با موفقیت بروزرسانی شد.");
     } catch {
       setProfileMessage("خطا در اتصال به سرور.");
     } finally {
       setSavingProfile(false);
-    }
-  }
-
-  async function changePassword() {
-    if (!customer) return;
-    if (newPassword.length < 8) { toast("رمز عبور جدید باید حداقل ۸ کاراکتر باشد.", "warning"); return; }
-    if (newPassword !== confirmPassword) { toast("رمز عبور جدید و تکرار آن یکسان نیستند.", "warning"); return; }
-    setSavingPassword(true);
-    try {
-      const res = await fetch(apiUrl(`/customers/${customer.id}/change-password`), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast("رمز عبور با موفقیت تغییر یافت.", "success");
-        setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
-        setShowChangePassword(false);
-      } else {
-        toast(data.message || "خطا در تغییر رمز عبور.", "error");
-      }
-    } catch {
-      toast("خطا در اتصال به سرور.", "error");
-    } finally {
-      setSavingPassword(false);
     }
   }
 
@@ -628,48 +594,6 @@ ${msgHtml}
                   {profileMessage}
                 </div>
               )}
-
-              {/* تغییر رمز عبور */}
-              <div className="mt-5 border-t border-slate-100 pt-4">
-                <button
-                  onClick={() => setShowChangePassword((v) => !v)}
-                  className="text-sm font-bold text-slate-500 transition hover:text-slate-800"
-                >
-                  {showChangePassword ? "▲ بستن" : "🔒 تغییر رمز عبور"}
-                </button>
-                {showChangePassword && (
-                  <div className="mt-4 space-y-3">
-                    <input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="ui-input rounded-2xl p-3 text-sm"
-                      placeholder="رمز عبور فعلی"
-                    />
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="ui-input rounded-2xl p-3 text-sm"
-                      placeholder="رمز عبور جدید (حداقل ۸ کاراکتر)"
-                    />
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="ui-input rounded-2xl p-3 text-sm"
-                      placeholder="تکرار رمز عبور جدید"
-                    />
-                    <button
-                      onClick={changePassword}
-                      disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword}
-                      className="ui-btn ui-btn-primary rounded-2xl px-5 py-3 text-sm disabled:opacity-50"
-                    >
-                      {savingPassword ? "در حال ذخیره..." : "ذخیره رمز جدید"}
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
 
             <div className="ui-card rounded-[32px] p-6 shadow-sm">

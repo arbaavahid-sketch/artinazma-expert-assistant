@@ -974,25 +974,6 @@ def verify_password(password: str, stored_hash: str) -> bool:
         return False
 
 
-def change_customer_password(customer_id: int, current_password: str, new_password: str) -> dict:
-    """تغییر رمز عبور مشتری پس از تایید رمز فعلی"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT password_hash FROM customers WHERE id=?", (customer_id,))
-        row = cursor.fetchone()
-        if not row:
-            return {"success": False, "message": "مشتری پیدا نشد."}
-        if not verify_password(current_password, row[0]):
-            return {"success": False, "message": "رمز عبور فعلی اشتباه است."}
-        new_hash = hash_password(new_password)
-        cursor.execute("UPDATE customers SET password_hash=? WHERE id=?", (new_hash, customer_id))
-        conn.commit()
-        return {"success": True, "message": "رمز عبور با موفقیت تغییر یافت."}
-    finally:
-        conn.close()
-
-
 def create_customer(
     full_name: str, email: str, password: str, company: str = "", phone: str = ""
 ) -> Dict[str, Any]:
