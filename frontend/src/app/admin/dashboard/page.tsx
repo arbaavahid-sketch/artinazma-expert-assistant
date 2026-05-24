@@ -165,6 +165,7 @@ export default function DashboardPage() {
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [analyticsDays, setAnalyticsDays] = useState(14);
 
   async function loadStats() {
     setLoading(true);
@@ -174,7 +175,7 @@ export default function DashboardPage() {
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
         fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
-        fetch(apiUrl("/questions/analytics?days=14"), { cache: "no-store" }),
+        fetch(apiUrl(`/questions/analytics?days=${analyticsDays}`), { cache: "no-store" }),
         fetch(apiUrl("/customers/stats"), { cache: "no-store" }),
         fetch(adminUrl("/cache/stats"), { cache: "no-store" }),
         fetch(adminUrl("/feedback-stats"), { cache: "no-store" }),
@@ -210,7 +211,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadStats();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analyticsDays]);
 
   const topDomains = useMemo(() => {
     return questionStats?.domains || [];
@@ -577,6 +579,29 @@ export default function DashboardPage() {
               )}
             </div>
 
+            {/* ─── Analytics Date Range Selector ──────────────────────── */}
+            <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="text-sm font-bold text-slate-600">بازه زمانی نمودار:</span>
+              <div className="flex gap-2">
+                {[7, 14, 30, 90].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setAnalyticsDays(d)}
+                    className={`rounded-2xl px-4 py-2 text-sm font-bold transition ${
+                      analyticsDays === d
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-purple-50 hover:text-purple-700"
+                    }`}
+                  >
+                    {d} روز
+                  </button>
+                ))}
+              </div>
+              {loading && (
+                <span className="text-xs text-slate-400">در حال بارگذاری...</span>
+              )}
+            </div>
+
             {/* ─── Daily Activity Line Chart ────────────────────────── */}
             {analyticsData?.daily && analyticsData.daily.length > 0 && (
               <DailyLineChart data={analyticsData.daily} />
@@ -591,7 +616,7 @@ export default function DashboardPage() {
             {analyticsData?.top_keywords && analyticsData.top_keywords.length > 0 && (
               <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-5">
-                  <h2 className="text-xl font-black text-slate-900">کلمات پرتکرار ۱۴ روز اخیر</h2>
+                  <h2 className="text-xl font-black text-slate-900">کلمات پرتکرار {analyticsDays} روز اخیر</h2>
                   <p className="mt-2 text-sm text-slate-500">موضوعاتی که کاربران بیشتر جستجو کرده‌اند.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -690,6 +715,30 @@ export default function DashboardPage() {
   );
 }
 
+// ─── CSV export helper ───────────────────────────────────────────────────────
+function downloadCSV(filename: string, headers: string[], rows: (string | number)[][]) {
+  const NEWLINE = "\n";
+  const escapeCell = (v: string | number) => {
+    const s = String(v);
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  };
+  const lines = [
+    headers.map(escapeCell).join(","),
+    ...rows.map((r) => r.map(escapeCell).join(",")),
+  ].join(NEWLINE);
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + lines], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ─── Line Chart: daily questions ────────────────────────────────────────────
 function DailyLineChart({ data }: { data: DailyCount[] }) {
   const W = 360, H = 110, PAD = { top: 12, right: 8, bottom: 28, left: 28 };
@@ -725,9 +774,19 @@ function DailyLineChart({ data }: { data: DailyCount[] }) {
 
   return (
     <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4">
-        <h2 className="text-xl font-black text-slate-900">فعالیت ۱۴ روز اخیر</h2>
-        <p className="mt-1 text-sm text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز</p>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black text-slate-900">فعالیت روزانه</h2>
+          <p className="mt-1 text-sm text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز</p>
+        </div>
+        <button
+          onClick={() => downloadCSV("daily-activity.csv", ["تاریخ", "تعداد سوال"], data.map((d) => [d.day, d.count]))}
+          className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
+          title="دانلود CSV"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          CSV
+        </button>
       </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
@@ -816,9 +875,19 @@ function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
 
   return (
     <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4">
-        <h2 className="text-xl font-black text-slate-900">توزیع حوزه‌های سوالات</h2>
-        <p className="mt-1 text-sm text-slate-500">سهم هر حوزه از کل سوالات دریافتی</p>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black text-slate-900">توزیع حوزه‌های سوالات</h2>
+          <p className="mt-1 text-sm text-slate-500">سهم هر حوزه از کل سوالات دریافتی</p>
+        </div>
+        <button
+          onClick={() => downloadCSV("domain-distribution.csv", ["حوزه", "تعداد", "درصد"], domains.map((d) => [d.domain, d.count, total > 0 ? ((d.count / total) * 100).toFixed(1) : 0]))}
+          className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
+          title="دانلود CSV"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          CSV
+        </button>
       </div>
       <div className="flex items-center gap-4" style={{ direction: "ltr" }}>
         <svg viewBox="0 0 160 160" className="w-36 shrink-0" aria-hidden="true">
