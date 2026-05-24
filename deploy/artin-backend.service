@@ -1,0 +1,43 @@
+[Unit]
+Description=ArtinAzma Expert Assistant — FastAPI Backend
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=artin
+Group=artin
+WorkingDirectory=/opt/artinazma/backend
+EnvironmentFile=/opt/artinazma/backend/.env
+
+# Activate venv and run uvicorn with multiple workers
+ExecStart=/opt/artinazma/backend/venv/bin/uvicorn main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 2 \
+    --log-level info \
+    --access-log \
+    --no-use-colors
+
+# Graceful reload on SIGHUP
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Auto-restart on crash
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/artinazma/backend/storage /opt/artinazma/backend/uploads /opt/artinazma/backend/knowledge_files
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=artin-backend
+
+[Install]
+WantedBy=multi-user.target

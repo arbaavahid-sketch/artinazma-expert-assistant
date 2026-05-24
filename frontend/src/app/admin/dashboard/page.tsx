@@ -18,6 +18,10 @@ import {
   Users,
   MessagesSquare,
   BookOpen,
+  Zap,
+  ThumbsUp,
+  ThumbsDown,
+  Star,
 } from "lucide-react";
 
 type KnowledgeStats = {
@@ -68,6 +72,22 @@ type AnalyticsData = {
   top_keywords: Keyword[];
   feedback:     { status: string; count: number }[];
   hourly:       { hour: number; count: number }[];
+};
+
+type CacheStats = {
+  total_entries: number;
+  max_entries:   number;
+  fill_pct:      number;
+  ttl_hours:     number;
+};
+
+type FeedbackStats = {
+  total_questions: number;
+  rated: number;
+  up: number;
+  down: number;
+  unrated: number;
+  satisfaction_pct: number | null;
 };
 
 type CustomerStats = {
@@ -142,18 +162,22 @@ export default function DashboardPage() {
   const [requestStats, setRequestStats] = useState<RequestStats | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
+  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function loadStats() {
     setLoading(true);
 
     try {
-      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes] = await Promise.all([
+      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes, cacheRes, feedbackRes] = await Promise.all([
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
         fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
         fetch(apiUrl("/questions/analytics?days=14"), { cache: "no-store" }),
         fetch(apiUrl("/customers/stats"), { cache: "no-store" }),
+        fetch(adminUrl("/cache/stats"), { cache: "no-store" }),
+        fetch(adminUrl("/feedback-stats"), { cache: "no-store" }),
       ]);
 
       const results = await Promise.allSettled([
@@ -162,6 +186,8 @@ export default function DashboardPage() {
         requestRes.json(),
         analyticsRes.json(),
         customerRes.json(),
+        cacheRes.json(),
+        feedbackRes.json(),
       ]);
 
       setKnowledgeStats(results[0].status === "fulfilled" ? results[0].value : null);
@@ -169,6 +195,8 @@ export default function DashboardPage() {
       setRequestStats(results[2].status === "fulfilled" ? results[2].value : null);
       setAnalyticsData(results[3].status === "fulfilled" ? results[3].value : null);
       setCustomerStats(results[4].status === "fulfilled" ? results[4].value : null);
+      setCacheStats(results[5].status === "fulfilled" ? results[5].value : null);
+      setFeedbackStats(results[6].status === "fulfilled" ? results[6].value : null);
     } catch {
       setKnowledgeStats(null);
       setQuestionStats(null);
@@ -299,6 +327,61 @@ export default function DashboardPage() {
             tone="red"
             href="/admin/requests"
           />
+        </div>
+
+        {/* ─── Cache Stats Row ────────────────────────────────────── */}
+        <div className="mb-6 grid gap-4 md:grid-cols-3">
+          <DashboardCard
+            title="پاسخ‌های کش‌شده"
+            value={cacheStats?.total_entries ?? 0}
+            icon={<Zap size={24} />}
+            tone="amber"
+            href="/admin/dashboard"
+          />
+
+          <div className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="text-sm font-bold text-slate-500">ظرفیت Cache</div>
+                <div className="mt-3 text-4xl font-black text-slate-900">
+                  {cacheStats ? `${cacheStats.fill_pct}٪` : "—"}
+                </div>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-emerald-50 text-emerald-700 border-emerald-100">
+                <Database size={24} />
+              </div>
+            </div>
+            {cacheStats && (
+              <div className="mt-4">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-700"
+                    style={{ width: `${cacheStats.fill_pct}%` }}
+                  />
+                </div>
+                <div className="mt-2 text-xs text-slate-400 font-bold">
+                  {cacheStats.total_entries} / {cacheStats.max_entries} — نگهداری تا {cacheStats.ttl_hours} ساعت
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-bold text-slate-500">صرفه‌جویی API</div>
+                <div className="mt-3 text-4xl font-black text-slate-900">
+                  {cacheStats?.total_entries ?? "—"}x
+                </div>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-blue-50 text-blue-700 border-blue-100">
+                <Activity size={24} />
+              </div>
+            </div>
+            <div className="mt-4 text-xs font-bold text-slate-400">
+              هر سوال تکراری از Cache برگردانده می‌شود بدون صدا زدن OpenAI
+            </div>
+          </div>
         </div>
 
         {/* ─── Customer Stats Row ─────────────────────────────────── */}
@@ -527,6 +610,16 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* ─── Cache Gauge Widget ──────────────────────────────── */}
+            {cacheStats && (
+              <CacheGaugeWidget stats={cacheStats} />
+            )}
+
+            {/* ─── Feedback Stats Widget ───────────────────────────── */}
+            {feedbackStats && (
+              <FeedbackStatsWidget stats={feedbackStats} />
+            )}
+
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div>
@@ -745,6 +838,133 @@ function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
               <span className="text-slate-400">{s.pct}٪</span>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Feedback Stats Widget ───────────────────────────────────────────────────
+function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
+  const pct = stats.satisfaction_pct;
+  const ratedPct = stats.total_questions > 0
+    ? Math.round((stats.rated / stats.total_questions) * 100)
+    : 0;
+
+  return (
+    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+          <Star size={20} />
+        </div>
+        <div>
+          <h2 className="text-lg font-black text-slate-900">رضایت کاربران</h2>
+          <p className="text-xs text-slate-500">بازخورد روی پاسخ‌های آرتین</p>
+        </div>
+      </div>
+
+      {/* Satisfaction score */}
+      <div className="mb-5 flex items-end gap-3">
+        <div className="text-5xl font-black text-slate-900">
+          {pct !== null ? `${pct}٪` : "—"}
+        </div>
+        <div className="mb-1 text-sm font-bold text-emerald-600">رضایت</div>
+      </div>
+
+      {/* Progress bar */}
+      {pct !== null && (
+        <div className="mb-5">
+          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${pct}%`,
+                background: pct >= 70
+                  ? "linear-gradient(to right, #10b981, #059669)"
+                  : pct >= 40
+                  ? "linear-gradient(to right, #f59e0b, #d97706)"
+                  : "linear-gradient(to right, #ef4444, #dc2626)",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Like / Dislike row */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-3">
+          <ThumbsUp size={16} className="text-emerald-600" />
+          <div>
+            <div className="text-xl font-black text-emerald-700">{stats.up}</div>
+            <div className="text-[11px] font-bold text-emerald-500">مفید بود</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 rounded-2xl bg-red-50 p-3">
+          <ThumbsDown size={16} className="text-red-500" />
+          <div>
+            <div className="text-xl font-black text-red-600">{stats.down}</div>
+            <div className="text-[11px] font-bold text-red-400">نیاز به بهبود</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rated vs unrated */}
+      <div className="rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-500 space-y-1">
+        <div className="flex justify-between">
+          <span>ارزیابی‌شده</span>
+          <span className="text-slate-700">{stats.rated} از {stats.total_questions} ({ratedPct}٪)</span>
+        </div>
+        <div className="flex justify-between">
+          <span>بدون نظر</span>
+          <span>{stats.unrated}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Cache Gauge Widget ──────────────────────────────────────────────────────
+function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
+  const pct = stats.fill_pct;
+  const R = 52, CX = 70, CY = 68;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const arcEnd = {
+    x: CX + R * Math.cos(toRad(180 - pct * 1.8)),
+    y: CY - R * Math.sin(toRad(pct * 1.8)),
+  };
+  const largeArc = pct * 1.8 > 180 ? 1 : 0;
+  const arcD = `M ${CX - R} ${CY} A ${R} ${R} 0 ${largeArc} 1 ${arcEnd.x} ${arcEnd.y}`;
+  const bgD  = `M ${CX - R} ${CY} A ${R} ${R} 0 1 1 ${CX + R} ${CY}`;
+  const color = pct > 80 ? "#ef4444" : pct > 50 ? "#f59e0b" : "#10b981";
+
+  return (
+    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-3">
+        <h2 className="text-xl font-black text-slate-900">وضعیت Cache هوشمند</h2>
+        <p className="mt-1 text-sm text-slate-500">پاسخ‌های ذخیره‌شده برای کاهش هزینه API</p>
+      </div>
+      <div className="flex items-center gap-6">
+        <svg viewBox="0 0 140 80" className="w-36 shrink-0" aria-hidden="true" style={{ direction: "ltr" }}>
+          <path d={bgD} fill="none" stroke="#e2e8f0" strokeWidth="10" strokeLinecap="round" />
+          {pct > 0 && (
+            <path d={arcD} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round" />
+          )}
+          <text x={CX} y={CY - 8} textAnchor="middle" fontSize="18" fontWeight="bold" fill="#1e293b">{pct}٪</text>
+          <text x={CX} y={CY + 6} textAnchor="middle" fontSize="7.5" fill="#64748b">پر شده</text>
+          <text x="8" y={CY + 16} textAnchor="middle" fontSize="7" fill="#94a3b8">۰</text>
+          <text x="132" y={CY + 16} textAnchor="middle" fontSize="7" fill="#94a3b8">{stats.max_entries}</text>
+        </svg>
+        <div className="flex flex-col gap-2 text-sm" style={{ direction: "rtl" }}>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+            <span className="font-bold text-slate-700">{stats.total_entries} پاسخ کش‌شده</span>
+          </div>
+          <div className="text-slate-500">حداکثر: {stats.max_entries} ورودی</div>
+          <div className="text-slate-500">مدت نگهداری: {stats.ttl_hours} ساعت</div>
+          <div className="mt-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+            {stats.total_entries} بار صرفه‌جویی API
+          </div>
         </div>
       </div>
     </div>
