@@ -59,6 +59,7 @@ from db_service import (
     authenticate_customer,
     get_customer_by_id,
     update_customer_profile,
+    change_customer_password,
     create_chat_session,
     save_chat_message,
     get_customer_chat_sessions,
@@ -834,6 +835,18 @@ class CustomerProfileUpdateRequest(BaseModel):
     full_name: str
     company: str = ""
     phone: str = ""
+
+
+class CustomerChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("رمز عبور جدید باید حداقل ۸ کاراکتر باشد.")
+        return v
 
 
 class CustomerSessionCreateRequest(BaseModel):
@@ -2476,6 +2489,16 @@ def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequ
         "message": "اطلاعات حساب با موفقیت بروزرسانی شد.",
         "customer": updated_customer,
     }
+
+
+@app.post("/customers/{customer_id}/change-password")
+def customer_change_password(customer_id: int, request: CustomerChangePasswordRequest):
+    result = change_customer_password(
+        customer_id=customer_id,
+        current_password=request.current_password,
+        new_password=request.new_password,
+    )
+    return result
 
 
 @app.get("/customers/{customer_id}/chat-sessions")
