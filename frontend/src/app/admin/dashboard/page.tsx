@@ -165,6 +165,7 @@ export default function DashboardPage() {
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [analyticsDays, setAnalyticsDays] = useState(14);
 
   async function loadStats() {
     setLoading(true);
@@ -174,7 +175,7 @@ export default function DashboardPage() {
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
         fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
-        fetch(apiUrl("/questions/analytics?days=14"), { cache: "no-store" }),
+        fetch(apiUrl(`/questions/analytics?days=${analyticsDays}`), { cache: "no-store" }),
         fetch(apiUrl("/customers/stats"), { cache: "no-store" }),
         fetch(adminUrl("/cache/stats"), { cache: "no-store" }),
         fetch(adminUrl("/feedback-stats"), { cache: "no-store" }),
@@ -210,7 +211,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadStats();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analyticsDays]);
 
   const topDomains = useMemo(() => {
     return questionStats?.domains || [];
@@ -577,6 +579,29 @@ export default function DashboardPage() {
               )}
             </div>
 
+            {/* ─── Analytics Date Range Selector ──────────────────────── */}
+            <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="text-sm font-bold text-slate-600">بازه زمانی نمودار:</span>
+              <div className="flex gap-2">
+                {[7, 14, 30, 90].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setAnalyticsDays(d)}
+                    className={`rounded-2xl px-4 py-2 text-sm font-bold transition ${
+                      analyticsDays === d
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-purple-50 hover:text-purple-700"
+                    }`}
+                  >
+                    {d} روز
+                  </button>
+                ))}
+              </div>
+              {loading && (
+                <span className="text-xs text-slate-400">در حال بارگذاری...</span>
+              )}
+            </div>
+
             {/* ─── Daily Activity Line Chart ────────────────────────── */}
             {analyticsData?.daily && analyticsData.daily.length > 0 && (
               <DailyLineChart data={analyticsData.daily} />
@@ -591,7 +616,7 @@ export default function DashboardPage() {
             {analyticsData?.top_keywords && analyticsData.top_keywords.length > 0 && (
               <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-5">
-                  <h2 className="text-xl font-black text-slate-900">کلمات پرتکرار ۱۴ روز اخیر</h2>
+                  <h2 className="text-xl font-black text-slate-900">کلمات پرتکرار {analyticsDays} روز اخیر</h2>
                   <p className="mt-2 text-sm text-slate-500">موضوعاتی که کاربران بیشتر جستجو کرده‌اند.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
