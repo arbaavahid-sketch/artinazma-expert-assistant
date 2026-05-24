@@ -22,6 +22,9 @@ from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 from pydantic import BaseModel
+import hashlib
+import time as _time
+from collections import OrderedDict
 from google_drive_service import sync_google_drive_folder
 from knowledge_service import (
     add_file_to_knowledge_base,
@@ -507,6 +510,52 @@ class CustomerChatMessageCreateRequest(BaseModel):
     role: str
     content: str
     metadata: dict = {}
+
+
+# ─── Simple in-memory LRU response cache ────────────────────────────────────
+class _ResponseCache:
+    """Thread-safe LRU cache for identical non-personalised questions."""
+    def __init__(self, maxsize: int = 200, ttl: int = 3600):
+        self._cache: OrderedDict = OrderedDict()
+        self._maxsize = maxsize
+        self._ttl = ttl  # seconds
+        self._lock = threading.Lock()
+
+    def _make_key(self, message: str, domain: str) -> str:
+        norm = message.strip().lower()
+        return hashlib.sha256(f"{domain}||{norm}".encode()).hexdigest()
+
+    def get(self, message: str, domain: str):
+        key = self._make_key(message, domain)
+        with self._lock:
+            entry = self._cache.get(key)
+            if not entry:
+                return None
+            if _time.time() - entry["ts"] > self._ttl:
+                del self._cache[key]
+                return None
+            # LRU: move to end
+            self._cache.move_to_end(key)
+            return entry["data"]
+
+    def set(self, message: str, domain: str, data: dict):
+        key = self._make_key(message, domain)
+        with self._lock:
+            self._cache[key] = {"data": data, "ts": _time.time()}
+            self._cache.move_to_end(key)
+            if len(self._cache) > self._maxsize:
+                self._cache.popitem(last=False)
+
+    def invalidate(self):
+        with self._lock:
+            self._cache.clear()
+
+    def stats(self) -> dict:
+        with self._lock:
+            return {"size": len(self._cache), "maxsize": self._maxsize, "ttl": self._ttl}
+
+
+_response_cache = _ResponseCache(maxsize=200, ttl=3600)
 
 
 @app.get("/")
@@ -1060,6 +1109,33 @@ def chat_stream(body: ChatRequest, request: Request):
         except Exception as _e:
             print("customer_context (stream) load failed:", _e)
 
+    # ── Cache check: only for anonymous users with no history/context ──────────
+    _use_cache = (
+        not body.history
+        and not body.context
+        and not body.customer_id
+        and not is_transform_followup
+    )
+    if _use_cache:
+        _cached = _response_cache.get(body.message, detected_domain)
+        if _cached:
+            # Replay cached response as fast-stream (no OpenAI call)
+            def _cached_generator():
+                yield f"data: {_json_local.dumps(_cached['meta'], ensure_ascii=False)}\n\n"
+                # Send answer in small chunks for natural feel
+                text = _cached["answer"]
+                chunk_size = 80
+                for i in range(0, len(text), chunk_size):
+                    chunk = text[i:i+chunk_size]
+                    yield f"data: {_json_local.dumps({'type': 'chunk', 'text': chunk}, ensure_ascii=False)}\n\n"
+                done = {"type": "done", "question_id": _cached.get("question_id"), "memory_id": None, "from_cache": True}
+                yield f"data: {_json_local.dumps(done, ensure_ascii=False)}\n\n"
+            return StreamingResponse(
+                _cached_generator(),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
+
     def event_generator():
         # ابتدا metadata ارسال می‌شود
         meta = {
@@ -1095,6 +1171,7 @@ def chat_stream(body: ChatRequest, request: Request):
             full_answer = "خطا در دریافت پاسخ."
 
         # ذخیره در DB و ارسال event پایانی
+        question_id = None
         try:
             question_id = save_expert_question(
                 question=body.message,
@@ -1116,6 +1193,15 @@ def chat_stream(body: ChatRequest, request: Request):
             done = {"type": "done", "question_id": question_id, "memory_id": memory_id}
         except Exception:
             done = {"type": "done", "question_id": None, "memory_id": None}
+
+        # ── Store in cache if eligible ──────────────────────────────────────
+        if _use_cache and full_answer and "خطا" not in full_answer:
+            _response_cache.set(body.message, detected_domain, {
+                "meta": meta,
+                "answer": full_answer,
+                "question_id": question_id,
+            })
+
         yield f"data: {_json_local.dumps(done, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(
@@ -2514,3 +2600,16 @@ def artinazma_site_index_status():
         "created_at": index_data.get("created_at", 0),
         "base_url": index_data.get("base_url", ""),
     }
+
+
+@app.get("/admin/cache/stats")
+def cache_stats(_=Depends(require_admin)):
+    """آمار cache پاسخ‌های آرتین."""
+    return _response_cache.stats()
+
+
+@app.post("/admin/cache/clear")
+def cache_clear(_=Depends(require_admin)):
+    """پاک کردن cache پاسخ‌های آرتین."""
+    _response_cache.invalidate()
+    return {"success": True, "message": "Cache پاک شد."}

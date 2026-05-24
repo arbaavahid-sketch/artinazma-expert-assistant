@@ -635,6 +635,14 @@ ${cleanAnswer}`,
   }
 
   // Undo send — abort in-flight request and restore message
+  // Edit & Retry: truncate history to before the edited message, re-send
+  function handleEditMessage(msgIndex: number, newText: string) {
+    // Keep only messages before this user message
+    const history = messages.slice(0, msgIndex);
+    setMessages(history);
+    sendMessage(newText, newText);
+  }
+
   function undoSend() {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -759,6 +767,7 @@ ${cleanAnswer}`,
   async function sendAnswerFeedback(
     questionId: number | undefined,
     rating: "up" | "down",
+    comment?: string,
   ) {
     if (!questionId) return;
     // Optimistic update
@@ -767,7 +776,7 @@ ${cleanAnswer}`,
       await fetch(apiUrl(`/questions/${questionId}/feedback`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating }),
+        body: JSON.stringify({ rating, comment: comment || "" }),
       });
     } catch {
       // خطای بازخورد نباید چت را خراب کند
@@ -1785,6 +1794,7 @@ ${msgHtml}
                   }
                   onSpeak={speakMessage}
                   isSpeaking={speakingIndex === index}
+                  onEdit={handleEditMessage}
                 />
               ))}
 
@@ -2075,6 +2085,7 @@ function MessageBubble({
   feedbackValue,
   onSpeak,
   isSpeaking,
+  onEdit,
 }: {
   item: ChatMessage;
   loading: boolean;
@@ -2087,14 +2098,28 @@ function MessageBubble({
   onFeedback: (
     questionId: number | undefined,
     rating: "up" | "down",
+    comment?: string,
   ) => void;
   feedbackValue?: string;
   onSpeak: (text: string, index: number) => void;
   isSpeaking?: boolean;
   index: number;
+  onEdit: (index: number, newText: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(item.content);
+  const [showFeedbackMenu, setShowFeedbackMenu] = useState(false);
   const isUser = item.role === "user";
+
+  const FEEDBACK_REASONS = [
+    "پاسخ ناقص بود",
+    "اطلاعات اشتباه داشت",
+    "ربطی به سوالم نداشت",
+    "خیلی طولانی بود",
+    "خیلی کوتاه بود",
+    "دیگر",
+  ];
   const displayContent = isUser
     ? item.content
     : cleanMarkdownText(item.content);
@@ -2144,7 +2169,62 @@ function MessageBubble({
             }
           >
             {isUser ? (
-              displayContent
+              isEditing ? (
+                <div className="flex flex-col gap-2" dir="rtl">
+                  <textarea
+                    className="w-full rounded-xl bg-white/20 p-2 text-sm text-white placeholder-white/60 outline-none ring-2 ring-white/40 focus:ring-white/70 resize-none"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        if (editText.trim()) {
+                          onEdit(index, editText.trim());
+                          setIsEditing(false);
+                        }
+                      }
+                      if (e.key === "Escape") {
+                        setEditText(item.content);
+                        setIsEditing(false);
+                      }
+                    }}
+                    rows={Math.max(2, editText.split("\n").length)}
+                    autoFocus
+                    dir="rtl"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => { setEditText(item.content); setIsEditing(false); }}
+                      className="rounded-lg px-3 py-1 text-xs text-white/70 hover:text-white"
+                    >
+                      انصراف
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (editText.trim()) {
+                          onEdit(index, editText.trim());
+                          setIsEditing(false);
+                        }
+                      }}
+                      className="rounded-lg bg-white/20 px-3 py-1 text-xs font-bold text-white hover:bg-white/30"
+                    >
+                      ارسال مجدد ↵
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="group/edit relative">
+                  <span>{displayContent}</span>
+                  <button
+                    onClick={() => { setEditText(item.content); setIsEditing(true); }}
+                    className="mr-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-white/50 opacity-0 transition hover:bg-white/20 hover:text-white group-hover/edit:opacity-100"
+                    title="ویرایش پیام"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                    ویرایش
+                  </button>
+                </div>
+              )
             ) : (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -2321,20 +2401,50 @@ function MessageBubble({
               >
                 <ThumbsUp size={13} />
               </button>
-              <button
-                onClick={() => onFeedback(item.question_id, "down")}
-                disabled={!!feedbackValue}
-                className={`rounded-lg p-1.5 transition ${
-                  feedbackValue === "down"
-                    ? "text-red-500 bg-red-50"
-                    : feedbackValue === "up"
-                    ? "text-slate-300 cursor-default"
-                    : "text-slate-400 hover:bg-red-50 hover:text-red-500"
-                }`}
-                title="پاسخ نیاز به بهبود دارد"
-              >
-                <ThumbsDown size={13} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    if (feedbackValue) return;
+                    setShowFeedbackMenu((v) => !v);
+                  }}
+                  disabled={!!feedbackValue}
+                  className={`rounded-lg p-1.5 transition ${
+                    feedbackValue === "down"
+                      ? "text-red-500 bg-red-50"
+                      : feedbackValue === "up"
+                      ? "text-slate-300 cursor-default"
+                      : "text-slate-400 hover:bg-red-50 hover:text-red-500"
+                  }`}
+                  title="پاسخ نیاز به بهبود دارد"
+                >
+                  <ThumbsDown size={13} />
+                </button>
+                {showFeedbackMenu && !feedbackValue && (
+                  <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800">
+                    <p className="mb-1.5 px-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      چه مشکلی داشت؟
+                    </p>
+                    {FEEDBACK_REASONS.map((reason) => (
+                      <button
+                        key={reason}
+                        onClick={() => {
+                          onFeedback(item.question_id, "down", reason);
+                          setShowFeedbackMenu(false);
+                        }}
+                        className="block w-full rounded-xl px-3 py-1.5 text-right text-xs text-slate-700 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-950 dark:hover:text-red-400"
+                      >
+                        {reason}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setShowFeedbackMenu(false)}
+                      className="mt-1 block w-full rounded-xl px-3 py-1 text-center text-[11px] text-slate-400 hover:text-slate-600"
+                    >
+                      انصراف
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
               <button
                 onClick={onRequest}
