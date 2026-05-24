@@ -544,6 +544,9 @@ function AssistantPageInner() {
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedMsgRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const isAtBottomRef = useRef(true);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(
@@ -947,6 +950,28 @@ ${cleanAnswer}`,
     const timer = setTimeout(() => setRateLimitCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [rateLimitCountdown]);
+
+  // Auto-scroll: only when user is already at the bottom
+  useEffect(() => {
+    if (isAtBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  function handleChatScroll() {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const atBottom = distanceFromBottom < 80;
+    isAtBottomRef.current = atBottom;
+    setShowScrollBtn(!atBottom);
+  }
+
+  function scrollToBottom() {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    isAtBottomRef.current = true;
+    setShowScrollBtn(false);
+  }
 
   function typeAssistantMessage(
     previousMessages: ChatMessage[],
@@ -1608,7 +1633,7 @@ ${printScript}
   }
   return (
     <section
-      className={`flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff] transition-colors ${isDragOver ? "ring-2 ring-inset ring-blue-400 bg-blue-50/30" : ""}`}
+      className={`relative flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff] transition-colors ${isDragOver ? "ring-2 ring-inset ring-blue-400 bg-blue-50/30" : ""}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -1815,7 +1840,11 @@ ${printScript}
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleChatScroll}
+        className="min-h-0 flex-1 overflow-y-auto"
+      >
         {loadingSavedSession && (
           <div className="ui-alert ui-alert-info mx-auto mt-6 max-w-xl text-center text-sm font-bold">
             در حال بارگذاری گفتگوی ذخیره‌شده...
@@ -2008,6 +2037,18 @@ ${printScript}
           )}
         </div>
       </div>
+      {showScrollBtn && messages.length > 0 && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center">
+          <button
+            onClick={scrollToBottom}
+            className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-lg transition hover:bg-slate-50 hover:shadow-xl"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            رفتن به آخر
+          </button>
+        </div>
+      )}
+
       {messages.length > 0 && (
         <footer className="shrink-0 border-t border-slate-100 bg-white pb-2 pt-3">
           <div className="mx-auto w-full max-w-3xl px-4">
