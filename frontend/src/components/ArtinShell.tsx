@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { ToastProvider } from "@/components/Toast";
+import AdminGlobalSearch from "@/components/AdminGlobalSearch";
 import {
   ChartBar,
   CircleUserRound,
@@ -521,6 +522,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
             {isAdminArea && (
               <div className="mt-6">
+                {!sidebarCollapsed && isAdmin && (
+                  <div className="mb-3 px-1">
+                    <AdminGlobalSearch />
+                  </div>
+                )}
                 {!sidebarCollapsed && (
                   <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
                     مدیریت

@@ -2313,6 +2313,46 @@ def admin_list_customers(
     return get_all_customers(limit=limit, offset=offset)
 
 
+@app.get("/admin/search")
+def admin_global_search(q: str = "", limit: int = 5, _=Depends(require_admin)):
+    """جستجوی سراسری ادمین در سوالات، مشتریان و درخواست‌ها."""
+    q = q.strip().lower()
+    if not q or len(q) < 2:
+        return {"questions": [], "customers": [], "requests": []}
+
+    # Search questions
+    all_questions = get_all_questions(limit=500)
+    matched_questions = [
+        {"id": item["id"], "question": item["question"], "detected_domain": item.get("detected_domain", ""), "created_at": item.get("created_at", "")}
+        for item in all_questions
+        if q in (item.get("question") or "").lower() or q in str(item.get("id", ""))
+    ][:limit]
+
+    # Search customers
+    all_customers = get_all_customers(limit=500)
+    matched_customers = [
+        {"id": item["id"], "full_name": item["full_name"], "email": item.get("email", ""), "company": item.get("company", "")}
+        for item in all_customers
+        if q in (item.get("full_name") or "").lower()
+        or q in (item.get("email") or "").lower()
+        or q in (item.get("company") or "").lower()
+        or q in str(item.get("id", ""))
+    ][:limit]
+
+    # Search customer requests
+    all_requests = get_customer_requests(limit=500)
+    matched_requests = [
+        {"id": item["id"], "full_name": item["full_name"], "subject": item.get("subject", ""), "status": item.get("status", ""), "created_at": item.get("created_at", "")}
+        for item in all_requests
+        if q in (item.get("full_name") or "").lower()
+        or q in (item.get("subject") or "").lower()
+        or q in (item.get("message") or "").lower()
+        or q in str(item.get("id", ""))
+    ][:limit]
+
+    return {"questions": matched_questions, "customers": matched_customers, "requests": matched_requests}
+
+
 @app.post("/admin/customers/{customer_id}/block")
 def admin_block_customer(customer_id: int, _=Depends(require_admin)):
     """بلاک کردن حساب مشتری."""
