@@ -21,7 +21,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 import hashlib
 import time as _time
 from collections import OrderedDict
@@ -433,6 +433,214 @@ class ChatHistoryMessage(BaseModel):
     content: str
 
 
+# ─── Score thresholds (single place to change) ──────────────────────────────
+_LOCAL_SCORE_THRESHOLD = 10      # local search score >= this → use local
+_MODEL_LOCAL_SCORE_THRESHOLD = 8 # model question: exact local match threshold
+_WEAK_CONTEXT_THRESHOLD = 14     # below this → discard internal context for tech intents
+
+# ─── Upload limits ───────────────────────────────────────────────────────────
+_MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
+_ALLOWED_FILE_EXTS = {"xlsx", "xls", "csv", "pdf", "txt"}
+_ALLOWED_IMAGE_EXTS = {"jpg", "jpeg", "png", "webp"}
+
+_TECHNICAL_INTENTS = {
+    "technical_general",
+    "equipment_recommendation",
+    "troubleshooting",
+    "lab_analysis",
+}
+
+
+def _build_chat_pipeline(body: "ChatRequest") -> dict:
+    """
+    Shared pre-processing pipeline for /chat and /chat/stream.
+    Returns a dict with all computed fields needed by both endpoints.
+    """
+    has_astm_code = bool(
+        re.search(r"\bD\s*\d{3,5}\b", body.message, flags=re.IGNORECASE)
+    )
+    specific_model_question = is_specific_product_or_model_question(body.message)
+    allow_company_reference = is_artinazma_related_question(body.message)
+    is_transform_followup = is_followup_transform_request(body.message)
+    intent_data = detect_question_intent(message=body.message, domain=body.domain or "auto")
+
+    question_intent: str = intent_data["intent"]
+    question_intent_label: str = intent_data["label"]
+    local_docs = local_search_knowledge_base(body.message, top_k=12)
+
+    best_score = 0.0
+    related_docs: list = []
+    search_mode = "unknown"
+
+    if has_astm_code:
+        related_docs = []
+        search_mode = "gpt_astm_direct"
+    elif specific_model_question:
+        exact_local_match = context_has_exact_model_match(body.message, local_docs)
+        if (
+            exact_local_match
+            and local_docs
+            and float(local_docs[0].get("score", 0) or 0) >= _MODEL_LOCAL_SCORE_THRESHOLD
+        ):
+            related_docs = local_docs[:8]
+            search_mode = "local_exact_model"
+        else:
+            related_docs = []
+            search_mode = "no_exact_model_context"
+    else:
+        if local_docs and float(local_docs[0].get("score", 0) or 0) >= _LOCAL_SCORE_THRESHOLD:
+            related_docs = local_docs[:8]
+            search_mode = "local_fast"
+        else:
+            try:
+                related_docs = search_knowledge_base(body.message, top_k=5)
+                search_mode = "ai_vector"
+            except Exception as e:
+                logger.warning("AI vector search failed, using local: %s", e)
+                related_docs = local_docs[:8]
+                search_mode = "local_fallback"
+
+    if related_docs:
+        try:
+            best_score = float(related_docs[0].get("score", 0) or 0)
+        except Exception:
+            best_score = 0.0
+
+    if question_intent in _TECHNICAL_INTENTS and best_score < _WEAK_CONTEXT_THRESHOLD:
+        related_docs = []
+        best_score = 0.0
+        search_mode = f"{search_mode}+ignored_weak_internal_context"
+
+    # ── Site resource lookup ──
+    resource_links: list = []
+    resource_images: list = []
+    artinazma_context = ""
+
+    if allow_company_reference:
+        try:
+            artinazma_resources = find_artinazma_resources(message=body.message, max_results=2)
+            resource_links = artinazma_resources.get("links", [])
+            resource_images = artinazma_resources.get("images", [])
+            if resource_links:
+                artinazma_context = (
+                    "نتیجه جست‌وجوی سایت رسمی آرتین آزما:\n"
+                    "این مورد در سایت رسمی آرتین آزما پیدا شده است.\n"
+                    "هنگام پاسخ، کامل و فنی توضیح بده.\n"
+                    "در متن پاسخ، لینک خام ننویس؛ لینک جداگانه توسط سیستم نمایش داده می‌شود.\n"
+                )
+                for link in resource_links:
+                    artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
+                    artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
+                search_mode = f"{search_mode}+artinazma_site"
+        except Exception as e:
+            logger.warning("ArtinAzma resource search failed: %s", e)
+
+    # ── Web search flag ──
+    allow_web_search = True
+    if body.response_mode == "brief":
+        allow_web_search = False
+    if question_intent in _TECHNICAL_INTENTS:
+        allow_web_search = True
+    if specific_model_question or has_astm_code or not related_docs:
+        allow_web_search = True
+    if is_transform_followup:
+        allow_web_search = False
+        related_docs = []
+        search_mode = "followup_transform"
+
+    if allow_web_search:
+        search_mode = f"{search_mode}+openai_web"
+
+    # ── Build context string ──
+    context_parts = []
+    for doc in related_docs:
+        context_parts.append(
+            f"منبع داخلی:\nعنوان: {doc.get('title', '')}\n"
+            f"فایل: {doc.get('file_name', '')}\n"
+            f"دسته‌بندی: {doc.get('category', '')}\n"
+            f"امتیاز ارتباط: {doc.get('score', '')}\n"
+            f"متن:\n{doc.get('content', '')}"
+        )
+    context = "\n\n".join(context_parts)
+
+    if artinazma_context:
+        context = f"{context}\n\n{artinazma_context}".strip()
+
+    if body.context:
+        context = f"اطلاعات خارجی ارائه‌شده توسط کاربر:\n{body.context}\n\n---\n\n{context}".strip()
+
+    # ── Domain detection ──
+    auto_domain = detect_domain(body.message)
+    selected_domain = body.domain or "auto"
+    detected_domain = auto_domain if selected_domain == "auto" else selected_domain
+
+    # ── History (last 6 turns) ──
+    history = [
+        {"role": item.role, "content": item.content}
+        for item in (body.history or [])[-6:]
+        if item.role in ["user", "assistant"] and item.content
+    ]
+
+    # ── Style instructions ──
+    style_instructions = (
+        "سبک پاسخ:\n"
+        "پاسخ باید شبیه ChatGPT Plus باشد: کامل، دقیق، آموزشی، تیتردار، مرتب، با جدول، مثال و جمع‌بندی.\n"
+        "قانون پاسخ تأییدشده: برای سؤال‌های تخصصی و فنی، از منبع معتبر استفاده کن.\n"
+        "پاسخ فارسی باشد."
+    )
+    if is_transform_followup:
+        style_instructions = (
+            "قانون بسیار مهم برای درخواست‌های بازنویسی:\n"
+            "پیام فعلی کاربر یک درخواست بازنویسی است. از history استفاده کن.\n"
+            "web search انجام نده. اطلاعات جدید اضافه نکن.\n"
+            "اگر کاربر خواست «تبدیل به جدول»: فقط Markdown table معتبر تولید کن.\n"
+            "از tab یا <br> داخل جدول استفاده نکن. هر ردیف تعداد ستون برابر داشته باشد."
+        )
+
+    context = f"{context}\n\n---\n\n{style_instructions}".strip() if context else style_instructions
+
+    # ── Sources list ──
+    sources = [
+        {
+            "title": doc.get("title", ""),
+            "file_name": doc.get("file_name", ""),
+            "category": doc.get("category", ""),
+            "score": float(doc.get("score", 0) or 0),
+        }
+        for doc in related_docs
+    ]
+
+    # ── Customer cross-session context ──
+    customer_context = ""
+    if body.customer_id:
+        try:
+            customer_context = get_customer_cross_session_context(body.customer_id)
+            if not body.user_id or body.user_id == "anonymous":
+                body.user_id = f"customer_{body.customer_id}"
+        except Exception as _e:
+            logger.warning("customer_context load failed: %s", _e)
+
+    return {
+        "has_astm_code": has_astm_code,
+        "specific_model_question": specific_model_question,
+        "allow_company_reference": allow_company_reference,
+        "is_transform_followup": is_transform_followup,
+        "question_intent": question_intent,
+        "question_intent_label": question_intent_label,
+        "related_docs": related_docs,
+        "search_mode": search_mode,
+        "allow_web_search": allow_web_search,
+        "context": context,
+        "detected_domain": detected_domain,
+        "history": history,
+        "sources": sources,
+        "resource_links": resource_links,
+        "resource_images": resource_images,
+        "customer_context": customer_context,
+        "response_mode": body.response_mode or "auto",
+    }
+
+
 class GoogleDriveSyncRequest(BaseModel):
     root_folder_id: str = ""
     max_files: int = 200
@@ -470,6 +678,40 @@ class CustomerRequestCreate(BaseModel):
     subject: str = ""
     message: str
 
+    @field_validator("full_name")
+    @classmethod
+    def validate_full_name(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 2:
+            raise ValueError("نام و نام خانوادگی باید حداقل ۲ کاراکتر باشد.")
+        return v
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        v = v.strip()
+        import re as _re
+        if not _re.match(r"^[0-9+\-() ]{7,20}$", v):
+            raise ValueError("شماره تماس معتبر نیست.")
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v:
+            import re as _re
+            if not _re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", v):
+                raise ValueError("آدرس ایمیل معتبر نیست.")
+        return v
+
+    @field_validator("message")
+    @classmethod
+    def validate_message(cls, v: str) -> str:
+        if len(v.strip()) < 10:
+            raise ValueError("متن پیام باید حداقل ۱۰ کاراکتر باشد.")
+        return v
+
 
 class CustomerRequestStatusUpdate(BaseModel):
     status: str
@@ -481,6 +723,40 @@ class CustomerRegisterRequest(BaseModel):
     password: str
     company: str = ""
     phone: str = ""
+
+    @field_validator("full_name")
+    @classmethod
+    def validate_full_name(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 2:
+            raise ValueError("نام و نام خانوادگی باید حداقل ۲ کاراکتر باشد.")
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        import re as _re
+        if not _re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", v):
+            raise ValueError("آدرس ایمیل معتبر نیست.")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("رمز عبور باید حداقل ۶ کاراکتر باشد.")
+        return v
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        v = v.strip()
+        if v:
+            import re as _re
+            if not _re.match(r"^[0-9+\-() ]{7,20}$", v):
+                raise ValueError("شماره تماس معتبر نیست.")
+        return v
 
 
 class CustomerLoginRequest(BaseModel):
@@ -628,10 +904,7 @@ def save_question_review(question_id: int, request: QuestionReviewRequest):
     )
 
     if not updated:
-        return {
-            "success": False,
-            "message": "Question not found",
-        }
+        raise HTTPException(status_code=404, detail="سوال موردنظر پیدا نشد.")
 
     return {
         "success": True,
@@ -641,12 +914,12 @@ def save_question_review(question_id: int, request: QuestionReviewRequest):
 
 
 @app.put("/questions/{question_id}/review")
-def review_question_put(question_id: int, request: QuestionReviewRequest):
+def review_question_put(question_id: int, request: QuestionReviewRequest, _=Depends(require_admin)):
     return save_question_review(question_id, request)
 
 
 @app.patch("/questions/{question_id}/review")
-def review_question_patch(question_id: int, request: QuestionReviewRequest):
+def review_question_patch(question_id: int, request: QuestionReviewRequest, _=Depends(require_admin)):
     return save_question_review(question_id, request)
 
 
@@ -660,7 +933,7 @@ def question_feedback(question_id: int, body: FeedbackRequest):
     """ذخیره امتیاز کاربر (👍👎) برای یک پاسخ آرتین."""
     ok = save_question_feedback(question_id, body.rating, body.comment)
     if not ok:
-        return {"success": False, "message": "سوال پیدا نشد یا امتیاز نامعتبر است."}
+        raise HTTPException(status_code=404, detail="سوال پیدا نشد یا امتیاز نامعتبر است.")
     return {"success": True, "rating": body.rating}
 
 
@@ -673,312 +946,65 @@ def feedback_stats(_=Depends(require_admin)):
 @app.post("/chat")
 @limiter.limit("20/minute")
 def chat(body: ChatRequest, request: Request):
-    has_astm_code = bool(
-        re.search(r"\bD\s*\d{3,5}\b", body.message, flags=re.IGNORECASE)
-    )
-
-    specific_model_question = is_specific_product_or_model_question(body.message)
-    allow_company_reference = is_artinazma_related_question(body.message)
-    is_transform_followup = is_followup_transform_request(body.message)
-    intent_data = detect_question_intent(
-        message=body.message, domain=body.domain or "auto"
-    )
-
-    question_intent = intent_data["intent"]
-    question_intent_label = intent_data["label"]
-    intent_instruction = intent_data["instruction"]
-    local_docs = local_search_knowledge_base(body.message, top_k=12)
-
-    best_score = 0.0
-    related_docs = []
-    search_mode = "unknown"
-
-    if has_astm_code:
-        related_docs = []
-        search_mode = "gpt_astm_direct"
-
-    elif specific_model_question:
-        exact_local_match = context_has_exact_model_match(body.message, local_docs)
-
-        if (
-            exact_local_match
-            and local_docs
-            and float(local_docs[0].get("score", 0) or 0) >= 8
-        ):
-            related_docs = local_docs[:8]
-            search_mode = "local_exact_model"
-        else:
-            related_docs = []
-            search_mode = "no_exact_model_context"
-
-    else:
-        if local_docs and float(local_docs[0].get("score", 0) or 0) >= 10:
-            related_docs = local_docs[:8]
-            search_mode = "local_fast"
-        else:
-            try:
-                related_docs = search_knowledge_base(body.message, top_k=5)
-                search_mode = "ai_vector"
-            except Exception as e:
-                print("AI vector search failed, using local search:", e)
-                related_docs = local_docs[:8]
-                search_mode = "local_fallback"
-
-    if related_docs:
-        try:
-            best_score = float(related_docs[0].get("score", 0) or 0)
-        except Exception:
-            best_score = 0.0
-
-    # برای سوالات عمومی فنی، مقایسه‌ای، انتخاب روش یا عیب‌یابی،
-    # اگر منبع داخلی خیلی مطمئن نیست، اجازه نده منبع نامرتبط جواب را خراب کند.
-    if question_intent in [
-        "technical_general",
-        "equipment_recommendation",
-        "troubleshooting",
-        "lab_analysis",
-    ]:
-        if best_score < 14:
-            related_docs = []
-            best_score = 0.0
-            search_mode = f"{search_mode}+ignored_weak_internal_context"
-
-    resource_links = []
-    resource_images = []
-    artinazma_context = ""
-
-    if allow_company_reference:
-        try:
-            artinazma_resources = find_artinazma_resources(
-                message=body.message,
-                max_results=2,
-            )
-
-            resource_links = artinazma_resources.get("links", [])
-            resource_images = artinazma_resources.get("images", [])
-
-            if resource_links:
-                artinazma_context = """
-نتیجه جست‌وجوی سایت رسمی آرتین آزما:
-این مورد در سایت رسمی آرتین آزما پیدا شده است.
-هنگام پاسخ، کامل و فنی توضیح بده.
-در متن پاسخ، لینک خام ننویس؛ لینک جداگانه توسط سیستم نمایش داده می‌شود.
-اگر مشخصات دقیق محصول در متن منابع داخلی نیست، با دانش فنی معتبر تکمیل کن، اما ادعای ساختگی نکن.
-"""
-
-                for link in resource_links:
-                    artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}"
-                    artinazma_context += f"\nلینک صفحه: {link.get('url', '')}\n"
-
-                search_mode = f"{search_mode}+artinazma_site"
-
-        except Exception as e:
-            print("ArtinAzma resource search failed:", e)
-            resource_links = []
-            resource_images = []
-            artinazma_context = ""
-    else:
-        resource_links = []
-        resource_images = []
-        artinazma_context = ""
-
-    # حالت پاسخ تأییدشده:
-    # برای همه سؤال‌های تخصصی و فنی، وب‌سرچ فعال شود تا مدل جواب حدسی ندهد.
-    verified_answer_intents = [
-        "technical_general",
-        "equipment_recommendation",
-        "troubleshooting",
-        "lab_analysis",
-    ]
-
-    allow_web_search = True
-    
-    if body.response_mode == "brief":
-        allow_web_search = False
-
-    if question_intent in verified_answer_intents:
-        allow_web_search = True
-
-    if specific_model_question or has_astm_code or not related_docs:
-        allow_web_search = True
-
-    # درخواست‌های بازنویسی مثل «تبدیل به جدول»، «خلاصه‌تر کن» و «فنی‌تر توضیح بده»
-    # باید فقط روی پاسخ قبلی کار کنند و نباید دوباره web search بزنند.
-    if is_transform_followup:
-        allow_web_search = False
-        related_docs = []
-        sources = []
-        search_mode = "followup_transform"
-
-    if allow_web_search:
-        search_mode = f"{search_mode}+openai_web"
-
-    context = ""
-
-    if related_docs:
-        context_parts = []
-
-        for doc in related_docs:
-            context_parts.append(f"""
-                منبع داخلی:
-                عنوان: {doc.get('title', '')}
-                فایل: {doc.get('file_name', '')}
-                دسته‌بندی: {doc.get('category', '')}
-                امتیاز ارتباط: {doc.get('score', '')}
-                متن:
-                {doc.get('content', '')}
-                """)
-
-        context = "\n\n".join(context_parts)
-
-    if artinazma_context:
-        context = f"{context}\n\n{artinazma_context}".strip()
-
-    # Inject external context from request (e.g. file analysis from /analyze page)
-    if body.context:
-        context = f"اطلاعات خارجی ارائه‌شده توسط کاربر:\n{body.context}\n\n---\n\n{context}".strip()
-
-    auto_domain = detect_domain(body.message)
-    selected_domain = body.domain or "auto"
-    detected_domain = auto_domain if selected_domain == "auto" else selected_domain
-
-    history = [
-    {"role": item.role, "content": item.content}
-    for item in (body.history or [])[-6:]
-    if item.role in ["user", "assistant"] and item.content
-]
-
-    response_mode = body.response_mode or "auto"
-
-    style_instructions = """
-سبک پاسخ:
-پاسخ باید شبیه ChatGPT Plus باشد: کامل، دقیق، آموزشی، تیتر‌دار، مرتب، با جدول، مثال و جمع‌بندی.
-
-قانون پاسخ تأییدشده:
-برای سؤال‌های تخصصی، فنی، صنعتی، آزمایشگاهی، دستگاهی، استانداردی، محصولی، ماده شیمیایی، کاتالیستی، عیب‌یابی یا مقایسه‌ای:
-- اگر web search فعال است، قبل از پاسخ از منبع معتبر استفاده کن.
-- ادعای قطعی را بدون پشتوانه نساز.
-- اگر چند احتمال وجود دارد، بهترین احتمال را با دلیل فنی توضیح بده.
-- پاسخ را کوتاه و خشک نکن؛ کامل، کاربردی و قابل استفاده برای کارشناس بنویس.
-- برای مقایسه‌ها جدول بده.
-- برای روش‌ها و دستگاه‌ها اصل روش، کاربرد، محدودیت، QC و خطاهای رایج را توضیح بده.
-- برای استانداردها عنوان، دامنه کاربرد، ورودی، خروجی، روش، ارتباط با استانداردهای دیگر و کاربرد صنعتی را توضیح بده.
-- برای مواد و کاتالیست‌ها، کاربرد، مکانیسم، شرایط مصرف، کنترل کیفیت، محدودیت و نکات ایمنی را توضیح بده.
-
-پاسخ فارسی باشد.
-"""
-    if is_transform_followup:
-        context = f"""
-    {context}
-
-قانون بسیار مهم برای درخواست‌های بازنویسی:
-پیام فعلی کاربر یک درخواست بازنویسی، خلاصه‌سازی، فنی‌تر کردن یا تبدیل پاسخ قبلی است.
-- از history و پاسخ قبلی استفاده کن.
-- web search انجام نده.
-- اطلاعات جدید، منبع جدید، لینک، نام سایت یا دامنه اضافه نکن.
-- فقط همان پاسخ قبلی را طبق درخواست کاربر بازنویسی کن.
-
-اگر کاربر خواست «تبدیل به جدول»:
-- فقط یک جدول Markdown معتبر تولید کن.
-- از tab استفاده نکن.
-- از <br> داخل جدول استفاده نکن.
-- داخل سلول جدول خط جدید نگذار.
-- نام سایت، لینک، دامنه یا منبع داخل جدول ننویس.
-- هر ردیف باید دقیقاً تعداد ستون‌های برابر داشته باشد.
-- متن هر سلول کوتاه، تمیز و قابل نمایش در UI باشد.
-""".strip()
-# ترکیب context دانش + دستورالعمل سبک
-    if context:
-        context = f"{context}\n\n---\n\n{style_instructions}"
-    else:
-        context = style_instructions
-    # Build cross-session customer context if a logged-in customer is chatting
-    _cust_ctx = ""
-    if body.customer_id:
-        try:
-            _cust_ctx = get_customer_cross_session_context(body.customer_id)
-            # Also normalise user_id so memories are linked to the customer
-            if not body.user_id or body.user_id == "anonymous":
-                body.user_id = f"customer_{body.customer_id}"
-        except Exception as _e:
-            print("customer_context load failed:", _e)
+    p = _build_chat_pipeline(body)
 
     try:
         answer = ask_expert_assistant(
             message=body.message,
-            context=context,
-            history=history,
-            domain=detected_domain,
-            allow_web_search=allow_web_search,
-            customer_context=_cust_ctx,
+            context=p["context"],
+            history=p["history"],
+            domain=p["detected_domain"],
+            allow_web_search=p["allow_web_search"],
+            customer_context=p["customer_context"],
         )
-
-        # answer = format_answer_for_ui(answer)
-
         answer_mode = "ai"
-
     except Exception as e:
         import traceback; traceback.print_exc()
-        print("AI answer failed, using local answer:", type(e).__name__, e)
-
-        answer = build_local_answer(body.message, related_docs)
-        # answer = format_answer_for_ui(answer)
-
+        logger.warning("AI answer failed, using local answer: %s %s", type(e).__name__, e)
+        answer = build_local_answer(body.message, p["related_docs"])
         answer_mode = "local"
-    # if not allow_company_reference:
-    #  answer = remove_company_mentions_if_not_allowed(answer)
-    sources = [
-        {
-            "title": doc.get("title", ""),
-            "file_name": doc.get("file_name", ""),
-            "category": doc.get("category", ""),
-            "score": float(doc.get("score", 0) or 0),
-        }
-        for doc in related_docs
-    ]
 
     question_id = save_expert_question(
         question=body.message,
         answer=answer,
-        sources=sources,
-        detected_domain=detected_domain,
+        sources=p["sources"],
+        detected_domain=p["detected_domain"],
     )
 
     memory_id = None
-
     if body.user_id and body.user_id != "anonymous":
         memory_id = save_user_memory(
             user_id=body.user_id,
             question=body.message,
             answer=answer,
-            detected_domain=detected_domain,
+            detected_domain=p["detected_domain"],
             memory_type="chat",
             metadata={
                 "question_id": question_id,
-                "sources": sources,
-                "search_mode": search_mode,
-                "web_search_used": allow_web_search,
+                "sources": p["sources"],
+                "search_mode": p["search_mode"],
+                "web_search_used": p["allow_web_search"],
                 "answer_mode": answer_mode,
-                "resource_links": resource_links,
-                "resource_images": resource_images,
-                "question_intent": question_intent,
-                "question_intent_label": question_intent_label,
+                "resource_links": p["resource_links"],
+                "resource_images": p["resource_images"],
+                "question_intent": p["question_intent"],
+                "question_intent_label": p["question_intent_label"],
             },
         )
 
     return {
         "question_id": question_id,
         "memory_id": memory_id,
-        "detected_domain": detected_domain,
+        "detected_domain": p["detected_domain"],
         "answer": answer,
-        "sources": sources,
-        "resource_links": resource_links if allow_company_reference else [],
-        "resource_images": resource_images if allow_company_reference else [],
-        "search_mode": search_mode,
-        "web_search_used": allow_web_search,
-        "question_intent": question_intent,
-        "question_intent_label": question_intent_label,
-        "response_mode": response_mode,
+        "sources": p["sources"],
+        "resource_links": p["resource_links"] if p["allow_company_reference"] else [],
+        "resource_images": p["resource_images"] if p["allow_company_reference"] else [],
+        "search_mode": p["search_mode"],
+        "web_search_used": p["allow_web_search"],
+        "question_intent": p["question_intent"],
+        "question_intent_label": p["question_intent_label"],
+        "response_mode": p["response_mode"],
         "answer_mode": answer_mode,
     }
 
@@ -989,125 +1015,21 @@ def chat_stream(body: ChatRequest, request: Request):
     """همان pipeline چت اما با پاسخ streaming (SSE)."""
     import json as _json_local
 
-    # ── همان pipeline پیش‌پردازش /chat ──────────────────────────────
-    has_astm_code = bool(re.search(r"\bD\s*\d{3,5}\b", body.message, flags=re.IGNORECASE))
-    specific_model_question = is_specific_product_or_model_question(body.message)
-    allow_company_reference = is_artinazma_related_question(body.message)
-    is_transform_followup = is_followup_transform_request(body.message)
-    intent_data = detect_question_intent(message=body.message, domain=body.domain or "auto")
-    question_intent = intent_data["intent"]
-    question_intent_label = intent_data["label"]
-    local_docs = local_search_knowledge_base(body.message, top_k=12)
-
-    best_score = 0.0
-    related_docs = []
-    search_mode = "unknown"
-
-    if has_astm_code:
-        related_docs = []
-        search_mode = "gpt_astm_direct"
-    elif specific_model_question:
-        exact_local_match = context_has_exact_model_match(body.message, local_docs)
-        if exact_local_match and local_docs and float(local_docs[0].get("score", 0) or 0) >= 8:
-            related_docs = local_docs[:8]
-            search_mode = "local_exact_model"
-        else:
-            related_docs = []
-            search_mode = "no_exact_model_context"
-    else:
-        if local_docs and float(local_docs[0].get("score", 0) or 0) >= 10:
-            related_docs = local_docs[:8]
-            search_mode = "local_fast"
-        else:
-            try:
-                related_docs = search_knowledge_base(body.message, top_k=5)
-                search_mode = "ai_vector"
-            except Exception:
-                related_docs = local_docs[:8]
-                search_mode = "local_fallback"
-
-    if related_docs:
-        try:
-            best_score = float(related_docs[0].get("score", 0) or 0)
-        except Exception:
-            best_score = 0.0
-
-    if question_intent in ["technical_general", "equipment_recommendation", "troubleshooting", "lab_analysis"]:
-        if best_score < 14:
-            related_docs = []
-            best_score = 0.0
-
-    resource_links = []
-    resource_images = []
-    artinazma_context = ""
-
-    if allow_company_reference:
-        try:
-            artinazma_resources = find_artinazma_resources(message=body.message, max_results=2)
-            resource_links = artinazma_resources.get("links", [])
-            resource_images = artinazma_resources.get("images", [])
-            if resource_links:
-                artinazma_context = "نتیجه جست‌وجوی سایت رسمی آرتین آزما:\n"
-                for link in resource_links:
-                    artinazma_context += f"\nعنوان صفحه: {link.get('title', '')}\nلینک صفحه: {link.get('url', '')}\n"
-        except Exception:
-            pass
-
-    allow_web_search = True
-    if body.response_mode == "brief":
-        allow_web_search = False
-    if question_intent in ["technical_general", "equipment_recommendation", "troubleshooting", "lab_analysis"]:
-        allow_web_search = True
-    if specific_model_question or has_astm_code or not related_docs:
-        allow_web_search = True
-    if is_transform_followup:
-        allow_web_search = False
-        related_docs = []
-        search_mode = "followup_transform"
-
-    context = ""
-    if related_docs:
-        parts = []
-        for doc in related_docs:
-            parts.append(f"منبع داخلی:\nعنوان: {doc.get('title','')}\nمتن:\n{doc.get('content','')}")
-        context = "\n\n".join(parts)
-    if artinazma_context:
-        context = f"{context}\n\n{artinazma_context}".strip()
-
-    # Inject external context from request (e.g. file analysis from /analyze page)
-    if body.context:
-        context = f"اطلاعات خارجی ارائه‌شده توسط کاربر:\n{body.context}\n\n---\n\n{context}".strip()
-
-    auto_domain = detect_domain(body.message)
-    selected_domain = body.domain or "auto"
-    detected_domain = auto_domain if selected_domain == "auto" else selected_domain
-    history = [
-        {"role": item.role, "content": item.content}
-        for item in (body.history or [])[-6:]
-        if item.role in ["user", "assistant"] and item.content
-    ]
-
-    sources = [
-        {"title": doc.get("title",""), "file_name": doc.get("file_name",""),
-         "category": doc.get("category",""), "score": float(doc.get("score",0) or 0)}
-        for doc in related_docs
-    ]
-
-    style_instructions = "پاسخ فارسی، تخصصی، کامل و آموزشی باشد."
-    if context:
-        context = f"{context}\n\n---\n\n{style_instructions}"
-    else:
-        context = style_instructions
-
-    # Cross-session customer context
-    _cust_ctx_stream = ""
-    if body.customer_id:
-        try:
-            _cust_ctx_stream = get_customer_cross_session_context(body.customer_id)
-            if not body.user_id or body.user_id == "anonymous":
-                body.user_id = f"customer_{body.customer_id}"
-        except Exception as _e:
-            print("customer_context (stream) load failed:", _e)
+    # ── shared pre-processing pipeline ───────────────────────────────
+    p = _build_chat_pipeline(body)
+    detected_domain = p["detected_domain"]
+    allow_company_reference = p["allow_company_reference"]
+    is_transform_followup = p["is_transform_followup"]
+    search_mode = p["search_mode"]
+    resource_links = p["resource_links"]
+    resource_images = p["resource_images"]
+    allow_web_search = p["allow_web_search"]
+    context = p["context"]
+    history = p["history"]
+    sources = p["sources"]
+    question_intent = p["question_intent"]
+    question_intent_label = p["question_intent_label"]
+    _cust_ctx_stream = p["customer_context"]
 
     # ── Cache check: only for anonymous users with no history/context ──────────
     _use_cache = (
@@ -1212,22 +1134,34 @@ def chat_stream(body: ChatRequest, request: Request):
 
 
 @app.post("/analyze-file")
+@limiter.limit("10/minute")
 def analyze_file(
+    request: Request,
     file: UploadFile = File(...),
     test_type: str = Form("general"),
     user_note: str = Form(""),
 ):
+    # ── File validation ──────────────────────────────────────────────
+    safe_filename = make_safe_filename(file.filename or "upload")
+    ext = safe_filename.lower().rsplit(".", 1)[-1]
+    if ext not in _ALLOWED_FILE_EXTS:
+        raise HTTPException(
+            status_code=415,
+            detail=f"فرمت .{ext} پشتیبانی نمی‌شود. فرمت‌های مجاز: {', '.join(sorted(_ALLOWED_FILE_EXTS))}",
+        )
+
+    content = file.file.read()
+    if len(content) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="حجم فایل بیش از ۲۰ مگابایت است.")
+
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
 
-    safe_filename = make_safe_filename(file.filename)
     file_path = os.path.join(upload_dir, safe_filename)
     file_url = f"/uploads/{safe_filename}"
 
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    ext = safe_filename.lower().split(".")[-1]
+        buffer.write(content)
 
     test_type_labels = {
         "general": "گزارش عمومی آزمایشگاهی",
@@ -1426,7 +1360,7 @@ async def upload_knowledge_file(
 
 
 @app.post("/knowledge/sync-google-drive")
-def knowledge_sync_google_drive(request: GoogleDriveSyncRequest):
+def knowledge_sync_google_drive(request: GoogleDriveSyncRequest, _=Depends(require_admin)):
     folder_id = (
         request.root_folder_id.strip()
         or os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
@@ -1532,7 +1466,7 @@ def delete_backup(file_name: str, _=Depends(require_admin)):
     safe_name = Path(file_name).name
     backup_path = BACKUP_DIR / safe_name
     if not backup_path.exists():
-        return {"success": False, "message": "فایل پیدا نشد."}
+        raise HTTPException(status_code=404, detail="فایل پیدا نشد.")
     backup_path.unlink()
     return {"success": True}
 
@@ -1647,11 +1581,11 @@ def knowledge_audit_log_clear(_=Depends(require_admin)):
 
 
 @app.delete("/customers/{customer_id}/chat-sessions")
-def customer_chat_sessions_delete_all(customer_id: int):
+def customer_chat_sessions_delete_all(customer_id: int, _=Depends(require_admin)):
     customer = get_customer_by_id(customer_id)
 
     if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد.", "deleted_sessions": 0}
+        raise HTTPException(status_code=404, detail="مشتری پیدا نشد.")
 
     deleted_sessions = delete_all_customer_chat_sessions(customer_id)
 
@@ -1757,33 +1691,18 @@ def question_detail(question_id: int, _=Depends(require_admin)):
     return question
 
 
-@app.patch("/questions/{question_id}/review")
-def question_review(question_id: int, request: QuestionReviewRequest):
-    updated = update_question_review(
-        question_id=question_id,
-        expert_status=request.expert_status,
-        expert_note=request.expert_note,
-        reviewed_answer=request.reviewed_answer,
-    )
-
-    if not updated:
-        return {"success": False, "message": "سوال موردنظر پیدا نشد."}
-
-    return {"success": True, "message": "بررسی کارشناس با موفقیت ذخیره شد."}
-
-
 @app.post("/questions/{question_id}/add-to-knowledge")
-def question_add_to_knowledge(question_id: int):
+def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
     question = get_question_by_id(question_id)
 
     if not question:
-        return {"success": False, "message": "سوال موردنظر پیدا نشد."}
+        raise HTTPException(status_code=404, detail="سوال موردنظر پیدا نشد.")
 
     if question["expert_status"] != "approved":
-        return {
-            "success": False,
-            "message": "فقط سوالات تاییدشده توسط کارشناس می‌توانند به بانک دانش اضافه شوند.",
-        }
+        raise HTTPException(
+            status_code=422,
+            detail="فقط سوالات تاییدشده توسط کارشناس می‌توانند به بانک دانش اضافه شوند.",
+        )
 
     final_answer = question["reviewed_answer"] or question["answer"]
 
@@ -1830,32 +1749,39 @@ async def transcribe_audio(file: UploadFile = File(...)):
         )
         return {"transcript": transcript.text}
     except Exception as e:
-        print("Transcription error:", e)
+        logger.error("Transcription error: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/analyze-image")
+@limiter.limit("10/minute")
 def analyze_image(
+    request: Request,
     file: UploadFile = File(...),
     image_type: str = Form("general"),
     user_note: str = Form(""),
 ):
+    # ── File validation ──────────────────────────────────────────────
+    safe_filename = make_safe_filename(file.filename or "upload")
+    ext = safe_filename.lower().rsplit(".", 1)[-1]
+    if ext not in _ALLOWED_IMAGE_EXTS:
+        raise HTTPException(
+            status_code=415,
+            detail=f"فرمت .{ext} پشتیبانی نمی‌شود. فرمت‌های مجاز: JPG، PNG، WEBP",
+        )
+
+    content = file.file.read()
+    if len(content) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="حجم فایل بیش از ۲۰ مگابایت است.")
+
     try:
         upload_dir = "uploads"
         os.makedirs(upload_dir, exist_ok=True)
 
-        safe_filename = make_safe_filename(file.filename)
         file_path = os.path.join(upload_dir, safe_filename)
         file_url = f"/uploads/{safe_filename}"
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        ext = safe_filename.lower().split(".")[-1]
-
-        if ext not in ["jpg", "jpeg", "png", "webp"]:
-            return {
-                "error": f"فرمت تصویر .{ext} فعلاً پشتیبانی نمی‌شود. لطفاً تصویر را به JPG، PNG یا WEBP تبدیل کنید."
-            }
+            buffer.write(content)
 
         image_type_labels = {
             "general": "تصویر عمومی",
@@ -1945,7 +1871,7 @@ def customer_requests(limit: int = 100, _=Depends(require_admin)):
 
 
 @app.patch("/customer-requests/{request_id}/status")
-def customer_request_status(request_id: int, request: CustomerRequestStatusUpdate):
+def customer_request_status(request_id: int, request: CustomerRequestStatusUpdate, _=Depends(require_admin)):
     updated = update_customer_request_status(
         request_id=request_id, status=request.status
     )

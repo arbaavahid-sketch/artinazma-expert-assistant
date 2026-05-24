@@ -67,8 +67,13 @@ export default function CustomerRegisterPage() {
       }
 
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-      document.cookie =
-        "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
+
+      // Set secure httpOnly session cookie via server-side API
+      await fetch("/api/customer-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: data.customer.id }),
+      });
 
       router.push("/assistant");
     } catch {
@@ -248,13 +253,4 @@ export default function CustomerRegisterPage() {
 
                 <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
                   <Sparkles size={18} className="text-blue-700" />
-                  پیگیری بهتر درخواست‌های فنی
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+                  پیگیری بهتر د

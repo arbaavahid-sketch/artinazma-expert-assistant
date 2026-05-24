@@ -1,13 +1,28 @@
+# ==========================================
+# ArtinAzma Expert Assistant — .gitignore
+# ==========================================
+
 # --------------------
 # Backend / Python
 # --------------------
 backend/venv/
 backend/__pycache__/
+backend/*.pyc
 backend/.env
+backend/.env.*
+
+# Runtime data & uploads (not source code)
 backend/uploads/
 backend/storage/
 backend/knowledge_files/
-backend/*.pyc
+backend/google_drive_files/
+
+# Service account credentials
+backend/google-service-account.json
+*.service-account.json
+
+# Qdrant local data
+backend/qdrant_data/
 
 # --------------------
 # Frontend / Next.js
@@ -18,6 +33,7 @@ frontend/out/
 frontend/build/
 frontend/.env.local
 frontend/.env
+frontend/.env.*
 frontend/.vercel/
 frontend/next-env.d.ts
 frontend/*.tsbuildinfo
@@ -28,6 +44,15 @@ frontend/*.tsbuildinfo
 .env
 .env.*
 *.env
+.env.local
+.env.production
+.env.*.local
+
+# Exception: example/template files SHOULD be committed
+!.env.example
+!.env.local.example
+!**/.env.example
+!**/.env.local.example
 
 # --------------------
 # Logs
@@ -39,37 +64,8 @@ yarn-error.log*
 *.log
 
 # --------------------
-# System
+# System & Editor
 # --------------------
 .DS_Store
 Thumbs.db
-
-# --------------------
-# Certificates / Secrets
-# --------------------
-*.pem
-*.key
-backend/knowledge_files/
-backend/storage/
-backend/uploads/
-.env
-.env.local
-.env.production
-.env.*.local
-
-backend/.env
-frontend/.env.local
-
-backend/uploads/
-backend/storage/
-backend/knowledge_files/
-backend/vector_store.json
-backend/__pycache__/
-backend/venv/
-
-frontend/.next/
-frontend/node_modules/
-backend/google-service-account.json
-*.service-account.json
-backend/google_drive_files/
-node_modules
+.idea/

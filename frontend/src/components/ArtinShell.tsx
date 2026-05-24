@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import {
-  ChartBar,
+  BarChart3,
   CircleUserRound,
   Database,
   FlaskConical,
@@ -65,7 +65,7 @@ const adminItems: SidebarItem[] = [
   { href: "/admin/questions", label: "سوالات کاربران", Icon: MessagesSquare },
   { href: "/admin/requests", label: "درخواست‌ها", Icon: Inbox },
   { href: "/admin/customers", label: "مشتریان", Icon: Users },
-  { href: "/admin/dashboard", label: "داشبورد", Icon: ChartBar },
+  { href: "/admin/dashboard", label: "داشبورد", Icon: BarChart3 },
   { href: "/admin/backup", label: "پشتیبان‌گیری", Icon: HardDrive },
   { href: "/admin/settings", label: "تنظیمات سیستم", Icon: Settings },
 ];
@@ -176,9 +176,10 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     } catch {}
   }
 
-  function logoutCustomer() {
+  async function logoutCustomer() {
     localStorage.removeItem("artin_customer");
-    document.cookie = "artin_customer_auth=; path=/; max-age=0";
+    // Clear secure httpOnly session cookie via server-side API
+    await fetch("/api/customer-session", { method: "DELETE" });
 
     setCustomer(null);
     setCustomerSessions([]);
@@ -649,9 +650,4 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
           >
             {children}
-          </section>
-        </div>
-      </div>
-    </main>
-  );
-}
+  

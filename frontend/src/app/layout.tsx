@@ -3,6 +3,7 @@ import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -51,8 +52,4 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}` }} />
       </head>
       <body className={vazirmatn.variable}>
-        <ArtinShell>{children}</ArtinShell>
-      </body>
-    </html>
-  );
-}
+        <ErrorBoundary>

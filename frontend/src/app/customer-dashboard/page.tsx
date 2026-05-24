@@ -310,9 +310,10 @@ ${msgHtml}
     }
   }
 
-  function logout() {
+  async function logout() {
     localStorage.removeItem("artin_customer");
-    document.cookie = "artin_customer_auth=; path=/; max-age=0";
+    // Clear both secure httpOnly session cookie and plain auth marker
+    await fetch("/api/customer-session", { method: "DELETE" });
     window.location.href = "/customer-login";
   }
 
@@ -789,10 +790,4 @@ ${msgHtml}
                   شروع گفتگو با آرتین
                 </Link>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+            
