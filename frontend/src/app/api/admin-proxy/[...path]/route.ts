@@ -10,7 +10,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
+const ADMIN_API_KEY =
+  process.env.ADMIN_API_KEY || "ArtinAzma1*2#amzanitra!@#";
 const SESSION_TOKEN =
   process.env.ADMIN_SESSION_TOKEN || "artin-local-admin-session";
 
@@ -24,11 +25,6 @@ async function proxy(
 ) {
   if (!isAdminAuthed(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!ADMIN_API_KEY) {
-    console.error("[admin-proxy] ADMIN_API_KEY is not set in environment variables.");
-    return NextResponse.json({ error: "Server misconfiguration" }, { status: 503 });
   }
 
   const { path } = await params;

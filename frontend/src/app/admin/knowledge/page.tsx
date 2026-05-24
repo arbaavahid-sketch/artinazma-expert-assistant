@@ -1067,17 +1067,6 @@ export default function KnowledgePage() {
                     </thead>
 
                     <tbody>
-                      {filteredFiles.length === 0 && (
-                        <tr>
-                          <td colSpan={4} className="py-12 text-center text-slate-400">
-                            <div className="text-4xl mb-2">📂</div>
-                            <div className="font-bold">هیچ فایلی پیدا نشد</div>
-                            <div className="text-sm mt-1">
-                              {searchText ? "جستجوی خود را تغییر دهید یا فیلتر را پاک کنید." : "ابتدا یک فایل دانش آپلود کنید."}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
                       {filteredFiles.map((item) => {
                         const categories = item.categories?.length
                           ? item.categories

@@ -52,13 +52,8 @@ export default function CustomerLoginPage() {
       }
 
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-
-      // Set secure httpOnly session cookie via server-side API
-      await fetch("/api/customer-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: data.customer.id }),
-      });
+      document.cookie =
+        "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
 
       const params = new URLSearchParams(window.location.search);
       const nextPath = params.get("next") || "/assistant";

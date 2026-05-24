@@ -4,16 +4,9 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const password = body.password || "";
 
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  const sessionToken = process.env.ADMIN_SESSION_TOKEN || "artin-local-admin-session";
-
-  if (!adminPassword) {
-    console.error("[admin-login] ADMIN_PASSWORD is not set in environment variables.");
-    return NextResponse.json(
-      { success: false, message: "پیکربندی سرور ناقص است. با مدیر سیستم تماس بگیرید." },
-      { status: 503 }
-    );
-  }
+  const adminPassword = process.env.ADMIN_PASSWORD || "ArtinAzma1*2#amzanitra!@#";
+  const sessionToken =
+    process.env.ADMIN_SESSION_TOKEN || "artin-local-admin-session";
 
   if (password !== adminPassword) {
     return NextResponse.json(

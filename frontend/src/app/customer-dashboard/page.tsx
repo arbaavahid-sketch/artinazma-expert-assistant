@@ -310,10 +310,9 @@ ${msgHtml}
     }
   }
 
-  async function logout() {
+  function logout() {
     localStorage.removeItem("artin_customer");
-    // Clear both secure httpOnly session cookie and plain auth marker
-    await fetch("/api/customer-session", { method: "DELETE" });
+    document.cookie = "artin_customer_auth=; path=/; max-age=0";
     window.location.href = "/customer-login";
   }
 

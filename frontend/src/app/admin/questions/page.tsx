@@ -495,11 +495,7 @@ export default function QuestionsPage() {
             </div>
           ) : (
             <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
-              <div className="text-4xl mb-2">🔍</div>
-              <div className="font-bold text-slate-700">سوالی پیدا نشد</div>
-              <div className="text-sm mt-1">
-                فیلتر یا جستجوی خود را تغییر دهید.
-              </div>
+              سوالی با این فیلتر یا جستجو پیدا نشد.
             </div>
           )}
         </div>
