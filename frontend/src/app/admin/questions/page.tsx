@@ -19,6 +19,8 @@ import {
   AlertCircle,
   XCircle,
   Loader2,
+  Square,
+  CheckSquare2,
 } from "lucide-react";
 
 type QuestionItem = {
@@ -105,6 +107,8 @@ export default function QuestionsPage() {
   const [reviewingId, setReviewingId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 20;
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   function downloadCsv() {
     const url = adminUrl("/admin/questions/export-csv");
@@ -206,9 +210,66 @@ export default function QuestionsPage() {
     }
   }
 
+  function toggleSelect(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (pagedQuestions.every((q) => selectedIds.has(q.id))) {
+      // deselect all on page
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        pagedQuestions.forEach((q) => next.delete(q.id));
+        return next;
+      });
+    } else {
+      // select all on page
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        pagedQuestions.forEach((q) => next.add(q.id));
+        return next;
+      });
+    }
+  }
+
+  async function bulkReview(status: string) {
+    if (selectedIds.size === 0) return;
+    setBulkProcessing(true);
+    const ids = Array.from(selectedIds);
+    let successCount = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(adminUrl(`/questions/${id}/review`), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expert_status: status, expert_notes: "" }),
+        });
+        if (res.ok) {
+          successCount++;
+          setQuestions((prev) =>
+            prev.map((q) => (q.id === id ? { ...q, expert_status: status } : q))
+          );
+        }
+      } catch {
+        // continue
+      }
+    }
+    setBulkProcessing(false);
+    setSelectedIds(new Set());
+    const label =
+      status === "approved" ? "تایید شد" : status === "needs_edit" ? "نیازمند اصلاح ثبت شد" : "رد شد";
+    toast(`${successCount} سوال — ${label}`, status === "approved" ? "success" : status === "rejected" ? "error" : "warning");
+  }
+
   // Reset to page 1 whenever filter/search changes
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedIds(new Set());
   }, [searchText, statusFilter, domainFilter, ratingFilter, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filteredQuestions.length / PAGE_SIZE));
@@ -460,10 +521,64 @@ export default function QuestionsPage() {
 
         {/* Questions list */}
         <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="text-sm font-bold text-slate-500">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            {/* Select-all checkbox */}
+            <button
+              onClick={toggleSelectAll}
+              className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-purple-700 transition"
+              title={pagedQuestions.every((q) => selectedIds.has(q.id)) ? "لغو انتخاب همه" : "انتخاب همه صفحه"}
+            >
+              {pagedQuestions.length > 0 && pagedQuestions.every((q) => selectedIds.has(q.id)) ? (
+                <CheckSquare2 size={18} className="text-purple-600" />
+              ) : (
+                <Square size={18} />
+              )}
               {filteredQuestions.length} سوال
-            </div>
+            </button>
+
+            {/* Bulk action toolbar */}
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2">
+                <span className="text-xs font-black text-purple-700">
+                  {selectedIds.size} انتخاب شده
+                </span>
+                <span className="text-purple-200">|</span>
+                {bulkProcessing ? (
+                  <Loader2 size={16} className="animate-spin text-purple-500" />
+                ) : (
+                  <>
+                    <button
+                      onClick={() => bulkReview("approved")}
+                      className="flex items-center gap-1 rounded-xl bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200"
+                    >
+                      <CheckCircle2 size={13} />
+                      تایید
+                    </button>
+                    <button
+                      onClick={() => bulkReview("needs_edit")}
+                      className="flex items-center gap-1 rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-200"
+                    >
+                      <AlertCircle size={13} />
+                      اصلاح
+                    </button>
+                    <button
+                      onClick={() => bulkReview("rejected")}
+                      className="flex items-center gap-1 rounded-xl bg-red-100 px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-200"
+                    >
+                      <XCircle size={13} />
+                      رد
+                    </button>
+                    <button
+                      onClick={() => setSelectedIds(new Set())}
+                      className="text-slate-400 hover:text-slate-600"
+                      title="لغو انتخاب"
+                    >
+                      <X size={15} />
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -476,9 +591,24 @@ export default function QuestionsPage() {
                 <Link
                   key={item.id}
                   href={`/admin/questions/${item.id}`}
-                  className="group block rounded-[28px] border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm"
+                  className={`group block rounded-[28px] border p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm ${
+                    selectedIds.has(item.id)
+                      ? "border-purple-300 bg-purple-50"
+                      : "border-slate-200 bg-slate-50"
+                  }`}
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    {/* Row checkbox */}
+                    <div
+                      className="shrink-0 self-start pt-1 lg:self-center"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
+                    >
+                      {selectedIds.has(item.id) ? (
+                        <CheckSquare2 size={18} className="text-purple-600" />
+                      ) : (
+                        <Square size={18} className="text-slate-300 group-hover:text-slate-400" />
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="mb-3 flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-700">
@@ -536,114 +666,4 @@ export default function QuestionsPage() {
                       ) : (
                         <div className="flex gap-1.5" onClick={(e) => e.preventDefault()}>
                           <button
-                            onClick={(e) => quickReview(e, item.id, "approved")}
-                            title="تایید"
-                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                              item.expert_status === "approved"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-white text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200"
-                            }`}
-                          >
-                            <CheckCircle2 size={13} />
-                            تایید
-                          </button>
-                          <button
-                            onClick={(e) => quickReview(e, item.id, "needs_edit")}
-                            title="نیازمند اصلاح"
-                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                              item.expert_status === "needs_edit"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-700 border border-slate-200"
-                            }`}
-                          >
-                            <AlertCircle size={13} />
-                            اصلاح
-                          </button>
-                          <button
-                            onClick={(e) => quickReview(e, item.id, "rejected")}
-                            title="رد"
-                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                              item.expert_status === "rejected"
-                                ? "bg-red-100 text-red-600"
-                                : "bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200"
-                            }`}
-                          >
-                            <XCircle size={13} />
-                            رد
-                          </button>
-                        </div>
-                      )}
-                      <span className="text-xs text-purple-600 group-hover:underline">مشاهده جزئیات ←</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
-              سوالی با این فیلتر یا جستجو پیدا نشد.
-            </div>
-          )}
-
-          {/* Pagination */}
-          {!loading && filteredQuestions.length > PAGE_SIZE && (
-            <div className="mt-6 flex items-center justify-center gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                ›
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(
-                  (p) =>
-                    p === 1 ||
-                    p === totalPages ||
-                    Math.abs(p - currentPage) <= 2,
-                )
-                .reduce<(number | "…")[]>((acc, p, idx, arr) => {
-                  if (idx > 0 && p - (arr[idx - 1] as number) > 1)
-                    acc.push("…");
-                  acc.push(p);
-                  return acc;
-                }, [])
-                .map((p, idx) =>
-                  p === "…" ? (
-                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-400">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setCurrentPage(p as number)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-bold shadow-sm transition ${
-                        currentPage === p
-                          ? "border-purple-300 bg-purple-600 text-white"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-purple-50 hover:text-purple-700"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                ‹
-              </button>
-
-              <span className="mr-2 text-sm text-slate-500">
-                صفحه {currentPage} از {totalPages}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
+             

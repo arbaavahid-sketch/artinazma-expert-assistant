@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, adminUrl } from "@/lib/api";
-import { useConfirm } from "@/components/ConfirmDialog";
 import {
   AlertCircle,
   CheckCircle2,
@@ -111,7 +110,6 @@ export default function KnowledgePage() {
   );
   const [driveMaxFiles, setDriveMaxFiles] = useState(20);
   const [forceDriveResync, setForceDriveResync] = useState(false);
-  const { confirm } = useConfirm();
   const [knowledgeResult, setKnowledgeResult] = useState("");
   const [knowledgeResultType, setKnowledgeResultType] = useState<
     "success" | "error" | ""
@@ -202,7 +200,7 @@ export default function KnowledgePage() {
   }
 
   async function clearAuditLog() {
-    if (!await confirm({ message: "آیا مطمئنید که می‌خواهید همه لاگ‌ها را پاک کنید؟", variant: "warning", confirmLabel: "پاک کردن", title: "پاک کردن لاگ‌ها" })) return;
+    if (!window.confirm("آیا مطمئنید که می‌خواهید همه لاگ‌ها را پاک کنید؟")) return;
     await fetch(adminUrl("/knowledge/audit-log"), { method: "DELETE" });
     setAuditLog([]);
   }
@@ -373,7 +371,11 @@ export default function KnowledgePage() {
     }
   }
   async function deleteKnowledgeFile(fileName: string) {
-    if (!await confirm({ message: `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`, variant: "danger", confirmLabel: "حذف", title: "حذف فایل دانش" })) return;
+    const confirmed = window.confirm(
+      `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`,
+    );
+
+    if (!confirmed) return;
 
     setDeletingFile(fileName);
     setKnowledgeResult("");
@@ -742,26 +744,9 @@ export default function KnowledgePage() {
               />
 
               {knowledgeFile && (
-                <div className="mt-3 rounded-2xl border border-purple-100 bg-purple-50 p-4 text-sm leading-7">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-bold text-slate-800">{knowledgeFile.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {(knowledgeFile.size / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
-                    <div className="shrink-0 rounded-xl bg-purple-100 px-3 py-1 text-center">
-                      <p className="text-xs font-bold text-purple-700">تخمین chunk</p>
-                      <p className="text-lg font-black text-purple-800">
-                        {Math.max(1, Math.ceil(
-                          Math.max(0, knowledgeFile.size - 200) / (1200 - 200)
-                        ))}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-[11px] text-purple-600">
-                    * بر اساس اندازه فایل — تعداد واقعی پس از متن‌کشی تعیین می‌شود
-                  </p>
+                <div className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+                  فایل انتخاب‌شده:{" "}
+                  <span className="font-bold">{knowledgeFile.name}</span>
                 </div>
               )}
 

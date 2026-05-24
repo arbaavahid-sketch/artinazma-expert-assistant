@@ -1108,7 +1108,15 @@ def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]
             c.is_blocked,
             COUNT(DISTINCT cs.id) AS session_count,
             COUNT(cm.id) AS message_count,
-            MAX(cm.created_at) AS last_active
+            MAX(cm.created_at) AS last_active,
+            (
+                SELECT cm2.content
+                FROM chat_messages cm2
+                INNER JOIN chat_sessions cs2 ON cm2.session_id = cs2.id
+                WHERE cs2.customer_id = c.id
+                ORDER BY cm2.id DESC
+                LIMIT 1
+            ) AS last_message
         FROM customers c
         LEFT JOIN chat_sessions cs ON cs.customer_id = c.id
         LEFT JOIN chat_messages cm ON cm.session_id = cs.id
@@ -1135,6 +1143,7 @@ def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]
                 "message_count": r["message_count"],
                 "last_active": r["last_active"] or None,
                 "is_blocked": bool(r["is_blocked"]) if "is_blocked" in r.keys() else False,
+                "last_message_preview": (r["last_message"][:100] + "…" if r["last_message"] and len(r["last_message"]) > 100 else r["last_message"]) if r["last_message"] else None,
             }
             for r in rows
         ],
@@ -1624,20 +1633,4 @@ def get_feedback_stats() -> Dict[str, Any]:
                 SUM(CASE WHEN user_rating = 'up' THEN 1 ELSE 0 END) AS up_count,
                 SUM(CASE WHEN user_rating = 'down' THEN 1 ELSE 0 END) AS down_count,
                 SUM(CASE WHEN user_rating IS NULL THEN 1 ELSE 0 END) AS unrated
-            FROM expert_questions
-            """
-        ).fetchone()
-        total = rows["total"] or 0
-        up = rows["up_count"] or 0
-        down = rows["down_count"] or 0
-        rated = up + down
-        return {
-            "total_questions": total,
-            "rated": rated,
-            "up": up,
-            "down": down,
-            "unrated": rows["unrated"] or 0,
-            "satisfaction_pct": round(up / rated * 100, 1) if rated > 0 else None,
-        }
-    finally:
-        conn.close()
+            FROM expert_quest

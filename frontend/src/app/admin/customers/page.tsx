@@ -29,6 +29,7 @@ type Customer = {
   message_count: number;
   last_active?: string | null;
   is_blocked?: boolean;
+  last_message_preview?: string | null;
 };
 
 function formatDate(value?: string) {
@@ -256,6 +257,11 @@ export default function AdminCustomersPage() {
                             </>
                           )}
                         </div>
+                        {c.last_message_preview && (
+                          <p className="mt-1 line-clamp-1 text-xs text-slate-400 italic">
+                            {c.last_message_preview}
+                          </p>
+                        )}
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-slate-500">
                         <div className="flex items-center gap-2">
@@ -562,15 +568,4 @@ export default function AdminCustomersPage() {
                 </button>
                 <button
                   onClick={() => setNotifyModal(false)}
-                  className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
-                >
-                  انصراف
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
+           
