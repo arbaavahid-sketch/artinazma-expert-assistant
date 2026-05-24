@@ -103,8 +103,6 @@ export default function QuestionsPage() {
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [reviewingId, setReviewingId] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 20;
 
   function downloadCsv() {
     const url = adminUrl("/admin/questions/export-csv");
@@ -205,17 +203,6 @@ export default function QuestionsPage() {
       setReviewingId(null);
     }
   }
-
-  // Reset to page 1 whenever filter/search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchText, statusFilter, domainFilter, ratingFilter, dateFrom, dateTo]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredQuestions.length / PAGE_SIZE));
-  const pagedQuestions = filteredQuestions.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
 
   const pendingCount = questions.filter(
     (item) => !item.expert_status || item.expert_status === "pending",
@@ -472,7 +459,7 @@ export default function QuestionsPage() {
             </div>
           ) : filteredQuestions.length > 0 ? (
             <div className="space-y-3">
-              {pagedQuestions.map((item) => (
+              {filteredQuestions.map((item) => (
                 <Link
                   key={item.id}
                   href={`/admin/questions/${item.id}`}
@@ -582,64 +569,6 @@ export default function QuestionsPage() {
           ) : (
             <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
               سوالی با این فیلتر یا جستجو پیدا نشد.
-            </div>
-          )}
-
-          {/* Pagination */}
-          {!loading && filteredQuestions.length > PAGE_SIZE && (
-            <div className="mt-6 flex items-center justify-center gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                ›
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(
-                  (p) =>
-                    p === 1 ||
-                    p === totalPages ||
-                    Math.abs(p - currentPage) <= 2,
-                )
-                .reduce<(number | "…")[]>((acc, p, idx, arr) => {
-                  if (idx > 0 && p - (arr[idx - 1] as number) > 1)
-                    acc.push("…");
-                  acc.push(p);
-                  return acc;
-                }, [])
-                .map((p, idx) =>
-                  p === "…" ? (
-                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-400">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setCurrentPage(p as number)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-bold shadow-sm transition ${
-                        currentPage === p
-                          ? "border-purple-300 bg-purple-600 text-white"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-purple-50 hover:text-purple-700"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                ‹
-              </button>
-
-              <span className="mr-2 text-sm text-slate-500">
-                صفحه {currentPage} از {totalPages}
-              </span>
             </div>
           )}
         </div>

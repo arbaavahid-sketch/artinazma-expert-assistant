@@ -23,6 +23,7 @@ import {
   Download,
   Sparkles,
   Search,
+  Hash,
 } from "lucide-react";
 
 type Customer = {
@@ -38,6 +39,8 @@ type ChatSession = {
   title: string;
   created_at: string;
   updated_at: string;
+  message_count?: number;
+  last_message_preview?: string;
 };
 
 function formatDate(value?: string) {
@@ -778,15 +781,28 @@ ${msgHtml}
                     className="group block rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-200 hover:bg-white hover:shadow-sm"
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="truncate text-base font-black text-slate-900 group-hover:text-blue-700">
                           {session.title || "گفتگوی جدید"}
                         </div>
 
-                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                          <Clock3 size={15} />
-                          آخرین بروزرسانی:{" "}
-                          {formatDate(session.updated_at || session.created_at)}
+                        {session.last_message_preview && (
+                          <p className="mt-1 truncate text-sm leading-6 text-slate-500">
+                            {session.last_message_preview}
+                          </p>
+                        )}
+
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <Clock3 size={13} />
+                            {formatDate(session.updated_at || session.created_at)}
+                          </span>
+                          {(session.message_count ?? 0) > 0 && (
+                            <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-600">
+                              <Hash size={11} />
+                              {session.message_count} پیام
+                            </span>
+                          )}
                         </div>
                       </div>
 
