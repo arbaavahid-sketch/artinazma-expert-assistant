@@ -229,6 +229,7 @@ export default function AnalyzePage() {
   const [loading, setLoading] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
+  const [uploadPercent, setUploadPercent] = useState(0);
   const [resultType, setResultType] = useState<"success" | "error" | "">("");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -306,12 +307,27 @@ export default function AnalyzePage() {
     if (img) formData.append("image_type", imageType);
     else formData.append("test_type", testType);
 
+    setUploadPercent(0);
     try {
-      const res = await fetch(apiUrl(endpoint), { method: "POST", body: formData });
-      const data = await res.json();
+      const data = await new Promise<Record<string, unknown>>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", apiUrl(endpoint));
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadPercent(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          setUploadPercent(100);
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { reject(new Error("Invalid JSON")); }
+        };
+        xhr.onerror = () => reject(new Error("Network error"));
+        xhr.send(formData);
+      });
       clearInterval(interval);
-      if (data.ai_analysis) return data.ai_analysis;
-      if (data.error) return `⚠️ خطا: ${friendlyError(data.error)}`;
+      if (data.ai_analysis) return data.ai_analysis as string;
+      if (data.error) return `⚠️ خطا: ${friendlyError(data.error as string)}`;
       return JSON.stringify(data, null, 2);
     } catch {
       clearInterval(interval);
@@ -342,6 +358,7 @@ export default function AnalyzePage() {
     setFileAnalysis(combined);
     setLoading(false);
     setProgressLabel("");
+    setUploadPercent(0);
   }
 
   async function copyResult() {
@@ -737,6 +754,20 @@ ${htmlBody}
                   </h3>
                   {progressLabel && (
                     <p className="mt-1 text-sm text-slate-500">{progressLabel}</p>
+                  )}
+                  {uploadPercent > 0 && uploadPercent < 100 && (
+                    <div className="mt-4">
+                      <div className="mb-1 flex justify-between text-xs font-bold text-slate-500">
+                        <span>آپلود فایل</span>
+                        <span>{uploadPercent}٪</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 transition-all duration-200"
+                          style={{ width: `${uploadPercent}%` }}
+                        />
+                      </div>
+                    </div>
                   )}
                   <div className="mt-6 space-y-2">
                     {(allImages ? PROGRESS_STEPS_IMAGE : PROGRESS_STEPS_FILE).map((step, i) => (

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { adminUrl } from "@/lib/api";
-import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Database,
   Download,
@@ -33,7 +32,6 @@ export default function BackupPage() {
   const [backups, setBackups] = useState<BackupFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const { confirm } = useConfirm();
   const [deletingFile, setDeletingFile] = useState("");
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -70,7 +68,7 @@ export default function BackupPage() {
   }
 
   async function deleteBackup(fileName: string) {
-    if (!await confirm({ message: `حذف فایل "${fileName}"؟`, variant: "danger", confirmLabel: "حذف", title: "حذف فایل پشتیبان" })) return;
+    if (!window.confirm(`حذف فایل "${fileName}"؟`)) return;
     setDeletingFile(fileName);
     try {
       const res = await fetch(adminUrl(`/admin/backup/${encodeURIComponent(fileName)}`), {

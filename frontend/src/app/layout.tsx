@@ -3,7 +3,6 @@ import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
-import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -52,9 +51,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}` }} />
       </head>
       <body className={vazirmatn.variable}>
-        <ConfirmDialogProvider>
-          <ArtinShell>{children}</ArtinShell>
-        </ConfirmDialogProvider>
+        <ArtinShell>{children}</ArtinShell>
       </body>
     </html>
   );
