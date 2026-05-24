@@ -12,6 +12,9 @@ import {
   RefreshCw,
   Search,
   UserRound,
+  PlayCircle,
+  XCircle,
+  Filter,
 } from "lucide-react";
 
 type CustomerRequest = {
@@ -245,31 +248,40 @@ export default function AdminRequestsPage() {
         </div>
 
         <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_240px]">
-            <div className="relative">
-              <Search
-                size={18}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
-                placeholder="جستجو در نام، شرکت، شماره، موضوع یا متن درخواست..."
-              />
-            </div>
+          {/* ─── Search bar ─────────────────────────────────────── */}
+          <div className="mb-4 relative">
+            <Search
+              size={18}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-4 pr-11 outline-none transition focus:border-purple-500 focus:bg-white"
+              placeholder="جستجو در نام، شرکت، شماره، موضوع یا متن درخواست..."
+            />
+          </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-purple-600"
-            >
-              {statusOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+          {/* ─── Quick filter pills ──────────────────────────────────── */}
+          <div className="mb-5 flex flex-wrap gap-2">
+            {[
+              { value: "all",         label: "همه",            count: requests.length,      cls: "bg-slate-100 text-slate-700 hover:bg-slate-200",                     active: "bg-slate-800 text-white" },
+              { value: "new",         label: "جدید",           count: newCount,              cls: "bg-blue-50 text-blue-700 hover:bg-blue-100",                         active: "bg-blue-600 text-white" },
+              { value: "in_progress", label: "در پیگیری",      count: inProgressCount,      cls: "bg-amber-50 text-amber-700 hover:bg-amber-100",                      active: "bg-amber-500 text-white" },
+              { value: "done",        label: "انجام شده",      count: doneCount,             cls: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",                active: "bg-emerald-600 text-white" },
+              { value: "closed",      label: "بسته شده",       count: requests.filter(r => r.status === "closed").length, cls: "bg-slate-50 text-slate-500 hover:bg-slate-100", active: "bg-slate-500 text-white" },
+            ].map(({ value, label, count, cls, active }) => (
+              <button
+                key={value}
+                onClick={() => setStatusFilter(value)}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${statusFilter === value ? active : cls}`}
+              >
+                {label}
+                <span className={`rounded-full px-2 py-0.5 text-xs font-black ${statusFilter === value ? "bg-white/20" : "bg-white"}`}>
+                  {count}
+                </span>
+              </button>
+            ))}
           </div>
 
           {message && (
@@ -288,7 +300,15 @@ export default function AdminRequestsPage() {
               {filteredRequests.map((item) => (
                 <article
                   key={item.id}
-                  className="rounded-[30px] border border-slate-200 bg-slate-50 p-5 transition hover:bg-white hover:shadow-sm"
+                  className={`rounded-[30px] border p-5 transition hover:shadow-md ${
+                    item.status === "new"
+                      ? "border-blue-200 bg-blue-50/40 hover:bg-blue-50"
+                      : item.status === "in_progress"
+                      ? "border-amber-200 bg-amber-50/40 hover:bg-amber-50"
+                      : item.status === "done"
+                      ? "border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50"
+                      : "border-slate-200 bg-slate-50 hover:bg-white"
+                  }`}
                 >
                   <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
@@ -320,16 +340,43 @@ export default function AdminRequestsPage() {
                       </div>
                     </div>
 
-                    <select
-                      value={item.status}
-                      onChange={(e) => updateStatus(item.id, e.target.value)}
-                      className="rounded-2xl border border-slate-300 bg-white p-3 text-sm font-bold outline-none transition focus:border-purple-600"
-                    >
-                      <option value="new">جدید</option>
-                      <option value="in_progress">در حال پیگیری</option>
-                      <option value="done">انجام شده</option>
-                      <option value="closed">بسته شده</option>
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                      {item.status === "new" && (
+                        <button
+                          onClick={() => updateStatus(item.id, "in_progress")}
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100 border border-amber-100"
+                        >
+                          <PlayCircle size={15} />
+                          شروع پیگیری
+                        </button>
+                      )}
+                      {item.status === "in_progress" && (
+                        <button
+                          onClick={() => updateStatus(item.id, "done")}
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 border border-emerald-100"
+                        >
+                          <CheckCircle2 size={15} />
+                          انجام شد
+                        </button>
+                      )}
+                      {item.status !== "closed" && (
+                        <button
+                          onClick={() => updateStatus(item.id, "closed")}
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500 transition hover:bg-slate-200"
+                        >
+                          <XCircle size={15} />
+                          بستن
+                        </button>
+                      )}
+                      {item.status === "closed" && (
+                        <button
+                          onClick={() => updateStatus(item.id, "new")}
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-50 px-3 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-100"
+                        >
+                          بازگشایی
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
