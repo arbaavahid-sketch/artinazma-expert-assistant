@@ -94,13 +94,6 @@ const howItWorks = [
   },
 ];
 
-const stats = [
-  { value: "۲۴/۷", label: "پاسخ‌گویی آنلاین" },
-  { value: "+۹۵٪", label: "رضایت کاربران" },
-  { value: "+۲۰۰", label: "سناریوی فنی آماده" },
-  { value: "+۷", label: "برند تخصصی" },
-];
-
 const userPaths = [
   {
     title: "برای مشتریان صنعتی",
