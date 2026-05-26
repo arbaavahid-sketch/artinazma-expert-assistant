@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, customerFetch, removeCustomerToken } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import Tooltip from "@/components/Tooltip";
@@ -91,7 +91,7 @@ export default function CustomerDashboardPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   async function loadSessions(customerId: number) {
     try {
-      const res = await fetch(
+      const res = await customerFetch(
         apiUrl(`/customers/${customerId}/chat-sessions`),
         {
           cache: "no-store",
@@ -107,7 +107,7 @@ export default function CustomerDashboardPage() {
 
   async function loadNotifications(customerId: number) {
     try {
-      const res = await fetch(apiUrl(`/customers/${customerId}/notifications`), { cache: "no-store" });
+      const res = await customerFetch(apiUrl(`/customers/${customerId}/notifications`), { cache: "no-store" });
       const data = await res.json();
       setNotifications(data.notifications || []);
       setUnreadCount(data.unread_count || 0);
@@ -118,7 +118,7 @@ export default function CustomerDashboardPage() {
 
   async function markNotificationsRead(customerId: number) {
     try {
-      await fetch(apiUrl(`/customers/${customerId}/notifications/read`), { method: "POST" });
+      await customerFetch(apiUrl(`/customers/${customerId}/notifications/read`), { method: "POST" });
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
     } catch {
@@ -156,7 +156,7 @@ export default function CustomerDashboardPage() {
     setSavingProfile(true);
 
     try {
-      const res = await fetch(apiUrl(`/customers/${customer.id}`), {
+      const res = await customerFetch(apiUrl(`/customers/${customer.id}`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -193,7 +193,7 @@ export default function CustomerDashboardPage() {
     if (newPassword !== confirmPassword) { toast("رمز عبور جدید و تکرار آن یکسان نیستند.", "warning"); return; }
     setSavingPassword(true);
     try {
-      const res = await fetch(apiUrl(`/customers/${customer.id}/change-password`), {
+      const res = await customerFetch(apiUrl(`/customers/${customer.id}/change-password`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
@@ -233,7 +233,7 @@ export default function CustomerDashboardPage() {
     setDeletingSessionId(sessionId);
 
     try {
-      const res = await fetch(
+      const res = await customerFetch(
         apiUrl(`/customers/${customer.id}/chat-sessions/${sessionId}`),
         {
           method: "DELETE",
@@ -267,7 +267,7 @@ export default function CustomerDashboardPage() {
     setClearingAllSessions(true);
 
     try {
-      const res = await fetch(
+      const res = await customerFetch(
         apiUrl(`/customers/${customer.id}/chat-sessions`),
         {
           method: "DELETE",
@@ -294,7 +294,7 @@ export default function CustomerDashboardPage() {
     if (!title || !customer) return;
     setSavingRename(true);
     try {
-      const res = await fetch(apiUrl(`/customers/chat-sessions/${sessionId}`), {
+      const res = await customerFetch(apiUrl(`/customers/chat-sessions/${sessionId}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customer_id: customer.id, title }),
@@ -320,7 +320,7 @@ export default function CustomerDashboardPage() {
   async function exportSessionPDF(session: ChatSession) {
     if (!customer) return;
     try {
-      const res = await fetch(
+      const res = await customerFetch(
         apiUrl(`/customers/${customer.id}/chat-sessions/${session.id}/messages`),
         { cache: "no-store" },
       );
@@ -382,6 +382,7 @@ ${msgHtml}
 
   function logout() {
     localStorage.removeItem("artin_customer");
+    removeCustomerToken();
     document.cookie = "artin_customer_auth=; path=/; max-age=0";
     window.location.href = "/customer-login";
   }

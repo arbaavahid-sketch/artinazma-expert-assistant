@@ -10,12 +10,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
-const ADMIN_API_KEY =
-  process.env.ADMIN_API_KEY || "ArtinAzma1*2#amzanitra!@#";
-const SESSION_TOKEN =
-  process.env.ADMIN_SESSION_TOKEN || "artin-local-admin-session";
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
+const SESSION_TOKEN = process.env.ADMIN_SESSION_TOKEN || "";
 
 function isAdminAuthed(request: NextRequest): boolean {
+  if (!SESSION_TOKEN || !ADMIN_API_KEY) return false;
   return request.cookies.get("artin_admin")?.value === SESSION_TOKEN;
 }
 

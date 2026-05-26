@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, saveCustomerToken } from "@/lib/api";
 import {
   ArrowLeft,
   Building2,
@@ -67,6 +67,9 @@ export default function CustomerRegisterPage() {
       }
 
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
+      if (data.access_token) {
+        saveCustomerToken(data.access_token);
+      }
       document.cookie =
         "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
 

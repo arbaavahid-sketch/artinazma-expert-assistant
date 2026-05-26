@@ -84,6 +84,12 @@ from db_service import (
     get_unread_notification_count,
 )
 from telegram_service import notify_new_customer, notify_new_request
+from auth_service import (
+    create_access_token,
+    get_current_customer,
+    get_optional_customer,
+    require_customer_match,
+)
 
 _gdrive_timer: threading.Timer | None = None
 _gdrive_lock = threading.Lock()
@@ -2381,16 +2387,18 @@ def admin_notify_customer(customer_id: int, body: CustomerNotifyRequest, _=Depen
 
 
 @app.get("/customers/{customer_id}/notifications")
-def customer_notifications(customer_id: int, unread_only: bool = False):
-    """فهرست اعلان‌های یک مشتری (نیازی به ادمین نیست — مشتری با ID خودش می‌خواند)."""
+def customer_notifications(customer_id: int, unread_only: bool = False, current_user: dict = Depends(get_current_customer)):
+    """فهرست اعلان‌های یک مشتری — نیاز به توکن JWT دارد."""
+    require_customer_match(current_user["customer_id"], customer_id)
     notifs = get_customer_notifications(customer_id, unread_only=unread_only)
     unread_count = get_unread_notification_count(customer_id)
     return {"notifications": notifs, "unread_count": unread_count}
 
 
 @app.post("/customers/{customer_id}/notifications/read")
-def mark_customer_notifications_read(customer_id: int):
+def mark_customer_notifications_read(customer_id: int, current_user: dict = Depends(get_current_customer)):
     """علامت‌گذاری همه اعلان‌های یک مشتری به عنوان خوانده‌شده."""
+    require_customer_match(current_user["customer_id"], customer_id)
     mark_notifications_read(customer_id)
     return {"success": True}
 
@@ -2477,10 +2485,14 @@ def customer_register(body: CustomerRegisterRequest, request: Request):
         company=body.company or "",
     )
 
+    token = create_access_token(customer_id=result["customer_id"], email=body.email)
+
     return {
         "success": True,
         "message": "ثبت‌نام با موفقیت انجام شد.",
         "customer": customer,
+        "access_token": token,
+        "token_type": "bearer",
     }
 
 
@@ -2495,15 +2507,20 @@ def customer_login(body: CustomerLoginRequest, request: Request):
     if customer.get("blocked"):
         return {"success": False, "message": "حساب شما مسدود شده است. لطفاً با پشتیبانی تماس بگیرید."}
 
+    token = create_access_token(customer_id=customer["id"], email=customer["email"])
+
     return {
         "success": True,
         "message": "ورود با موفقیت انجام شد.",
         "customer": customer,
+        "access_token": token,
+        "token_type": "bearer",
     }
 
 
 @app.get("/customers/{customer_id}")
-def customer_profile(customer_id: int):
+def customer_profile(customer_id: int, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
     customer = get_customer_by_id(customer_id)
 
     if not customer:
@@ -2513,7 +2530,8 @@ def customer_profile(customer_id: int):
 
 
 @app.patch("/customers/{customer_id}")
-def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequest):
+def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequest, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
     updated_customer = update_customer_profile(
         customer_id=customer_id,
         full_name=request.full_name,
@@ -2532,7 +2550,8 @@ def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequ
 
 
 @app.post("/customers/{customer_id}/change-password")
-def customer_change_password(customer_id: int, request: CustomerChangePasswordRequest):
+def customer_change_password(customer_id: int, request: CustomerChangePasswordRequest, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
     result = change_customer_password(
         customer_id=customer_id,
         current_password=request.current_password,
@@ -2542,21 +2561,14 @@ def customer_change_password(customer_id: int, request: CustomerChangePasswordRe
 
 
 @app.get("/customers/{customer_id}/chat-sessions")
-def customer_chat_sessions(customer_id: int):
-    customer = get_customer_by_id(customer_id)
-
-    if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد.", "sessions": []}
-
+def customer_chat_sessions(customer_id: int, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
     return {"success": True, "sessions": get_customer_chat_sessions(customer_id)}
 
 
 @app.post("/customers/chat-sessions")
-def customer_chat_session_create(request: CustomerSessionCreateRequest):
-    customer = get_customer_by_id(request.customer_id)
-
-    if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد."}
+def customer_chat_session_create(request: CustomerSessionCreateRequest, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], request.customer_id)
 
     session_id = create_chat_session(
         customer_id=request.customer_id, title=request.title.strip() or "گفتگوی جدید"
@@ -2566,11 +2578,8 @@ def customer_chat_session_create(request: CustomerSessionCreateRequest):
 
 
 @app.get("/customers/{customer_id}/chat-sessions/{session_id}/messages")
-def customer_chat_session_messages(customer_id: int, session_id: int):
-    customer = get_customer_by_id(customer_id)
-
-    if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد.", "messages": []}
+def customer_chat_session_messages(customer_id: int, session_id: int, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
 
     return {
         "success": True,
@@ -2579,11 +2588,8 @@ def customer_chat_session_messages(customer_id: int, session_id: int):
 
 
 @app.post("/customers/chat-messages")
-def customer_chat_message_create(request: CustomerChatMessageCreateRequest):
-    customer = get_customer_by_id(request.customer_id)
-
-    if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد."}
+def customer_chat_message_create(request: CustomerChatMessageCreateRequest, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], request.customer_id)
 
     message_id = save_chat_message(
         session_id=request.session_id,
@@ -2597,12 +2603,9 @@ def customer_chat_message_create(request: CustomerChatMessageCreateRequest):
 
 @app.patch("/customers/chat-sessions/{session_id}")
 def customer_chat_session_update(
-    session_id: int, request: CustomerSessionUpdateRequest
+    session_id: int, request: CustomerSessionUpdateRequest, current_user: dict = Depends(get_current_customer)
 ):
-    customer = get_customer_by_id(request.customer_id)
-
-    if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد."}
+    require_customer_match(current_user["customer_id"], request.customer_id)
 
     updated = update_chat_session_title(
         session_id=session_id, customer_id=request.customer_id, title=request.title
@@ -2615,11 +2618,8 @@ def customer_chat_session_update(
 
 
 @app.delete("/customers/{customer_id}/chat-sessions/{session_id}")
-def customer_chat_session_delete(customer_id: int, session_id: int):
-    customer = get_customer_by_id(customer_id)
-
-    if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد."}
+def customer_chat_session_delete(customer_id: int, session_id: int, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
 
     deleted = delete_chat_session(session_id=session_id, customer_id=customer_id)
 

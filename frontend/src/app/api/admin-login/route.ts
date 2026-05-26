@@ -4,9 +4,18 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const password = body.password || "";
 
-  const adminPassword = process.env.ADMIN_PASSWORD || "ArtinAzma1*2#amzanitra!@#";
-  const sessionToken =
-    process.env.ADMIN_SESSION_TOKEN || "artin-local-admin-session";
+  const adminPassword = process.env.ADMIN_PASSWORD || "";
+  const sessionToken = process.env.ADMIN_SESSION_TOKEN || "";
+
+  if (!adminPassword || !sessionToken) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "تنظیمات ادمین انجام نشده. ADMIN_PASSWORD و ADMIN_SESSION_TOKEN را در متغیرهای محیطی تنظیم کنید.",
+      },
+      { status: 503 },
+    );
+  }
 
   if (password !== adminPassword) {
     return NextResponse.json(
