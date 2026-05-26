@@ -82,6 +82,10 @@ from db_service import (
     get_customer_notifications,
     mark_notifications_read,
     get_unread_notification_count,
+    get_response_time_stats,
+    save_push_subscription,
+    remove_push_subscription,
+    get_push_subscriptions,
 )
 from telegram_service import notify_new_customer, notify_new_request
 from ws_chat import router as ws_router
@@ -91,6 +95,8 @@ from auth_service import (
     get_optional_customer,
     require_customer_match,
 )
+from push_service import send_push_to_customer, is_push_configured
+from security_middleware import CSRFMiddleware, SmartRateLimitMiddleware, login_tracker, generate_csrf_token
 
 
 # ── Sentry Error Tracking ─────────────────────────────────────────────────────
@@ -254,6 +260,10 @@ app.add_middleware(
 
 # ── WebSocket Router ─────────────────────────────────────────────────────────
 app.include_router(ws_router)
+
+# ── Security Middleware ────────────────────────────────────────────────
+app.add_middleware(CSRFMiddleware)
+app.add_middleware(SmartRateLimitMiddleware)
 
 
 # ── Request Logging Middleware ─────────────────────────────────────────────────
@@ -1108,6 +1118,7 @@ def feedback_stats(_=Depends(require_admin)):
 def chat(body: ChatRequest, request: Request):
     p = _build_chat_pipeline(body)
 
+    _t0 = _time.monotonic()
     try:
         answer = ask_expert_assistant(
             message=body.message,
@@ -1123,12 +1134,14 @@ def chat(body: ChatRequest, request: Request):
         logger.warning("AI answer failed, using local answer: %s %s", type(e).__name__, e)
         answer = build_local_answer(body.message, p["related_docs"])
         answer_mode = "local"
+    _response_time_ms = int((_time.monotonic() - _t0) * 1000)
 
     question_id = save_expert_question(
         question=body.message,
         answer=answer,
         sources=p["sources"],
         detected_domain=p["detected_domain"],
+        response_time_ms=_response_time_ms,
     )
 
     memory_id = None
@@ -2460,7 +2473,15 @@ def admin_notify_customer(customer_id: int, body: CustomerNotifyRequest, _=Depen
     if not body.message.strip():
         return {"success": False, "message": "متن پیام نمی‌تواند خالی باشد."}
     nid = save_customer_notification(customer_id, body.message.strip())
-    return {"success": True, "notification_id": nid}
+    # Also send push notification if configured
+    push_sent = 0
+    if is_push_configured():
+        push_sent = send_push_to_customer(
+            customer_id,
+            title="آرتین آزما",
+            body=body.message.strip()[:200],
+        )
+    return {"success": True, "notification_id": nid, "push_sent": push_sent}
 
 
 @app.get("/customers/{customer_id}/notifications")
@@ -2478,6 +2499,55 @@ def mark_customer_notifications_read(customer_id: int, current_user: dict = Depe
     require_customer_match(current_user["customer_id"], customer_id)
     mark_notifications_read(customer_id)
     return {"success": True}
+
+
+# ── Push Notification Endpoints ──────────────────────────────────────────────
+
+class PushSubscribeRequest(BaseModel):
+    customer_id: int
+    subscription: dict
+
+
+@app.post("/customers/push-subscribe", tags=["Notifications"], summary="Subscribe to push notifications")
+def push_subscribe(body: PushSubscribeRequest, current_user: dict = Depends(get_current_customer)):
+    """ثبت اشتراک Push Notification برای مشتری — نیاز به توکن JWT."""
+    require_customer_match(current_user["customer_id"], body.customer_id)
+    sub_id = save_push_subscription(body.customer_id, body.subscription)
+    return {"success": True, "subscription_id": sub_id}
+
+
+class PushUnsubscribeRequest(BaseModel):
+    customer_id: int
+
+
+@app.post("/customers/push-unsubscribe", tags=["Notifications"], summary="Unsubscribe from push notifications")
+def push_unsubscribe(body: PushUnsubscribeRequest, current_user: dict = Depends(get_current_customer)):
+    """لغو اشتراک Push Notification مشتری — نیاز به توکن JWT."""
+    require_customer_match(current_user["customer_id"], body.customer_id)
+    remove_push_subscription(body.customer_id)
+    return {"success": True}
+
+
+@app.get("/push/status", tags=["Notifications"], summary="Check push notification configuration")
+def push_status():
+    """بررسی وضعیت پیکربندی Push Notification."""
+    return {"configured": is_push_configured()}
+
+
+
+
+@app.get("/csrf-token", tags=["Security"], summary="Get CSRF token")
+def get_csrf_token(request: Request):
+    """دریافت توکن CSRF برای فرم‌های فرانت‌اند."""
+    token = request.cookies.get("artin_csrf", "")
+    if not token:
+        token = generate_csrf_token()
+    return {"csrf_token": token}
+
+@app.get("/admin/response-time-stats", tags=["Admin"], summary="Response time statistics")
+def admin_response_time_stats(days: int = 30, _=Depends(require_admin)):
+    """آمار زمان پاسخ‌دهی AI — میانگین، حداقل و حداکثر."""
+    return get_response_time_stats(days)
 
 
 @app.get("/system/status")
@@ -2576,14 +2646,28 @@ def customer_register(body: CustomerRegisterRequest, request: Request):
 @app.post("/customers/login", tags=["Customers"], summary="Customer login")
 @limiter.limit("10/minute")
 def customer_login(body: CustomerLoginRequest, request: Request):
+    ip = request.client.host if request.client else "unknown"
+
+    # Brute force protection
+    if login_tracker.is_locked(ip):
+        remaining = login_tracker.get_remaining_lockout(ip)
+        return {
+            "success": False,
+            "message": f"تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً {remaining // 60} دقیقه صبر کنید.",
+            "locked": True,
+            "retry_after": remaining,
+        }
+
     customer = authenticate_customer(email=body.email, password=body.password)
 
     if not customer:
+        login_tracker.record_failure(ip)
         return {"success": False, "message": "ایمیل یا رمز عبور اشتباه است."}
 
     if customer.get("blocked"):
         return {"success": False, "message": "حساب شما مسدود شده است. لطفاً با پشتیبانی تماس بگیرید."}
 
+    login_tracker.record_success(ip)
     token = create_access_token(customer_id=customer["id"], email=customer["email"])
 
     return {

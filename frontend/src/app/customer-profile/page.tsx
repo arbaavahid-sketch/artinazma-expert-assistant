@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl, customerFetch, getCustomerToken } from "@/lib/api";
+import { usePushNotifications } from "@/lib/usePushNotifications";
+import { useI18n } from "@/lib/i18n";
 import {
   User, Building2, Phone, Mail, Lock, Save, ArrowRight,
-  Moon, Sun, CheckCircle, AlertCircle,
+  Moon, Sun, CheckCircle, AlertCircle, Bell, BellOff, Languages,
 } from "lucide-react";
 
 interface Customer {
@@ -39,6 +41,12 @@ export default function CustomerProfilePage() {
 
   // Theme
   const [darkMode, setDarkMode] = useState(false);
+
+  // Push Notifications
+  const { permission, isSubscribed, loading: pushLoading, subscribe, unsubscribe, isSupported } = usePushNotifications(customer?.id);
+
+  // i18n
+  const { locale, setLocale } = useI18n();
 
   useEffect(() => {
     // Load theme preference
@@ -357,6 +365,48 @@ export default function CustomerProfilePage() {
           </form>
         </div>
 
+        {/* Push Notification Card */}
+        {isSupported && (
+          <div className="ui-card rounded-2xl p-6">
+            <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+              <Bell className="w-5 h-5 text-blue-600" />
+              اعلان‌های Push
+            </h2>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isSubscribed ? (
+                  <Bell className="w-5 h-5 text-blue-500" />
+                ) : (
+                  <BellOff className="w-5 h-5 text-gray-400" />
+                )}
+                <div>
+                  <p className="font-medium text-gray-700 dark:text-gray-200">
+                    {isSubscribed ? "اعلان‌ها فعال" : "اعلان‌ها غیرفعال"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {permission === "denied"
+                      ? "دسترسی اعلان در مرورگر مسدود شده است"
+                      : "دریافت اعلان‌های مهم از آرتین آزما"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={isSubscribed ? unsubscribe : subscribe}
+                disabled={pushLoading || permission === "denied"}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-300 disabled:opacity-50 ${
+                  isSubscribed ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
+                    isSubscribed ? "translate-x-0.5" : "translate-x-7.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Theme Settings Card */}
         <div className="ui-card rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
@@ -390,6 +440,49 @@ export default function CustomerProfilePage() {
                 }`}
               />
             </button>
+          </div>
+        </div>
+
+        {/* Language Settings Card */}
+        <div className="ui-card rounded-2xl p-6">
+          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <Languages className="w-5 h-5 text-blue-600" />
+            زبان / Language
+          </h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Languages className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <div>
+                <p className="font-medium text-gray-700 dark:text-gray-200">
+                  {locale === "fa" ? "فارسی" : "English"}
+                </p>
+                <p className="text-xs text-gray-400">
+                  تغییر زبان رابط کاربری / Change UI language
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setLocale("fa")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  locale === "fa"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                }`}
+              >
+                فارسی
+              </button>
+              <button
+                onClick={() => setLocale("en")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  locale === "en"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                }`}
+              >
+                English
+              </button>
+            </div>
           </div>
         </div>
       </div>

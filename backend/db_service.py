@@ -44,6 +44,11 @@ def init_db():
         for row in cursor.execute("PRAGMA table_info(expert_questions)").fetchall()
     ]
 
+    if "response_time_ms" not in existing_columns:
+        cursor.execute(
+            "ALTER TABLE expert_questions ADD COLUMN response_time_ms INTEGER DEFAULT NULL"
+        )
+
     if "expert_status" not in existing_columns:
         cursor.execute(
             "ALTER TABLE expert_questions ADD COLUMN expert_status TEXT DEFAULT 'pending'"
@@ -177,6 +182,17 @@ def init_db():
             expires_at TEXT NOT NULL,
             used INTEGER DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now'))
+        )
+        """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            endpoint TEXT NOT NULL UNIQUE,
+            keys_json TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (customer_id) REFERENCES customers(id)
         )
         """)
 
@@ -375,7 +391,8 @@ def detect_domain(question: str) -> str:
 
 
 def save_expert_question(
-    question: str, answer: str, sources: List[Dict[str, Any]], detected_domain: str
+    question: str, answer: str, sources: List[Dict[str, Any]], detected_domain: str,
+    response_time_ms: int = None,
 ) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -383,8 +400,8 @@ def save_expert_question(
     cursor.execute(
         """
         INSERT INTO expert_questions 
-        (question, answer, detected_domain, sources_json, expert_status, expert_note, reviewed_answer, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (question, answer, detected_domain, sources_json, expert_status, expert_note, reviewed_answer, created_at, updated_at, response_time_ms)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             question,
@@ -396,6 +413,7 @@ def save_expert_question(
             "",
             datetime.now().isoformat(timespec="seconds"),
             None,
+            response_time_ms,
         ),
     )
 
@@ -1738,5 +1756,92 @@ def reset_password_with_token(token: str, new_password: str) -> dict:
         conn.execute("UPDATE password_reset_tokens SET used = 1 WHERE id = ?", (check["token_id"],))
         conn.commit()
         return {"success": True, "message": "رمز عبور با موفقیت تغییر کرد."}
+    finally:
+        conn.close()
+
+
+# ─── Push Subscriptions ───────────────────────────────────────────────────────
+
+def save_push_subscription(customer_id: int, subscription: dict) -> int:
+    """ذخیره اشتراک Push Notification مشتری."""
+    conn = get_connection()
+    try:
+        endpoint = subscription.get("endpoint", "")
+        keys_json = json.dumps(subscription.get("keys", {}))
+        # Upsert: update if endpoint exists
+        existing = conn.execute(
+            "SELECT id FROM push_subscriptions WHERE endpoint = ?", (endpoint,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE push_subscriptions SET customer_id = ?, keys_json = ? WHERE endpoint = ?",
+                (customer_id, keys_json, endpoint),
+            )
+            conn.commit()
+            return existing["id"]
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO push_subscriptions (customer_id, endpoint, keys_json) VALUES (?, ?, ?)",
+                (customer_id, endpoint, keys_json),
+            )
+            conn.commit()
+            return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def remove_push_subscription(customer_id: int) -> bool:
+    """حذف اشتراک Push مشتری."""
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM push_subscriptions WHERE customer_id = ?", (customer_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def get_push_subscriptions(customer_id: int) -> list:
+    """دریافت لیست اشتراک‌های Push یک مشتری."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT endpoint, keys_json FROM push_subscriptions WHERE customer_id = ?",
+            (customer_id,),
+        ).fetchall()
+        result = []
+        for r in rows:
+            result.append({
+                "endpoint": r["endpoint"],
+                "keys": json.loads(r["keys_json"]),
+            })
+        return result
+    finally:
+        conn.close()
+
+
+def get_response_time_stats(days: int = 30) -> dict:
+    """آمار زمان پاسخ‌دهی AI."""
+    conn = get_connection()
+    try:
+        from datetime import timedelta
+        cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+        row = conn.execute(
+            """SELECT
+                AVG(response_time_ms) as avg_ms,
+                MIN(response_time_ms) as min_ms,
+                MAX(response_time_ms) as max_ms,
+                COUNT(*) as total
+            FROM expert_questions
+            WHERE response_time_ms IS NOT NULL AND created_at >= ?""",
+            (cutoff,)
+        ).fetchone()
+        return {
+            "avg_ms": round(row["avg_ms"]) if row["avg_ms"] else 0,
+            "min_ms": row["min_ms"] or 0,
+            "max_ms": row["max_ms"] or 0,
+            "total_answered": row["total"] or 0,
+        }
     finally:
         conn.close()

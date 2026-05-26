@@ -80,3 +80,30 @@ export async function customerFetch(url: string, options: RequestInit = {}): Pro
 
   return res;
 }
+
+// ─── CSRF Token Management ────────────────────────────────────────────────
+
+/** Read the CSRF cookie set by the backend. */
+export function getCsrfToken(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(/(?:^|;\s*)artin_csrf=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+/**
+ * fetch wrapper that automatically attaches the CSRF token header
+ * for state-changing requests (POST/PUT/PATCH/DELETE).
+ */
+export async function secureFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const method = (options.method || "GET").toUpperCase();
+  const headers = new Headers(options.headers || {});
+
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrf = getCsrfToken();
+    if (csrf) {
+      headers.set("X-CSRF-Token", csrf);
+    }
+  }
+
+  return fetch(url, { ...options, headers });
+}

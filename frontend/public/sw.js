@@ -122,3 +122,59 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// ── Push Notification Handling ──────────────────────────────────────────────
+
+self.addEventListener('push', (event) => {
+  let data = { title: 'آرتین آزما', body: 'پیام جدید', url: '/customer-dashboard' };
+
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() };
+    } catch {
+      data.body = event.data.text() || data.body;
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/images/artinazma-logo.png',
+    badge: '/images/artinazma-logo.png',
+    dir: 'rtl',
+    lang: 'fa',
+    vibrate: [200, 100, 200],
+    tag: data.tag || 'artin-notification',
+    renotify: true,
+    data: { url: data.url || '/customer-dashboard' },
+    actions: [
+      { action: 'open', title: 'مشاهده' },
+      { action: 'dismiss', title: 'بستن' },
+    ],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'dismiss') return;
+
+  const targetUrl = event.notification.data?.url || '/customer-dashboard';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Focus existing tab if available
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      // Otherwise open new tab
+      return clients.openWindow(targetUrl);
+    })
+  );
+});

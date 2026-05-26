@@ -7,6 +7,7 @@ import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import InstallPrompt from "@/components/InstallPrompt";
 import NetworkStatus from "@/components/NetworkStatus";
 import ThemeProvider from "@/components/ThemeProvider";
+import { I18nProvider } from "@/lib/i18n";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -69,11 +70,13 @@ export default function RootLayout({
       </head>
       <body className={vazirmatn.variable}>
         <ThemeProvider>
+          <I18nProvider>
           <ConfirmDialogProvider>
             <NetworkStatus />
             <ArtinShell>{children}</ArtinShell>
             <InstallPrompt />
           </ConfirmDialogProvider>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

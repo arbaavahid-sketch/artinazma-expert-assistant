@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { WifiOff, RefreshCw } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export default function OfflinePage() {
   const [isOnline, setIsOnline] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -30,17 +32,15 @@ export default function OfflinePage() {
           <WifiOff className="w-10 h-10 text-gray-400" />
         </div>
         <h1 className="text-2xl font-bold text-gray-800 mb-3">
-          اتصال اینترنت قطع شده
+          {t("offline.title")}
         </h1>
         <p className="text-gray-500 mb-8 leading-relaxed">
-          برای استفاده از دستیار آرتین به اتصال اینترنت نیاز دارید.
-          <br />
-          لطفاً اتصال خود را بررسی کنید.
+          {t("offline.message")}
         </p>
 
         {isOnline ? (
           <p className="text-green-600 font-medium">
-            اتصال برقرار شد! در حال بازگشت...
+            {t("common.success")}
           </p>
         ) : (
           <button
@@ -49,7 +49,7 @@ export default function OfflinePage() {
                        hover:bg-blue-700 transition-colors font-medium"
           >
             <RefreshCw className="w-4 h-4" />
-            تلاش مجدد
+            {t("offline.retry")}
           </button>
         )}
       </div>

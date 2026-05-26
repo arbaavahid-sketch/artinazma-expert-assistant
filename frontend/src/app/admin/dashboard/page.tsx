@@ -90,6 +90,13 @@ type FeedbackStats = {
   satisfaction_pct: number | null;
 };
 
+type ResponseTimeStats = {
+  avg_ms: number;
+  min_ms: number;
+  max_ms: number;
+  total_answered: number;
+};
+
 type CustomerStats = {
   total_customers: number;
   total_sessions: number;
@@ -164,6 +171,7 @@ export default function DashboardPage() {
   const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
+  const [responseTimeStats, setResponseTimeStats] = useState<ResponseTimeStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [analyticsDays, setAnalyticsDays] = useState(14);
 
@@ -171,7 +179,7 @@ export default function DashboardPage() {
     setLoading(true);
 
     try {
-      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes, cacheRes, feedbackRes] = await Promise.all([
+      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes, cacheRes, feedbackRes, responseTimeRes] = await Promise.all([
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
         fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
@@ -179,6 +187,7 @@ export default function DashboardPage() {
         fetch(apiUrl("/customers/stats"), { cache: "no-store" }),
         fetch(adminUrl("/cache/stats"), { cache: "no-store" }),
         fetch(adminUrl("/feedback-stats"), { cache: "no-store" }),
+        fetch(adminUrl("/response-time-stats"), { cache: "no-store" }),
       ]);
 
       const results = await Promise.allSettled([
@@ -189,6 +198,7 @@ export default function DashboardPage() {
         customerRes.json(),
         cacheRes.json(),
         feedbackRes.json(),
+        responseTimeRes.json(),
       ]);
 
       setKnowledgeStats(results[0].status === "fulfilled" ? results[0].value : null);
@@ -198,6 +208,7 @@ export default function DashboardPage() {
       setCustomerStats(results[4].status === "fulfilled" ? results[4].value : null);
       setCacheStats(results[5].status === "fulfilled" ? results[5].value : null);
       setFeedbackStats(results[6].status === "fulfilled" ? results[6].value : null);
+      setResponseTimeStats(results[7]?.status === "fulfilled" ? results[7].value : null);
     } catch {
       setKnowledgeStats(null);
       setQuestionStats(null);
@@ -610,6 +621,19 @@ export default function DashboardPage() {
             {/* ─── Domain Pie Chart ─────────────────────────────────── */}
             {topDomains.length > 0 && (
               <DomainPieChart domains={topDomains} />
+            )}
+
+            {/* ─── Hourly Heatmap ──────────────────────────────────────── */}
+            {analyticsData?.hourly && analyticsData.hourly.length > 0 && (
+              <HourlyHeatmap data={analyticsData.hourly} />
+            )}
+
+            {/* ─── Response Time Widget ───────────────────────────────── */}
+            {responseTimeStats && responseTimeStats.total_answered > 0 && (
+              <ResponseTimeWidget
+                avgMs={responseTimeStats.avg_ms}
+                totalAnswered={responseTimeStats.total_answered}
+              />
             )}
 
             {/* ─── Trending Keywords ────────────────────────────────────── */}
@@ -1035,6 +1059,98 @@ function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
             {stats.total_entries} بار صرفه‌جویی API
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Hourly Activity Heatmap ───────────────────────────────────────────────
+function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+
+  function getColor(count: number) {
+    if (count === 0) return "#f1f5f9";
+    const ratio = count / maxCount;
+    if (ratio < 0.25) return "#c7d2fe";
+    if (ratio < 0.5) return "#818cf8";
+    if (ratio < 0.75) return "#6366f1";
+    return "#4338ca";
+  }
+
+  return (
+    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4">
+        <h2 className="text-xl font-black text-slate-900">ساعات پرتردد</h2>
+        <p className="mt-1 text-sm text-slate-500">فعالیت کاربران به تفکیک ساعت روز</p>
+      </div>
+      <div className="grid grid-cols-12 gap-1.5" style={{ direction: "ltr" }}>
+        {data.map((d) => (
+          <div key={d.hour} className="flex flex-col items-center gap-1">
+            <div
+              className="w-full aspect-square rounded-lg transition-all hover:scale-110"
+              style={{ background: getColor(d.count) }}
+              title={`ساعت ${d.hour}: ${d.count} سوال`}
+            />
+            <span className="text-[9px] font-bold text-slate-400">
+              {d.hour}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-slate-400">
+        <span>کم</span>
+        <div className="flex gap-0.5">
+          {["#f1f5f9", "#c7d2fe", "#818cf8", "#6366f1", "#4338ca"].map((c) => (
+            <div key={c} className="h-3 w-3 rounded-sm" style={{ background: c }} />
+          ))}
+        </div>
+        <span>زیاد</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Response Time Stats Widget ──────────────────────────────────────────────
+function ResponseTimeWidget({ avgMs, totalAnswered }: { avgMs: number; totalAnswered: number }) {
+  const avgSec = (avgMs / 1000).toFixed(1);
+  const rating = avgMs < 3000 ? "عالی" : avgMs < 8000 ? "خوب" : avgMs < 15000 ? "متوسط" : "کند";
+  const ratingColor = avgMs < 3000 ? "text-emerald-600" : avgMs < 8000 ? "text-blue-600" : avgMs < 15000 ? "text-amber-600" : "text-red-600";
+  const barPct = Math.min(100, Math.round((avgMs / 20000) * 100));
+
+  return (
+    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+          <Clock3 size={20} />
+        </div>
+        <div>
+          <h2 className="text-lg font-black text-slate-900">زمان پاسخ</h2>
+          <p className="text-xs text-slate-500">میانگین زمان تولید پاسخ AI</p>
+        </div>
+      </div>
+
+      <div className="mb-4 flex items-end gap-3">
+        <div className="text-5xl font-black text-slate-900">{avgSec}</div>
+        <div className="mb-1 text-sm font-bold text-slate-500">ثانیه</div>
+        <div className={`mb-1 mr-2 text-sm font-black ${ratingColor}`}>{rating}</div>
+      </div>
+
+      <div className="mb-4">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-blue-400 to-indigo-500 transition-all duration-700"
+            style={{ width: `${barPct}%` }}
+          />
+        </div>
+        <div className="mt-2 flex justify-between text-[10px] text-slate-400">
+          <span>۰ ثانیه</span>
+          <span>۲۰ ثانیه</span>
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-500">
+        {totalAnswered} سوال پاسخ داده‌شده
       </div>
     </div>
   );

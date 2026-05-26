@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { ToastProvider } from "@/components/Toast";
+import { useI18n } from "@/lib/i18n";
 import AdminGlobalSearch from "@/components/AdminGlobalSearch";
 import ServerStatus from "@/components/ServerStatus";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -55,12 +56,12 @@ type ArtinShellProps = {
   children: ReactNode;
 };
 
-const navItems: SidebarItem[] = [
-  { href: "/assistant", label: "خانه", Icon: Home },
-  { href: "/", label: "آرتین", Icon: Sparkles },
-  { href: "/analyze", label: "تحلیل تست", Icon: FlaskConical },
-  { href: "/customer-request", label: "درخواست مشاوره", Icon: PhoneCall },
-  { href: "/customer-dashboard", label: "حساب من", Icon: CircleUserRound },
+const navItemDefs: { href: string; labelKey: string; fallback: string; Icon: LucideIcon }[] = [
+  { href: "/assistant", labelKey: "nav.assistant", fallback: "دستیار هوشمند", Icon: Home },
+  { href: "/", labelKey: "nav.home", fallback: "آرتین", Icon: Sparkles },
+  { href: "/analyze", labelKey: "nav.analyze", fallback: "تحلیل تست", Icon: FlaskConical },
+  { href: "/customer-request", labelKey: "nav.customerRequest", fallback: "درخواست مشاوره", Icon: PhoneCall },
+  { href: "/customer-dashboard", labelKey: "nav.dashboard", fallback: "حساب من", Icon: CircleUserRound },
 ];
 
 const adminItems: SidebarItem[] = [
@@ -82,8 +83,11 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
 
 export default function ArtinShell({ children }: ArtinShellProps) {
   const pathname = usePathname();
+  const { t, locale } = useI18n();
 
   const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
+
+  const navItems: SidebarItem[] = navItemDefs.map(d => ({ href: d.href, label: t(d.labelKey) || d.fallback, Icon: d.Icon }));
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -283,14 +287,14 @@ export default function ArtinShell({ children }: ArtinShellProps) {
       {!isOnline && (
         <div className="absolute inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
           <span>📡</span>
-          <span>اتصال اینترنت قطع شده است — پیام‌های جدید ارسال نمی‌شوند.</span>
+          <span>{locale === "fa" ? "اتصال اینترنت قطع شده است — پیام‌های جدید ارسال نمی‌شوند." : "Internet connection lost — new messages won't be sent."}</span>
         </div>
       )}
       {/* Reconnected flash */}
       {showReconnected && (
         <div className="absolute inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
           <span>✅</span>
-          <span>اتصال برقرار شد.</span>
+          <span>{locale === "fa" ? "اتصال برقرار شد." : "Connection restored."}</span>
         </div>
       )}
 
@@ -356,7 +360,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2">
             {!sidebarCollapsed && (
               <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
-                بخش‌ها
+{t("nav.home") ? (locale === "fa" ? "بخش‌ها" : "Sections") : "بخش‌ها"}
               </div>
             )}
 
@@ -399,7 +403,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             {!sidebarCollapsed && customer && customerSessions.length > 0 && (
               <div className="mt-6">
                 <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
-                  گفتگوهای من
+{locale === "fa" ? "گفتگوهای من" : "My Conversations"}
                 </div>
 
                 <div className="space-y-1">
@@ -503,7 +507,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
               <div className="mt-6">
                 {!sidebarCollapsed && (
                   <div className="mb-2 px-3 text-xs font-bold text-slate-500">
-                    حساب مشتری
+{locale === "fa" ? "حساب مشتری" : "Customer Account"}
                   </div>
                 )}
 
@@ -518,7 +522,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                     <LogOut size={19} strokeWidth={1.9} />
                   </span>
 
-                  {!sidebarCollapsed && <span>خروج از حساب مشتری</span>}
+                  {!sidebarCollapsed && <span>{locale === "fa" ? "خروج از حساب مشتری" : "Logout"}</span>}
                 </button>
               </div>
             )}
@@ -532,7 +536,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 )}
                 {!sidebarCollapsed && (
                   <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
-                    مدیریت
+{locale === "fa" ? "مدیریت" : "Administration"}
                   </div>
                 )}
 
@@ -626,7 +630,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 </span>
                 {!sidebarCollapsed && (
                   <span className="text-slate-700 dark:text-slate-300">
-                    {darkMode ? "حالت روشن" : "حالت تاریک"}
+                    {darkMode ? (locale === "fa" ? "حالت روشن" : "Light Mode") : (locale === "fa" ? "حالت تاریک" : "Dark Mode")}
                   </span>
                 )}
               </button>
