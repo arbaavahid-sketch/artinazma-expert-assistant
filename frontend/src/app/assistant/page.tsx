@@ -497,7 +497,7 @@ ${cleanAnswer}`,
     setLoadingSavedSession(true);
 
     try {
-      const res = await fetch(
+      const res = await customerFetch(
         apiUrl(`/customers/${customerId}/chat-sessions/${sessionId}/messages`),
       );
 

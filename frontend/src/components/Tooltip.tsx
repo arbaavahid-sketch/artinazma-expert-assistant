@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 type TooltipProps = {
   label: string;
@@ -11,13 +11,9 @@ type TooltipProps = {
 };
 
 /**
- * Lightweight CSS-only tooltip wrapper.
- * Wraps any element and shows a styled tooltip on hover/focus.
- *
- * Usage:
- *   <Tooltip label="کپی کردن">
- *     <button>...</button>
- *   </Tooltip>
+ * Lightweight tooltip wrapper.
+ * Uses local hover state instead of CSS group-hover to avoid
+ * conflicts with parent group classes.
  */
 export default function Tooltip({
   label,
@@ -25,6 +21,8 @@ export default function Tooltip({
   position = "top",
   className = "",
 }: TooltipProps) {
+  const [show, setShow] = useState(false);
+
   const positionClasses: Record<string, string> = {
     top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
     bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
@@ -42,14 +40,19 @@ export default function Tooltip({
   };
 
   return (
-    <div className={`group relative inline-flex ${className}`}>
+    <div
+      className={`relative inline-flex ${className}`}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      onFocus={() => setShow(true)}
+      onBlur={() => setShow(false)}
+    >
       {children}
       <div
         role="tooltip"
-        className={`pointer-events-none absolute z-50 whitespace-nowrap rounded-xl bg-slate-800 px-2.5 py-1.5 text-xs font-bold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 ${positionClasses[position]}`}
+        className={`pointer-events-none absolute z-50 whitespace-nowrap rounded-xl bg-slate-800 px-2.5 py-1.5 text-xs font-bold text-white shadow-lg transition-opacity duration-150 ${positionClasses[position]} ${show ? "opacity-100" : "opacity-0"}`}
       >
         {label}
-        {/* Arrow */}
         <span
           className={`absolute border-4 ${arrowClasses[position]}`}
           aria-hidden

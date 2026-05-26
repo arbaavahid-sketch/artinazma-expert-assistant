@@ -710,25 +710,26 @@ ${msgHtml}
             </div>
 
             <div className="ui-card rounded-[32px] p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-bold text-slate-500">
-                    تعداد گفتگوها
-                  </div>
-                  <div className="mt-2 text-4xl font-black text-slate-900">
-                    {sessions.length}
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-blue-50 p-4 text-center">
+                  <div className="text-2xl font-black text-blue-700">{sessions.length}</div>
+                  <div className="mt-1 text-xs font-bold text-blue-600">گفتگو</div>
                 </div>
-
-                <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-50 text-blue-700">
-                  <MessageSquareText size={28} strokeWidth={1.8} />
+                <div className="rounded-2xl bg-emerald-50 p-4 text-center">
+                  <div className="text-2xl font-black text-emerald-700">
+                    {sessions.reduce((sum, s) => sum + (s.message_count || 0), 0)}
+                  </div>
+                  <div className="mt-1 text-xs font-bold text-emerald-600">پیام</div>
                 </div>
               </div>
-
-              <p className="mt-4 text-sm leading-7 text-slate-500">
-                گفتگوها به حساب شما متصل هستند و می‌توانید از همین بخش دوباره
-                ادامه‌شان دهید.
-              </p>
+              {sessions.length > 0 && (
+                <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-center">
+                  <div className="text-xs font-bold text-slate-400">آخرین فعالیت</div>
+                  <div className="mt-1 text-sm font-black text-slate-700">
+                    {formatDate(sessions[0]?.updated_at || sessions[0]?.created_at)}
+                  </div>
+                </div>
+              )}
             </div>
           </aside>
 
@@ -816,7 +817,7 @@ ${msgHtml}
                   >
                     <div className="flex flex-col gap-2">
                       {/* Title / Rename row */}
-                      <div className="min-w-0" onClick={(e) => e.preventDefault()}>
+                      <div className="min-w-0">
                         {renamingSessionId === session.id ? (
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <input

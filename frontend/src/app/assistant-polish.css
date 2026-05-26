@@ -245,3 +245,69 @@
   border-color: #e4e4e7 !important;
   box-shadow: none !important;
 }
+
+/* ── Smooth message entrance animation ─────────────────────── */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.group {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+/* ── Typing indicator animation ────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.typing-dot {
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Mobile responsive improvements ────────────────────────── */
+@media (max-width: 640px) {
+  .chat-composer-box {
+    border-radius: 12px;
+    margin: 0 4px;
+  }
+
+  .ai-markdown {
+    font-size: 14px !important;
+    line-height: 1.75 !important;
+  }
+
+  .ai-markdown pre {
+    font-size: 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .ai-markdown table {
+    font-size: 12px !important;
+  }
+}
+
+/* ── Smooth scroll behavior ────────────────────────────────── */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* ── Better focus styles for accessibility ──────────────────── */
+.chat-composer-box textarea:focus {
+  outline: none;
+}
+
+button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 8px;
+}

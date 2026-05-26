@@ -91,6 +91,24 @@ from auth_service import (
     require_customer_match,
 )
 
+
+# ── Sentry Error Tracking ─────────────────────────────────────────────────────
+_SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+if _SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+    sentry_sdk.init(
+        dsn=_SENTRY_DSN,
+        integrations=[FastApiIntegration(), StarletteIntegration()],
+        traces_sample_rate=0.1,
+        send_default_pii=False,
+        environment=os.getenv("ENVIRONMENT", "production"),
+    )
+    print("[sentry] ✅ Sentry error tracking enabled")
+else:
+    print("[sentry] ℹ️  SENTRY_DSN not set — error tracking disabled")
+
 _gdrive_timer: threading.Timer | None = None
 _gdrive_lock = threading.Lock()
 
@@ -206,6 +224,33 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Admin-Key", "X-Requested-With"],
 )
+
+
+# ── Request Logging Middleware ─────────────────────────────────────────────────
+import time as _time
+_request_logger = logging.getLogger("artin.requests")
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = _time.monotonic()
+    response = await call_next(request)
+    duration_ms = round((_time.monotonic() - start) * 1000)
+    # Only log slow requests (>500ms) or errors to avoid noise
+    if duration_ms > 500 or response.status_code >= 400:
+        _request_logger.info(
+            "%s %s → %s (%dms)",
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration_ms,
+            extra={
+                "method": request.method,
+                "endpoint": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": duration_ms,
+            },
+        )
+    return response
 
 
 def make_safe_filename(filename: str) -> str:
@@ -2578,6 +2623,35 @@ def customer_chat_session_create(request: CustomerSessionCreateRequest, current_
 
     return {"success": True, "session_id": session_id}
 
+
+
+
+@app.get("/customers/{customer_id}/analytics")
+def customer_analytics(customer_id: int, current_user: dict = Depends(get_current_customer)):
+    """آمار کلی حساب مشتری: تعداد گفتگوها، پیام‌ها، آخرین فعالیت."""
+    require_customer_match(current_user["customer_id"], customer_id)
+    conn = get_connection()
+    try:
+        sessions = conn.execute(
+            "SELECT COUNT(*) as cnt FROM chat_sessions WHERE customer_id = ?",
+            (customer_id,),
+        ).fetchone()
+        messages = conn.execute(
+            "SELECT COUNT(*) as cnt FROM chat_messages cm JOIN chat_sessions cs ON cm.session_id = cs.id WHERE cs.customer_id = ?",
+            (customer_id,),
+        ).fetchone()
+        last_activity = conn.execute(
+            "SELECT MAX(updated_at) as last FROM chat_sessions WHERE customer_id = ?",
+            (customer_id,),
+        ).fetchone()
+        return {
+            "success": True,
+            "total_sessions": sessions["cnt"] if sessions else 0,
+            "total_messages": messages["cnt"] if messages else 0,
+            "last_activity": last_activity["last"] if last_activity else None,
+        }
+    finally:
+        conn.close()
 
 @app.get("/customers/{customer_id}/chat-sessions/{session_id}/messages")
 def customer_chat_session_messages(customer_id: int, session_id: int, current_user: dict = Depends(get_current_customer)):
