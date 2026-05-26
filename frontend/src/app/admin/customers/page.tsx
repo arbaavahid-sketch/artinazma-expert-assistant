@@ -568,4 +568,15 @@ export default function AdminCustomersPage() {
                 </button>
                 <button
                   onClick={() => setNotifyModal(false)}
-           
+                  className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  انصراف
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

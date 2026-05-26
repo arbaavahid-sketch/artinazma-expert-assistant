@@ -666,4 +666,114 @@ export default function QuestionsPage() {
                       ) : (
                         <div className="flex gap-1.5" onClick={(e) => e.preventDefault()}>
                           <button
-             
+                            onClick={(e) => quickReview(e, item.id, "approved")}
+                            title="تایید"
+                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                              item.expert_status === "approved"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-white text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200"
+                            }`}
+                          >
+                            <CheckCircle2 size={13} />
+                            تایید
+                          </button>
+                          <button
+                            onClick={(e) => quickReview(e, item.id, "needs_edit")}
+                            title="نیازمند اصلاح"
+                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                              item.expert_status === "needs_edit"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-700 border border-slate-200"
+                            }`}
+                          >
+                            <AlertCircle size={13} />
+                            اصلاح
+                          </button>
+                          <button
+                            onClick={(e) => quickReview(e, item.id, "rejected")}
+                            title="رد"
+                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                              item.expert_status === "rejected"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200"
+                            }`}
+                          >
+                            <XCircle size={13} />
+                            رد
+                          </button>
+                        </div>
+                      )}
+                      <span className="text-xs text-purple-600 group-hover:underline">مشاهده جزئیات ←</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
+              سوالی با این فیلتر یا جستجو پیدا نشد.
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && filteredQuestions.length > PAGE_SIZE && (
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ›
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(
+                  (p) =>
+                    p === 1 ||
+                    p === totalPages ||
+                    Math.abs(p - currentPage) <= 2,
+                )
+                .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && p - (arr[idx - 1] as number) > 1)
+                    acc.push("…");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, idx) =>
+                  p === "…" ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-400">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p as number)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-bold shadow-sm transition ${
+                        currentPage === p
+                          ? "border-purple-300 bg-purple-600 text-white"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-purple-50 hover:text-purple-700"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ),
+                )}
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ‹
+              </button>
+
+              <span className="mr-2 text-sm text-slate-500">
+                صفحه {currentPage} از {totalPages}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}

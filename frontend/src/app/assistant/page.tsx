@@ -533,6 +533,7 @@ function AssistantPageInner() {
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
+  const [rateLimitTotal, setRateLimitTotal] = useState(60);
   const [stagedImage, setStagedImage] = useState<File | null>(null);
   const [stagedImageUrl, setStagedImageUrl] = useState<string>("");
   const [isDragOver, setIsDragOver] = useState(false);
@@ -1108,7 +1109,9 @@ ${cleanAnswer}`,
 
       if (res.status === 429) {
         const retryAfter = parseInt(res.headers.get("Retry-After") || "60", 10);
-        setRateLimitCountdown(isNaN(retryAfter) ? 60 : retryAfter);
+        const totalSecs = isNaN(retryAfter) ? 60 : retryAfter;
+        setRateLimitTotal(totalSecs);
+        setRateLimitCountdown(totalSecs);
         setMessages([
           ...previousMessages,
           userMessage,
@@ -1895,13 +1898,21 @@ ${printScript}
               </p>
 
               {rateLimitCountdown > 0 && (
-                <div className="mb-3 flex w-full max-w-3xl items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-700">
-                  <span className="text-lg">⏳</span>
-                  <span>محدودیت ارسال فعال است — لطفاً</span>
-                  <span className="rounded-xl bg-amber-100 px-3 py-1 text-base font-black tabular-nums">
-                    {rateLimitCountdown}
-                  </span>
-                  <span>ثانیه دیگر تلاش کنید.</span>
+                <div className="mb-3 w-full max-w-3xl overflow-hidden rounded-2xl border border-amber-200 bg-amber-50">
+                  <div className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-amber-700">
+                    <span className="text-lg">⏳</span>
+                    <span className="flex-1">محدودیت ارسال — لطفاً صبر کنید</span>
+                    <span className="rounded-xl bg-amber-100 px-3 py-1 text-base font-black tabular-nums">
+                      {rateLimitCountdown}s
+                    </span>
+                  </div>
+                  {/* Countdown progress bar */}
+                  <div className="h-1.5 bg-amber-100">
+                    <div
+                      className="h-full bg-amber-400 transition-all duration-1000 ease-linear"
+                      style={{ width: `${(rateLimitCountdown / rateLimitTotal) * 100}%` }}
+                    />
+                  </div>
                 </div>
               )}
 

@@ -958,4 +958,15 @@ ${msgHtml}
 
                 <Link
                   href="/assistant"
-                  className="ui-btn ui-btn-
+                  className="ui-btn ui-btn-primary mt-6 inline-flex rounded-2xl px-6 py-3"
+                >
+                  شروع گفتگو با آرتین
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

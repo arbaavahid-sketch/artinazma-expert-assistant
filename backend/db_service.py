@@ -1633,4 +1633,20 @@ def get_feedback_stats() -> Dict[str, Any]:
                 SUM(CASE WHEN user_rating = 'up' THEN 1 ELSE 0 END) AS up_count,
                 SUM(CASE WHEN user_rating = 'down' THEN 1 ELSE 0 END) AS down_count,
                 SUM(CASE WHEN user_rating IS NULL THEN 1 ELSE 0 END) AS unrated
-            FROM expert_quest
+            FROM expert_questions
+            """
+        ).fetchone()
+        total = rows["total"] or 0
+        up = rows["up_count"] or 0
+        down = rows["down_count"] or 0
+        rated = up + down
+        return {
+            "total_questions": total,
+            "rated": rated,
+            "up": up,
+            "down": down,
+            "unrated": rows["unrated"] or 0,
+            "satisfaction_pct": round(up / rated * 100, 1) if rated > 0 else None,
+        }
+    finally:
+        conn.close()
