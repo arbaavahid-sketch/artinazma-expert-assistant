@@ -169,6 +169,17 @@ def init_db():
         )
         """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            token TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL,
+            used INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+        """)
+
     # ── Performance Indexes ────────────────────────────────────────
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_questions_created ON expert_questions(created_at)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_questions_domain ON expert_questions(detected_domain)")
@@ -177,7 +188,7 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_customer ON chat_sessions(customer_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_updated ON chat_sessions(updated_at)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_session ON chat_messages(session_id)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_customer ON customer_requests(customer_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_email ON customer_requests(email)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_status ON customer_requests(status)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_customer ON customer_notifications(customer_id, is_read)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)")
@@ -1666,66 +1677,34 @@ def get_feedback_stats() -> Dict[str, Any]:
         conn.close()
 
 
-# ── Password Reset ──────────────────────────────────────────────────────────
+# ─── Password Reset ──────────────────────────────────────────────────────────
 
-def _ensure_password_reset_table():
-    """ایجاد جدول توکن بازیابی رمز عبور اگر وجود نداشته باشد."""
-    conn = get_connection()
-    try:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                customer_id INTEGER NOT NULL,
-                token TEXT NOT NULL UNIQUE,
-                expires_at TEXT NOT NULL,
-                used INTEGER DEFAULT 0,
-                created_at TEXT DEFAULT (datetime('now'))
-            )
-        """)
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def create_password_reset_token(email: str) -> dict:
-    """
-    ایجاد توکن بازیابی رمز عبور.
-    برمی‌گرداند: {"success": True, "token": ..., "customer": ...} یا {"success": False, "message": ...}
-    """
+def create_password_reset_token(customer_id: int) -> str:
+    """ساخت توکن بازیابی رمز عبور (معتبر ۱ ساعت)."""
     import secrets
-    _ensure_password_reset_table()
+    from datetime import datetime, timedelta
 
     conn = get_connection()
     try:
-        row = conn.execute("SELECT id, full_name, email FROM customers WHERE email = ?", (email.strip().lower(),)).fetchone()
-        if not row:
-            # Don't reveal if email exists
-            return {"success": True, "message": "اگر ایمیل معتبر باشد، لینک بازیابی ارسال می‌شود."}
-
         # Invalidate old tokens
-        conn.execute("UPDATE password_reset_tokens SET used = 1 WHERE customer_id = ? AND used = 0", (row["id"],))
+        conn.execute("UPDATE password_reset_tokens SET used = 1 WHERE customer_id = ? AND used = 0", (customer_id,))
 
-        token = secrets.token_urlsafe(32)
+        token = secrets.token_urlsafe(48)
         expires_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
 
         conn.execute(
             "INSERT INTO password_reset_tokens (customer_id, token, expires_at) VALUES (?, ?, ?)",
-            (row["id"], token, expires_at),
+            (customer_id, token, expires_at),
         )
         conn.commit()
-
-        return {
-            "success": True,
-            "token": token,
-            "customer": {"id": row["id"], "full_name": row["full_name"], "email": row["email"]},
-        }
+        return token
     finally:
         conn.close()
 
 
-def verify_reset_token(token: str) -> dict:
-    """بررسی اعتبار توکن بازیابی."""
-    _ensure_password_reset_table()
+def verify_reset_token(token: str) -> dict | None:
+    """بررسی اعتبار توکن. اگر معتبر باشد dict با customer_id برمیگرداند."""
+    from datetime import datetime
 
     conn = get_connection()
     try:
@@ -1735,31 +1714,29 @@ def verify_reset_token(token: str) -> dict:
         ).fetchone()
 
         if not row:
-            return {"valid": False, "message": "لینک بازیابی نامعتبر است."}
-
+            return None
         if row["used"]:
-            return {"valid": False, "message": "این لینک قبلاً استفاده شده است."}
+            return None
+        if datetime.utcnow().isoformat() > row["expires_at"]:
+            return None
 
-        if datetime.fromisoformat(row["expires_at"]) < datetime.utcnow():
-            return {"valid": False, "message": "لینک بازیابی منقضی شده است. لطفاً دوباره درخواست دهید."}
-
-        return {"valid": True, "customer_id": row["customer_id"], "token_id": row["id"]}
+        return {"token_id": row["id"], "customer_id": row["customer_id"]}
     finally:
         conn.close()
 
 
 def reset_password_with_token(token: str, new_password: str) -> dict:
-    """تغییر رمز عبور با استفاده از توکن بازیابی."""
+    """بازنشانی رمز عبور با استفاده از توکن معتبر."""
     check = verify_reset_token(token)
-    if not check.get("valid"):
-        return {"success": False, "message": check.get("message", "لینک نامعتبر")}
+    if not check:
+        return {"success": False, "message": "توکن نامعتبر یا منقضی شده است."}
 
     conn = get_connection()
     try:
-        new_hash = hash_password(new_password)
-        conn.execute("UPDATE customers SET password_hash = ? WHERE id = ?", (new_hash, check["customer_id"]))
+        hashed = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        conn.execute("UPDATE customers SET password_hash = ? WHERE id = ?", (hashed, check["customer_id"]))
         conn.execute("UPDATE password_reset_tokens SET used = 1 WHERE id = ?", (check["token_id"],))
         conn.commit()
-        return {"success": True, "message": "رمز عبور با موفقیت تغییر یافت."}
+        return {"success": True, "message": "رمز عبور با موفقیت تغییر کرد."}
     finally:
         conn.close()
