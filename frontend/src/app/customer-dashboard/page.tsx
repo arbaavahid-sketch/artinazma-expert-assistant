@@ -457,6 +457,14 @@ ${msgHtml}
                   گفتگوی جدید
                 </Link>
 
+                <Link
+                  href="/customer-profile"
+                  className="ui-btn ui-btn-ghost inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm"
+                >
+                  <CircleUserRound size={18} />
+                  پروفایل و تنظیمات
+                </Link>
+
                 <button
                   onClick={logout}
                   className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-5 py-3 text-sm"

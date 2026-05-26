@@ -16,6 +16,7 @@ import {
   Send,
   ShieldOff,
   ShieldCheck,
+  Download,
 } from "lucide-react";
 
 type Customer = {
@@ -172,6 +173,18 @@ export default function AdminCustomersPage() {
                   </div>
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = adminUrl("/admin/customers/export-csv");
+                  a.download = "customers.csv";
+                  a.click();
+                }}
+                className="ui-btn ui-btn-ghost rounded-2xl px-4 py-2.5 text-sm"
+              >
+                <Download size={15} className="ml-1.5" />
+                خروجی CSV
+              </button>
             </div>
           </div>
         </div>

@@ -148,7 +148,16 @@ export default function CustomerLoginPage() {
               <ArrowLeft size={18} />
             </button>
 
-            <div className="mt-6 text-center text-sm text-slate-600">
+            <div className="mt-4 text-center">
+              <Link
+                href="/forgot-password"
+                className="text-sm font-bold text-slate-500 hover:text-blue-700"
+              >
+                رمز عبور را فراموش کرده‌اید؟
+              </Link>
+            </div>
+
+            <div className="mt-4 text-center text-sm text-slate-600">
               حساب کاربری ندارید؟{" "}
               <Link
                 href="/customer-register"

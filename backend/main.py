@@ -84,6 +84,7 @@ from db_service import (
     get_unread_notification_count,
 )
 from telegram_service import notify_new_customer, notify_new_request
+from ws_chat import router as ws_router
 from auth_service import (
     create_access_token,
     get_current_customer,
@@ -186,7 +187,33 @@ async def _lifespan(app_instance):
             _gdrive_timer.cancel()
 
 
-app = FastAPI(title="ArtinAzma Expert Assistant API", lifespan=_lifespan)
+app = FastAPI(
+    title="ArtinAzma Expert Assistant API",
+    description=(
+        "\u0633\u0627\u0645\u0627\u0646\u0647 \u062f\u0633\u062a\u06cc\u0627\u0631 \u0647\u0648\u0634\u0645\u0646\u062f \u0622\u0631\u062a\u06cc\u0646 \u0622\u0632\u0645\u0627 \u0645\u0647\u0631 \u2014 API \u0628\u0631\u0627\u06cc \u0686\u062a \u062a\u062e\u0635\u0635\u06cc\u060c "
+        "\u0645\u062f\u06cc\u0631\u06cc\u062a \u0628\u0627\u0646\u06a9 \u062f\u0627\u0646\u0634\u060c \u062a\u062d\u0644\u06cc\u0644 \u0641\u0627\u06cc\u0644\u060c \u0645\u062f\u06cc\u0631\u06cc\u062a \u0645\u0634\u062a\u0631\u06cc\u0627\u0646 \u0648 \u067e\u0646\u0644 \u0627\u062f\u0645\u06cc\u0646.\n\n"
+        "## Authentication\n"
+        "- **Customers**: JWT Bearer token in `Authorization` header\n"
+        "- **Admin**: API key in `X-Admin-Key` header\n\n"
+        "## Rate Limits\n"
+        "- `/chat`: 20 requests/minute\n"
+        "- `/knowledge/upload`: 10 requests/minute"
+    ),
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {"name": "Chat", "description": "AI chat and streaming endpoints"},
+        {"name": "Knowledge", "description": "Knowledge base management"},
+        {"name": "Customers", "description": "Customer registration, login, and profile"},
+        {"name": "Chat Sessions", "description": "Customer chat session management"},
+        {"name": "Analysis", "description": "File and image analysis"},
+        {"name": "Admin", "description": "Admin panel endpoints (requires X-Admin-Key)"},
+        {"name": "Settings", "description": "System settings and health check"},
+        {"name": "WebSocket", "description": "Real-time WebSocket chat"},
+    ],
+    lifespan=_lifespan,
+)
 _admin_key_header = APIKeyHeader(name="X-Admin-Key", auto_error=False)
 
 def require_admin(api_key: str = Security(_admin_key_header)):
@@ -224,6 +251,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Admin-Key", "X-Requested-With"],
 )
+
+# ── WebSocket Router ─────────────────────────────────────────────────────────
+app.include_router(ws_router)
 
 
 # ── Request Logging Middleware ─────────────────────────────────────────────────
@@ -969,7 +999,7 @@ def home():
     return {"message": "ArtinAzma Expert Assistant API is running"}
 
 
-@app.get("/health")
+@app.get("/health", tags=["Settings"], summary="Health check")
 def health_check():
     """بررسی سلامت سرویس: دیتابیس + OpenAI."""
     import time
@@ -1073,7 +1103,7 @@ def feedback_stats(_=Depends(require_admin)):
     return get_feedback_stats()
 
 
-@app.post("/chat")
+@app.post("/chat", tags=["Chat"], summary="Send message and get AI response")
 @limiter.limit("20/minute")
 def chat(body: ChatRequest, request: Request):
     p = _build_chat_pipeline(body)
@@ -1139,7 +1169,7 @@ def chat(body: ChatRequest, request: Request):
     }
 
 
-@app.post("/chat/stream")
+@app.post("/chat/stream", tags=["Chat"], summary="Streaming chat (SSE)")
 @limiter.limit("20/minute")
 def chat_stream(body: ChatRequest, request: Request):
     """همان pipeline چت اما با پاسخ streaming (SSE)."""
@@ -1278,7 +1308,7 @@ def chat_stream(body: ChatRequest, request: Request):
     )
 
 
-@app.post("/analyze-file")
+@app.post("/analyze-file", tags=["Analysis"], summary="Analyze Excel/CSV/PDF file")
 @limiter.limit("10/minute")
 def analyze_file(
     request: Request,
@@ -1468,7 +1498,7 @@ def analyze_file(
     return {"error": "فعلاً فقط فایل‌های Excel, CSV و PDF پشتیبانی می‌شوند."}
 
 
-@app.post("/knowledge/upload")
+@app.post("/knowledge/upload", tags=["Knowledge"], summary="Upload knowledge file")
 @limiter.limit("10/minute")
 async def upload_knowledge_file(
     request: Request,
@@ -1506,7 +1536,7 @@ async def upload_knowledge_file(
     return result
 
 
-@app.post("/knowledge/sync-google-drive")
+@app.post("/knowledge/sync-google-drive", tags=["Knowledge"], summary="Sync from Google Drive")
 def knowledge_sync_google_drive(request: GoogleDriveSyncRequest, _=Depends(require_admin)):
     folder_id = (
         request.root_folder_id.strip()
@@ -1543,7 +1573,7 @@ def knowledge_sync_google_drive(request: GoogleDriveSyncRequest, _=Depends(requi
         }
 
 
-@app.get("/knowledge/stats")
+@app.get("/knowledge/stats", tags=["Knowledge"], summary="Knowledge base statistics")
 def knowledge_stats():
     return get_knowledge_stats()
 
@@ -1751,7 +1781,7 @@ class KnowledgeSearchRequest(BaseModel):
     top_k: Optional[int] = 10        # number of results
 
 
-@app.post("/knowledge/search")
+@app.post("/knowledge/search", tags=["Knowledge"], summary="Search knowledge base")
 def knowledge_search(request: KnowledgeSearchRequest):
     query = request.message
     top_k = max(1, min(request.top_k or 10, 30))
@@ -1793,17 +1823,17 @@ def knowledge_search(request: KnowledgeSearchRequest):
     }
 
 
-@app.get("/questions/recent")
+@app.get("/questions/recent", tags=["Admin"], summary="Recent questions")
 def questions_recent(limit: int = 20, _=Depends(require_admin)):
     return {"questions": get_recent_questions(limit=limit)}
 
 
-@app.get("/questions/stats")
+@app.get("/questions/stats", tags=["Admin"], summary="Question statistics")
 def questions_stats(_=Depends(require_admin)):
     return get_question_stats()
 
 
-@app.get("/questions/analytics")
+@app.get("/questions/analytics", tags=["Admin"], summary="Question analytics")
 def questions_analytics(days: int = 7):
     return get_question_analytics(days=days)
 
@@ -1890,7 +1920,7 @@ def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
     return result
 
 
-@app.post("/transcribe")
+@app.post("/transcribe", tags=["Analysis"], summary="Transcribe audio to text")
 async def transcribe_audio(file: UploadFile = File(...)):
     """Transcribe audio using OpenAI Whisper - works in Iran unlike Web Speech API."""
     try:
@@ -1911,7 +1941,7 @@ async def transcribe_audio(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/analyze-image")
+@app.post("/analyze-image", tags=["Analysis"], summary="Analyze image with AI")
 @limiter.limit("10/minute")
 def analyze_image(
     request: Request,
@@ -1995,7 +2025,7 @@ def memory_stats(user_id: str):
     return get_user_memory_stats(user_id)
 
 
-@app.post("/customer-requests")
+@app.post("/customer-requests", tags=["Customers"], summary="Submit inquiry/request")
 def create_customer_request(request: CustomerRequestCreate):
     request_id = save_customer_request(
         full_name=request.full_name,
@@ -2023,7 +2053,7 @@ def create_customer_request(request: CustomerRequestCreate):
     }
 
 
-@app.get("/customer-requests")
+@app.get("/customer-requests", tags=["Admin"], summary="List customer requests")
 def customer_requests(limit: int = 100, _=Depends(require_admin)):
     return {"requests": get_customer_requests(limit=limit)}
 
@@ -2500,7 +2530,7 @@ def system_status(check_ai: bool = False):
     }
 
 
-@app.post("/customers/register")
+@app.post("/customers/register", tags=["Customers"], summary="Register new customer")
 @limiter.limit("5/minute")
 def customer_register(body: CustomerRegisterRequest, request: Request):
     if not body.full_name.strip():
@@ -2543,7 +2573,7 @@ def customer_register(body: CustomerRegisterRequest, request: Request):
     }
 
 
-@app.post("/customers/login")
+@app.post("/customers/login", tags=["Customers"], summary="Customer login")
 @limiter.limit("10/minute")
 def customer_login(body: CustomerLoginRequest, request: Request):
     customer = authenticate_customer(email=body.email, password=body.password)
@@ -2565,7 +2595,7 @@ def customer_login(body: CustomerLoginRequest, request: Request):
     }
 
 
-@app.get("/customers/{customer_id}")
+@app.get("/customers/{customer_id}", tags=["Customers"], summary="Get customer profile")
 def customer_profile(customer_id: int, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], customer_id)
     customer = get_customer_by_id(customer_id)
@@ -2576,7 +2606,7 @@ def customer_profile(customer_id: int, current_user: dict = Depends(get_current_
     return {"success": True, "customer": customer}
 
 
-@app.patch("/customers/{customer_id}")
+@app.patch("/customers/{customer_id}", tags=["Customers"], summary="Update customer profile")
 def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequest, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], customer_id)
     updated_customer = update_customer_profile(
@@ -2596,7 +2626,7 @@ def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequ
     }
 
 
-@app.post("/customers/{customer_id}/change-password")
+@app.post("/customers/{customer_id}/change-password", tags=["Customers"], summary="Change password")
 def customer_change_password(customer_id: int, request: CustomerChangePasswordRequest, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], customer_id)
     result = change_customer_password(
@@ -2607,13 +2637,13 @@ def customer_change_password(customer_id: int, request: CustomerChangePasswordRe
     return result
 
 
-@app.get("/customers/{customer_id}/chat-sessions")
+@app.get("/customers/{customer_id}/chat-sessions", tags=["Chat Sessions"], summary="List chat sessions")
 def customer_chat_sessions(customer_id: int, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], customer_id)
     return {"success": True, "sessions": get_customer_chat_sessions(customer_id)}
 
 
-@app.post("/customers/chat-sessions")
+@app.post("/customers/chat-sessions", tags=["Chat Sessions"], summary="Create chat session")
 def customer_chat_session_create(request: CustomerSessionCreateRequest, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], request.customer_id)
 

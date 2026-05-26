@@ -4,6 +4,9 @@ import "./globals.css";
 import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import InstallPrompt from "@/components/InstallPrompt";
+import NetworkStatus from "@/components/NetworkStatus";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -65,9 +68,13 @@ export default function RootLayout({
         />
       </head>
       <body className={vazirmatn.variable}>
-        <ConfirmDialogProvider>
-          <ArtinShell>{children}</ArtinShell>
-        </ConfirmDialogProvider>
+        <ThemeProvider>
+          <ConfirmDialogProvider>
+            <NetworkStatus />
+            <ArtinShell>{children}</ArtinShell>
+            <InstallPrompt />
+          </ConfirmDialogProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

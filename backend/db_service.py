@@ -169,6 +169,20 @@ def init_db():
         )
         """)
 
+    # ── Performance Indexes ────────────────────────────────────────
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_questions_created ON expert_questions(created_at)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_questions_domain ON expert_questions(detected_domain)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_questions_rating ON expert_questions(user_rating)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_customer ON chat_sessions(customer_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_updated ON chat_sessions(updated_at)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_session ON chat_messages(session_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_customer ON customer_requests(customer_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_status ON customer_requests(status)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_customer ON customer_notifications(customer_id, is_read)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_memories_user ON user_memories(user_id)")
+
     conn.commit()
     conn.close()
 
@@ -1648,5 +1662,104 @@ def get_feedback_stats() -> Dict[str, Any]:
             "unrated": rows["unrated"] or 0,
             "satisfaction_pct": round(up / rated * 100, 1) if rated > 0 else None,
         }
+    finally:
+        conn.close()
+
+
+# ── Password Reset ──────────────────────────────────────────────────────────
+
+def _ensure_password_reset_table():
+    """ایجاد جدول توکن بازیابی رمز عبور اگر وجود نداشته باشد."""
+    conn = get_connection()
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                token TEXT NOT NULL UNIQUE,
+                expires_at TEXT NOT NULL,
+                used INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def create_password_reset_token(email: str) -> dict:
+    """
+    ایجاد توکن بازیابی رمز عبور.
+    برمی‌گرداند: {"success": True, "token": ..., "customer": ...} یا {"success": False, "message": ...}
+    """
+    import secrets
+    _ensure_password_reset_table()
+
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT id, full_name, email FROM customers WHERE email = ?", (email.strip().lower(),)).fetchone()
+        if not row:
+            # Don't reveal if email exists
+            return {"success": True, "message": "اگر ایمیل معتبر باشد، لینک بازیابی ارسال می‌شود."}
+
+        # Invalidate old tokens
+        conn.execute("UPDATE password_reset_tokens SET used = 1 WHERE customer_id = ? AND used = 0", (row["id"],))
+
+        token = secrets.token_urlsafe(32)
+        expires_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+
+        conn.execute(
+            "INSERT INTO password_reset_tokens (customer_id, token, expires_at) VALUES (?, ?, ?)",
+            (row["id"], token, expires_at),
+        )
+        conn.commit()
+
+        return {
+            "success": True,
+            "token": token,
+            "customer": {"id": row["id"], "full_name": row["full_name"], "email": row["email"]},
+        }
+    finally:
+        conn.close()
+
+
+def verify_reset_token(token: str) -> dict:
+    """بررسی اعتبار توکن بازیابی."""
+    _ensure_password_reset_table()
+
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT id, customer_id, expires_at, used FROM password_reset_tokens WHERE token = ?",
+            (token,),
+        ).fetchone()
+
+        if not row:
+            return {"valid": False, "message": "لینک بازیابی نامعتبر است."}
+
+        if row["used"]:
+            return {"valid": False, "message": "این لینک قبلاً استفاده شده است."}
+
+        if datetime.fromisoformat(row["expires_at"]) < datetime.utcnow():
+            return {"valid": False, "message": "لینک بازیابی منقضی شده است. لطفاً دوباره درخواست دهید."}
+
+        return {"valid": True, "customer_id": row["customer_id"], "token_id": row["id"]}
+    finally:
+        conn.close()
+
+
+def reset_password_with_token(token: str, new_password: str) -> dict:
+    """تغییر رمز عبور با استفاده از توکن بازیابی."""
+    check = verify_reset_token(token)
+    if not check.get("valid"):
+        return {"success": False, "message": check.get("message", "لینک نامعتبر")}
+
+    conn = get_connection()
+    try:
+        new_hash = hash_password(new_password)
+        conn.execute("UPDATE customers SET password_hash = ? WHERE id = ?", (new_hash, check["customer_id"]))
+        conn.execute("UPDATE password_reset_tokens SET used = 1 WHERE id = ?", (check["token_id"],))
+        conn.commit()
+        return {"success": True, "message": "رمز عبور با موفقیت تغییر یافت."}
     finally:
         conn.close()
