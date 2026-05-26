@@ -1,6 +1,8 @@
 "use client";
-import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import { debounce } from "@/lib/debounce";
 import { apiUrl, customerFetch } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
@@ -18,6 +20,7 @@ import {
   ImagePlus,
   X as XIcon,
   SlidersHorizontal,
+  Volume2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
@@ -30,13 +33,15 @@ import {
   getTestTypeLabel,
   getImageTypeLabel,
 } from "@/lib/chat-helpers";
-import MessageBubble from "@/components/MessageBubble";
-import UploadModal from "@/components/UploadModal";
+const MessageBubble = dynamic(() => import("@/components/MessageBubble"), { ssr: false });
+const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: false });
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import type {
   Source,
   ChatMessage,
   Customer,
+  ResourceLink,
+  ResourceImage,
   SavedChatMessage,
   ToolAction,
 } from "@/lib/chat-types";
@@ -589,14 +594,19 @@ ${cleanAnswer}`,
     return () => window.removeEventListener("keydown", onGlobalKeyDown);
   }, []);
 
-  function handleChatScroll() {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const atBottom = distanceFromBottom < 80;
-    isAtBottomRef.current = atBottom;
-    setShowScrollBtn(!atBottom);
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleChatScroll = useMemo(
+    () =>
+      debounce(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+        const atBottom = distanceFromBottom < 80;
+        isAtBottomRef.current = atBottom;
+        setShowScrollBtn(!atBottom);
+      }, 50),
+    [],
+  );
 
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

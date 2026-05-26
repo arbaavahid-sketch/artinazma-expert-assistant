@@ -33,6 +33,15 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "آرتین آزما مهر",
+  url: "https://artinazma.net",
+  description: "تأمین‌کننده تجهیزات آزمایشگاهی، مواد شیمیایی، کاتالیست‌ها و مواد فرایندی",
+  sameAs: ["https://artinazma.net"],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -50,6 +59,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/images/artinazma-logo.png" />
         <meta name="theme-color" content="#1d4ed8" />
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}` }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className={vazirmatn.variable}>
         <ConfirmDialogProvider>

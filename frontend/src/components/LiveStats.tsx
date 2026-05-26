@@ -23,7 +23,7 @@ function useCountUp(target: number | null, duration = 1200) {
       const progress = Math.min(elapsed / duration, 1);
       // ease-out
       const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(eased * target));
+      setDisplay(Math.round(eased * (target as number)));
       if (progress < 1) raf.current = requestAnimationFrame(tick);
     }
     raf.current = requestAnimationFrame(tick);

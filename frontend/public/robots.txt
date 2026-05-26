@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/
+Disallow: /customer-dashboard
+Disallow: /memory
+Disallow: /questions
+Disallow: /knowledge
+Disallow: /dashboard
+
+Sitemap: https://artinazma.net/sitemap.xml

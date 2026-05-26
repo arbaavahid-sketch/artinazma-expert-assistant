@@ -3,7 +3,7 @@
  * کامپوننت حباب پیام — استخراج‌شده از assistant/page.tsx
  */
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -118,7 +118,7 @@ interface MessageBubbleProps {
   onEdit: (index: number, newText: string) => void;
 }
 
-export default function MessageBubble({
+function MessageBubble({
   item,
   index,
   loading,
@@ -478,3 +478,5 @@ export default function MessageBubble({
     </div>
   );
 }
+
+export default memo(MessageBubble);

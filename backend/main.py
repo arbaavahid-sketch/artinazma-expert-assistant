@@ -203,8 +203,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Admin-Key", "X-Requested-With"],
 )
 
 
@@ -1424,7 +1424,9 @@ def analyze_file(
 
 
 @app.post("/knowledge/upload")
+@limiter.limit("10/minute")
 async def upload_knowledge_file(
+    request: Request,
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
     category: Optional[str] = Form("general"),
