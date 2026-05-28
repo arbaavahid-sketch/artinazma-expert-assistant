@@ -1164,24 +1164,38 @@ def _ocr_extract_text(file_path: str) -> str:
 def analyze_image_with_ai(
     file_path: str, user_note: str = "", web_context: str = ""
 ) -> str:
-    # Step 1: extract text locally with OCR (no network needed)
+    import base64 as _b64
+    import mimetypes as _mime
+
+    # Step 1: encode image as base64 for vision API
+    mime_type = _mime.guess_type(file_path)[0] or "image/jpeg"
+    try:
+        with open(file_path, "rb") as f:
+            image_b64 = _b64.b64encode(f.read()).decode("utf-8")
+        image_data_url = f"data:{mime_type};base64,{image_b64}"
+        has_image = True
+    except Exception as e:
+        print(f"[VISION] failed to read image file: {e}")
+        has_image = False
+
+    # Step 2: optionally run OCR as supplementary context
     ocr_text = _ocr_extract_text(file_path)
 
-    prompt = IMAGE_ANALYSIS_PROMPT.format(
+    prompt_text = IMAGE_ANALYSIS_PROMPT.format(
         user_note=user_note if user_note else "توضیحی ارائه نشده است."
     )
 
     if ocr_text:
-        prompt += f"""
+        prompt_text += f"""
 
-متن استخراج‌شده از تصویر (OCR):
+متن استخراج‌شده از تصویر (OCR — برای اطمینان):
 ---
 {ocr_text}
 ---
 """
 
     if web_context:
-        prompt += f"""
+        prompt_text += f"""
 
 زمینه تکمیلی قابل استفاده:
 {web_context}
@@ -1191,11 +1205,23 @@ def analyze_image_with_ai(
 - به کاربر نگو این زمینه از کجا آمده است.
 """
 
-    # Step 2: send extracted text to OpenAI
+    # Step 3: send image + text to OpenAI vision
+    if has_image:
+        user_content = [
+            {"type": "text", "text": prompt_text},
+            {
+                "type": "image_url",
+                "image_url": {"url": image_data_url, "detail": "high"},
+            },
+        ]
+    else:
+        # fallback: text-only if image couldn't be read
+        user_content = prompt_text
+
     return _chat_via_requests(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
+            {"role": "user", "content": user_content},
         ],
         model=MODEL,
         temperature=OPENAI_TEMPERATURE,

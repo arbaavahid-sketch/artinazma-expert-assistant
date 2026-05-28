@@ -74,6 +74,12 @@ export async function customerFetch(url: string, options: RequestInit = {}): Pro
     if (typeof window !== "undefined") {
       // Remove stored customer data
       localStorage.removeItem("artin_customer");
+      // Clear the httpOnly session cookie via server-side API route, then redirect
+      try {
+        await fetch("/api/customer-session", { method: "DELETE" });
+      } catch {
+        // ignore — even if this fails, still redirect to login
+      }
       window.location.href = "/customer-login";
     }
   }

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { debounce } from "@/lib/debounce";
-import { apiUrl, customerFetch } from "@/lib/api";
+import { apiUrl, customerFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
   Loader,
@@ -427,7 +427,7 @@ ${cleanAnswer}`,
     try {
       await fetch(apiUrl(`/questions/${questionId}/feedback`), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": getCsrfToken() },
         body: JSON.stringify({ rating, comment: comment || "" }),
       });
     } catch {
@@ -1063,6 +1063,7 @@ ${printScript}
     try {
       const res = await fetch(apiUrl("/analyze-file"), {
         method: "POST",
+        headers: { "X-CSRF-Token": getCsrfToken() },
         body: formData,
       });
 
@@ -1162,6 +1163,7 @@ ${printScript}
     try {
       const res = await fetch(apiUrl("/analyze-image"), {
         method: "POST",
+        headers: { "X-CSRF-Token": getCsrfToken() },
         body: formData,
       });
 

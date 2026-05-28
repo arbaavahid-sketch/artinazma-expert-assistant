@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, getCsrfToken } from "@/lib/api";
 import {
   AlertCircle,
   Beaker,
@@ -312,6 +312,8 @@ export default function AnalyzePage() {
       const data = await new Promise<Record<string, unknown>>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", apiUrl(endpoint));
+        const csrfToken = getCsrfToken();
+        if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken);
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             setUploadPercent(Math.round((e.loaded / e.total) * 100));

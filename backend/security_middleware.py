@@ -24,6 +24,7 @@ _CSRF_EXEMPT_PATHS = {
     "/chat", "/chat-stream", "/ws/chat",
     "/customers/login", "/customers/register", "/customers/logout",
     "/customer-requests",
+    "/analyze-image", "/analyze-file", "/transcribe",
 }
 _CSRF_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 

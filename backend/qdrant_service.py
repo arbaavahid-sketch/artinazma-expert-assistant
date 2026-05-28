@@ -44,8 +44,8 @@ def _get_client():
 
 
 def _ensure_collection(client) -> None:
-    """Create the collection if it doesn't exist yet."""
-    from qdrant_client.models import VectorParams, Distance
+    """Create the collection if it doesn't exist yet, then ensure payload indexes."""
+    from qdrant_client.models import VectorParams, Distance, PayloadSchemaType
 
     existing = {c.name for c in client.get_collections().collections}
     if COLLECTION not in existing:
@@ -54,6 +54,19 @@ def _ensure_collection(client) -> None:
             vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
         )
         logger.info("Created Qdrant collection '%s'", COLLECTION)
+
+    # Ensure keyword indexes exist (required for filtered count/delete/search).
+    # create_payload_index is idempotent — safe to call on every startup.
+    for field in ("file_name", "category"):
+        try:
+            client.create_payload_index(
+                collection_name=COLLECTION,
+                field_name=field,
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
+        except Exception as exc:
+            # Ignore "already exists" or similar; log anything unexpected.
+            logger.debug("create_payload_index(%s): %s", field, exc)
 
 
 def _chunk_id(file_name: str, chunk_index: int) -> int:
