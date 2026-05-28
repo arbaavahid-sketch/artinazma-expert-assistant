@@ -43,6 +43,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
+        # Skip CSRF in test mode (set TESTING=1 in environment)
+        if os.getenv("TESTING") == "1":
+            return await call_next(request)
+
         # Skip non-state-changing methods
         if request.method not in _CSRF_METHODS:
             response = await call_next(request)

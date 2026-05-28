@@ -79,29 +79,29 @@ class TestHelperFunctions:
     """تست توابع کمکی main.py."""
 
     def test_is_specific_product_question(self):
-        from main import is_specific_product_or_model_question
+        from utils.chat_utils import is_specific_product_or_model_question
         assert is_specific_product_or_model_question("مشخصات دستگاه GC-5000 چیست؟") is True
         assert is_specific_product_or_model_question("XRF چیست؟") is False
 
     def test_is_artinazma_related(self):
-        from main import is_artinazma_related_question
+        from utils.chat_utils import is_artinazma_related_question
         assert is_artinazma_related_question("آیا شما دستگاه GC دارید؟") is True
         assert is_artinazma_related_question("روش کار BET چیست؟") is False
 
     def test_is_followup_transform(self):
-        from main import is_followup_transform_request
+        from utils.chat_utils import is_followup_transform_request
         assert is_followup_transform_request("تبدیل به جدول کن") is True
         assert is_followup_transform_request("کوتاه‌تر کن") is True
         assert is_followup_transform_request("گوگرد نفت خام چیست؟") is False
 
     def test_make_safe_filename(self):
-        from main import make_safe_filename
+        from utils.chat_utils import make_safe_filename
         assert make_safe_filename("my file (1).pdf") == "my_file__1_.pdf"
         assert make_safe_filename("") == "uploaded_file"
         assert make_safe_filename("..") == "uploaded_file"
 
     def test_remove_company_mentions(self):
-        from main import remove_company_mentions_if_not_allowed
+        from utils.chat_utils import remove_company_mentions_if_not_allowed
         text = "آرتین آزما مهر بهترین شرکت است.\nبرای اطلاع بیشتر تماس بگیرید."
         cleaned = remove_company_mentions_if_not_allowed(text)
         assert "آرتین آزما مهر" not in cleaned

@@ -70,9 +70,11 @@ class TestCustomerAuth:
     """تست‌های احراز هویت مشتری با JWT."""
 
     def test_register_customer(self, app_client):
+        import random
+        email = f"register_test_{random.randint(10000, 99999)}@example.com"
         res = app_client.post("/customers/register", json={
             "full_name": "تست کاربر",
-            "email": "test@example.com",
+            "email": email,
             "password": "test123456",
             "company": "شرکت تست",
         })
@@ -81,16 +83,11 @@ class TestCustomerAuth:
         assert data["success"] is True
         assert "access_token" in data
         assert data["token_type"] == "bearer"
-        assert data["customer"]["email"] == "test@example.com"
+        assert data["customer"]["email"] == email
 
-    def test_login_customer(self, app_client):
-        # First register
-        app_client.post("/customers/register", json={
-            "full_name": "تست لاگین",
-            "email": "login@example.com",
-            "password": "login123456",
-        })
-        # Then login
+    def test_login_customer(self, app_client, test_db):
+        from repositories.customer_repo import create_customer
+        create_customer(full_name="تست لاگین", email="login@example.com", password="login123456")
         res = app_client.post("/customers/login", json={
             "email": "login@example.com",
             "password": "login123456",
@@ -100,12 +97,9 @@ class TestCustomerAuth:
         assert data["success"] is True
         assert "access_token" in data
 
-    def test_login_wrong_password(self, app_client):
-        app_client.post("/customers/register", json={
-            "full_name": "تست رمز",
-            "email": "wrongpass@example.com",
-            "password": "correct123",
-        })
+    def test_login_wrong_password(self, app_client, test_db):
+        from repositories.customer_repo import create_customer
+        create_customer(full_name="تست رمز", email="wrongpass@example.com", password="correct123")
         res = app_client.post("/customers/login", json={
             "email": "wrongpass@example.com",
             "password": "wrongpassword",
@@ -118,43 +112,47 @@ class TestCustomerAuth:
         res = app_client.get("/customers/1")
         assert res.status_code == 401
 
-    def test_profile_with_valid_token(self, app_client):
+    def test_profile_with_valid_token(self, app_client, test_db):
         """دسترسی به پروفایل با توکن معتبر."""
-        reg = app_client.post("/customers/register", json={
-            "full_name": "پروفایل تست",
-            "email": "profile@example.com",
-            "password": "profile123",
-        })
-        data = reg.json()
-        token = data["access_token"]
-        customer_id = data["customer"]["id"]
+        import random
+        from repositories.customer_repo import create_customer
+        from auth_service import create_access_token
+
+        email = f"profile_{random.randint(10000,99999)}@example.com"
+        cust = create_customer(full_name="پروفایل تست", email=email, password="profile123")
+        token = create_access_token(customer_id=cust["customer_id"], email=email)
 
         res = app_client.get(
-            f"/customers/{customer_id}",
+            f"/customers/{cust['customer_id']}",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert res.status_code == 200
         assert res.json()["success"] is True
 
-    def test_profile_access_other_customer(self, app_client):
+    def test_profile_access_other_customer(self, app_client, test_db):
         """مشتری A نباید بتواند به پروفایل مشتری B دسترسی داشته باشد."""
-        reg_a = app_client.post("/customers/register", json={
-            "full_name": "مشتری الف",
-            "email": "customer_a@example.com",
-            "password": "pass123456",
-        })
-        token_a = reg_a.json()["access_token"]
+        import random
+        from repositories.customer_repo import create_customer
+        from auth_service import create_access_token
 
-        reg_b = app_client.post("/customers/register", json={
-            "full_name": "مشتری ب",
-            "email": "customer_b@example.com",
-            "password": "pass123456",
-        })
-        customer_b_id = reg_b.json()["customer"]["id"]
+        suffix = random.randint(10000, 99999)
+        email_a = f"customer_a_{suffix}@example.com"
+        email_b = f"customer_b_{suffix}@example.com"
+        cust_a = create_customer(
+            full_name="مشتری الف",
+            email=email_a,
+            password="pass123456",
+        )
+        cust_b = create_customer(
+            full_name="مشتری ب",
+            email=email_b,
+            password="pass123456",
+        )
+        token_a = create_access_token(customer_id=cust_a["customer_id"], email=email_a)
 
         # A tries to access B's profile
         res = app_client.get(
-            f"/customers/{customer_b_id}",
+            f"/customers/{cust_b['customer_id']}",
             headers={"Authorization": f"Bearer {token_a}"},
         )
         assert res.status_code == 403
