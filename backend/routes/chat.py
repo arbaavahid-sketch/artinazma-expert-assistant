@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse
 from schemas.models import ChatRequest, SuggestQuestionsRequest
 from utils.deps import limiter, require_admin
 from utils.chat_utils import (
-    _ResponseCache,
+    make_response_cache,
     _ASTM_KNOWN_STANDARDS,
     _LOCAL_SCORE_THRESHOLD,
     _MODEL_LOCAL_SCORE_THRESHOLD,
@@ -37,7 +37,7 @@ logger = logging.getLogger("artin_scheduler")
 
 router = APIRouter()
 
-_response_cache = _ResponseCache(maxsize=200, ttl=3600)
+_response_cache = make_response_cache(maxsize=200, ttl=3600)
 
 
 def _build_chat_pipeline(body: ChatRequest) -> dict:

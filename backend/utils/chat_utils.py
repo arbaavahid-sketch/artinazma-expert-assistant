@@ -187,13 +187,14 @@ def remove_company_mentions_if_not_allowed(answer: str) -> str:
     return cleaned.strip()
 
 
-# ─── Simple in-memory LRU response cache ────────────────────────────────────
+# ─── Response cache (in-memory LRU or Redis) ─────────────────────────────────
+
 class _ResponseCache:
     """Thread-safe LRU cache for identical non-personalised questions."""
     def __init__(self, maxsize: int = 200, ttl: int = 3600):
         self._cache: OrderedDict = OrderedDict()
         self._maxsize = maxsize
-        self._ttl = ttl  # seconds
+        self._ttl = ttl
         self._lock = threading.Lock()
 
     def _make_key(self, message: str, domain: str) -> str:
@@ -227,3 +228,82 @@ class _ResponseCache:
     def stats(self) -> dict:
         with self._lock:
             return {"size": len(self._cache), "maxsize": self._maxsize, "ttl": self._ttl}
+
+
+class _RedisCache:
+    """
+    Drop-in replacement for _ResponseCache backed by Redis.
+    Activated when REDIS_URL env var is set.
+    Falls back silently to None on any Redis error (cache miss).
+    """
+    def __init__(self, ttl: int = 3600, prefix: str = "artin:chat:"):
+        import redis as _redis  # type: ignore[import]
+        self._redis = _redis.from_url(
+            os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+            decode_responses=False,
+            socket_connect_timeout=2,
+            socket_timeout=2,
+        )
+        self._ttl = ttl
+        self._prefix = prefix
+
+    def _make_key(self, message: str, domain: str) -> str:
+        norm = message.strip().lower()
+        digest = hashlib.sha256(f"{domain}||{norm}".encode()).hexdigest()
+        return f"{self._prefix}{digest}"
+
+    def get(self, message: str, domain: str):
+        import json as _json
+        try:
+            raw = self._redis.get(self._make_key(message, domain))
+            if raw is None:
+                return None
+            return _json.loads(raw)
+        except Exception:
+            return None
+
+    def set(self, message: str, domain: str, data: dict):
+        import json as _json
+        try:
+            self._redis.setex(
+                self._make_key(message, domain),
+                self._ttl,
+                _json.dumps(data, ensure_ascii=False),
+            )
+        except Exception:
+            pass
+
+    def invalidate(self):
+        try:
+            keys = self._redis.keys(f"{self._prefix}*")
+            if keys:
+                self._redis.delete(*keys)
+        except Exception:
+            pass
+
+    def stats(self) -> dict:
+        try:
+            size = len(self._redis.keys(f"{self._prefix}*"))
+            info = self._redis.info("memory")
+            return {
+                "backend": "redis",
+                "size": size,
+                "ttl": self._ttl,
+                "used_memory_human": info.get("used_memory_human", "?"),
+            }
+        except Exception:
+            return {"backend": "redis", "size": -1, "ttl": self._ttl, "error": "unavailable"}
+
+
+def make_response_cache(maxsize: int = 200, ttl: int = 3600):
+    """Returns Redis cache if REDIS_URL is set, else in-memory LRU."""
+    redis_url = os.getenv("REDIS_URL", "").strip()
+    if redis_url:
+        try:
+            cache = _RedisCache(ttl=ttl)
+            cache._redis.ping()
+            print(f"[cache] Redis cache enabled ({redis_url})")
+            return cache
+        except Exception as exc:
+            print(f"[cache] Redis connection failed ({exc}) -- falling back to in-memory cache")
+    return _ResponseCache(maxsize=maxsize, ttl=ttl)

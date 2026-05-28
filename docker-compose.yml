@@ -1,6 +1,18 @@
 version: "3.9"
 
+# ─── Required environment variables ──────────────────────────────────────────
+# Copy .env.example → .env and fill in:
+#   POSTGRES_PASSWORD   strong database password
+#   DOMAIN              your public domain (e.g. artinazma.net)
+#                       defaults to "localhost" for local dev
+#
+# For production TLS certs:  make certs-prod DOMAIN=yourdomain.com
+# For self-signed dev certs: make certs-dev   (already included in repo)
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: artin_postgres
@@ -17,11 +29,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: artin_redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save ""
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Qdrant ──────────────────────────────────────────────────────────────────
   qdrant:
     image: qdrant/qdrant:latest
     container_name: artin_qdrant
-    ports:
-      - "6333:6333"
+    # Not exposed externally — backend accesses via internal Docker network
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped
@@ -31,23 +57,26 @@ services:
       timeout: 5s
       retries: 3
 
+  # ── FastAPI Backend ─────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: artin_backend
-    ports:
-      - "8000:8000"
+    # Port 8000 is NOT exposed externally — nginx is the sole public entry point
     env_file:
       - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://artinazma:${POSTGRES_PASSWORD:-changeme}@postgres:5432/artinazma
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - backend_storage:/app/storage
       - backend_uploads:/app/uploads
       - backend_knowledge:/app/knowledge_files
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       qdrant:
         condition: service_healthy
@@ -58,25 +87,71 @@ services:
       timeout: 10s
       retries: 3
 
+  # ── Next.js Frontend ─────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # Baked into the Next.js bundle at build time.
+        # Browser calls   → https://<DOMAIN>/api/* → nginx → backend:8000
+        # SSR calls (Node) are also routed via nginx for consistency.
+        - NEXT_PUBLIC_API_BASE_URL=https://${DOMAIN:-localhost}/api
     container_name: artin_frontend
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./frontend/.env.local
+    # Port 3000 is NOT exposed externally — nginx proxies all traffic
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://backend:8000
+      - NEXT_PUBLIC_API_BASE_URL=https://${DOMAIN:-localhost}/api
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
 
+  # ── nginx reverse proxy + TLS termination ────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: artin_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      # Certbot webroot for ACME HTTP-01 challenges (production)
+      - certbot_webroot:/var/www/certbot:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Certbot (Let's Encrypt) — runs once to issue/renew certs ─────────────────
+  # Activated manually for production:  docker compose run --rm certbot
+  # Or scheduled renewal:               docker compose run --rm certbot renew
+  certbot:
+    image: certbot/certbot:latest
+    container_name: artin_certbot
+    profiles:
+      - certbot          # only starts when explicitly requested
+    volumes:
+      - ./nginx/certs:/etc/letsencrypt/live/${DOMAIN:-localhost}
+      - certbot_webroot:/var/www/certbot
+    command: >
+      certonly --webroot
+      --webroot-path=/var/www/certbot
+      --email ${CERTBOT_EMAIL:-admin@example.com}
+      --agree-tos --no-eff-email
+      -d ${DOMAIN:-localhost}
+    restart: "no"
+
 volumes:
   postgres_data:
+  redis_data:
   backend_storage:
   backend_uploads:
   backend_knowledge:
   qdrant_data:
+  certbot_webroot:
