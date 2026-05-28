@@ -36,6 +36,9 @@ import {
 const MessageBubble = dynamic(() => import("@/components/MessageBubble"), { ssr: false });
 const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: false });
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { useTTS } from "@/hooks/useTTS";
+import { useExportChat } from "@/hooks/useExportChat";
+import StarterQuestions from "@/components/StarterQuestions";
 import type {
   Source,
   ChatMessage,
@@ -145,10 +148,9 @@ function AssistantPageInner() {
   const [stagedImage, setStagedImage] = useState<File | null>(null);
   const [stagedImageUrl, setStagedImageUrl] = useState<string>("");
   const [isDragOver, setIsDragOver] = useState(false);
-  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
-  const [ttsNote, setTtsNote] = useState<string>("");
+  const { speakingIndex, ttsNote, speakMessage } = useTTS();
   const [canUndo, setCanUndo] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
+  const { showExportMenu, setShowExportMenu, exportChat, exportChatWord, exportChatText } = useExportChat(messages);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -275,146 +277,6 @@ ${cleanAnswer}`,
     setMessages((prev) => prev.slice(0, -2)); // remove user msg + placeholder
   }
 
-  const _ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  function _clearTtsKeepAlive() {
-    if (_ttsKeepAliveRef.current) {
-      clearInterval(_ttsKeepAliveRef.current);
-      _ttsKeepAliveRef.current = null;
-    }
-  }
-
-  function speakMessage(text: string, index: number) {
-    if (!("speechSynthesis" in window)) {
-      setTtsNote("مرورگر شما از قابلیت خواندن متن پشتیبانی نمی\u200cکند.");
-      setTimeout(() => setTtsNote(""), 5000);
-      return;
-    }
-
-    // Toggle off if already speaking this message
-    if (speakingIndex === index) {
-      window.speechSynthesis.cancel();
-      _clearTtsKeepAlive();
-      setSpeakingIndex(null);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    _clearTtsKeepAlive();
-
-    // Strip markdown for cleaner TTS
-    const clean = text
-      .replace(/#{1,6}\s/g, "")
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .replace(/\*(.*?)\*/g, "$1")
-      .replace(/`{1,3}[^`]*`{1,3}/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/[-*_]{3,}/g, "")
-      .replace(/\|/g, " ")
-      .replace(/\n+/g, ". ")
-      .trim()
-      .slice(0, 4000);
-
-    // Split text into Persian/Arabic vs Latin segments for bilingual TTS
-    // Only switch voice for long English phrases (>15 chars with spaces).
-    // Short terms like GC, XRF, HPLC stay in the Persian segment — the
-    // Persian voice handles short abbreviations fine and avoids choppy switching.
-    const segments: { text: string; isLatin: boolean }[] = [];
-    const segmentRegex = /([A-Za-z][A-Za-z0-9\s.,;:!?\'\"/()\-/%@#+*=<>{}\[\]~^&$_\\|]*)|([^A-Za-z]+)/g;
-    let match: RegExpExecArray | null;
-    while ((match = segmentRegex.exec(clean)) !== null) {
-      const segText = match[0].trim();
-      if (!segText) continue;
-      // Only treat as Latin if it's a real English phrase (long enough and has spaces)
-      const isLatin = Boolean(match[1]) && segText.length > 15 && segText.includes(" ");
-      if (segments.length > 0 && segments[segments.length - 1].isLatin === isLatin) {
-        segments[segments.length - 1].text += " " + segText;
-      } else {
-        segments.push({ text: segText, isLatin });
-      }
-    }
-    if (segments.length === 0) {
-      segments.push({ text: clean, isLatin: false });
-    }
-
-    const doSpeak = (voices: SpeechSynthesisVoice[]) => {
-      const faVoice =
-        voices.find((v) => v.lang.startsWith("fa")) ||
-        voices.find((v) => v.lang.startsWith("ar")) ||
-        null;
-      const enVoice =
-        voices.find((v) => v.lang.startsWith("en") && v.lang.includes("US")) ||
-        voices.find((v) => v.lang.startsWith("en")) ||
-        null;
-      const fallbackVoice = voices.find((v) => v.default) || voices[0] || null;
-
-      const utterances: SpeechSynthesisUtterance[] = segments.map((seg) => {
-        const utter = new SpeechSynthesisUtterance(seg.text);
-        if (seg.isLatin) {
-          const voice = enVoice || fallbackVoice;
-          if (voice) utter.voice = voice;
-          utter.lang = voice?.lang ?? "en-US";
-          utter.rate = 0.9;
-        } else {
-          const voice = faVoice || fallbackVoice;
-          if (voice) utter.voice = voice;
-          utter.lang = voice?.lang ?? "fa-IR";
-          utter.rate = 0.85;
-        }
-        utter.pitch = 1;
-        return utter;
-      });
-
-      if (utterances.length === 0) return;
-
-      utterances[0].onstart = () => setTtsNote("");
-
-      const lastUtter = utterances[utterances.length - 1];
-      lastUtter.onend = () => {
-        _clearTtsKeepAlive();
-        setSpeakingIndex(null);
-      };
-      lastUtter.onerror = (e) => {
-        _clearTtsKeepAlive();
-        setSpeakingIndex(null);
-        if (e.error !== "interrupted") {
-          setTtsNote(
-            "صدای فارسی روی سیستم شما نصب نیست. برای نصب: Settings \u2192 Time & Language \u2192 Speech \u2192 Add voices \u2192 Persian"
-          );
-          setTimeout(() => setTtsNote(""), 12000);
-        }
-      };
-
-      setSpeakingIndex(index);
-      for (const u of utterances) {
-        window.speechSynthesis.speak(u);
-      }
-
-      _ttsKeepAliveRef.current = setInterval(() => {
-        if (!window.speechSynthesis.speaking) {
-          _clearTtsKeepAlive();
-          setSpeakingIndex(null);
-          return;
-        }
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }, 10000);
-    };
-
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      doSpeak(voices);
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        doSpeak(window.speechSynthesis.getVoices());
-      };
-      setTimeout(() => {
-        const v = window.speechSynthesis.getVoices();
-        if (v.length > 0) doSpeak(v);
-      }, 600);
-    }
-  }
 
   async function sendAnswerFeedback(
     questionId: number | undefined,
@@ -891,125 +753,6 @@ ${cleanAnswer}`,
     setShowTools(false);
     setActiveSessionId(null);
     router.replace("/assistant");
-  }
-
-  function exportChat() {
-    if (messages.length === 0) return;
-    const html = _buildExportHtml(false);
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); }
-    setShowExportMenu(false);
-  }
-
-  function _buildExportHtml(forWord: boolean): string {
-    const now = new Date().toLocaleDateString("fa-IR", {
-      year: "numeric", month: "long", day: "numeric",
-    });
-    const msgHtml = messages.map((msg) => {
-      if (msg.role === "user") {
-        const attachLine = msg.attachment
-          ? `<div class="attachment">📎 پیوست: ${msg.attachment.name}</div>`
-          : "";
-        const body = msg.content
-          ? `<p>${msg.content.replace(/\n/g, "<br/>")}</p>`
-          : "";
-        return `<div class="bubble user"><div class="label">کاربر</div>${attachLine}${body}</div>`;
-      } else {
-        const safe = msg.content
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/\*(.*?)\*/g, "<em>$1</em>")
-          .replace(/^#{1,3}\s+(.+)$/gm, "<b>$1</b><br/>")
-          .replace(/\n/g, "<br/>");
-        return `<div class="bubble artin"><div class="label">آرتین</div><p>${safe}</p></div>`;
-      }
-    }).join("");
-    const font = forWord ? "Arial, sans-serif" : "'Vazirmatn', sans-serif";
-    const fontLink = forWord ? "" : `<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>`;
-    const printScript = forWord ? "" : `<script>window.onload=function(){window.print();}\u003c/script>`;
-    return `<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-<meta charset="UTF-8"/>
-<title>گفتگو با آرتین — آرتین آزما</title>
-${fontLink}
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: ${font}; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: rtl; }
-  .header { border-bottom: 2px solid #7c3aed; padding-bottom: 16px; margin-bottom: 28px; }
-  .header h1 { font-size: 20px; font-weight: 900; color: #7c3aed; }
-  .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }
-  .bubble { margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; page-break-inside: avoid; }
-  .bubble.user { background: #ede9fe; border-right: 4px solid #7c3aed; }
-  .bubble.artin { background: #f1f5f9; border-right: 4px solid #0ea5e9; }
-  .label { font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; }
-  .bubble.user .label { color: #7c3aed; }
-  .bubble.artin .label { color: #0ea5e9; }
-  p { line-height: 2; }
-  .attachment { font-size: 11px; color: #64748b; margin-bottom: 6px; }
-  .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 10px; color: #94a3b8; text-align: center; }
-  @media print { body { padding: 20px; } }
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>گفتگو با آرتین — دستیار هوشمند آرتین آزما</h1>
-  <div class="meta">تاریخ: ${now} | تعداد پیام: ${messages.length}</div>
-</div>
-${msgHtml}
-<div class="footer">آرتین آزما مهر — artinazma.net</div>
-${printScript}
-</body>
-</html>`;
-  }
-
-  function exportChatWord() {
-    if (messages.length === 0) return;
-    const html = _buildExportHtml(true);
-    const blob = new Blob([html], { type: "application/msword;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `گفتگو-آرتین-${new Date().toISOString().slice(0, 10)}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
-  }
-
-  function exportChatText() {
-    if (messages.length === 0) return;
-    const now = new Date().toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" });
-    const lines: string[] = [
-      "گفتگو با آرتین — دستیار هوشمند آرتین آزما",
-      `تاریخ: ${now}`,
-      "═══════════════════════════════════════",
-      "",
-    ];
-    messages.forEach((msg, i) => {
-      if (msg.role === "user") {
-        lines.push(`── کاربر [${i + 1}] ──`);
-        if (msg.attachment) lines.push(`📎 پیوست: ${msg.attachment.name}`);
-        lines.push(msg.content);
-      } else {
-        lines.push(`── آرتین [${i + 1}] ──`);
-        lines.push(msg.content.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/#{1,6}\s/g, ""));
-      }
-      lines.push("");
-    });
-    lines.push("───────────────────────────────────────");
-    lines.push("آرتین آزما مهر — artinazma.net");
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `گفتگو-آرتین-${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -1850,99 +1593,6 @@ ${printScript}
         </footer>
       )}
     </section>
-  );
-}
-
-
-const STARTER_QUESTIONS: { category: string; icon: string; questions: string[] }[] = [
-  {
-    category: "کروماتوگرافی",
-    icon: "📊",
-    questions: [
-      "تفاوت GC-FID و GC-TCD در آنالیز گاز طبیعی چیست؟",
-      "علت نوسان baseline در کروماتوگراف چیست و چطور رفع می‌شود؟",
-    ],
-  },
-  {
-    category: "کاتالیست",
-    icon: "⚗️",
-    questions: [
-      "کاتالیست مناسب فرایند ریفرمینگ نفتا چه ویژگی‌هایی دارد؟",
-      "روش ارزیابی فعالیت کاتالیست هیدروکراکینگ چیست؟",
-    ],
-  },
-  {
-    category: "استانداردها",
-    icon: "📋",
-    questions: [
-      "استاندارد ASTM D5453 برای اندازه‌گیری سولفور را توضیح دهید",
-      "برای تعیین آروماتیک‌ها در بنزین کدام استاندارد ASTM مناسب است؟",
-    ],
-  },
-  {
-    category: "تجهیزات",
-    icon: "🔬",
-    questions: [
-      "برای اندازه‌گیری جیوه در نفت خام چه دستگاهی پیشنهاد می‌کنید؟",
-      "تفاوت XRF و ICP-OES در آنالیز عنصری چیست؟",
-    ],
-  },
-];
-
-function StarterQuestions({ onSelect }: { onSelect: (q: string) => void }) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  const allQuestions = STARTER_QUESTIONS.flatMap((c) => c.questions);
-  const displayQuestions =
-    activeCategory
-      ? (STARTER_QUESTIONS.find((c) => c.category === activeCategory)?.questions ?? [])
-      : allQuestions.slice(0, 4);
-
-  return (
-    <div className="mt-8 w-full max-w-3xl px-1 md:px-0" dir="rtl">
-      <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-xs font-bold text-slate-400 ml-1">موضوع:</span>
-        {STARTER_QUESTIONS.map((cat) => (
-          <button
-            key={cat.category}
-            onClick={() => setActiveCategory(activeCategory === cat.category ? null : cat.category)}
-            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
-              activeCategory === cat.category
-                ? "bg-violet-100 text-violet-700"
-                : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
-            }`}
-          >
-            {cat.icon} {cat.category}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        {displayQuestions.map((q, i) => (
-          <button
-            key={i}
-            onClick={() => onSelect(q)}
-            className="group flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right text-sm font-medium text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800"
-          >
-            <svg
-              className="mt-0.5 shrink-0 text-slate-300 transition group-hover:text-violet-400"
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <span className="leading-6">{q}</span>
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
 
