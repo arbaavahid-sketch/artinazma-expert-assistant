@@ -17,8 +17,12 @@ export function proxy(request: NextRequest) {
 
   if (isAdminRoute) {
     const adminCookie = request.cookies.get("artin_admin")?.value;
-    const sessionToken =
-      process.env.ADMIN_SESSION_TOKEN || "artin-local-admin-session";
+    const sessionToken = process.env.ADMIN_SESSION_TOKEN;
+
+    if (!sessionToken) {
+      // Fail closed: if env is missing, block all admin access rather than falling back to a known value
+      return NextResponse.redirect(new URL("/admin-login", request.url));
+    }
 
     if (adminCookie === sessionToken) {
       return NextResponse.next();
