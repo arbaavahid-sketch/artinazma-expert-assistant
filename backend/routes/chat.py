@@ -32,6 +32,13 @@ from db_service import (
     detect_domain,
     get_customer_cross_session_context,
 )
+from metrics_service import (
+    chat_requests_total,
+    chat_requests_by_intent,
+    cache_hits,
+    cache_misses,
+    ai_response_duration,
+)
 
 logger = logging.getLogger("artin_scheduler")
 
@@ -251,6 +258,9 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
 def chat(body: ChatRequest, request: Request):
     p = _build_chat_pipeline(body)
 
+    chat_requests_total.inc()
+    chat_requests_by_intent.labels(intent=p["question_intent"]).inc()
+
     _t0 = _time.monotonic()
     try:
         answer = ask_expert_assistant(
@@ -268,6 +278,7 @@ def chat(body: ChatRequest, request: Request):
         answer = build_local_answer(body.message, p["related_docs"])
         answer_mode = "local"
     _response_time_ms = int((_time.monotonic() - _t0) * 1000)
+    ai_response_duration.observe(_response_time_ms / 1000)
 
     question_id = save_expert_question(
         question=body.message,
@@ -343,6 +354,10 @@ def chat_stream(body: ChatRequest, request: Request):
     )
     if _use_cache:
         _cached = _response_cache.get(body.message, detected_domain)
+        if _cached:
+            cache_hits.inc()
+        else:
+            cache_misses.inc()
         if _cached:
             def _cached_generator():
                 yield f"data: {_json_local.dumps(_cached['meta'], ensure_ascii=False)}\n\n"

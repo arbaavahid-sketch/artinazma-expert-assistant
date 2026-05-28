@@ -28,6 +28,10 @@ from routes.admin import router as admin_router, set_response_cache, set_schedul
 
 import time as _time
 
+# ── Prometheus metrics ────────────────────────────────────────────────────────
+from prometheus_fastapi_instrumentator import Instrumentator as _PFI
+from metrics_service import refresh_knowledge_gauge as _refresh_knowledge_gauge
+
 # ── Sentry Error Tracking ─────────────────────────────────────────────────────
 _SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
 if _SENTRY_DSN:
@@ -113,6 +117,7 @@ async def _lifespan(app_instance):
     if interval > 0:
         _schedule_gdrive(interval)
         logger.info("Google Drive auto-sync scheduled every %.1f hours", interval)
+    _refresh_knowledge_gauge()   # seed the knowledge-chunks gauge on startup
     yield
     # shutdown
     with _gdrive_lock:
@@ -185,6 +190,7 @@ app.add_middleware(
 )
 
 # ── WebSocket Router ──────────────────────────────────────────────────────────
+
 app.include_router(ws_router)
 
 # ── Security Middleware ───────────────────────────────────────────────────────
@@ -216,6 +222,10 @@ async def log_requests(request: Request, call_next):
         )
     return response
 
+# ── Prometheus instrumentation (/metrics endpoint) ──────────────────────────
+# /metrics is NOT routed through nginx — Prometheus scrapes it directly
+# via the internal Docker network (backend:8000/metrics).
+_PFI().instrument(app).expose(app, include_in_schema=False, tags=["Monitoring"])
 
 # ── Route Includes ────────────────────────────────────────────────────────────
 app.include_router(health_router)

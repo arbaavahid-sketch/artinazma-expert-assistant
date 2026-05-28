@@ -1,0 +1,112 @@
+{
+  "title": "ArtinAzma Expert Assistant",
+  "uid": "artinazma-main",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "timezone": "Asia/Tehran",
+  "tags": ["artinazma"],
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Request Rate (req/min)",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "orientation": "auto" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{"color":"green","value":null},{"color":"yellow","value":30},{"color":"red","value":100}] }, "unit": "reqpm" } },
+      "targets": [{ "datasource": "Prometheus", "expr": "rate(http_requests_total{job=\"artinazma_backend\"}[1m]) * 60", "legendFormat": "req/min" }]
+    },
+    {
+      "id": 2, "type": "stat", "title": "Error Rate (5xx %)",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{"color":"green","value":null},{"color":"yellow","value":1},{"color":"red","value":5}] }, "unit": "percent" } },
+      "targets": [{ "datasource": "Prometheus", "expr": "100 * sum(rate(http_requests_total{job=\"artinazma_backend\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"artinazma_backend\"}[5m]))", "legendFormat": "5xx %" }]
+    },
+    {
+      "id": 3, "type": "stat", "title": "P95 Latency",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{"color":"green","value":null},{"color":"yellow","value":2},{"color":"red","value":5}] }, "unit": "s" } },
+      "targets": [{ "datasource": "Prometheus", "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"artinazma_backend\"}[5m])) by (le))", "legendFormat": "p95" }]
+    },
+    {
+      "id": 4, "type": "stat", "title": "Cache Hit Rate",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{"color":"red","value":null},{"color":"yellow","value":10},{"color":"green","value":30}] }, "unit": "percent" } },
+      "targets": [{ "datasource": "Prometheus", "expr": "100 * rate(artin_cache_hits_total[5m]) / (rate(artin_cache_hits_total[5m]) + rate(artin_cache_misses_total[5m]) + 0.001)", "legendFormat": "hit %" }]
+    },
+    {
+      "id": 5, "type": "stat", "title": "Total Chat Questions",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{"color":"blue","value":null}] }, "unit": "short" } },
+      "targets": [{ "datasource": "Prometheus", "expr": "artin_chat_requests_total", "legendFormat": "total" }]
+    },
+    {
+      "id": 6, "type": "stat", "title": "Knowledge Chunks",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{"color":"purple","value":null}] }, "unit": "short" } },
+      "targets": [{ "datasource": "Prometheus", "expr": "artin_knowledge_chunks_total", "legendFormat": "chunks" }]
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Request Rate by Endpoint",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } } },
+      "targets": [{ "datasource": "Prometheus", "expr": "sum by (handler) (rate(http_requests_total{job=\"artinazma_backend\"}[2m]))", "legendFormat": "{{handler}}" }]
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "Response Time Percentiles",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"artinazma_backend\"}[5m])) by (le))", "legendFormat": "p50" },
+        { "datasource": "Prometheus", "expr": "histogram_quantile(0.90, sum(rate(http_request_duration_seconds_bucket{job=\"artinazma_backend\"}[5m])) by (le))", "legendFormat": "p90" },
+        { "datasource": "Prometheus", "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"artinazma_backend\"}[5m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "HTTP Status Codes",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 7 },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "2.." }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": "4.." }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": "5.." }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [{ "datasource": "Prometheus", "expr": "sum by (status) (rate(http_requests_total{job=\"artinazma_backend\"}[2m]))", "legendFormat": "{{status}}" }]
+    },
+    {
+      "id": 13, "type": "timeseries", "title": "Chat Requests by Intent",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 7 },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } } },
+      "targets": [{ "datasource": "Prometheus", "expr": "sum by (intent) (rate(artin_chat_requests_by_intent_total[5m]))", "legendFormat": "{{intent}}" }]
+    },
+    {
+      "id": 14, "type": "timeseries", "title": "Cache Hits vs Misses",
+      "gridPos": { "x": 0, "y": 19, "w": 12, "h": 7 },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "rate(artin_cache_hits_total[2m])", "legendFormat": "hits" },
+        { "datasource": "Prometheus", "expr": "rate(artin_cache_misses_total[2m])", "legendFormat": "misses" }
+      ]
+    },
+    {
+      "id": 15, "type": "timeseries", "title": "AI Response Time (chat endpoint)",
+      "gridPos": { "x": 12, "y": 19, "w": 12, "h": 7 },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } } },
+      "targets": [
+        { "datasource": "Prometheus", "expr": "histogram_quantile(0.50, sum(rate(artin_ai_response_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50" },
+        { "datasource": "Prometheus", "expr": "histogram_quantile(0.95, sum(rate(artin_ai_response_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95" }
+      ]
+    }
+  ]
+}
