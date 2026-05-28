@@ -70,8 +70,13 @@ export default function CustomerRegisterPage() {
       if (data.access_token) {
         saveCustomerToken(data.access_token);
       }
-      document.cookie =
-        "artin_customer_auth=logged_in; path=/; max-age=86400; samesite=lax";
+
+      // Set secure httpOnly session cookie via server-side API route
+      await fetch("/api/customer-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: data.customer.id }),
+      });
 
       router.push("/assistant");
     } catch {

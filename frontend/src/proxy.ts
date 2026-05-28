@@ -32,9 +32,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (isCustomerProtectedRoute) {
-    const customerCookie = request.cookies.get("artin_customer_auth")?.value;
+    // artin_customer_session is an httpOnly signed cookie set only by /api/customer-session.
+    // We verify it exists and has the expected "payload.signature" shape;
+    // full HMAC verification happens in API routes that need the customer_id.
+    const sessionCookie = request.cookies.get("artin_customer_session")?.value;
 
-    if (customerCookie === "logged_in") {
+    if (sessionCookie && sessionCookie.includes(".")) {
       return NextResponse.next();
     }
 

@@ -380,10 +380,13 @@ ${msgHtml}
     }
   }
 
-  function logout() {
+  async function logout() {
     localStorage.removeItem("artin_customer");
     removeCustomerToken();
-    document.cookie = "artin_customer_auth=; path=/; max-age=0";
+
+    // Clear httpOnly session cookies via server-side API route
+    await fetch("/api/customer-session", { method: "DELETE" }).catch(() => {});
+
     window.location.href = "/customer-login";
   }
 

@@ -185,9 +185,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     } catch {}
   }
 
-  function logoutCustomer() {
+  async function logoutCustomer() {
     localStorage.removeItem("artin_customer");
-    document.cookie = "artin_customer_auth=; path=/; max-age=0";
+
+    // Clear httpOnly session cookies via server-side API route
+    await fetch("/api/customer-session", { method: "DELETE" }).catch(() => {});
 
     setCustomer(null);
     setCustomerSessions([]);

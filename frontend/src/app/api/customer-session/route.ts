@@ -12,8 +12,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const SESSION_SECRET =
-  process.env.CUSTOMER_SESSION_SECRET || "artin-customer-default-secret-change-me";
+const SESSION_SECRET = process.env.CUSTOMER_SESSION_SECRET;
+
+if (!SESSION_SECRET) {
+  throw new Error("CUSTOMER_SESSION_SECRET environment variable is not set");
+}
 
 /** Simple HMAC-like signing using Web Crypto (available in Next.js edge/node) */
 async function sign(payload: string): Promise<string> {
@@ -71,9 +74,10 @@ export async function POST(request: NextRequest) {
     path: "/",
     maxAge: 60 * 60 * 24, // 24h
   });
-  // Also set the plain "logged_in" marker so middleware can read it without crypto
+  // Secondary marker cookie — now also httpOnly since middleware (server-side) can still read it.
+  // JS in the browser can no longer access or forge it.
   response.cookies.set("artin_customer_auth", "logged_in", {
-    httpOnly: false, // readable by middleware
+    httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
