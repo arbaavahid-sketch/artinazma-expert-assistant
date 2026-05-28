@@ -1,10 +1,9 @@
-import sqlite3
 import secrets
 import bcrypt
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-from repositories.base import get_connection
+from repositories.base import get_connection, DBIntegrityError
 
 
 def hash_password(password: str) -> str:
@@ -46,7 +45,7 @@ def create_customer(
 
         return {"success": True, "customer_id": customer_id}
 
-    except sqlite3.IntegrityError:
+    except DBIntegrityError:
         return {"success": False, "message": "این ایمیل قبلاً ثبت شده است."}
 
     finally:
@@ -221,12 +220,12 @@ def set_customer_blocked(customer_id: int, blocked: bool) -> bool:
     """بلاک یا فعال‌سازی حساب مشتری."""
     conn = get_connection()
     try:
-        conn.execute(
+        cur = conn.execute(
             "UPDATE customers SET is_blocked = ? WHERE id = ?",
             (1 if blocked else 0, customer_id),
         )
         conn.commit()
-        return conn.execute("SELECT changes()").fetchone()[0] > 0
+        return cur.rowcount > 0
     finally:
         conn.close()
 

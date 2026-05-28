@@ -1,4 +1,3 @@
-import sqlite3
 from pathlib import Path
 from datetime import datetime
 
@@ -10,7 +9,7 @@ VALID_REQUEST_STATUSES = {"new", "in_progress", "done", "closed"}
 STORAGE_DIR.mkdir(exist_ok=True)
 
 # Re-exports from repository modules
-from repositories.base import get_connection
+from repositories.base import get_connection, _BACKEND
 
 from repositories.settings_repo import (
     get_setting,
@@ -87,7 +86,22 @@ from repositories.requests_repo import (
 )
 
 
+def _pg_column_exists(conn, table: str, column: str) -> bool:
+    """PostgreSQL-safe check for a column's existence."""
+    row = conn.execute(
+        "SELECT COUNT(*) FROM information_schema.columns WHERE table_name=? AND column_name=?",
+        (table, column),
+    ).fetchone()
+    return (row[0] if row else 0) > 0
+
+
 def init_db():
+    if _BACKEND == "postgres":
+        # For PostgreSQL, schema is managed by Alembic migrations.
+        # init_db() is a no-op to avoid AUTOINCREMENT / PRAGMA syntax errors.
+        print("[db] PostgreSQL backend — skipping init_db() (use Alembic migrations)")
+        return
+
     conn = get_connection()
     cursor = conn.cursor()
 

@@ -69,8 +69,8 @@ def get_knowledge_audit_log(limit: int = 100, action_filter: str = "") -> List[D
 def clear_knowledge_audit_log() -> int:
     conn = get_connection()
     try:
-        conn.execute("DELETE FROM knowledge_audit_log")
+        cur = conn.execute("DELETE FROM knowledge_audit_log")
         conn.commit()
-        return conn.execute("SELECT changes()").fetchone()[0]
+        return cur.rowcount
     finally:
         conn.close()
