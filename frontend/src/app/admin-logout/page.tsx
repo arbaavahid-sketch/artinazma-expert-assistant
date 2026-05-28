@@ -1,24 +1,21 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2, LogOut, ShieldCheck } from "lucide-react";
 
 export default function AdminLogoutPage() {
-  const router = useRouter();
-
   useEffect(() => {
     async function logout() {
       await fetch("/api/admin-logout", {
         method: "POST",
       });
 
-      router.replace("/admin-login");
-      router.refresh();
+      // Hard redirect so middleware re-evaluates with cleared cookie
+      window.location.replace("/admin-login");
     }
 
     logout();
-  }, [router]);
+  }, []);
 
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">

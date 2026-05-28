@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash, timingSafeEqual } from "crypto";
+
+/** Hash a string with SHA-256 so timingSafeEqual always compares same-length buffers */
+function sha256(value: string): Buffer {
+  return createHash("sha256").update(value, "utf8").digest();
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -17,7 +23,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (password !== adminPassword) {
+  // Timing-safe comparison: hash both sides first so buffers are always equal length.
+  // This prevents attackers from measuring response time to guess the password character by character.
+  const passwordMatch = timingSafeEqual(sha256(password), sha256(adminPassword));
+
+  if (!passwordMatch) {
     return NextResponse.json(
       {
         success: false,
