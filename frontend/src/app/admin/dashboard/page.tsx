@@ -185,9 +185,9 @@ export default function DashboardPage() {
         fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
         fetch(apiUrl(`/questions/analytics?days=${analyticsDays}`), { cache: "no-store" }),
         fetch(apiUrl("/customers/stats"), { cache: "no-store" }),
-        fetch(adminUrl("/cache/stats"), { cache: "no-store" }),
-        fetch(adminUrl("/feedback-stats"), { cache: "no-store" }),
-        fetch(adminUrl("/response-time-stats"), { cache: "no-store" }),
+        fetch(adminUrl("/admin/cache/stats"), { cache: "no-store" }),
+        fetch(adminUrl("/admin/feedback-stats"), { cache: "no-store" }),
+        fetch(adminUrl("/admin/response-time-stats"), { cache: "no-store" }),
       ]);
 
       const results = await Promise.allSettled([
@@ -412,7 +412,7 @@ export default function DashboardPage() {
             value={customerStats?.total_sessions ?? 0}
             icon={<MessagesSquare size={24} />}
             tone="blue"
-            href="/admin/customers"
+            href="/admin/customers?sessions=1"
           />
 
           <DashboardCard
@@ -420,7 +420,7 @@ export default function DashboardPage() {
             value={customerStats?.total_messages ?? 0}
             icon={<BookOpen size={24} />}
             tone="emerald"
-            href="/admin/customers"
+            href="/admin/questions"
           />
         </div>
 

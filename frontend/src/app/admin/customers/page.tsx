@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { adminUrl } from "@/lib/api";
 import {
   Users,
@@ -17,6 +18,8 @@ import {
   ShieldOff,
   ShieldCheck,
   Download,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 type Customer = {
@@ -33,6 +36,15 @@ type Customer = {
   last_message_preview?: string | null;
 };
 
+type Session = {
+  id: string;
+  title: string;
+  created_at: string;
+  message_count: number;
+  last_message_at?: string | null;
+  first_user_message?: string | null;
+};
+
 function formatDate(value?: string) {
   if (!value) return "نامشخص";
   try {
@@ -45,6 +57,8 @@ function formatDate(value?: string) {
 }
 
 export default function AdminCustomersPage() {
+  const searchParams = useSearchParams();
+  const autoSessions = searchParams.get("sessions") === "1";
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -58,6 +72,22 @@ export default function AdminCustomersPage() {
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyStatus, setNotifyStatus] = useState<{ text: string; ok: boolean } | null>(null);
   const [sendingNotify, setSendingNotify] = useState(false);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [showSessions, setShowSessions] = useState(false);
+
+  const loadSessions = useCallback(async (customerId: number) => {
+    setSessionsLoading(true);
+    try {
+      const res = await fetch(adminUrl(`/admin/customers/${customerId}/sessions`));
+      const data = await res.json();
+      setSessions(data.sessions || []);
+    } catch {
+      setSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
 
   async function sendNotification() {
     if (!selected || !notifyMessage.trim()) return;
@@ -110,12 +140,18 @@ export default function AdminCustomersPage() {
     fetch(adminUrl("/admin/customers?limit=200"))
       .then((r) => r.json())
       .then((d) => {
-        setCustomers(d.customers || []);
+        const list = d.customers || [];
+        setCustomers(list);
         setTotal(d.total || 0);
+        if (autoSessions && list.length > 0) {
+          setSelected(list[0]);
+          setShowSessions(true);
+          loadSessions(list[0].id);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [autoSessions, loadSessions]);
 
   const filtered = search.trim()
     ? customers.filter(
@@ -240,7 +276,7 @@ export default function AdminCustomersPage() {
                 {filtered.map((c) => (
                   <button
                     key={c.id}
-                    onClick={() => setSelected(c)}
+                    onClick={() => { setSelected(c); setShowSessions(false); setSessions([]); loadSessions(c.id); }}
                     className={`w-full rounded-2xl border p-4 text-right transition ${
                       selected?.id === c.id
                         ? "border-blue-200 bg-blue-50"
@@ -410,6 +446,64 @@ export default function AdminCustomersPage() {
                       پیام ارسالی
                     </div>
                   </div>
+                </div>
+
+                {/* Sessions list */}
+                <div className="mt-5">
+                  <button
+                    onClick={() => setShowSessions(!showSessions)}
+                    className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MessageSquareText size={15} className="text-blue-600" />
+                      جلسات گفتگو ({selected.session_count})
+                    </span>
+                    {showSessions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+
+                  {showSessions && (
+                    <div className="mt-2 max-h-64 space-y-2 overflow-y-auto">
+                      {sessionsLoading ? (
+                        <div className="space-y-2">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="ui-skeleton h-14 w-full rounded-xl" />
+                          ))}
+                        </div>
+                      ) : sessions.length === 0 ? (
+                        <div className="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-500">
+                          هنوز جلسه‌ای ثبت نشده
+                        </div>
+                      ) : (
+                        sessions.map((s) => (
+                          <div
+                            key={s.id}
+                            className="rounded-xl border border-slate-100 bg-white p-3 transition hover:border-blue-100 hover:shadow-sm"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="truncate text-xs font-black text-slate-800">
+                                {s.title || "بدون عنوان"}
+                              </span>
+                              <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                                {s.message_count} پیام
+                              </span>
+                            </div>
+                            {s.first_user_message && (
+                              <p className="mt-1.5 line-clamp-2 text-[11px] leading-5 text-slate-500 italic">
+                                {s.first_user_message}
+                              </p>
+                            )}
+                            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-400">
+                              <Clock3 size={10} />
+                              {formatDate(s.created_at)}
+                              {s.last_message_at && s.last_message_at !== s.created_at && (
+                                <span className="mr-2">— آخرین: {formatDate(s.last_message_at)}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}

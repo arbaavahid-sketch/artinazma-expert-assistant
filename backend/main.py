@@ -68,6 +68,7 @@ from db_service import (
     delete_chat_session,
     get_all_questions,
     get_all_customers,
+    get_customer_sessions,
     get_connection,
     get_setting,
     set_setting,
@@ -2407,6 +2408,13 @@ def admin_list_customers(
 ):
     """لیست همه مشتریان برای ادمین."""
     return get_all_customers(limit=limit, offset=offset)
+
+
+@app.get("/admin/customers/{customer_id}/sessions")
+def admin_customer_sessions(customer_id: int, _=Depends(require_admin)):
+    """لیست جلسات چت یک مشتری."""
+    sessions = get_customer_sessions(customer_id)
+    return {"sessions": sessions, "total": len(sessions)}
 
 
 @app.get("/admin/search")

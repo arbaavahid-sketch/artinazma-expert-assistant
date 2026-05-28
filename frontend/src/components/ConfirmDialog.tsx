@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 type ConfirmOptions = {
   title?: string;
@@ -31,6 +32,8 @@ export function useConfirm() {
 }
 
 export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions>({ message: "" });
   const resolveRef = useRef<(value: boolean) => void>(() => {});
@@ -124,13 +127,13 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 <X size={15} />
-                {options.cancelLabel || "انصراف"}
+                {options.cancelLabel || (isEn ? "Cancel" : "انصراف")}
               </button>
               <button
                 onClick={handleConfirm}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-bold shadow-sm transition ${confirmBtnClass}`}
               >
-                {options.confirmLabel || "تایید"}
+                                {options.confirmLabel || (isEn ? "Confirm" : "تایید")}
               </button>
             </div>
           </div>

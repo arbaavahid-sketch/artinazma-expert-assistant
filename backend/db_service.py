@@ -1193,6 +1193,48 @@ def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]
     }
 
 
+def get_customer_sessions(customer_id: int) -> List[Dict[str, Any]]:
+    """لیست جلسات چت یک مشتری با آمار پیام‌ها."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT
+            cs.id,
+            cs.title,
+            cs.created_at,
+            COUNT(cm.id) AS message_count,
+            MAX(cm.created_at) AS last_message_at,
+            (
+                SELECT cm2.content
+                FROM chat_messages cm2
+                WHERE cm2.session_id = cs.id AND cm2.role = 'user'
+                ORDER BY cm2.id ASC
+                LIMIT 1
+            ) AS first_user_message
+        FROM chat_sessions cs
+        LEFT JOIN chat_messages cm ON cm.session_id = cs.id
+        WHERE cs.customer_id = ?
+        GROUP BY cs.id
+        ORDER BY cs.created_at DESC
+        """,
+        (customer_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {
+            "id": r["id"],
+            "title": r["title"] or "",
+            "created_at": r["created_at"],
+            "message_count": r["message_count"],
+            "last_message_at": r["last_message_at"] or None,
+            "first_user_message": (r["first_user_message"][:120] + "…" if r["first_user_message"] and len(r["first_user_message"]) > 120 else r["first_user_message"]) if r["first_user_message"] else None,
+        }
+        for r in rows
+    ]
+
+
 def set_customer_blocked(customer_id: int, blocked: bool) -> bool:
     """بلاک یا فعال‌سازی حساب مشتری."""
     conn = get_connection()

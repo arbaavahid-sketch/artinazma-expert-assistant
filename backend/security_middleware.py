@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 _CSRF_SECRET = os.getenv("CSRF_SECRET", secrets.token_hex(32))
 _CSRF_HEADER = "X-CSRF-Token"
 _CSRF_COOKIE = "artin_csrf"
-_CSRF_EXEMPT_PATHS = {"/chat", "/chat-stream", "/ws/chat"}  # public API endpoints
+_CSRF_EXEMPT_PATHS = {
+    "/chat", "/chat-stream", "/ws/chat",
+    "/customers/login", "/customers/register", "/customers/logout",
+    "/customer-requests",
+}
 _CSRF_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 

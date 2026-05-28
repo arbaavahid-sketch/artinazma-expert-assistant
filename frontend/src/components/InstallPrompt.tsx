@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -9,6 +10,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function InstallPrompt() {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -53,9 +56,9 @@ export default function InstallPrompt() {
           <Download className="w-5 h-5 text-blue-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800">نصب اپلیکیشن آرتین</p>
+          <p className="text-sm font-semibold text-gray-800">{isEn ? "Install Artin App" : "نصب اپلیکیشن آرتین"}</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            دسترسی سریع‌تر بدون مرورگر
+            {isEn ? "Faster access without browser" : "دسترسی سریع‌تر بدون مرورگر"}
           </p>
         </div>
         <button
@@ -63,12 +66,12 @@ export default function InstallPrompt() {
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl
                      hover:bg-blue-700 transition-colors shrink-0"
         >
-          نصب
+          {isEn ? "Install" : "نصب"}
         </button>
         <button
           onClick={handleDismiss}
           className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
-          aria-label="بستن"
+          aria-label={isEn ? "Close" : "بستن"}
         >
           <X className="w-4 h-4" />
         </button>
