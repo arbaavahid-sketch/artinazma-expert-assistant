@@ -19,7 +19,7 @@ services:
     environment:
       POSTGRES_DB: artinazma
       POSTGRES_USER: artinazma
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -67,7 +67,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://artinazma:${POSTGRES_PASSWORD:-changeme}@postgres:5432/artinazma
+      - DATABASE_URL=postgresql://artinazma:${POSTGRES_PASSWORD}@postgres:5432/artinazma
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - backend_storage:/app/storage
