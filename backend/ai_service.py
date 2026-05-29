@@ -7,6 +7,7 @@ import urllib.request
 import urllib.error
 import ssl
 import socket as _socket
+import http.client
 import time
 import threading
 from typing import Optional, List, Dict, Tuple, Generator
@@ -39,11 +40,32 @@ _DOH_PROVIDERS = [
 ]
 
 
+class _DoHHTTPSConnection(http.client.HTTPSConnection):
+    """
+    به IP مستقیم وصل می‌شود (دور زدن DNS ایران) اما TLS را برای
+    hostname واقعی verify می‌کند — بدون CERT_NONE.
+    """
+    def __init__(self, ip_addr: str, real_hostname: str, timeout: int = 5):
+        super().__init__(ip_addr, timeout=timeout)
+        self._real_hostname = real_hostname
+        self._ssl_ctx = ssl.create_default_context()  # verify_mode=CERT_REQUIRED
+
+    def connect(self):
+        raw = _socket.create_connection(
+            (self.host, self.port or 443),
+            timeout=self.timeout,
+        )
+        self.sock = self._ssl_ctx.wrap_socket(
+            raw,
+            server_hostname=self._real_hostname,  # SNI + cert verification
+        )
+
+
 def _resolve_via_doh(hostname: str) -> str | None:
     """
     DNS hostname را از طریق DoH resolve می‌کند.
     به جای OS DNS از سرور DoH با IP ثابت استفاده می‌کند
-    تا ISP نتواند بلاک کند.
+    تا ISP نتواند بلاک کند. TLS کاملاً verify می‌شود.
     """
     with _DOH_LOCK:
         if hostname in _DOH_CACHE:
@@ -51,29 +73,26 @@ def _resolve_via_doh(hostname: str) -> str | None:
 
     for server_ip, host_header, path in _DOH_PROVIDERS:
         try:
-            url = f"https://{server_ip}{path}?name={hostname}&type=A"
-            req = urllib.request.Request(
-                url,
+            conn = _DoHHTTPSConnection(server_ip, real_hostname=host_header, timeout=5)
+            conn.request(
+                "GET",
+                f"{path}?name={hostname}&type=A",
                 headers={
                     "Host": host_header,
                     "Accept": "application/dns-json",
                     "User-Agent": "Mozilla/5.0",
-                }
+                },
             )
-            # SSL verify=False چون از IP مستقیم وصل می‌شویم نه hostname
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-
-            with urllib.request.urlopen(req, context=ctx, timeout=5) as resp:
-                data = _json.loads(resp.read())
-                for answer in data.get("Answer", []):
-                    if answer.get("type") == 1:  # A record
-                        ip = answer["data"]
-                        with _DOH_LOCK:
-                            _DOH_CACHE[hostname] = ip
-                        print(f"[DoH] ✓ {hostname} → {ip} (via {server_ip})")
-                        return ip
+            resp = conn.getresponse()
+            data = _json.loads(resp.read())
+            conn.close()
+            for answer in data.get("Answer", []):
+                if answer.get("type") == 1:  # A record
+                    ip = answer["data"]
+                    with _DOH_LOCK:
+                        _DOH_CACHE[hostname] = ip
+                    print(f"[DoH] ✓ {hostname} → {ip} (via {server_ip})")
+                    return ip
         except Exception as e:
             print(f"[DoH] ✗ {server_ip} failed: {type(e).__name__}")
             continue
