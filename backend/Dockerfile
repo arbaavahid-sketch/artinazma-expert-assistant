@@ -14,8 +14,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create required directories
-RUN mkdir -p storage uploads knowledge_files
+# Create required directories and non-root user
+RUN mkdir -p storage uploads knowledge_files \
+    && addgroup --system appuser \
+    && adduser --system --ingroup appuser appuser \
+    && chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 
