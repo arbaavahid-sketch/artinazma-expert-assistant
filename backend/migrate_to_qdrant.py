@@ -44,14 +44,25 @@ def main():
         print("Nothing to migrate.")
         return
 
-    # Batch upsert
-    batch_size = 200
+    # Batch upsert — small batches to avoid cloud timeouts
+    batch_size = 40
+    max_retries = 3
     start = time.time()
     uploaded = 0
 
     for i in range(0, total, batch_size):
         batch = store[i : i + batch_size]
-        qs.upsert_chunks(batch)
+        for attempt in range(1, max_retries + 1):
+            try:
+                qs.upsert_chunks(batch)
+                break
+            except Exception as e:
+                if attempt == max_retries:
+                    print(f"\n❌  Failed after {max_retries} attempts at chunk {i}: {e}")
+                    raise
+                wait = 5 * attempt
+                print(f"\n⚠️  Timeout on attempt {attempt}, retrying in {wait}s…")
+                time.sleep(wait)
         uploaded += len(batch)
         pct = uploaded / total * 100
         elapsed = time.time() - start
