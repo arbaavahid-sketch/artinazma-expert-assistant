@@ -3,7 +3,8 @@ import logging
 from datetime import datetime, timedelta
 from datetime import datetime as _dt
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from repositories.admin_audit_repo import log_admin_action, get_admin_audit_log, clear_admin_audit_log
 from fastapi.responses import Response
 
 from schemas.models import (
@@ -331,14 +332,14 @@ def admin_global_search(q: str = "", limit: int = 5, _=Depends(require_admin)):
 
 
 @router.post("/admin/customers/{customer_id}/block")
-def admin_block_customer(customer_id: int, _=Depends(require_admin)):
+def admin_block_customer(customer_id: int, request: Request, _=Depends(require_admin)):
     """بلاک کردن حساب مشتری."""
     ok = set_customer_blocked(customer_id, True)
     return {"success": ok}
 
 
 @router.post("/admin/customers/{customer_id}/unblock")
-def admin_unblock_customer(customer_id: int, _=Depends(require_admin)):
+def admin_unblock_customer(customer_id: int, request: Request, _=Depends(require_admin)):
     """فعال‌سازی مجدد حساب مشتری."""
     ok = set_customer_blocked(customer_id, False)
     return {"success": ok}
@@ -381,3 +382,23 @@ def cache_clear(_=Depends(require_admin)):
     if _response_cache:
         _response_cache.invalidate()
     return {"success": True, "message": "Cache پاک شد."}
+
+# ── Admin Audit Log ────────────────────────────────────────────────────────────
+
+@router.get("/admin/audit-log")
+def admin_audit_log(
+    limit: int = 100,
+    action: str = "",
+    target_type: str = "",
+    _=Depends(require_admin),
+):
+    """Return recent admin audit log entries."""
+    entries = get_admin_audit_log(limit=limit, action_filter=action, target_type_filter=target_type)
+    return {"entries": entries, "count": len(entries)}
+
+
+@router.delete("/admin/audit-log")
+def admin_audit_log_clear(days: int = 90, _=Depends(require_admin)):
+    """Delete audit log entries older than N days."""
+    deleted = clear_admin_audit_log(older_than_days=days)
+    return {"deleted": deleted, "older_than_days": days}

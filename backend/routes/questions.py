@@ -1,7 +1,8 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from repositories.admin_audit_repo import log_admin_action
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import Response
 
 from schemas.models import QuestionReviewRequest, FeedbackRequest

@@ -8,8 +8,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+// Use BACKEND_INTERNAL_URL (server-side only, absolute) — never the public-facing
+// NEXT_PUBLIC_API_BASE_URL which may be a relative path like /api/backend in dev.
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+  process.env.BACKEND_INTERNAL_URL || "http://127.0.0.1:8000";
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
 const SESSION_TOKEN = process.env.ADMIN_SESSION_TOKEN || "";
 
