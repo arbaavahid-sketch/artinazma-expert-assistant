@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { ToastProvider } from "@/components/Toast";
+import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useI18n } from "@/lib/i18n";
 import AdminGlobalSearch from "@/components/AdminGlobalSearch";
 import ServerStatus from "@/components/ServerStatus";
@@ -674,7 +675,9 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             data-app-path={pathname}
             className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
           >
-            {children}
+            <SectionErrorBoundary>
+              {children}
+            </SectionErrorBoundary>
           </section>
         </div>
       </div>

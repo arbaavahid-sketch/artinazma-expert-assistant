@@ -4,6 +4,7 @@ import "./globals.css";
 import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import InstallPrompt from "@/components/InstallPrompt";
 import NetworkStatus from "@/components/NetworkStatus";
 import ThemeProvider from "@/components/ThemeProvider";
@@ -73,7 +74,9 @@ export default function RootLayout({
           <I18nProvider>
           <ConfirmDialogProvider>
             <NetworkStatus />
-            <ArtinShell>{children}</ArtinShell>
+            <ErrorBoundary>
+              <ArtinShell>{children}</ArtinShell>
+            </ErrorBoundary>
             <InstallPrompt />
           </ConfirmDialogProvider>
           </I18nProvider>
