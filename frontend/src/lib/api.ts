@@ -9,6 +9,7 @@ export function apiUrl(path: string) {
   return `${API_BASE_URL}${path}`;
 }
 
+
 /**
  * Returns a URL routed through the Next.js admin proxy.
  * Use this instead of apiUrl() for admin-protected backend endpoints.
@@ -19,66 +20,42 @@ export function adminUrl(path: string) {
   return `/api/admin-proxy${p}`;
 }
 
-// ─── Customer JWT Token Management ─────────────────────────────────────────
-
-const TOKEN_KEY = "artin_customer_token";
-
-/** ذخیره توکن JWT در localStorage */
-export function saveCustomerToken(token: string) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(TOKEN_KEY, token);
-  }
-}
-
-/** خواندن توکن JWT از localStorage */
-export function getCustomerToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-/** حذف توکن هنگام خروج */
-export function removeCustomerToken() {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(TOKEN_KEY);
-  }
-}
-
 /**
- * ساخت هدرهای Authorization برای درخواست‌های مشتری.
- * به headers موجود اضافه می‌شود.
+ * In dev, direct backend calls are cross-origin so the browser won't send
+ * httpOnly cookies. Rewrite them through the Next.js reverse-proxy
+ * (/api/backend/*) so every customer request is same-origin.
+ * In production NEXT_PUBLIC_API_BASE_URL already points to a same-origin path.
  */
-export function customerAuthHeaders(extraHeaders?: Record<string, string>): Record<string, string> {
-  const headers: Record<string, string> = { ...extraHeaders };
-  const token = getCustomerToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+function toProxyUrl(url: string): string {
+  if (typeof window === "undefined") return url; // SSR — no rewrite needed
+  const isDev =
+    !process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL.startsWith("http://127") ||
+    process.env.NEXT_PUBLIC_API_BASE_URL.startsWith("http://localhost");
+  if (isDev && url.startsWith(API_BASE_URL)) {
+    return `/api/backend${url.slice(API_BASE_URL.length)}`;
   }
-  return headers;
+  return url;
 }
 
 /**
- * fetch wrapper برای اندپوینت‌های مشتری — توکن JWT را خودکار اضافه می‌کند.
- * اگر 401 برگرداند، توکن را پاک و به صفحه لاگین ریدایرکت می‌کند.
+ * fetch wrapper برای اندپوینت‌های مشتری.
+ * کوکی artin_jwt (httpOnly) خودکار توسط مرورگر ارسال می‌شود — credentials: 'include'.
+ * در dev از پروکسی Next.js استفاده می‌کند تا کوکی‌ها same-origin باشند.
+ * اگر 401 برگرداند، به صفحه لاگین ریدایرکت می‌کند.
  */
 export async function customerFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = getCustomerToken();
-  const headers = new Headers(options.headers || {});
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(toProxyUrl(url), { ...options, credentials: "include" });
 
   if (res.status === 401) {
-    removeCustomerToken();
     if (typeof window !== "undefined") {
-      // Remove stored customer data
       localStorage.removeItem("artin_customer");
-      // Clear the httpOnly session cookie via server-side API route, then redirect
       try {
+        // Clear Next.js session cookie and backend JWT cookie
         await fetch("/api/customer-session", { method: "DELETE" });
+        await fetch(toProxyUrl(`${API_BASE_URL}/customers/logout`), { method: "POST", credentials: "include" });
       } catch {
-        // ignore — even if this fails, still redirect to login
+        // ignore — still redirect
       }
       window.location.href = "/customer-login";
     }

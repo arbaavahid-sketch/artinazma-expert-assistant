@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || "http://127.0.0.1:8000";
+
 const nextConfig: NextConfig = {
   // Enable standalone output for optimised Docker production images
   output: "standalone",
@@ -15,6 +17,16 @@ const nextConfig: NextConfig = {
 
   // Reduce powered-by header exposure
   poweredByHeader: false,
+
+  // Proxy /api/backend/* → FastAPI backend (keeps cookies same-origin in dev)
+  async rewrites() {
+    return [
+      {
+        source: "/api/backend/:path*",
+        destination: `${BACKEND_URL}/:path*`,
+      },
+    ];
+  },
 
   // Security headers applied to every response
   async headers() {

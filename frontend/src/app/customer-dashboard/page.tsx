@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiUrl, customerFetch, removeCustomerToken } from "@/lib/api";
+import { apiUrl, customerFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import Tooltip from "@/components/Tooltip";
@@ -382,10 +382,12 @@ ${msgHtml}
 
   async function logout() {
     localStorage.removeItem("artin_customer");
-    removeCustomerToken();
 
-    // Clear httpOnly session cookies via server-side API route
-    await fetch("/api/customer-session", { method: "DELETE" }).catch(() => {});
+    // Clear JWT cookie (backend) and session cookie (Next.js) simultaneously
+    await Promise.allSettled([
+      customerFetch(apiUrl("/customers/logout"), { method: "POST" }),
+      fetch("/api/customer-session", { method: "DELETE" }),
+    ]);
 
     window.location.href = "/customer-login";
   }

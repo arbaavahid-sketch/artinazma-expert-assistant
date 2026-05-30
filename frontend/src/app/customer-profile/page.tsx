@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiUrl, customerFetch, getCustomerToken } from "@/lib/api";
+import { apiUrl, customerFetch } from "@/lib/api";
 import { usePushNotifications } from "@/lib/usePushNotifications";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -58,20 +58,15 @@ export default function CustomerProfilePage() {
   }, []);
 
   useEffect(() => {
-    const token = getCustomerToken();
-    if (!token) {
+    const stored = localStorage.getItem("artin_customer");
+    if (!stored) {
       router.push("/customer-login");
       return;
     }
-    const stored = localStorage.getItem("artin_customer");
-    if (stored) {
-      try {
-        const c = JSON.parse(stored);
-        loadProfile(c.id);
-      } catch {
-        router.push("/customer-login");
-      }
-    } else {
+    try {
+      const c = JSON.parse(stored);
+      loadProfile(c.id);
+    } catch {
       router.push("/customer-login");
     }
   }, [router]);

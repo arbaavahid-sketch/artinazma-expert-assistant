@@ -1,6 +1,7 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
 from typing import Optional
 
 from schemas.models import (
@@ -55,6 +56,8 @@ from auth_service import (
     create_access_token,
     get_current_customer,
     require_customer_match,
+    set_jwt_cookie,
+    clear_jwt_cookie,
 )
 from push_service import send_push_to_customer, is_push_configured
 from security_middleware import login_tracker
@@ -174,13 +177,15 @@ def customer_register(body: CustomerRegisterRequest, request: Request):
     )
     token = create_access_token(customer_id=result["customer_id"], email=body.email)
 
-    return {
+    response = JSONResponse({
         "success": True,
         "message": "ثبت‌نام با موفقیت انجام شد.",
         "customer": customer,
         "access_token": token,
         "token_type": "bearer",
-    }
+    })
+    set_jwt_cookie(response, token)
+    return response
 
 
 @router.post("/customers/login", tags=["Customers"], summary="Customer login")
@@ -208,13 +213,23 @@ def customer_login(body: CustomerLoginRequest, request: Request):
     login_tracker.record_success(ip)
     token = create_access_token(customer_id=customer["id"], email=customer["email"])
 
-    return {
+    response = JSONResponse({
         "success": True,
         "message": "ورود با موفقیت انجام شد.",
         "customer": customer,
         "access_token": token,
         "token_type": "bearer",
-    }
+    })
+    set_jwt_cookie(response, token)
+    return response
+
+
+@router.post("/customers/logout", tags=["Customers"], summary="Customer logout")
+def customer_logout():
+    """پاک کردن کوکی JWT — مشتری را از سیستم خارج می‌کند."""
+    response = JSONResponse({"success": True, "message": "با موفقیت خارج شدید."})
+    clear_jwt_cookie(response)
+    return response
 
 
 @router.get("/customers/{customer_id}", tags=["Customers"], summary="Get customer profile")

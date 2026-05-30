@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getCustomerToken } from "./api";
+/** Fetch the JWT from the server-side route that reads the httpOnly cookie. */
+async function fetchWsToken(): Promise<string | null> {
+  try {
+    const res = await fetch("/api/customer-ws-token");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE_URL || "ws://127.0.0.1:8000";
 
@@ -80,7 +90,9 @@ export function useWebSocketChat(options: UseWebSocketChatOptions = {}) {
     cleanup();
     setStatus("connecting");
 
-    const token = getCustomerToken();
+    // Fetch the JWT from the server-side route (reads httpOnly cookie) then open WS.
+    // The token stays in memory only — never written to localStorage.
+    fetchWsToken().then((token) => {
     const url = token ? `${WS_BASE}/ws/chat?token=${encodeURIComponent(token)}` : `${WS_BASE}/ws/chat`;
 
     const ws = new WebSocket(url);
@@ -148,6 +160,7 @@ export function useWebSocketChat(options: UseWebSocketChatOptions = {}) {
     ws.onerror = () => {
       setStatus("error");
     };
+    }); // end fetchWsToken().then
   }, [cleanup, maxRetries, retryInterval]);
 
   const disconnect = useCallback(() => {

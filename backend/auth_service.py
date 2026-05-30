@@ -1,38 +1,48 @@
 """
-سرویس احراز هویت مشتریان با JWT
-──────────────────────────────────
-هر مشتری بعد از login یک access_token دریافت می‌کند.
-اندپوینت‌های محافظت‌شده با require_customer توکن را بررسی می‌کنند.
+JWT Authentication Service
 """
 
 import os
-import time
 import secrets
 from typing import Optional
 from datetime import datetime, timedelta
 
 import jwt
-from fastapi import Request, HTTPException, Depends
+from fastapi import Request, HTTPException, Depends, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-# ─── Configuration ──────────────────────────────────────────────────────────
-# کلید امضای JWT — اگر متغیر محیطی نباشد، یک کلید تصادفی تولید و ذخیره می‌شود
 _JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
 if not _JWT_SECRET:
     _JWT_SECRET = secrets.token_urlsafe(48)
-    # در محیط توسعه OK است ولی در پروداکشن باید ست شود
-    print("[auth] ⚠️  JWT_SECRET not set — using random key (tokens won't survive restarts)")
+    print("[auth] WARNING: JWT_SECRET not set -- using random key (tokens won't survive restarts)")
 
 JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "72"))  # 3 days default
+ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "72"))
+
+JWT_COOKIE_NAME = "artin_jwt"
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 
-# ─── Token Creation ────────────────────────────────────────────────────────
+def set_jwt_cookie(response: Response, token: str) -> None:
+    """Set the JWT as an httpOnly, SameSite=Lax cookie on the response."""
+    response.set_cookie(
+        key=JWT_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+        path="/",
+    )
+
+
+def clear_jwt_cookie(response: Response) -> None:
+    """Delete the JWT cookie (logout)."""
+    response.delete_cookie(key=JWT_COOKIE_NAME, path="/")
+
 
 def create_access_token(customer_id: int, email: str) -> str:
-    """ساخت JWT access token برای مشتری."""
     now = datetime.utcnow()
     payload = {
         "sub": str(customer_id),
@@ -44,13 +54,7 @@ def create_access_token(customer_id: int, email: str) -> str:
     return jwt.encode(payload, _JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-# ─── Token Verification ────────────────────────────────────────────────────
-
 def verify_access_token(token: str) -> Optional[dict]:
-    """
-    بررسی و decode توکن JWT.
-    در صورت موفقیت payload برمی‌گرداند، در غیر اینصورت None.
-    """
     try:
         payload = jwt.decode(token, _JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
@@ -62,27 +66,35 @@ def verify_access_token(token: str) -> Optional[dict]:
         return None
 
 
-# ─── FastAPI Dependency ─────────────────────────────────────────────────────
+def _extract_token(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials],
+) -> Optional[str]:
+    cookie_token = request.cookies.get(JWT_COOKIE_NAME)
+    if cookie_token:
+        return cookie_token
+    if credentials and credentials.credentials:
+        return credentials.credentials
+    return None
+
 
 async def get_current_customer(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
 ) -> dict:
-    """
-    FastAPI dependency — توکن Bearer را از هدر Authorization می‌خواند.
-    در صورت نامعتبر بودن، 401 برمی‌گرداند.
-    """
-    if not credentials or not credentials.credentials:
+    token = _extract_token(request, credentials)
+    if not token:
         raise HTTPException(
             status_code=401,
-            detail="لطفاً وارد حساب کاربری خود شوید.",
+            detail="Please log in.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    payload = verify_access_token(credentials.credentials)
+    payload = verify_access_token(token)
     if not payload:
         raise HTTPException(
             status_code=401,
-            detail="توکن نامعتبر یا منقضی شده است. لطفاً دوباره وارد شوید.",
+            detail="Invalid or expired token. Please log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -93,16 +105,14 @@ async def get_current_customer(
 
 
 async def get_optional_customer(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
 ) -> Optional[dict]:
-    """
-    مشابه get_current_customer ولی اختیاری — اگر توکن نباشد None برمی‌گرداند.
-    برای اندپوینت‌هایی که هم با login و هم بدون login کار می‌کنند.
-    """
-    if not credentials or not credentials.credentials:
+    token = _extract_token(request, credentials)
+    if not token:
         return None
 
-    payload = verify_access_token(credentials.credentials)
+    payload = verify_access_token(token)
     if not payload:
         return None
 
@@ -113,12 +123,8 @@ async def get_optional_customer(
 
 
 def require_customer_match(token_customer_id: int, path_customer_id: int):
-    """
-    بررسی اینکه customer_id در توکن با customer_id در URL یکی باشد.
-    جلوگیری از دسترسی مشتری A به اطلاعات مشتری B.
-    """
     if token_customer_id != path_customer_id:
         raise HTTPException(
             status_code=403,
-            detail="شما اجازه دسترسی به اطلاعات این حساب را ندارید.",
+            detail="Access denied.",
         )

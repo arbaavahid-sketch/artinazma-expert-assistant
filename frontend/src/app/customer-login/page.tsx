@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { apiUrl, saveCustomerToken } from "@/lib/api";
+import { apiUrl, customerFetch } from "@/lib/api";
 import {
   ArrowLeft,
   LockKeyhole,
@@ -33,15 +33,10 @@ export default function CustomerLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(apiUrl("/customers/login"), {
+      const res = await customerFetch(apiUrl("/customers/login"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -52,9 +47,6 @@ export default function CustomerLoginPage() {
       }
 
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-      if (data.access_token) {
-        saveCustomerToken(data.access_token);
-      }
 
       // Set secure httpOnly session cookie via server-side API route
       await fetch("/api/customer-session", {

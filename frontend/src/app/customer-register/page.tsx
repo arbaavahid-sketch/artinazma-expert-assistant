@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { apiUrl, saveCustomerToken } from "@/lib/api";
+import { apiUrl, customerFetch } from "@/lib/api";
 import {
   ArrowLeft,
   Building2,
@@ -45,18 +45,10 @@ export default function CustomerRegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(apiUrl("/customers/register"), {
+      const res = await customerFetch(apiUrl("/customers/register"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          full_name: fullName,
-          company,
-          phone,
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full_name: fullName, company, phone, email, password }),
       });
 
       const data = await res.json();
@@ -67,9 +59,6 @@ export default function CustomerRegisterPage() {
       }
 
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-      if (data.access_token) {
-        saveCustomerToken(data.access_token);
-      }
 
       // Set secure httpOnly session cookie via server-side API route
       await fetch("/api/customer-session", {
