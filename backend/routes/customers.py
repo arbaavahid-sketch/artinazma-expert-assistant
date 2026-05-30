@@ -52,6 +52,7 @@ from db_service import (
     get_user_memory_stats,
 )
 from telegram_service import notify_new_customer, notify_new_request
+import threading
 from auth_service import (
     create_access_token,
     get_current_customer,
@@ -104,6 +105,24 @@ def create_customer_request(request: CustomerRequestCreate):
         subject=request.subject or "",
         request_type=request.request_type or "",
     )
+    # Fire-and-forget confirmation email (non-blocking)
+    if request.email and request.email.strip():
+        def _send_confirmation():
+            try:
+                from email_service import get_email_settings, send_customer_request_confirmation
+                from db_service import get_setting
+                settings = get_email_settings(get_setting)
+                send_customer_request_confirmation(
+                    settings=settings,
+                    to_addr=request.email.strip(),
+                    full_name=request.full_name or "",
+                    subject=request.subject or "",
+                    request_type=request.request_type or "general",
+                )
+            except Exception as exc:
+                logger.warning("Confirmation email error: %s", exc)
+        threading.Thread(target=_send_confirmation, daemon=True).start()
+
     return {
         "success": True,
         "request_id": request_id,

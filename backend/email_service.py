@@ -153,3 +153,78 @@ def send_weekly_report(settings: dict, stats: dict) -> tuple[bool, str]:
     except Exception as e:
         logger.error(f"Email send error: {e}")
         return False, f"خطا در ارسال ایمیل: {str(e)}"
+
+def send_customer_request_confirmation(
+    settings: dict,
+    to_addr: str,
+    full_name: str,
+    subject: str,
+    request_type: str,
+) -> tuple[bool, str]:
+    """
+    Send a confirmation email to the customer after they submit a request.
+    Returns (success, message). Errors are non-fatal -- caller should log but not raise.
+    """
+    smtp_host = settings.get("smtp_host", "").strip()
+    smtp_port = int(settings.get("smtp_port", 587))
+    smtp_user = settings.get("smtp_user", "").strip()
+    smtp_pass = settings.get("smtp_pass", "").strip()
+    from_addr = settings.get("from_addr", smtp_user).strip() or smtp_user
+
+    if not smtp_host or not to_addr:
+        return False, "SMTP not configured or no recipient address"
+
+    html = f"""<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f7f7f8;font-family:Tahoma,Arial,sans-serif;direction:rtl">
+<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.07)">
+  <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:28px 32px">
+    <div style="color:#fff;font-size:20px;font-weight:bold">آرتین آزما مهر</div>
+    <div style="color:#c7d2fe;font-size:13px;margin-top:4px">دستیار هوشمند تخصصی</div>
+  </div>
+  <div style="padding:28px 32px">
+    <p style="font-size:15px;color:#374151;margin:0 0 16px">
+      {full_name} عزیز،
+    </p>
+    <p style="font-size:14px;color:#4b5563;line-height:1.8;margin:0 0 20px">
+      درخواست شما با موضوع <strong style="color:#4f46e5">{subject}</strong> دریافت شد.<br/>
+      کارشناسان ما در اسرع وقت با شما تماس خواهند گرفت.
+    </p>
+    <div style="background:#f0f9ff;border-radius:12px;padding:16px 20px;border-right:4px solid #4f46e5;margin-bottom:20px">
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px">نوع درخواست</div>
+      <div style="font-size:14px;color:#1e3a8a;font-weight:bold">{request_type}</div>
+    </div>
+    <p style="font-size:13px;color:#9ca3af;margin:0">
+      این ایمیل به صورت خودکار ارسال شده است. لطفاً به این ایمیل پاسخ ندهید.
+    </p>
+  </div>
+  <div style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:14px 32px;text-align:center">
+    <div style="color:#9ca3af;font-size:12px">artinazma.net</div>
+  </div>
+</div>
+</body>
+</html>"""
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "تایید دریافت درخواست — آرتین آزما مهر"
+    msg["From"] = from_addr
+    msg["To"] = to_addr
+    msg.attach(MIMEText(html, "html", "utf-8"))
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server.ehlo()
+            server.starttls()
+        if smtp_user and smtp_pass:
+            server.login(smtp_user, smtp_pass)
+        server.sendmail(from_addr, [to_addr], msg.as_string())
+        server.quit()
+        logger.info("Confirmation email sent to %s", to_addr)
+        return True, "sent"
+    except Exception as e:
+        logger.warning("Confirmation email failed for %s: %s", to_addr, e)
+        return False, str(e)
