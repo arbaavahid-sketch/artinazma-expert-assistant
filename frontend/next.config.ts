@@ -30,10 +30,27 @@ const nextConfig: NextConfig = {
 
   // Security headers applied to every response
   async headers() {
+    // Content-Security-Policy
+    // - script-src: 'unsafe-inline' required by Next.js hydration scripts
+    // - connect-src: ws://127.0.0.1:8000 for local dev WebSocket; wss: covers production
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' wss: ws://127.0.0.1:8000",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ");
+
     return [
       {
         source: "/:path*",
         headers: [
+          { key: "Content-Security-Policy", value: csp },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
