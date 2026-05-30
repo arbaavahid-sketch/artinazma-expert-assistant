@@ -1,13 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-/** Fetch the JWT from the server-side route that reads the httpOnly cookie. */
-async function fetchWsToken(): Promise<string | null> {
+/** Read the CSRF cookie set by the backend. */
+function getCsrfToken(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(/(?:^|;\s*)artin_csrf=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+/** Fetch a one-time WebSocket ticket from the backend (JWT stays out of URL/logs). */
+async function fetchWsTicket(): Promise<string | null> {
   try {
-    const res = await fetch("/api/customer-ws-token");
+    const csrf = getCsrfToken();
+    const res = await fetch("/api/backend/customers/ws-ticket", {
+      method: "POST",
+      credentials: "include",
+      headers: csrf ? { "X-CSRF-Token": csrf } : {},
+    });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.token ?? null;
+    return data.ticket ?? null;
   } catch {
     return null;
   }
@@ -90,10 +102,11 @@ export function useWebSocketChat(options: UseWebSocketChatOptions = {}) {
     cleanup();
     setStatus("connecting");
 
-    // Fetch the JWT from the server-side route (reads httpOnly cookie) then open WS.
-    // The token stays in memory only — never written to localStorage.
-    fetchWsToken().then((token) => {
-    const url = token ? `${WS_BASE}/ws/chat?token=${encodeURIComponent(token)}` : `${WS_BASE}/ws/chat`;
+    // Fetch a one-time ticket so the JWT never appears in the WebSocket URL / server logs.
+    fetchWsTicket().then((ticket) => {
+    const url = ticket
+      ? `${WS_BASE}/ws/chat?ticket=${encodeURIComponent(ticket)}`
+      : `${WS_BASE}/ws/chat`;
 
     const ws = new WebSocket(url);
     wsRef.current = ws;

@@ -27,11 +27,16 @@ export function adminUrl(path: string) {
  * In production NEXT_PUBLIC_API_BASE_URL already points to a same-origin path.
  */
 function toProxyUrl(url: string): string {
-  if (typeof window === "undefined") return url; // SSR — no rewrite needed
+  // If the URL is already relative (starts with /), it's same-origin — no rewrite needed.
+  // This happens when NEXT_PUBLIC_API_BASE_URL is set to a relative path like /api/backend.
+  if (url.startsWith("/")) return url;
+  // If API_BASE_URL is itself relative, all apiUrl() calls are already same-origin.
+  if (API_BASE_URL.startsWith("/")) return url;
+  // Dev fallback: rewrite absolute cross-origin backend URLs through the proxy.
+  if (typeof window === "undefined") return url;
   const isDev =
-    !process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL.startsWith("http://127") ||
-    process.env.NEXT_PUBLIC_API_BASE_URL.startsWith("http://localhost");
+    API_BASE_URL.startsWith("http://127") ||
+    API_BASE_URL.startsWith("http://localhost");
   if (isDev && url.startsWith(API_BASE_URL)) {
     return `/api/backend${url.slice(API_BASE_URL.length)}`;
   }
@@ -45,7 +50,18 @@ function toProxyUrl(url: string): string {
  * اگر 401 برگرداند، به صفحه لاگین ریدایرکت می‌کند.
  */
 export async function customerFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const res = await fetch(toProxyUrl(url), { ...options, credentials: "include" });
+  const method = (options.method || "GET").toUpperCase();
+  const headers = new Headers(options.headers || {});
+
+  // Attach CSRF token for state-changing requests (backend CSRFMiddleware requires it)
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrf = getCsrfToken();
+    if (csrf) {
+      headers.set("X-CSRF-Token", csrf);
+    }
+  }
+
+  const res = await fetch(toProxyUrl(url), { ...options, headers, credentials: "include" });
 
   if (res.status === 401) {
     if (typeof window !== "undefined") {

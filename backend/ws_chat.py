@@ -23,12 +23,12 @@ from db_service import (
     get_customer_cross_session_context,
 )
 from auth_service import verify_access_token
+from ws_ticket_service import consume_ticket
 
 logger = logging.getLogger("artin_ws")
 
 router = APIRouter()
 
-# ── Active connections registry ──────────────────────────────────────────────
 _active_connections: dict[str, WebSocket] = {}
 
 
@@ -37,7 +37,6 @@ def _safe_json(data: dict) -> str:
 
 
 async def _send_safe(ws: WebSocket, data: dict):
-    """Send JSON to WebSocket if still connected."""
     try:
         if ws.client_state == WebSocketState.CONNECTED:
             await ws.send_text(_safe_json(data))
@@ -45,19 +44,27 @@ async def _send_safe(ws: WebSocket, data: dict):
         pass
 
 
-async def _authenticate_ws(ws: WebSocket, token: Optional[str]) -> Optional[dict]:
-    """Validate JWT token and return customer dict or None."""
-    if not token:
-        return None
-    try:
-        payload = verify_access_token(token)
-        return payload
-    except Exception:
-        return None
+async def _authenticate_ws(
+    ws: WebSocket,
+    ticket: Optional[str],
+    token: Optional[str],
+) -> Optional[dict]:
+    """
+    Authenticate a WebSocket connection.
+    Preferred: one-time ticket -- keeps JWT out of server logs.
+    Fallback:  raw JWT token -- kept for backwards-compat.
+    """
+    if ticket:
+        return consume_ticket(ticket)
+    if token:
+        try:
+            return verify_access_token(token)
+        except Exception:
+            return None
+    return None
 
 
 async def _heartbeat(ws: WebSocket, interval: int = 25):
-    """Send periodic pings to keep connection alive."""
     try:
         while ws.client_state == WebSocketState.CONNECTED:
             await asyncio.sleep(interval)
@@ -67,31 +74,31 @@ async def _heartbeat(ws: WebSocket, interval: int = 25):
 
 
 @router.websocket("/ws/chat")
-async def websocket_chat(ws: WebSocket, token: Optional[str] = Query(None)):
+async def websocket_chat(
+    ws: WebSocket,
+    ticket: Optional[str] = Query(None),
+    token: Optional[str] = Query(None),
+):
     await ws.accept()
 
-    # Authenticate
-    customer = await _authenticate_ws(ws, token)
-    customer_id = str(customer.get("sub", "")) if customer else None
+    customer = await _authenticate_ws(ws, ticket, token)
+    customer_id = str(customer.get("sub", customer.get("customer_id", ""))) if customer else None
     conn_id = f"ws_{id(ws)}"
 
     _active_connections[conn_id] = ws
     logger.info("WS connected: %s (customer: %s)", conn_id, customer_id or "anonymous")
 
-    # Send connection acknowledgement
     await _send_safe(ws, {
         "type": "connected",
         "customer_id": customer_id,
         "conn_id": conn_id,
     })
 
-    # Start heartbeat task
     heartbeat_task = asyncio.create_task(_heartbeat(ws))
 
     try:
         while True:
             raw = await ws.receive_text()
-
             try:
                 msg = json.loads(raw)
             except json.JSONDecodeError:
@@ -100,15 +107,10 @@ async def websocket_chat(ws: WebSocket, token: Optional[str] = Query(None)):
 
             msg_type = msg.get("type", "chat")
 
-            # Handle pong (client heartbeat response)
             if msg_type == "pong":
                 continue
-
-            # Handle typing indicator relay (for multi-user future)
             if msg_type == "typing":
                 continue
-
-            # Handle chat message
             if msg_type == "chat":
                 await _handle_chat_message(ws, msg, customer_id)
                 continue
@@ -118,14 +120,13 @@ async def websocket_chat(ws: WebSocket, token: Optional[str] = Query(None)):
     except WebSocketDisconnect:
         logger.info("WS disconnected: %s", conn_id)
     except Exception as e:
-        logger.error("WS error: %s — %s", conn_id, e)
+        logger.error("WS error: %s -- %s", conn_id, e)
     finally:
         heartbeat_task.cancel()
         _active_connections.pop(conn_id, None)
 
 
 async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[str]):
-    """Process a chat message and stream the AI response back."""
     message = (msg.get("message") or "").strip()
     if not message:
         await _send_safe(ws, {"type": "error", "message": "Empty message"})
@@ -135,17 +136,14 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
     history = msg.get("history") or []
     request_id = msg.get("request_id", "")
 
-    # Send typing indicator
     await _send_safe(ws, {"type": "typing_start", "request_id": request_id})
 
     try:
-        # ── Intent detection ──
         intent_result = detect_question_intent(message)
         question_intent = intent_result.get("intent", "general")
-        question_intent_label = intent_result.get("label", "عمومی")
+        question_intent_label = intent_result.get("label", "general")
         detected_domain = detect_domain(message)
 
-        # ── Knowledge search ──
         local_results = local_search_knowledge_base(message)
         local_score = local_results[0]["score"] if local_results else 0
         related_docs = local_results[:3] if local_score >= 10 else []
@@ -173,7 +171,6 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
             except Exception:
                 pass
 
-        # ── Site resources ──
         resource_links = []
         resource_images = []
         try:
@@ -183,7 +180,6 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
         except Exception:
             pass
 
-        # ── Customer context ──
         customer_context = ""
         if customer_id:
             try:
@@ -196,8 +192,7 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
             "comparison", "equipment_recommendation",
         )
 
-        # Send meta info
-        meta = {
+        await _send_safe(ws, {
             "type": "meta",
             "request_id": request_id,
             "detected_domain": detected_domain,
@@ -208,10 +203,8 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
             "web_search_used": allow_web_search,
             "question_intent": question_intent,
             "question_intent_label": question_intent_label,
-        }
-        await _send_safe(ws, meta)
+        })
 
-        # ── Stream AI response ──
         full_answer = ""
         try:
             for chunk in ask_expert_assistant_stream(
@@ -229,11 +222,10 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
                     "text": chunk,
                 })
         except Exception as exc:
-            err_msg = f"⚠️ خطا در دریافت پاسخ: {type(exc).__name__}"
+            err_msg = f"Server error: {type(exc).__name__}"
             await _send_safe(ws, {"type": "error", "request_id": request_id, "message": err_msg})
             full_answer = err_msg
 
-        # ── Save to database ──
         question_id = None
         memory_id = None
         try:
@@ -252,14 +244,12 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
                     memory_type="chat",
                     metadata={"question_id": question_id, "sources": sources},
                 )
-            # Save to chat session if provided
             if session_id and customer_id:
                 save_chat_message(int(session_id), "user", message)
                 save_chat_message(int(session_id), "assistant", full_answer)
         except Exception as e:
             logger.warning("DB save error: %s", e)
 
-        # Send done event
         await _send_safe(ws, {
             "type": "done",
             "request_id": request_id,
@@ -272,12 +262,11 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
         await _send_safe(ws, {
             "type": "error",
             "request_id": request_id,
-            "message": "خطای داخلی سرور",
+            "message": "Internal server error",
         })
     finally:
         await _send_safe(ws, {"type": "typing_stop", "request_id": request_id})
 
 
 def get_active_connection_count() -> int:
-    """Return the number of active WebSocket connections."""
     return len(_active_connections)

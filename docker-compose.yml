@@ -97,6 +97,7 @@ services:
         # Browser calls   → https://<DOMAIN>/api/* → nginx → backend:8000
         # SSR calls (Node) are also routed via nginx for consistency.
         - NEXT_PUBLIC_API_BASE_URL=https://${DOMAIN:-localhost}/api
+        - NEXT_PUBLIC_WS_BASE_URL=wss://${DOMAIN:-localhost}/api
     container_name: artin_frontend
     # Port 3000 is NOT exposed externally — nginx proxies all traffic
     environment:

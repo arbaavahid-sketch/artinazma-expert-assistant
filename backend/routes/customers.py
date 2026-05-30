@@ -59,6 +59,7 @@ from auth_service import (
     set_jwt_cookie,
     clear_jwt_cookie,
 )
+from ws_ticket_service import create_ticket
 from push_service import send_push_to_customer, is_push_configured
 from security_middleware import login_tracker
 
@@ -67,7 +68,7 @@ logger = logging.getLogger("artin_scheduler")
 router = APIRouter()
 
 
-# ── Memory endpoints ──────────────────────────────────────────────────────────
+# -- Memory endpoints ---------------------------------------------------------
 
 @router.post("/memory/search")
 def memory_search(request: MemorySearchRequest):
@@ -83,7 +84,7 @@ def memory_stats(user_id: str):
     return get_user_memory_stats(user_id)
 
 
-# ── Customer Requests ─────────────────────────────────────────────────────────
+# -- Customer Requests --------------------------------------------------------
 
 @router.post("/customer-requests", tags=["Customers"], summary="Submit inquiry/request")
 def create_customer_request(request: CustomerRequestCreate):
@@ -106,7 +107,7 @@ def create_customer_request(request: CustomerRequestCreate):
     return {
         "success": True,
         "request_id": request_id,
-        "message": "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما با شما تماس خواهند گرفت.",
+        "message": "Request submitted successfully.",
     }
 
 
@@ -119,8 +120,8 @@ def customer_requests(limit: int = 100, _=Depends(require_admin)):
 def customer_request_status(request_id: int, request: CustomerRequestStatusUpdate, _=Depends(require_admin)):
     updated = update_customer_request_status(request_id=request_id, status=request.status)
     if not updated:
-        return {"success": False, "message": "درخواست موردنظر پیدا نشد."}
-    return {"success": True, "message": "وضعیت درخواست بروزرسانی شد."}
+        return {"success": False, "message": "Request not found."}
+    return {"success": True, "message": "Status updated."}
 
 
 @router.get("/customer-requests/stats")
@@ -128,11 +129,10 @@ def customer_requests_stats(_=Depends(require_admin)):
     return get_customer_request_stats()
 
 
-# ── Customer Auth & Profile ───────────────────────────────────────────────────
+# -- Customer Auth & Profile --------------------------------------------------
 
 @router.get("/customers/stats")
 def customers_stats():
-    """آمار مشتریان — بدون نیاز به احراز هویت ادمین."""
     with get_connection() as conn:
         cursor = conn.cursor()
         total_customers = cursor.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
@@ -153,11 +153,11 @@ def customers_stats():
 @limiter.limit("5/minute")
 def customer_register(body: CustomerRegisterRequest, request: Request):
     if not body.full_name.strip():
-        return {"success": False, "message": "نام و نام خانوادگی الزامی است."}
+        return {"success": False, "message": "Full name is required."}
     if not body.email.strip():
-        return {"success": False, "message": "ایمیل الزامی است."}
+        return {"success": False, "message": "Email is required."}
     if len(body.password) < 6:
-        return {"success": False, "message": "رمز عبور باید حداقل ۶ کاراکتر باشد."}
+        return {"success": False, "message": "Password must be at least 6 characters."}
 
     result = create_customer(
         full_name=body.full_name,
@@ -179,7 +179,7 @@ def customer_register(body: CustomerRegisterRequest, request: Request):
 
     response = JSONResponse({
         "success": True,
-        "message": "ثبت‌نام با موفقیت انجام شد.",
+        "message": "Registration successful.",
         "customer": customer,
         "access_token": token,
         "token_type": "bearer",
@@ -197,7 +197,7 @@ def customer_login(body: CustomerLoginRequest, request: Request):
         remaining = login_tracker.get_remaining_lockout(ip)
         return {
             "success": False,
-            "message": f"تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً {remaining // 60} دقیقه صبر کنید.",
+            "message": f"Too many failed attempts. Please wait {remaining // 60} minutes.",
             "locked": True,
             "retry_after": remaining,
         }
@@ -205,17 +205,17 @@ def customer_login(body: CustomerLoginRequest, request: Request):
     customer = authenticate_customer(email=body.email, password=body.password)
     if not customer:
         login_tracker.record_failure(ip)
-        return {"success": False, "message": "ایمیل یا رمز عبور اشتباه است."}
+        return {"success": False, "message": "Invalid email or password."}
 
     if customer.get("blocked"):
-        return {"success": False, "message": "حساب شما مسدود شده است. لطفاً با پشتیبانی تماس بگیرید."}
+        return {"success": False, "message": "Account is blocked. Please contact support."}
 
     login_tracker.record_success(ip)
     token = create_access_token(customer_id=customer["id"], email=customer["email"])
 
     response = JSONResponse({
         "success": True,
-        "message": "ورود با موفقیت انجام شد.",
+        "message": "Login successful.",
         "customer": customer,
         "access_token": token,
         "token_type": "bearer",
@@ -224,10 +224,20 @@ def customer_login(body: CustomerLoginRequest, request: Request):
     return response
 
 
+@router.post("/customers/ws-ticket", tags=["Customers"], summary="Issue one-time WebSocket ticket")
+def customer_ws_ticket(current_user: dict = Depends(get_current_customer)):
+    """Return a short-lived one-time ticket for WebSocket authentication."""
+    ticket = create_ticket(
+        customer_id=current_user["customer_id"],
+        email=current_user["email"],
+    )
+    return {"ticket": ticket}
+
+
 @router.post("/customers/logout", tags=["Customers"], summary="Customer logout")
 def customer_logout():
-    """پاک کردن کوکی JWT — مشتری را از سیستم خارج می‌کند."""
-    response = JSONResponse({"success": True, "message": "با موفقیت خارج شدید."})
+    """Clear the JWT cookie to log the customer out."""
+    response = JSONResponse({"success": True, "message": "Logged out successfully."})
     clear_jwt_cookie(response)
     return response
 
@@ -237,7 +247,7 @@ def customer_profile(customer_id: int, current_user: dict = Depends(get_current_
     require_customer_match(current_user["customer_id"], customer_id)
     customer = get_customer_by_id(customer_id)
     if not customer:
-        return {"success": False, "message": "مشتری پیدا نشد."}
+        return {"success": False, "message": "Customer not found."}
     return {"success": True, "customer": customer}
 
 
@@ -251,10 +261,10 @@ def customer_profile_update(customer_id: int, request: CustomerProfileUpdateRequ
         phone=request.phone,
     )
     if not updated_customer:
-        return {"success": False, "message": "مشتری پیدا نشد یا نام وارد نشده است."}
+        return {"success": False, "message": "Customer not found or name missing."}
     return {
         "success": True,
-        "message": "اطلاعات حساب با موفقیت بروزرسانی شد.",
+        "message": "Profile updated successfully.",
         "customer": updated_customer,
     }
 
@@ -270,7 +280,7 @@ def customer_change_password(customer_id: int, request: CustomerChangePasswordRe
     return result
 
 
-# ── Chat Sessions ─────────────────────────────────────────────────────────────
+# -- Chat Sessions ------------------------------------------------------------
 
 @router.get("/customers/{customer_id}/chat-sessions", tags=["Chat Sessions"], summary="List chat sessions")
 def customer_chat_sessions(customer_id: int, current_user: dict = Depends(get_current_customer)):
@@ -282,14 +292,13 @@ def customer_chat_sessions(customer_id: int, current_user: dict = Depends(get_cu
 def customer_chat_session_create(request: CustomerSessionCreateRequest, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], request.customer_id)
     session_id = create_chat_session(
-        customer_id=request.customer_id, title=request.title.strip() or "گفتگوی جدید"
+        customer_id=request.customer_id, title=request.title.strip() or "New Chat"
     )
     return {"success": True, "session_id": session_id}
 
 
 @router.get("/customers/{customer_id}/analytics")
 def customer_analytics(customer_id: int, current_user: dict = Depends(get_current_customer)):
-    """آمار کلی حساب مشتری: تعداد گفتگوها، پیام‌ها، آخرین فعالیت."""
     require_customer_match(current_user["customer_id"], customer_id)
     conn = get_connection()
     try:
@@ -345,8 +354,8 @@ def customer_chat_session_update(
         session_id=session_id, customer_id=request.customer_id, title=request.title
     )
     if not updated:
-        return {"success": False, "message": "گفتگوی موردنظر پیدا نشد."}
-    return {"success": True, "message": "نام گفتگو تغییر کرد."}
+        return {"success": False, "message": "Session not found."}
+    return {"success": True, "message": "Session title updated."}
 
 
 @router.delete("/customers/{customer_id}/chat-sessions/{session_id}")
@@ -354,28 +363,27 @@ def customer_chat_session_delete(customer_id: int, session_id: int, current_user
     require_customer_match(current_user["customer_id"], customer_id)
     deleted = delete_chat_session(session_id=session_id, customer_id=customer_id)
     if not deleted:
-        return {"success": False, "message": "گفتگوی موردنظر پیدا نشد."}
-    return {"success": True, "message": "گفتگو حذف شد."}
+        return {"success": False, "message": "Session not found."}
+    return {"success": True, "message": "Session deleted."}
 
 
 @router.delete("/customers/{customer_id}/chat-sessions")
 def customer_chat_sessions_delete_all(customer_id: int, _=Depends(require_admin)):
     customer = get_customer_by_id(customer_id)
     if not customer:
-        raise HTTPException(status_code=404, detail="مشتری پیدا نشد.")
+        raise HTTPException(status_code=404, detail="Customer not found.")
     deleted_sessions = delete_all_customer_chat_sessions(customer_id)
     return {
         "success": True,
-        "message": "همه گفتگوهای مشتری حذف شدند.",
+        "message": "All sessions deleted.",
         "deleted_sessions": deleted_sessions,
     }
 
 
-# ── Notifications ─────────────────────────────────────────────────────────────
+# -- Notifications ------------------------------------------------------------
 
 @router.get("/customers/{customer_id}/notifications")
 def customer_notifications(customer_id: int, unread_only: bool = False, current_user: dict = Depends(get_current_customer)):
-    """فهرست اعلان‌های یک مشتری — نیاز به توکن JWT دارد."""
     require_customer_match(current_user["customer_id"], customer_id)
     notifs = get_customer_notifications(customer_id, unread_only=unread_only)
     unread_count = get_unread_notification_count(customer_id)
@@ -384,17 +392,15 @@ def customer_notifications(customer_id: int, unread_only: bool = False, current_
 
 @router.post("/customers/{customer_id}/notifications/read")
 def mark_customer_notifications_read(customer_id: int, current_user: dict = Depends(get_current_customer)):
-    """علامت‌گذاری همه اعلان‌های یک مشتری به عنوان خوانده‌شده."""
     require_customer_match(current_user["customer_id"], customer_id)
     mark_notifications_read(customer_id)
     return {"success": True}
 
 
-# ── Push Notifications ────────────────────────────────────────────────────────
+# -- Push Notifications -------------------------------------------------------
 
 @router.post("/customers/push-subscribe", tags=["Notifications"], summary="Subscribe to push notifications")
 def push_subscribe(body: PushSubscribeRequest, current_user: dict = Depends(get_current_customer)):
-    """ثبت اشتراک Push Notification برای مشتری — نیاز به توکن JWT."""
     require_customer_match(current_user["customer_id"], body.customer_id)
     sub_id = save_push_subscription(body.customer_id, body.subscription)
     return {"success": True, "subscription_id": sub_id}
@@ -402,7 +408,6 @@ def push_subscribe(body: PushSubscribeRequest, current_user: dict = Depends(get_
 
 @router.post("/customers/push-unsubscribe", tags=["Notifications"], summary="Unsubscribe from push notifications")
 def push_unsubscribe(body: PushUnsubscribeRequest, current_user: dict = Depends(get_current_customer)):
-    """لغو اشتراک Push Notification مشتری — نیاز به توکن JWT."""
     require_customer_match(current_user["customer_id"], body.customer_id)
     remove_push_subscription(body.customer_id)
     return {"success": True}

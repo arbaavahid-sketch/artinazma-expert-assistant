@@ -10,6 +10,8 @@ COPY . .
 
 # NEXT_PUBLIC_ vars are baked in at build time — pass via docker-compose build.args
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+ARG NEXT_PUBLIC_WS_BASE_URL=ws://localhost:8000
+ENV NEXT_PUBLIC_WS_BASE_URL=$NEXT_PUBLIC_WS_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 
 RUN npm run build
