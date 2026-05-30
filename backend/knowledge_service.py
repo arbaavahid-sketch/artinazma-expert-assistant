@@ -296,7 +296,7 @@ def search_knowledge_base(
 
     if _qs.is_enabled():
         try:
-            return _qs.search(query_embedding, top_k=top_k, category_filter=category_filter)
+            return _qs.hybrid_search(query, query_embedding, top_k=top_k, category_filter=category_filter)
         except Exception as e:
             logger.warning("Qdrant search failed, falling back to JSON: %s", e)
 

@@ -68,6 +68,9 @@ def _ensure_collection(client) -> None:
             # Ignore "already exists" or similar; log anything unexpected.
             logger.debug("create_payload_index(%s): %s", field, exc)
 
+    # Ensure full-text index on 'content' for hybrid search
+    ensure_fulltext_index()
+
 
 def _chunk_id(file_name: str, chunk_index: int) -> int:
     """Deterministic integer ID from file_name + chunk_index."""
@@ -246,3 +249,126 @@ def collection_stats() -> Dict[str, Any]:
         "collection": COLLECTION,
         "status": str(info.status),
     }
+
+
+# ─── Hybrid search (vector + full-text keyword) ───────────────────────────────
+
+def ensure_fulltext_index() -> None:
+    """Create a full-text payload index on 'content' for keyword search."""
+    from qdrant_client.models import TextIndexParams, TokenizerType
+    client = _get_client()
+    try:
+        client.create_payload_index(
+            collection_name=COLLECTION,
+            field_name="content",
+            field_schema=TextIndexParams(
+                type="text",
+                tokenizer=TokenizerType.WORD,
+                min_token_len=2,
+                max_token_len=20,
+                lowercase=True,
+            ),
+        )
+        logger.info("Full-text index on 'content' ensured")
+    except Exception as exc:
+        logger.debug("ensure_fulltext_index: %s", exc)
+
+
+def hybrid_search(
+    query: str,
+    query_embedding: List[float],
+    top_k: int = 5,
+    category_filter: Optional[str] = None,
+    vector_weight: float = 0.7,
+) -> List[Dict[str, Any]]:
+    """
+    Hybrid search: combines vector similarity + full-text keyword search.
+    Results are merged with Reciprocal Rank Fusion (RRF).
+
+    Args:
+        query:           Raw query text (used for keyword matching)
+        query_embedding: Dense embedding of the query
+        top_k:           Number of results to return
+        category_filter: Optional category payload filter
+        vector_weight:   Weight for vector scores vs keyword scores (0-1)
+    """
+    from qdrant_client.models import Filter, FieldCondition, MatchValue, MatchText
+
+    client = _get_client()
+    fetch_k = top_k * 3   # fetch more candidates for re-ranking
+
+    base_filter = None
+    if category_filter:
+        base_filter = Filter(
+            must=[FieldCondition(key="category", match=MatchValue(value=category_filter))]
+        )
+
+    # ── 1. Vector search ──────────────────────────────────────────────────────
+    vector_hits = client.search(
+        collection_name=COLLECTION,
+        query_vector=query_embedding,
+        limit=fetch_k,
+        query_filter=base_filter,
+        with_payload=True,
+    )
+
+    # ── 2. Full-text keyword search ───────────────────────────────────────────
+    # Build OR filter for significant query tokens
+    tokens = [t.strip() for t in query.split() if len(t.strip()) >= 2][:8]
+    keyword_hits = []
+    if tokens:
+        try:
+            keyword_filter_conditions = [
+                FieldCondition(key="content", match=MatchText(text=tok))
+                for tok in tokens
+            ]
+            kw_filter = Filter(
+                should=keyword_filter_conditions,
+                minimum_should_match=1,
+            )
+            if base_filter:
+                kw_filter = Filter(must=[base_filter, kw_filter])
+
+            keyword_hits = client.search(
+                collection_name=COLLECTION,
+                query_vector=query_embedding,      # still need a vector for Qdrant search
+                limit=fetch_k,
+                query_filter=kw_filter,
+                with_payload=True,
+            )
+        except Exception as exc:
+            logger.debug("keyword search failed (index may not exist yet): %s", exc)
+
+    # ── 3. Reciprocal Rank Fusion ─────────────────────────────────────────────
+    # RRF score = 1/(k + rank), k=60 is a common default
+    RRF_K = 60
+    scores: dict[int, float] = {}
+    payloads: dict[int, Any] = {}
+
+    for rank, hit in enumerate(vector_hits):
+        scores[hit.id] = scores.get(hit.id, 0.0) + vector_weight / (RRF_K + rank + 1)
+        payloads[hit.id] = hit.payload
+
+    kw_weight = 1.0 - vector_weight
+    for rank, hit in enumerate(keyword_hits):
+        scores[hit.id] = scores.get(hit.id, 0.0) + kw_weight / (RRF_K + rank + 1)
+        if hit.id not in payloads:
+            payloads[hit.id] = hit.payload
+
+    # Sort by combined RRF score
+    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
+
+    results = []
+    max_rrf = ranked[0][1] if ranked else 1.0
+    for point_id, rrf_score in ranked:
+        p = payloads.get(point_id) or {}
+        results.append({
+            "title":       p.get("title", ""),
+            "category":    p.get("category", ""),
+            "file_name":   p.get("file_name", ""),
+            "chunk_index": p.get("chunk_index", 0),
+            "content":     p.get("content", ""),
+            "score":       round((rrf_score / max_rrf) * 100, 2),
+        })
+
+    return results
