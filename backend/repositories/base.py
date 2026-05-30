@@ -5,6 +5,9 @@ Set DATABASE_URL env var to switch backends:
   SQLite    (default): not set
   PostgreSQL (prod):   postgresql://user:pass@host:5432/dbname
 
+PostgreSQL connections are managed via a ThreadedConnectionPool (psycopg2).
+Pool size is configurable via DB_POOL_MIN / DB_POOL_MAX env vars (default 2/10).
+
 The returned connection mirrors the sqlite3 API:
   conn.execute(sql, params)  -> _DBCursor  (.fetchall / .fetchone / .lastrowid)
   conn.cursor()              -> _DBCursor
@@ -14,6 +17,7 @@ The returned connection mirrors the sqlite3 API:
 
 import os
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -142,10 +146,11 @@ class _DBCursor:
 
 
 class _DBConnection:
-    def __init__(self, raw, backend: str):
+    def __init__(self, raw, backend: str, pool=None):
         self._raw = raw
         self._backend = backend
         self._last_rowcount: int = 0
+        self._pool = pool  # psycopg2 pool to return connection to on close
 
     def cursor(self) -> _DBCursor:
         return _DBCursor(self._raw.cursor(), self._backend, self)
@@ -162,7 +167,11 @@ class _DBConnection:
         self._raw.rollback()
 
     def close(self):
-        self._raw.close()
+        if self._pool is not None:
+            # Return connection to the pool instead of closing it
+            self._pool.putconn(self._raw)
+        else:
+            self._raw.close()
 
     def __enter__(self):
         return self
@@ -177,6 +186,27 @@ class _DBConnection:
                 pass
         self.close()
         return False
+
+
+# -- PostgreSQL connection pool (lazy-initialised, thread-safe) ---------------
+
+_pool_instance = None
+_pool_lock = threading.Lock()
+
+
+def _pg_pool():
+    """Return the shared ThreadedConnectionPool, creating it on first call."""
+    global _pool_instance
+    if _pool_instance is None:
+        with _pool_lock:
+            if _pool_instance is None:
+                import psycopg2.pool  # type: ignore[import]
+                minconn = int(os.getenv("DB_POOL_MIN", "2"))
+                maxconn = int(os.getenv("DB_POOL_MAX", "10"))
+                _pool_instance = psycopg2.pool.ThreadedConnectionPool(
+                    minconn, maxconn, DATABASE_URL
+                )
+    return _pool_instance
 
 
 # -- Factory ------------------------------------------------------------------
@@ -195,9 +225,9 @@ def _get_sqlite_connection() -> _DBConnection:
 
 
 def _get_pg_connection() -> _DBConnection:
-    import psycopg2  # type: ignore[import]
-    conn = psycopg2.connect(DATABASE_URL)
-    return _DBConnection(conn, "postgres")
+    pool = _pg_pool()
+    conn = pool.getconn()
+    return _DBConnection(conn, "postgres", pool=pool)
 
 
 __all__ = ["get_connection", "DBIntegrityError", "STORAGE_DIR", "DB_PATH", "_BACKEND"]
