@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import time
@@ -8,6 +9,8 @@ import requests
 from bs4 import BeautifulSoup
 
 from artinazma_index_service import search_artinazma_index, load_index
+
+logger = logging.getLogger("site_resource_service")
 
 ARTINAZMA_BASE_URL = os.getenv("ARTINAZMA_BASE_URL", "https://artinazma.net").rstrip(
     "/"
@@ -197,7 +200,7 @@ def fetch_html(url: str) -> Optional[str]:
         return response.text
 
     except Exception as e:
-        print("ArtinAzma fetch failed:", url, e)
+        logger.warning("ArtinAzma fetch failed:", url, e)
         return None
 
 
@@ -278,7 +281,7 @@ def search_wordpress_api(query: str) -> List[Dict]:
         return results
 
     except Exception as e:
-        print("ArtinAzma WP search failed:", e)
+        logger.warning("ArtinAzma WP search failed:", e)
         return []
 
 

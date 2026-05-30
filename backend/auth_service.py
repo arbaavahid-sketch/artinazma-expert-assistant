@@ -1,3 +1,4 @@
+import logging
 """
 JWT Authentication Service
 """
@@ -11,10 +12,12 @@ import jwt
 from fastapi import Request, HTTPException, Depends, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+logger = logging.getLogger("auth_service")
+
 _JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
 if not _JWT_SECRET:
     _JWT_SECRET = secrets.token_urlsafe(48)
-    print("[auth] WARNING: JWT_SECRET not set -- using random key (tokens won't survive restarts)")
+    logger.warning("[auth] WARNING: JWT_SECRET not set -- using random key (tokens won't survive restarts)")
 
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "72"))

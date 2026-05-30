@@ -1,8 +1,11 @@
+import logging
 from pathlib import Path
 from datetime import datetime
 
 # Storage paths (used by init_db and historically by callers)
 STORAGE_DIR = Path("storage")
+logger = logging.getLogger("db_service")
+
 DB_PATH = STORAGE_DIR / "app.db"
 VALID_EXPERT_STATUSES = {"pending", "approved", "needs_edit", "rejected"}
 VALID_REQUEST_STATUSES = {"new", "in_progress", "done", "closed"}
@@ -99,7 +102,7 @@ def init_db():
     if _BACKEND == "postgres":
         # For PostgreSQL, schema is managed by Alembic migrations.
         # init_db() is a no-op to avoid AUTOINCREMENT / PRAGMA syntax errors.
-        print("[db] PostgreSQL backend — skipping init_db() (use Alembic migrations)")
+        logger.warning("[db] PostgreSQL backend — skipping init_db() (use Alembic migrations)")
         return
 
     conn = get_connection()

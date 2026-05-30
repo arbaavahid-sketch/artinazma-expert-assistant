@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import threading
@@ -6,6 +7,8 @@ import time as _time
 from collections import OrderedDict
 
 # ─── Score thresholds (single place to change) ──────────────────────────────
+logger = logging.getLogger("utils.chat_utils")
+
 _LOCAL_SCORE_THRESHOLD = 10      # local search score >= this → use local
 _MODEL_LOCAL_SCORE_THRESHOLD = 8 # model question: exact local match threshold
 _WEAK_CONTEXT_THRESHOLD = 14     # below this → discard internal context for tech intents
@@ -302,8 +305,8 @@ def make_response_cache(maxsize: int = 200, ttl: int = 3600):
         try:
             cache = _RedisCache(ttl=ttl)
             cache._redis.ping()
-            print(f"[cache] Redis cache enabled ({redis_url})")
+            logger.info(f"[cache] Redis cache enabled ({redis_url})")
             return cache
         except Exception as exc:
-            print(f"[cache] Redis connection failed ({exc}) -- falling back to in-memory cache")
+            logger.warning(f"[cache] Redis connection failed ({exc}) -- falling back to in-memory cache")
     return _ResponseCache(maxsize=maxsize, ttl=ttl)

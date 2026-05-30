@@ -1,9 +1,12 @@
+import logging
 import json
 import os
 import re
 import time
 from typing import Dict, List
 from urllib.parse import urlparse, unquote
+
+logger = logging.getLogger("artinazma_index_service")
 
 ARTINAZMA_BASE_URL = "https://artinazma.net"
 INDEX_FILE = "artinazma_site_index.json"
@@ -75,7 +78,7 @@ def get_local_sitemap_urls() -> List[str]:
 
     for file_name in local_files:
         if not os.path.exists(file_name):
-            print("Local sitemap not found:", file_name)
+            logger.warning("Local sitemap not found:", file_name)
             continue
 
         try:

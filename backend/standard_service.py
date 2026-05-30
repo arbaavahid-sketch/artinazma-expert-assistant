@@ -1,3 +1,4 @@
+import logging
 import re
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional, Iterable, Sequence, Dict, Tuple, Any
@@ -6,6 +7,8 @@ from typing import List, Optional, Iterable, Sequence, Dict, Tuple, Any
 # 1) Data model
 # =============================================================================
 
+
+logger = logging.getLogger("standard_service")
 
 @dataclass
 class StandardEntry:
@@ -3702,9 +3705,9 @@ if __name__ == "__main__":
         "BTEX در آب آلوده با GC/MS",
         "کاتالیست NiMo را BET XRD TPR بررسی کنیم",
     ]
-    print("Registry validation:")
-    print(validate_registry())
+    logger.info("Registry validation:")
+    logger.info(validate_registry())
     for ex in examples:
-        print("\n" + "=" * 90)
-        print(ex)
-        print(get_context_for_app(ex)[:3500])
+        logger.info("\n" + "=" * 90)
+        logger.info(ex)
+        logger.info(get_context_for_app(ex)[:3500])

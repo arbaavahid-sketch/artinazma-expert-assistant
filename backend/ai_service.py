@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import io
@@ -16,6 +17,8 @@ import requests as _requests
 from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image, ImageOps
+
+logger = logging.getLogger("ai_service")
 
 load_dotenv()
 
@@ -91,10 +94,10 @@ def _resolve_via_doh(hostname: str) -> str | None:
                     ip = answer["data"]
                     with _DOH_LOCK:
                         _DOH_CACHE[hostname] = ip
-                    print(f"[DoH] ✓ {hostname} → {ip} (via {server_ip})")
+                    logger.info(f"[DoH] ✓ {hostname} → {ip} (via {server_ip})")
                     return ip
         except Exception as e:
-            print(f"[DoH] ✗ {server_ip} failed: {type(e).__name__}")
+            logger.warning(f"[DoH] ✗ {server_ip} failed: {type(e).__name__}")
             continue
 
     return None
@@ -114,7 +117,7 @@ def _patched_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
 
 # اعمال patch هنگام load شدن module
 _socket.getaddrinfo = _patched_getaddrinfo
-print("[DoH] DNS patch applied — OpenAI domains will resolve via DoH")
+logger.info("[DoH] DNS patch applied — OpenAI domains will resolve via DoH")
 
 
 def _pick_proxy() -> str | None:
@@ -142,7 +145,7 @@ def _get_session() -> _requests.Session:
     session = _requests.Session()
     proxy = _pick_proxy()
     if proxy:
-        print(f"[PROXY] using proxy: {proxy.split('@')[-1]}")  # بدون password
+        logger.info(f"[PROXY] using proxy: {proxy.split('@')[-1]}")  # بدون password
         session.proxies.update({"http": proxy, "https": proxy})
     return session
 
@@ -160,7 +163,7 @@ def _make_client():
         try:
             http_client = httpx.Client(proxy=proxy)
         except Exception as e:
-            print(f"[PROXY] httpx client failed: {e}")
+            logger.warning(f"[PROXY] httpx client failed: {e}")
 
     kwargs = dict(
         api_key=os.getenv("OPENAI_API_KEY"),
@@ -188,7 +191,7 @@ def _chat_via_requests(messages: list, model: str, temperature: float) -> str:
     key = os.getenv("OPENAI_API_KEY", "")
     body = {"model": model, "messages": messages, "temperature": temperature}
     _size = len(_json.dumps(body, ensure_ascii=False).encode("utf-8"))
-    print(f"[OPENAI] request body size: {_size} bytes ({_size//1024} KB)")
+    logger.info(f"[OPENAI] request body size: {_size} bytes ({_size//1024} KB)")
 
     url = f"{OPENAI_API_URL}/chat/completions"
     headers = {
@@ -206,7 +209,7 @@ def _chat_via_requests(messages: list, model: str, temperature: float) -> str:
         except (_requests.exceptions.ConnectionError,
                 _requests.exceptions.ChunkedEncodingError) as e:
             last_err = e
-            print(f"[OPENAI] attempt {attempt+1} failed: {e} — retrying…")
+            logger.warning(f"[OPENAI] attempt {attempt+1} failed: {e} — retrying…")
             time.sleep(1.5 * (attempt + 1))
         except Exception as e:
             raise
@@ -974,7 +977,7 @@ def ask_expert_assistant(
     if _use_cache:
         _cached = _cache_get(_ck)
         if _cached:
-            print(f"[Cache] HIT for: {message[:60]}")
+            logger.info(f"[Cache] HIT for: {message[:60]}")
             return _cached
 
     # Use the full build_user_content pipeline (language detection,
@@ -1160,9 +1163,9 @@ def _get_ocr_reader():
     with _ocr_reader_lock:
         if _ocr_reader is None:  # double-check after lock
             import easyocr
-            print("[OCR] loading easyocr reader for the first time…")
+            logger.info("[OCR] loading easyocr reader for the first time…")
             _ocr_reader = easyocr.Reader(["en", "fa"], gpu=False, verbose=False)
-            print("[OCR] reader ready and cached.")
+            logger.info("[OCR] reader ready and cached.")
     return _ocr_reader
 
 
@@ -1170,13 +1173,13 @@ def _ocr_extract_text(file_path: str) -> str:
     """Extract text from image using easyocr (cached reader, no network needed)."""
     try:
         reader = _get_ocr_reader()
-        print("[OCR] running readtext...")
+        logger.info("[OCR] running readtext...")
         results = reader.readtext(file_path, detail=0, paragraph=True)
         text = "\n".join(results).strip()
-        print(f"[OCR] extracted {len(text)} chars")
+        logger.info(f"[OCR] extracted {len(text)} chars")
         return text
     except Exception as e:
-        print(f"[OCR] failed: {e}")
+        logger.warning(f"[OCR] failed: {e}")
         return ""
 
 
@@ -1194,7 +1197,7 @@ def analyze_image_with_ai(
         image_data_url = f"data:{mime_type};base64,{image_b64}"
         has_image = True
     except Exception as e:
-        print(f"[VISION] failed to read image file: {e}")
+        logger.warning(f"[VISION] failed to read image file: {e}")
         has_image = False
 
     # Step 2: optionally run OCR as supplementary context

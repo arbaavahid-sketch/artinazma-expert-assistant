@@ -1,10 +1,12 @@
 import os
 import threading
 import logging
-import logging.handlers
 from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime as _dt
+
+from logging_config import setup_logging
+setup_logging()
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -45,35 +47,14 @@ if _SENTRY_DSN:
         send_default_pii=False,
         environment=os.getenv("ENVIRONMENT", "production"),
     )
-    print("[sentry] ✅ Sentry error tracking enabled")
+    logging.getLogger("artin.sentry").info("Sentry error tracking enabled")
 else:
-    print("[sentry] ℹ️  SENTRY_DSN not set — error tracking disabled")
+    logging.getLogger("artin.sentry").info("SENTRY_DSN not set -- error tracking disabled")
 
 _gdrive_timer: threading.Timer | None = None
 _gdrive_lock = threading.Lock()
 
 logger = logging.getLogger("artin_scheduler")
-
-# ── File-based error logging ──────────────────────────────────────────────────
-_LOG_DIR = os.path.join(os.path.dirname(__file__), "storage")
-os.makedirs(_LOG_DIR, exist_ok=True)
-_file_handler = logging.handlers.RotatingFileHandler(
-    os.path.join(_LOG_DIR, "app.log"),
-    maxBytes=5 * 1024 * 1024,
-    backupCount=3,
-    encoding="utf-8",
-)
-_file_handler.setLevel(logging.WARNING)
-_file_handler.setFormatter(
-    logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-)
-logging.getLogger().addHandler(_file_handler)
-logging.getLogger().setLevel(logging.INFO)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    force=False,
-)
 
 
 def _run_gdrive_sync():
