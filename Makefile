@@ -1,4 +1,4 @@
-.PHONY: help dev-backend dev-frontend dev lint test build docker-build docker-up docker-down certs-dev certs-prod
+.PHONY: help dev-backend dev-frontend dev lint test build docker-build docker-up docker-down certs-dev certs-prod backup backup-list
 
 # ─── Help ─────────────────────────────────────────────────────────────────────
 help:
@@ -25,7 +25,17 @@ help:
 	@echo "  TLS Certificates"
 	@echo "    make certs-dev       Generate self-signed cert for localhost dev"
 	@echo "    make certs-prod      Issue Let's Encrypt cert  (requires DOMAIN + port 80 open)"
+
+  Backup
+    make backup          Run one-off backup (Postgres + Qdrant → backup_data volume)
+    make backup-list     List files in the backup volume
+
 	@echo "                         Example: make certs-prod DOMAIN=artinazma.net CERTBOT_EMAIL=info@artinazma.net"
+
+  Backup
+    make backup          Run one-off backup (Postgres + Qdrant → backup_data volume)
+    make backup-list     List files in the backup volume
+
 	@echo ""
 
 # ─── Development ──────────────────────────────────────────────────────────────
@@ -79,3 +89,14 @@ certs-prod:
 	@test -n "$(CERTBOT_EMAIL)" || (echo "ERROR: set CERTBOT_EMAIL=you@example.com" && exit 1)
 	DOMAIN=$(DOMAIN) CERTBOT_EMAIL=$(CERTBOT_EMAIL) docker compose --profile certbot run --rm certbot
 	@echo "Cert issued → nginx/certs/  — restart nginx: docker compose restart nginx"
+
+# ─── Backup ───────────────────────────────────────────────────────────────────
+# Run a one-off backup (PostgreSQL + Qdrant snapshot → backup_data volume)
+backup:
+	POSTGRES_PASSWORD=$$(grep POSTGRES_PASSWORD .env | cut -d= -f2) \
+	docker compose --profile backup run --rm backup
+
+# List backup files stored in the backup_data volume
+backup-list:
+	docker run --rm -v artinazma-expert-assistant_backup_data:/backups alpine \
+	    sh -c "find /backups -type f | sort && echo '' && du -sh /backups"

@@ -194,3 +194,29 @@ volumes:
   certbot_webroot:
   prometheus_data:
   grafana_data:
+  backup_data:
+
+  # ── Backup service (daily at 02:00 UTC) ──────────────────────────────────────
+  # Runs pg_dump + Qdrant snapshot, keeps 7 days of history.
+  # Backups are stored in the backup_data volume (docker managed).
+  # To run manually:  make backup
+  # To restore:       see scripts/backup.sh header
+  backup:
+    image: postgres:16-alpine
+    container_name: artin_backup
+    profiles:
+      - backup          # only starts when explicitly requested
+    environment:
+      - DATABASE_URL=postgresql://artinazma:${POSTGRES_PASSWORD}@postgres:5432/artinazma
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=knowledge
+      - BACKUP_DIR=/backups
+      - KEEP_DAYS=7
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+      - backup_data:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh /backup.sh
+    restart: "no"
