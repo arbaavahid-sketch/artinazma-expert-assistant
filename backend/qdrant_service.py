@@ -169,13 +169,13 @@ def search(
             ]
         )
 
-    hits = client.search(
+    hits = client.query_points(
         collection_name=COLLECTION,
-        query_vector=query_embedding,
+        query=query_embedding,
         limit=top_k,
         query_filter=search_filter,
         with_payload=True,
-    )
+    ).points
 
     results = []
     for hit in hits:
@@ -235,6 +235,38 @@ def list_files() -> List[str]:
         offset = next_offset
 
     return sorted(file_names)
+
+
+def all_payloads() -> List[Dict[str, Any]]:
+    """Scroll the whole collection and return one dict per chunk with its
+    metadata (file_name, category, title, chunk_index). Mirrors the shape of
+    the legacy JSON vector store so callers can compute stats uniformly."""
+    client = _get_client()
+    items: List[Dict[str, Any]] = []
+    offset = None
+
+    while True:
+        records, next_offset = client.scroll(
+            collection_name=COLLECTION,
+            scroll_filter=None,
+            limit=1000,
+            offset=offset,
+            with_payload=["file_name", "category", "title", "chunk_index"],
+            with_vectors=False,
+        )
+        for record in records:
+            p = record.payload or {}
+            items.append({
+                "file_name": p.get("file_name", "unknown"),
+                "category": p.get("category", "general"),
+                "title": p.get("title", ""),
+                "chunk_index": p.get("chunk_index", 0),
+            })
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    return items
 
 
 def collection_stats() -> Dict[str, Any]:
@@ -304,13 +336,13 @@ def hybrid_search(
         )
 
     # ── 1. Vector search ──────────────────────────────────────────────────────
-    vector_hits = client.search(
+    vector_hits = client.query_points(
         collection_name=COLLECTION,
-        query_vector=query_embedding,
+        query=query_embedding,
         limit=fetch_k,
         query_filter=base_filter,
         with_payload=True,
-    )
+    ).points
 
     # ── 2. Full-text keyword search ───────────────────────────────────────────
     # Build OR filter for significant query tokens
@@ -329,13 +361,13 @@ def hybrid_search(
             if base_filter:
                 kw_filter = Filter(must=[base_filter, kw_filter])
 
-            keyword_hits = client.search(
+            keyword_hits = client.query_points(
                 collection_name=COLLECTION,
-                query_vector=query_embedding,      # still need a vector for Qdrant search
+                query=query_embedding,      # still need a vector for Qdrant search
                 limit=fetch_k,
                 query_filter=kw_filter,
                 with_payload=True,
-            )
+            ).points
         except Exception as exc:
             logger.debug("keyword search failed (index may not exist yet): %s", exc)
 

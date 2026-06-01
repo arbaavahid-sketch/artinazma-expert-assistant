@@ -345,7 +345,15 @@ def search_knowledge_base(
 
 
 def get_knowledge_stats() -> Dict[str, Any]:
-    store = load_vector_store()
+    import qdrant_service as _qs
+    if _qs.is_enabled():
+        try:
+            store = _qs.all_payloads()
+        except Exception as exc:
+            logger.warning("Qdrant stats failed, falling back to JSON: %s", exc)
+            store = load_vector_store()
+    else:
+        store = load_vector_store()
 
     files = sorted(list(set(item["file_name"] for item in store)))
     categories = sorted(list(set(item["category"] for item in store)))
