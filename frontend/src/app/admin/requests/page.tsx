@@ -14,7 +14,6 @@ import {
   UserRound,
   PlayCircle,
   XCircle,
-  Filter,
 } from "lucide-react";
 
 type CustomerRequest = {
@@ -30,14 +29,6 @@ type CustomerRequest = {
   created_at: string;
   updated_at: string | null;
 };
-
-const statusOptions = [
-  { value: "all", label: "همه وضعیت‌ها" },
-  { value: "new", label: "جدید" },
-  { value: "in_progress", label: "در حال پیگیری" },
-  { value: "done", label: "انجام شده" },
-  { value: "closed", label: "بسته شده" },
-];
 
 function getStatusLabel(status: string) {
   if (status === "in_progress") return "در حال پیگیری";

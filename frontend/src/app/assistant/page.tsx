@@ -495,10 +495,11 @@ ${cleanAnswer}`,
     return () => window.removeEventListener("keydown", onGlobalKeyDown);
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/refs
   const handleChatScroll = useMemo(
     () =>
       debounce(() => {
+        // Refs are only read inside the debounced scroll handler, never during render.
         const el = scrollContainerRef.current;
         if (!el) return;
         const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
@@ -702,7 +703,7 @@ ${cleanAnswer}`,
             } else if (event.type === "error") {
               throw new Error(event.message as string || "خطا در دریافت پاسخ.");
             }
-          } catch (parseErr) {
+          } catch {
             // ادامه parsing خطوط دیگر
           }
         }

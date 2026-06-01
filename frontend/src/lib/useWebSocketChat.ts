@@ -82,7 +82,9 @@ export function useWebSocketChat(options: UseWebSocketChatOptions = {}) {
 
   // Store latest callbacks in refs to avoid reconnection on callback changes
   const callbacksRef = useRef({ onMeta, onChunk, onDone, onError, onTypingStart, onTypingStop });
-  callbacksRef.current = { onMeta, onChunk, onDone, onError, onTypingStart, onTypingStop };
+  useEffect(() => {
+    callbacksRef.current = { onMeta, onChunk, onDone, onError, onTypingStart, onTypingStop };
+  });
 
   const cleanup = useCallback(() => {
     if (reconnectTimerRef.current) {

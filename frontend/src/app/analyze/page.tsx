@@ -18,7 +18,6 @@ import {
   ShieldCheck,
   UploadCloud,
   FileDown,
-  Table2,
 } from "lucide-react";
 
 const testTypes = [
@@ -40,17 +39,6 @@ const imageTypes = [
 ];
 
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
-
-function getTestTypeLabel(value: string) {
-  return (
-    testTypes.find((item) => item.value === value)?.label ||
-    "گزارش عمومی آزمایشگاهی"
-  );
-}
-
-function getImageTypeLabel(value: string) {
-  return imageTypes.find((item) => item.value === value)?.label || "تصویر عمومی";
-}
 
 function isImageFile(file: File) {
   const ext = file.name.split(".").pop()?.toLowerCase() || "";
@@ -192,10 +180,9 @@ function AnalysisRenderer({ text }: { text: string }) {
     // Numbered list
     if (/^\d+[.)]\s/.test(line)) {
       const items: string[] = [];
-      let num = 1;
       while (i < lines.length && /^\d+[.)]\s/.test(lines[i])) {
         items.push(lines[i].replace(/^\d+[.)]\s/, ""));
-        i++; num++;
+        i++;
       }
       elements.push(
         <ol key={`ol-${i}`} className="my-2 space-y-1 pr-4">

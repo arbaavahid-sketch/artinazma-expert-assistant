@@ -251,7 +251,6 @@ export default function Home() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {howItWorks.map((step, i) => {
-              const Icon = step.icon;
               return (
                 <div key={step.step} className="relative flex gap-4 rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-lg font-black text-white shadow">

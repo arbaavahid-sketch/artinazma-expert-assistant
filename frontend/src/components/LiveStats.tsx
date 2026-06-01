@@ -66,7 +66,7 @@ export default function LiveStats() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [knowledgeRes, feedbackRes, questionsRes] = await Promise.allSettled([
+        const [knowledgeRes, , questionsRes] = await Promise.allSettled([
           fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }).then(r => r.json()),
           fetch(apiUrl("/questions/analytics?days=3650"), { cache: "no-store" }).then(r => r.json()),
           fetch(apiUrl("/questions/stats-public"), { cache: "no-store" }).then(r => r.json()),
