@@ -184,28 +184,15 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
-volumes:
-  postgres_data:
-  redis_data:
-  backend_storage:
-  backend_uploads:
-  backend_knowledge:
-  qdrant_data:
-  certbot_webroot:
-  prometheus_data:
-  grafana_data:
-  backup_data:
 
-  # ── Backup service (daily at 02:00 UTC) ──────────────────────────────────────
+  # Backup service (run manually with: docker compose --profile backup run --rm backup)
   # Runs pg_dump + Qdrant snapshot, keeps 7 days of history.
   # Backups are stored in the backup_data volume (docker managed).
-  # To run manually:  make backup
-  # To restore:       see scripts/backup.sh header
   backup:
     image: postgres:16-alpine
     container_name: artin_backup
     profiles:
-      - backup          # only starts when explicitly requested
+      - backup
     environment:
       - DATABASE_URL=postgresql://artinazma:${POSTGRES_PASSWORD}@postgres:5432/artinazma
       - QDRANT_URL=http://qdrant:6333
@@ -220,3 +207,15 @@ volumes:
         condition: service_healthy
     command: sh /backup.sh
     restart: "no"
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_storage:
+  backend_uploads:
+  backend_knowledge:
+  qdrant_data:
+  certbot_webroot:
+  prometheus_data:
+  grafana_data:
+  backup_data:
