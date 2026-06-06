@@ -182,6 +182,45 @@ def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
     }
 
 
+def reindex_knowledge_file(file_name: str) -> Dict[str, Any]:
+    safe_name = Path(file_name).name
+    source_path = Path("knowledge_files") / safe_name
+
+    if safe_name != file_name or not source_path.exists():
+        return {
+            "success": False,
+            "message": "فایل منبع برای بازسازی پیدا نشد.",
+            "file_name": file_name,
+            "reason": "source_missing",
+        }
+
+    store = load_vector_store()
+    existing_chunks = [
+        item for item in store if item.get("file_name") == safe_name
+    ]
+    title = safe_name
+    category = "general"
+
+    if existing_chunks:
+        first_chunk = existing_chunks[0]
+        title = first_chunk.get("title") or safe_name
+        category_counts: Dict[str, int] = {}
+        for item in existing_chunks:
+            cat = item.get("category") or "general"
+            category_counts[cat] = category_counts.get(cat, 0) + 1
+        category = max(category_counts.items(), key=lambda item: item[1])[0]
+
+    result = add_file_to_knowledge_base(
+        file_path=str(source_path),
+        title=title,
+        category=category,
+        replace_existing=True,
+    )
+    result["reindexed"] = bool(result.get("success"))
+    result["source_file"] = str(source_path)
+    return result
+
+
 def replace_knowledge_file_if_exists(file_name: str) -> int:
     store = load_vector_store()
 
@@ -333,6 +372,12 @@ def search_knowledge_base(
         results.append(
             {
                 "score": round(float(scores[idx]) * 100, 2),  # 0-100 scale
+                "score_breakdown": {
+                    "algorithm": "json_vector",
+                    "vector_score": round(float(scores[idx]), 4),
+                    "category_filter": category_filter or "",
+                },
+                "score_reason": "vector similarity",
                 "title": item["title"],
                 "category": item["category"],
                 "file_name": item["file_name"],

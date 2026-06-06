@@ -23,6 +23,13 @@ def extract_astm_codes(text: str) -> List[str]:
     return [code.replace(" ", "") for code in codes]
 
 
+def extract_exact_codes(text: str) -> List[str]:
+    normalized = normalize_text(text)
+    candidates = re.findall(r"\b(?=[a-z0-9-]*\d)[a-z0-9][a-z0-9-]{2,}\b", normalized)
+    astm_codes = set(extract_astm_codes(text))
+    return sorted({code.replace(" ", "") for code in candidates if code not in astm_codes})
+
+
 # ---------------------------------------------------------------------------
 # BM25 Index (lazy-built, cached per vector-store snapshot)
 # ---------------------------------------------------------------------------
@@ -109,8 +116,9 @@ def local_search_knowledge_base(query: str, top_k: int = 12) -> List[Dict[str, A
 
     query_tokens = tokenize(query)
     astm_codes   = extract_astm_codes(query)
+    exact_codes  = extract_exact_codes(query)
 
-    if not query_tokens and not astm_codes:
+    if not query_tokens and not astm_codes and not exact_codes:
         return []
 
     bm25_index = _get_bm25_index(store)
@@ -136,17 +144,35 @@ def local_search_knowledge_base(query: str, top_k: int = 12) -> List[Dict[str, A
             if code in searchable_compact:
                 astm_boost += 50
 
+        exact_code_boost = 0
+        matched_exact_codes = []
+        for code in exact_codes:
+            if code in searchable_compact:
+                exact_code_boost += 35
+                matched_exact_codes.append(code)
+
         raw_bm25    = bm25_score(bm25_index, i, query_tokens)
         scaled_bm25 = raw_bm25 * 3
 
-        hybrid = 0.4 * kw_score + 0.6 * scaled_bm25 + astm_boost
+        hybrid = 0.4 * kw_score + 0.6 * scaled_bm25 + astm_boost + exact_code_boost
 
         if hybrid > 0:
+            score_breakdown = {
+                "algorithm": "local_hybrid",
+                "keyword_score": float(kw_score),
+                "bm25_score": round(raw_bm25, 4),
+                "bm25_scaled": round(scaled_bm25, 4),
+                "astm_boost": float(astm_boost),
+                "exact_code_boost": float(exact_code_boost),
+                "matched_exact_codes": matched_exact_codes,
+            }
             results.append(
                 {
                     "score":       round(hybrid, 4),
                     "bm25_score":  round(raw_bm25, 4),
                     "kw_score":    float(kw_score),
+                    "score_breakdown": score_breakdown,
+                    "score_reason": _score_reason(score_breakdown),
                     "title":       title,
                     "category":    category,
                     "file_name":   file_name,
@@ -157,6 +183,19 @@ def local_search_knowledge_base(query: str, top_k: int = 12) -> List[Dict[str, A
 
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:top_k]
+
+
+def _score_reason(breakdown: Dict[str, Any]) -> str:
+    parts = []
+    if breakdown.get("matched_exact_codes"):
+        parts.append("exact code/model match")
+    if breakdown.get("astm_boost", 0) > 0:
+        parts.append("ASTM code match")
+    if breakdown.get("bm25_score", 0) > 0:
+        parts.append("BM25 keyword relevance")
+    if breakdown.get("keyword_score", 0) > 0:
+        parts.append("direct keyword matches")
+    return ", ".join(parts) or "hybrid relevance"
 
 
 def get_more_chunks_from_best_file(

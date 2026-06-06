@@ -42,6 +42,32 @@ class TestLocalSearch:
         results = local_search_knowledge_base("", top_k=5)
         assert isinstance(results, list)
 
+    def test_local_search_returns_score_breakdown_for_exact_code(self, monkeypatch):
+        import local_search_service
+
+        monkeypatch.setattr(
+            local_search_service,
+            "load_vector_store",
+            lambda: [
+                {
+                    "title": "JFTOT analyzer manual",
+                    "category": "equipment",
+                    "file_name": "jftot-manual.txt",
+                    "chunk_index": 0,
+                    "content": "The JFTOT-230 is used for jet fuel thermal oxidation testing.",
+                }
+            ],
+        )
+        local_search_service._bm25_cache = None
+        local_search_service._bm25_store_len = 0
+
+        results = local_search_service.local_search_knowledge_base("JFTOT-230", top_k=3)
+
+        assert results
+        assert results[0]["score_breakdown"]["algorithm"] == "local_hybrid"
+        assert results[0]["score_breakdown"]["exact_code_boost"] > 0
+        assert "exact" in results[0]["score_reason"]
+
 
 class TestAuthService:
     """تست سرویس احراز هویت JWT."""

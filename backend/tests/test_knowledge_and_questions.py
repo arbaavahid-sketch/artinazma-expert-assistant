@@ -114,6 +114,37 @@ class TestKnowledgeSearch:
         data = res.json()
         assert "entries" in data or "logs" in data or isinstance(data, list)
 
+    def test_knowledge_reindex_requires_admin(self, app_client):
+        res = app_client.post("/knowledge/files/sample.txt/reindex")
+        assert res.status_code == 401
+
+    def test_knowledge_reindex_with_admin(self, app_client, admin_headers, monkeypatch):
+        from routes import knowledge as knowledge_routes
+
+        def fake_reindex(file_name):
+            return {
+                "success": True,
+                "file_name": file_name,
+                "title": "Sample",
+                "category": "general",
+                "chunks_added": 2,
+                "removed_old_chunks": 1,
+                "reindexed": True,
+            }
+
+        monkeypatch.setattr(knowledge_routes, "reindex_knowledge_file", fake_reindex)
+
+        res = app_client.post(
+            "/knowledge/files/sample.txt/reindex",
+            headers=admin_headers,
+        )
+
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert data["reindexed"] is True
+        assert data["chunks_added"] == 2
+
 
 class TestQuestionFeedback:
     """تست بازخورد سوالات."""

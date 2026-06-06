@@ -19,6 +19,7 @@ from knowledge_service import (
     get_knowledge_stats,
     delete_knowledge_file,
     add_text_to_knowledge_base,
+    reindex_knowledge_file,
 )
 from local_search_service import local_search_knowledge_base
 from google_drive_service import sync_google_drive_folder
@@ -147,6 +148,8 @@ def knowledge_search(request: KnowledgeSearchRequest):
                 "file_name": item["file_name"],
                 "category": item["category"],
                 "score": float(item.get("score", 0)),
+                "score_breakdown": item.get("score_breakdown", {}),
+                "score_reason": item.get("score_reason", ""),
                 "content": item["content"][:900],
             }
             for item in results
@@ -212,6 +215,27 @@ def knowledge_file_delete(file_name: str, _=Depends(require_admin)):
             action="delete",
             file_name=file_name,
             detail=f"{result.get('removed_chunks', 0)} chunk حذف شد",
+        )
+    return result
+
+
+@router.post("/knowledge/files/{file_name}/reindex")
+def knowledge_file_reindex(file_name: str, _=Depends(require_admin)):
+    result = reindex_knowledge_file(file_name)
+    if result.get("success"):
+        log_knowledge_action(
+            action="reindex",
+            file_name=result.get("file_name", file_name),
+            title=result.get("title", ""),
+            category=result.get("category", ""),
+            detail=(
+                f"{result.get('chunks_added', 0)} chunk بازسازی شد"
+                + (
+                    f"؛ {result.get('removed_old_chunks', 0)} chunk قبلی حذف شد"
+                    if result.get("removed_old_chunks", 0)
+                    else ""
+                )
+            ),
         )
     return result
 

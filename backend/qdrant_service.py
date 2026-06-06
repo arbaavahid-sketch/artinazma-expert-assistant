@@ -376,16 +376,21 @@ def hybrid_search(
     RRF_K = 60
     scores: dict[int, float] = {}
     payloads: dict[int, Any] = {}
+    rank_details: dict[int, Dict[str, Any]] = {}
 
     for rank, hit in enumerate(vector_hits):
         scores[hit.id] = scores.get(hit.id, 0.0) + vector_weight / (RRF_K + rank + 1)
         payloads[hit.id] = hit.payload
+        rank_details.setdefault(hit.id, {})["vector_rank"] = rank + 1
+        rank_details[hit.id]["vector_score"] = round(float(hit.score or 0), 4)
 
     kw_weight = 1.0 - vector_weight
     for rank, hit in enumerate(keyword_hits):
         scores[hit.id] = scores.get(hit.id, 0.0) + kw_weight / (RRF_K + rank + 1)
         if hit.id not in payloads:
             payloads[hit.id] = hit.payload
+        rank_details.setdefault(hit.id, {})["keyword_rank"] = rank + 1
+        rank_details[hit.id]["keyword_score"] = round(float(hit.score or 0), 4)
 
     # Sort by combined RRF score
     ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
@@ -394,6 +399,18 @@ def hybrid_search(
     max_rrf = ranked[0][1] if ranked else 1.0
     for point_id, rrf_score in ranked:
         p = payloads.get(point_id) or {}
+        details = rank_details.get(point_id, {})
+        score_breakdown = {
+            "algorithm": "qdrant_rrf_hybrid",
+            "rrf_score": round(rrf_score, 6),
+            "vector_weight": vector_weight,
+            "keyword_weight": kw_weight,
+            "vector_rank": details.get("vector_rank"),
+            "vector_score": details.get("vector_score"),
+            "keyword_rank": details.get("keyword_rank"),
+            "keyword_score": details.get("keyword_score"),
+            "matched_terms": tokens,
+        }
         results.append({
             "title":       p.get("title", ""),
             "category":    p.get("category", ""),
@@ -401,6 +418,19 @@ def hybrid_search(
             "chunk_index": p.get("chunk_index", 0),
             "content":     p.get("content", ""),
             "score":       round((rrf_score / max_rrf) * 100, 2),
+            "score_breakdown": score_breakdown,
+            "score_reason": _hybrid_score_reason(score_breakdown),
         })
 
     return results
+
+
+def _hybrid_score_reason(breakdown: Dict[str, Any]) -> str:
+    parts = []
+    if breakdown.get("vector_rank"):
+        parts.append(f"vector rank #{breakdown['vector_rank']}")
+    if breakdown.get("keyword_rank"):
+        parts.append(f"keyword rank #{breakdown['keyword_rank']}")
+    if breakdown.get("matched_terms"):
+        parts.append("matched query terms")
+    return ", ".join(parts) or "hybrid vector relevance"

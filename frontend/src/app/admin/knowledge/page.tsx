@@ -58,6 +58,8 @@ type KnowledgeSearchResult = {
   file_name: string;
   category: string;
   score: number;
+  score_reason?: string;
+  score_breakdown?: Record<string, unknown>;
   content: string;
 };
 
@@ -111,6 +113,29 @@ function getEmbeddingBadgeClass(status?: KnowledgeFileDetail["embedding_status"]
   return "bg-emerald-50 text-emerald-700";
 }
 
+function formatScoreBreakdown(breakdown?: Record<string, unknown>) {
+  if (!breakdown || Object.keys(breakdown).length === 0) return "";
+  const fields = [
+    ["algorithm", "alg"],
+    ["vector_score", "vector"],
+    ["vector_rank", "v-rank"],
+    ["keyword_score", "keyword"],
+    ["keyword_rank", "k-rank"],
+    ["bm25_score", "bm25"],
+    ["exact_code_boost", "exact"],
+    ["astm_boost", "astm"],
+  ];
+  return fields
+    .filter(([key]) => breakdown[key] !== undefined && breakdown[key] !== null && breakdown[key] !== "")
+    .map(([key, label]) => `${label}: ${String(breakdown[key])}`)
+    .join(" · ");
+}
+
+function normalizeSearchScore(score: number) {
+  const value = Number(score || 0);
+  return value > 1 ? value : value * 100;
+}
+
 export default function KnowledgePage() {
   const [knowledgeFile, setKnowledgeFile] = useState<File | null>(null);
   const [knowledgeTitle, setKnowledgeTitle] = useState("");
@@ -133,6 +158,7 @@ export default function KnowledgePage() {
   const [stats, setStats] = useState<KnowledgeStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [deletingFile, setDeletingFile] = useState("");
+  const [reindexingFile, setReindexingFile] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -418,6 +444,38 @@ export default function KnowledgePage() {
       setKnowledgeResult("خطا در اتصال به سرور برای حذف فایل.");
     } finally {
       setDeletingFile("");
+    }
+  }
+
+  async function reindexKnowledgeFile(fileName: string) {
+    if (!await confirm({ message: `فایل "${fileName}" دوباره از روی فایل منبع خوانده و embedding می‌شود. ادامه می‌دهید؟`, variant: "warning", confirmLabel: "بازسازی", title: "بازسازی فایل دانش" })) return;
+
+    setReindexingFile(fileName);
+    setKnowledgeResult("");
+    setKnowledgeResultType("");
+
+    try {
+      const res = await fetch(
+        adminUrl(`/knowledge/files/${encodeURIComponent(fileName)}/reindex`),
+        { method: "POST" },
+      );
+      const data = await res.json();
+
+      if (data.success) {
+        setKnowledgeResultType("success");
+        setKnowledgeResult(
+          `فایل دانش بازسازی شد.\nنام فایل: ${data.file_name}\nchunk جدید: ${data.chunks_added}\nchunk قبلی حذف‌شده: ${data.removed_old_chunks || 0}`,
+        );
+        await loadKnowledgeStats();
+      } else {
+        setKnowledgeResultType("error");
+        setKnowledgeResult(data.message || "بازسازی فایل دانش انجام نشد.");
+      }
+    } catch {
+      setKnowledgeResultType("error");
+      setKnowledgeResult("خطا در اتصال به سرور برای بازسازی فایل دانش.");
+    } finally {
+      setReindexingFile("");
     }
   }
 
@@ -966,11 +1024,12 @@ export default function KnowledgePage() {
 
                 <div className="space-y-4">
                   {groupedTestResults.map((group, gi) => {
+                    const normalizedBestScore = normalizeSearchScore(group.bestScore);
                     const scoreColor =
-                      group.bestScore >= 0.7 ? "bg-emerald-500" :
-                      group.bestScore >= 0.4 ? "bg-blue-500" :
-                      group.bestScore >= 0.2 ? "bg-amber-500" : "bg-slate-400";
-                    const scorePct = Math.min(100, Math.round(group.bestScore * 100));
+                      normalizedBestScore >= 70 ? "bg-emerald-500" :
+                      normalizedBestScore >= 40 ? "bg-blue-500" :
+                      normalizedBestScore >= 20 ? "bg-amber-500" : "bg-slate-400";
+                    const scorePct = Math.min(100, Math.round(normalizedBestScore));
                     return (
                       <div
                         key={group.file_name}
@@ -999,7 +1058,7 @@ export default function KnowledgePage() {
                           <div className="shrink-0 flex flex-col items-end gap-1">
                             <span className="text-xs font-bold text-slate-500">شباهت معنایی</span>
                             <span className="text-lg font-black text-slate-800">
-                              {(group.bestScore * 100).toFixed(1)}٪
+                              {normalizedBestScore.toFixed(1)}٪
                             </span>
                           </div>
                         </div>
@@ -1020,9 +1079,19 @@ export default function KnowledgePage() {
                               <div className="mb-2 flex items-center justify-between gap-2">
                                 <span className="text-xs font-bold text-slate-400">بخش {index + 1}</span>
                                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
-                                  {(Number(chunk.score) * 100).toFixed(1)}٪
+                                  {normalizeSearchScore(Number(chunk.score)).toFixed(1)}٪
                                 </span>
                               </div>
+                              {(chunk.score_reason || chunk.score_breakdown) && (
+                                <div className="mb-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-6 text-slate-500">
+                                  {chunk.score_reason && (
+                                    <div className="font-bold text-slate-600">{chunk.score_reason}</div>
+                                  )}
+                                  {formatScoreBreakdown(chunk.score_breakdown) && (
+                                    <div>{formatScoreBreakdown(chunk.score_breakdown)}</div>
+                                  )}
+                                </div>
+                              )}
                               <div className="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-7">
                                 {chunk.content}
                               </div>
@@ -1211,6 +1280,18 @@ export default function KnowledgePage() {
                                 >
                                   <Eye size={15} />
                                   پیش‌نمایش
+                                </button>
+                                <button
+                                  onClick={() => reindexKnowledgeFile(item.file_name)}
+                                  disabled={!item.source_exists || reindexingFile === item.file_name}
+                                  className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
+                                  title={!item.source_exists ? "فایل منبع در knowledge_files موجود نیست" : "بازسازی chunk و embedding"}
+                                >
+                                  <RefreshCw
+                                    size={15}
+                                    className={reindexingFile === item.file_name ? "animate-spin" : ""}
+                                  />
+                                  {reindexingFile === item.file_name ? "در حال بازسازی..." : "بازسازی"}
                                 </button>
                                 <button
                                   onClick={() =>
