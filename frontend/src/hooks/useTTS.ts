@@ -142,5 +142,5 @@ export function useTTS() {
     }
   }
 
-  return { speakingIndex, ttsNote, speakMessage };
+  return { speakingIndex, ttsNote, setTtsNote, speakMessage };
 }

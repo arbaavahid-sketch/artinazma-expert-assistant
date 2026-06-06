@@ -72,15 +72,16 @@ uvicorn==0.46.0
 watchfiles==1.1.1
 websockets==16.0
 beautifulsoup4==4.13.4
-bcrypt>=4.0.0
-slowapi>=0.1.9
-PySocks>=1.7.1
-qdrant-client>=1.9.0
-PyJWT>=2.8.0
-pytest>=8.0.0
+bcrypt==5.0.0
+slowapi==0.1.9
+PySocks==1.7.1
+qdrant-client==1.18.0
+PyJWT==2.13.0
+pytest==9.0.3
+# Prod-only deps (not installed in dev venv) — pin these from `pip freeze` in production:
 pywebpush>=2.0.0
 psycopg2-binary>=2.9.9
 alembic>=1.13.0
 redis>=5.0.0
-prometheus-fastapi-instrumentator>=7.0.0
-prometheus-client>=0.20.0
+prometheus-fastapi-instrumentator==7.1.0
+prometheus-client==0.25.0

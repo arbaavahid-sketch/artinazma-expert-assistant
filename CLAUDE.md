@@ -33,7 +33,7 @@ uvicorn main:app --port 8000
 The backend requires a `.env` file in `backend/` with at minimum:
 - `OPENAI_API_KEY` — required for AI responses and embeddings
 - `ADMIN_API_KEY` — required for admin-protected endpoints (`X-Admin-Key` header)
-- `OPENAI_MODEL` — defaults to `gpt-4o`
+- `OPENAI_MODEL` — defaults to `gpt-5.1`
 - `OPENAI_EMBEDDING_MODEL` — defaults to `text-embedding-3-small`
 - `FRONTEND_ORIGINS` — comma-separated allowed CORS origins (default: `http://localhost:3000,http://127.0.0.1:3000`)
 - `GOOGLE_DRIVE_ROOT_FOLDER_ID` / `GOOGLE_DRIVE_SERVICE_ACCOUNT_FILE` — for Google Drive knowledge sync
