@@ -30,11 +30,26 @@ type QuestionDetail = {
   answer: string;
   detected_domain: string;
   sources: Source[];
+  metadata?: QuestionMetadata;
   expert_status: string;
   expert_note: string;
   reviewed_answer: string;
   created_at: string;
   updated_at: string | null;
+};
+
+type QuestionMetadata = {
+  question_intent?: string;
+  question_intent_label?: string;
+  search_mode?: string;
+  best_score?: number;
+  web_search_used?: boolean;
+  source_count?: number;
+  resource_link_count?: number;
+  resource_image_count?: number;
+  response_mode?: string;
+  answer_mode?: string;
+  response_time_ms?: number;
 };
 
 function getStatusLabel(status: string) {
@@ -82,6 +97,16 @@ function formatDate(value?: string | null) {
   } catch {
     return value;
   }
+}
+
+function formatScore(value?: number) {
+  if (typeof value !== "number") return "-";
+  return value >= 10 ? value.toFixed(1) : value.toFixed(2);
+}
+
+function formatMs(value?: number) {
+  if (typeof value !== "number") return "-";
+  return value >= 1000 ? `${(value / 1000).toFixed(1)}s` : `${value}ms`;
 }
 
 export default function QuestionDetailPage() {
@@ -406,6 +431,48 @@ export default function QuestionDetailPage() {
                   برای این پاسخ منبعی از بانک دانش پیدا نشده است.
                 </div>
               )}
+            </div>
+
+            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                  <Database size={22} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">
+                    متادیتای کیفیت پاسخ
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    داده‌های مسیر پاسخ‌دهی برای بررسی کیفیت، منابع و حالت جستجو.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {[
+                  ["Intent", question.metadata?.question_intent_label || question.metadata?.question_intent || "-"],
+                  ["Search mode", question.metadata?.search_mode || "-"],
+                  ["Best score", formatScore(question.metadata?.best_score)],
+                  ["Web search", question.metadata?.web_search_used ? "on" : "off"],
+                  ["Sources", String(question.metadata?.source_count ?? sources.length)],
+                  ["Resources", `${question.metadata?.resource_link_count ?? 0} links / ${question.metadata?.resource_image_count ?? 0} images`],
+                  ["Answer mode", question.metadata?.answer_mode || "-"],
+                  ["Response mode", question.metadata?.response_mode || "-"],
+                  ["Response time", formatMs(question.metadata?.response_time_ms)],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="text-xs font-bold uppercase text-slate-400">
+                      {label}
+                    </div>
+                    <div className="mt-2 break-words text-sm font-black text-slate-800">
+                      {value}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

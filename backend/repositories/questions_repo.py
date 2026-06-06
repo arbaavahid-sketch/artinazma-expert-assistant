@@ -326,7 +326,7 @@ def get_all_questions(
 
     cursor.execute(
         f"""
-        SELECT id, question, detected_domain, expert_status, user_rating, created_at, updated_at
+        SELECT id, question, detected_domain, metadata_json, expert_status, user_rating, created_at, updated_at
         FROM expert_questions
         {where_clause}
         ORDER BY id DESC
@@ -343,6 +343,7 @@ def get_all_questions(
             "id": row["id"],
             "question": row["question"],
             "detected_domain": row["detected_domain"],
+            "metadata": json.loads(row["metadata_json"] or "{}"),
             "expert_status": row["expert_status"] or "pending",
             "user_rating": row["user_rating"] or "",
             "created_at": row["created_at"],

@@ -27,10 +27,22 @@ type QuestionItem = {
   id: number;
   question: string;
   detected_domain: string;
+  metadata?: QuestionMetadata;
   expert_status: string;
   user_rating: string;
   created_at: string;
   updated_at: string | null;
+};
+
+type QuestionMetadata = {
+  question_intent?: string;
+  question_intent_label?: string;
+  search_mode?: string;
+  best_score?: number;
+  web_search_used?: boolean;
+  source_count?: number;
+  answer_mode?: string;
+  response_time_ms?: number;
 };
 
 const statusOptions = [
@@ -91,6 +103,16 @@ function formatDate(value?: string | null) {
   } catch {
     return value;
   }
+}
+
+function formatScore(value?: number) {
+  if (typeof value !== "number") return "-";
+  return value >= 10 ? value.toFixed(1) : value.toFixed(2);
+}
+
+function formatMs(value?: number) {
+  if (typeof value !== "number") return "-";
+  return value >= 1000 ? `${(value / 1000).toFixed(1)}s` : `${value}ms`;
 }
 
 export default function QuestionsPage() {
@@ -643,6 +665,31 @@ export default function QuestionsPage() {
 
                       <div className="line-clamp-2 text-base font-bold leading-8 text-slate-900 group-hover:text-purple-700">
                         {item.question}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                          intent: {item.metadata?.question_intent_label || item.metadata?.question_intent || "-"}
+                        </span>
+                        <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-blue-700">
+                          search: {item.metadata?.search_mode || "-"}
+                        </span>
+                        <span className={`rounded-full border px-2.5 py-1 ${
+                          item.metadata?.web_search_used
+                            ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                            : "border-slate-200 bg-white text-slate-500"
+                        }`}>
+                          web: {item.metadata?.web_search_used ? "on" : "off"}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                          sources: {item.metadata?.source_count ?? 0}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                          score: {formatScore(item.metadata?.best_score)}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                          time: {formatMs(item.metadata?.response_time_ms)}
+                        </span>
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
