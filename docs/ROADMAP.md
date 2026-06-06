@@ -28,8 +28,8 @@
 - [x] 2.1 صفحه وضعیت فایل‌های دانش: تعداد chunk، دسته‌بندی، وضعیت embedding، آخرین sync
 - [x] 2.2 امکان re-index/re-embed انتخابی برای هر فایل دانش
 - [x] 2.3 بهبود hybrid search با ترکیب exact model/code، keyword، vector و score قابل توضیح
-- [ ] 2.4 بهتر کردن نمایش source و citation در چت
-- [ ] 2.5 گزارش خطا و نتیجه Google Drive sync به شکل قابل فهم در admin
+- [x] 2.4 بهتر کردن نمایش source و citation در چت
+- [x] 2.5 گزارش خطا و نتیجه Google Drive sync به شکل قابل فهم در admin
 
 ## فاز 3: تجربه کاربری چت
 

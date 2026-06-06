@@ -212,15 +212,21 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     context = f"{context}\n\n---\n\n{style_instructions}".strip() if context else style_instructions
 
     # ── Sources list ──
-    sources = [
-        {
-            "title": doc.get("title", ""),
-            "file_name": doc.get("file_name", ""),
-            "category": doc.get("category", ""),
-            "score": float(doc.get("score", 0) or 0),
-        }
-        for doc in related_docs
-    ]
+    sources = []
+    for index, doc in enumerate(related_docs, start=1):
+        content = str(doc.get("content", "") or "")
+        sources.append(
+            {
+                "citation_id": f"S{index}",
+                "title": doc.get("title", ""),
+                "file_name": doc.get("file_name", ""),
+                "category": doc.get("category", ""),
+                "chunk_index": doc.get("chunk_index", 0),
+                "score": float(doc.get("score", 0) or 0),
+                "score_reason": doc.get("score_reason", ""),
+                "excerpt": content[:260],
+            }
+        )
 
     # ── Customer cross-session context ──
     customer_context = ""

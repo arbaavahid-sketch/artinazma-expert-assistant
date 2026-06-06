@@ -7,7 +7,9 @@ import { useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  BookOpen,
   Copy,
+  FileText,
   ThumbsUp,
   ThumbsDown,
   Volume2,
@@ -19,7 +21,60 @@ import {
   getTextDirection,
   getTextFont,
 } from "@/lib/chat-helpers";
-import type { ChatMessage, ResourceLink, ResourceImage } from "@/lib/chat-types";
+import type { ChatMessage, ResourceLink, ResourceImage, Source } from "@/lib/chat-types";
+
+function formatSourceScore(score?: number) {
+  const value = Number(score || 0);
+  const normalized = value > 1 ? value : value * 100;
+  return `${normalized.toFixed(1)}٪`;
+}
+
+function InternalSourceCitations({ sources }: { sources?: Source[] }) {
+  if (!sources?.length) return null;
+
+  return (
+    <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50 p-3">
+      <div className="mb-2 flex items-center gap-2 text-xs font-black text-slate-700">
+        <BookOpen size={14} />
+        منابع داخلی استفاده‌شده
+      </div>
+      <div className="space-y-2">
+        {sources.map((source, index) => (
+          <div
+            key={`${source.file_name}-${source.chunk_index ?? index}`}
+            className="rounded-2xl border border-slate-200 bg-white p-3 text-xs leading-6 text-slate-600"
+          >
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 font-black text-blue-700">
+                [{source.citation_id || `S${index + 1}`}]
+              </span>
+              <span className="font-black text-slate-800">
+                {source.title || source.file_name || "منبع داخلی"}
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 font-bold text-slate-500">
+                {formatSourceScore(source.score)}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-slate-500">
+              <FileText size={12} />
+              <span className="break-all">{source.file_name || "-"}</span>
+              {source.chunk_index !== undefined && (
+                <span>chunk {source.chunk_index}</span>
+              )}
+              {source.category && <span>{source.category}</span>}
+            </div>
+            {source.score_reason && (
+              <div className="mt-1 font-bold text-slate-500">{source.score_reason}</div>
+            )}
+            {source.excerpt && (
+              <div className="mt-2 max-h-12 overflow-hidden text-slate-500">{source.excerpt}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ── ArtinazmaResourceCards (فقط اینجا استفاده می‌شود) ── */
 function ArtinazmaResourceCards({
@@ -356,6 +411,9 @@ function MessageBubble({
                 <div>توضیح کاربر: {item.attachment.note}</div>
               )}
             </div>
+          )}
+          {!isUser && (
+            <InternalSourceCitations sources={item.sources} />
           )}
           {!isUser && (
             <ArtinazmaResourceCards

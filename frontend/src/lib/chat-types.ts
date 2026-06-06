@@ -5,10 +5,14 @@
 import type { DeviceAsset } from "@/lib/device-assets";
 
 export type Source = {
+  citation_id?: string;
   title: string;
   file_name: string;
   category: string;
+  chunk_index?: number;
   score: number;
+  score_reason?: string;
+  excerpt?: string;
 };
 
 export type ResourceLink = {

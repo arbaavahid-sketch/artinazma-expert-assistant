@@ -78,6 +78,38 @@ def test_chat_persists_question(app_client, monkeypatch):
     assert saved["metadata"]["source_count"] == len(data["sources"])
 
 
+def test_chat_sources_include_citation_fields(app_client, monkeypatch):
+    import routes.chat as chat_mod
+
+    _patch_externals(monkeypatch, answer="پاسخ با منبع داخلی")
+    monkeypatch.setattr(
+        chat_mod,
+        "local_search_knowledge_base",
+        lambda *a, **k: [
+            {
+                "title": "JFTOT-230 manual",
+                "file_name": "jftot-230.txt",
+                "category": "equipment",
+                "chunk_index": 3,
+                "score": 55,
+                "score_reason": "exact code/model match",
+                "content": "This chunk explains the JFTOT-230 analyzer configuration.",
+            }
+        ],
+    )
+
+    res = app_client.post("/chat", json={"message": "JFTOT-230 چیست؟"})
+    assert res.status_code == 200
+    data = res.json()
+
+    assert data["sources"]
+    source = data["sources"][0]
+    assert source["citation_id"] == "S1"
+    assert source["chunk_index"] == 3
+    assert source["score_reason"] == "exact code/model match"
+    assert "JFTOT-230" in source["excerpt"]
+
+
 def test_chat_requires_message_field(app_client, monkeypatch):
     _patch_externals(monkeypatch)
     # بدنه بدون فیلد اجباری message → خطای اعتبارسنجی 422

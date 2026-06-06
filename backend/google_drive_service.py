@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import httplib2
@@ -531,6 +532,8 @@ def sync_google_drive_folder(
 
     save_drive_sync_state(sync_state)
 
+    summary = summarize_drive_sync_results(results)
+
     added_files = [
         item
         for item in results
@@ -555,5 +558,34 @@ def sync_google_drive_folder(
         "unchanged_files": len(unchanged_files),
         "skipped_files": len(skipped_files),
         "chunks_added": total_chunks,
+        "summary": summary,
+        "results_total": len(results),
+        "results_returned": min(len(results), 100),
+        "results_truncated": len(results) > 100,
         "results": results[:100],
+    }
+
+
+def summarize_drive_sync_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    by_status: Dict[str, int] = {}
+    skipped_by_reason: Dict[str, int] = {}
+    by_category: Dict[str, int] = {}
+
+    for item in results:
+        status = str(item.get("status") or ("added" if item.get("success") else "skipped"))
+        by_status[status] = by_status.get(status, 0) + 1
+
+        category = str(item.get("category") or "general")
+        by_category[category] = by_category.get(category, 0) + 1
+
+        if not item.get("success"):
+            reason = str(item.get("reason") or item.get("message") or "unknown")
+            skipped_by_reason[reason] = skipped_by_reason.get(reason, 0) + 1
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "by_status": by_status,
+        "skipped_by_reason": skipped_by_reason,
+        "by_category": by_category,
+        "has_errors": any(not item.get("success") for item in results),
     }

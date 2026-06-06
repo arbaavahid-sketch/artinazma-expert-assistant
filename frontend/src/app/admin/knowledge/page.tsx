@@ -94,6 +94,14 @@ type DriveSyncResult = {
   source_type?: string;
 };
 
+type DriveSyncSummary = {
+  generated_at?: string;
+  by_status?: Record<string, number>;
+  skipped_by_reason?: Record<string, number>;
+  by_category?: Record<string, number>;
+  has_errors?: boolean;
+};
+
 function formatDateTime(value?: string) {
   if (!value) return "-";
   const date = new Date(value);
@@ -136,6 +144,36 @@ function normalizeSearchScore(score: number) {
   return value > 1 ? value : value * 100;
 }
 
+function getDriveStatusLabel(status?: string, success?: boolean) {
+  if (status === "unchanged") return "بدون تغییر";
+  if (status === "added" || success) return "اضافه شد";
+  return "رد شد";
+}
+
+function buildDriveSyncSummary(results: DriveSyncResult[]): DriveSyncSummary {
+  const by_status: Record<string, number> = {};
+  const skipped_by_reason: Record<string, number> = {};
+  const by_category: Record<string, number> = {};
+
+  for (const item of results) {
+    const status = item.status || (item.success ? "added" : "skipped");
+    by_status[status] = (by_status[status] || 0) + 1;
+    const category = item.category || "general";
+    by_category[category] = (by_category[category] || 0) + 1;
+    if (!item.success) {
+      const reason = item.reason || item.message || "unknown";
+      skipped_by_reason[reason] = (skipped_by_reason[reason] || 0) + 1;
+    }
+  }
+
+  return {
+    by_status,
+    skipped_by_reason,
+    by_category,
+    has_errors: Object.keys(skipped_by_reason).length > 0,
+  };
+}
+
 export default function KnowledgePage() {
   const [knowledgeFile, setKnowledgeFile] = useState<File | null>(null);
   const [knowledgeTitle, setKnowledgeTitle] = useState("");
@@ -147,6 +185,8 @@ export default function KnowledgePage() {
   const [driveSyncResults, setDriveSyncResults] = useState<DriveSyncResult[]>(
     [],
   );
+  const [driveSyncSummary, setDriveSyncSummary] = useState<DriveSyncSummary | null>(null);
+  const [driveSyncFilter, setDriveSyncFilter] = useState<"all" | "added" | "unchanged" | "skipped">("all");
   const [driveMaxFiles, setDriveMaxFiles] = useState(20);
   const [forceDriveResync, setForceDriveResync] = useState(false);
   const { confirm } = useConfirm();
@@ -378,6 +418,8 @@ export default function KnowledgePage() {
     setSyncingDrive(true);
     setDriveSyncMessage("");
     setDriveSyncResults([]);
+    setDriveSyncSummary(null);
+    setDriveSyncFilter("all");
 
     try {
       const res = await fetch(adminUrl("/knowledge/sync-google-drive"), {
@@ -402,7 +444,9 @@ export default function KnowledgePage() {
         `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`,
       );
 
-      setDriveSyncResults(data.results || []);
+      const results = data.results || [];
+      setDriveSyncResults(results);
+      setDriveSyncSummary(data.summary || buildDriveSyncSummary(results));
 
       await loadKnowledgeStats();
     } catch {
@@ -506,6 +550,15 @@ export default function KnowledgePage() {
       return matchesSearch && matchesCategory;
     });
   }, [fileDetails, searchText, selectedCategory]);
+
+  const filteredDriveSyncResults = useMemo(() => {
+    if (driveSyncFilter === "all") return driveSyncResults;
+    return driveSyncResults.filter((item) => (item.status || (item.success ? "added" : "skipped")) === driveSyncFilter);
+  }, [driveSyncFilter, driveSyncResults]);
+
+  const driveStatusCounts = driveSyncSummary?.by_status || {};
+  const skippedReasons = Object.entries(driveSyncSummary?.skipped_by_reason || {})
+    .sort((a, b) => b[1] - a[1]);
 
   const groupedTestResults = useMemo<GroupedKnowledgeSearchResult[]>(() => {
     const map = new Map<string, GroupedKnowledgeSearchResult>();
@@ -732,12 +785,55 @@ export default function KnowledgePage() {
               </div>
 
               <button
-                onClick={() => setDriveSyncResults([])}
+                onClick={() => {
+                  setDriveSyncResults([]);
+                  setDriveSyncSummary(null);
+                  setDriveSyncFilter("all");
+                }}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-white"
               >
                 پاک کردن گزارش
               </button>
             </div>
+
+            <div className="mb-5 grid gap-3 md:grid-cols-4">
+              {[
+                ["all", "کل", driveSyncResults.length, "bg-slate-50 text-slate-700 border-slate-200"],
+                ["added", "اضافه‌شده", driveStatusCounts.added || 0, "bg-emerald-50 text-emerald-700 border-emerald-100"],
+                ["unchanged", "بدون تغییر", driveStatusCounts.unchanged || 0, "bg-amber-50 text-amber-700 border-amber-100"],
+                ["skipped", "ردشده/خطا", driveStatusCounts.skipped || 0, "bg-red-50 text-red-700 border-red-100"],
+              ].map(([status, label, count, classes]) => (
+                <button
+                  key={String(status)}
+                  onClick={() => setDriveSyncFilter(status as "all" | "added" | "unchanged" | "skipped")}
+                  className={`rounded-2xl border p-4 text-right transition hover:shadow-sm ${classes} ${
+                    driveSyncFilter === status ? "ring-2 ring-offset-2 ring-blue-200" : ""
+                  }`}
+                >
+                  <div className="text-xs font-bold">{label}</div>
+                  <div className="mt-1 text-2xl font-black">{count}</div>
+                </button>
+              ))}
+            </div>
+
+            {skippedReasons.length > 0 && (
+              <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-black text-red-700">
+                  <AlertCircle size={16} />
+                  دلایل رد شدن یا خطا
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {skippedReasons.slice(0, 8).map(([reason, count]) => (
+                    <span
+                      key={reason}
+                      className="rounded-full bg-white px-3 py-1 text-xs font-bold text-red-700"
+                    >
+                      {reason}: {count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="max-h-[420px] overflow-y-auto rounded-3xl border border-slate-200">
               <table className="w-full border-collapse text-right text-sm">
@@ -752,7 +848,7 @@ export default function KnowledgePage() {
                 </thead>
 
                 <tbody>
-                  {driveSyncResults.map((item, index) => (
+                  {filteredDriveSyncResults.map((item, index) => (
                     <tr
                       key={`${item.title}-${index}`}
                       className="border-b border-slate-100 hover:bg-slate-50"
@@ -767,11 +863,7 @@ export default function KnowledgePage() {
                                 : "bg-red-50 text-red-700"
                           }`}
                         >
-                          {item.status === "unchanged"
-                            ? "بدون تغییر"
-                            : item.success
-                              ? "اضافه شد"
-                              : "رد شد"}
+                          {getDriveStatusLabel(item.status, item.success)}
                         </span>
                       </td>
 

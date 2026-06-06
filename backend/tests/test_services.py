@@ -101,6 +101,37 @@ class TestAuthService:
         assert int(payload["sub"]) == 99
 
 
+class TestGoogleDriveService:
+    def test_summarize_drive_sync_results(self):
+        from google_drive_service import summarize_drive_sync_results
+
+        summary = summarize_drive_sync_results(
+            [
+                {"success": True, "status": "added", "category": "general"},
+                {"success": True, "status": "unchanged", "category": "general"},
+                {
+                    "success": False,
+                    "status": "skipped",
+                    "category": "ASTM Standards",
+                    "reason": "unsupported_file_type",
+                },
+                {
+                    "success": False,
+                    "status": "skipped",
+                    "category": "ASTM Standards",
+                    "reason": "unsupported_file_type",
+                },
+            ]
+        )
+
+        assert summary["by_status"]["added"] == 1
+        assert summary["by_status"]["unchanged"] == 1
+        assert summary["by_status"]["skipped"] == 2
+        assert summary["skipped_by_reason"]["unsupported_file_type"] == 2
+        assert summary["by_category"]["ASTM Standards"] == 2
+        assert summary["has_errors"] is True
+
+
 class TestHelperFunctions:
     """تست توابع کمکی main.py."""
 
