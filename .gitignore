@@ -91,6 +91,9 @@ frontend/tsconfig.tsbuildinfo
 # Sitemap XMLs belong on the web server, not in source code
 backend/*.xml
 
+# Generated eval reports
+docs/evals/latest_eval_report.json
+
 # Exception: self-signed dev certs committed so docker compose works out of the box.
 # Production certs (issued by certbot) stay on the server and are NEVER committed.
 !nginx/certs/fullchain.pem

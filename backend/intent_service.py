@@ -93,6 +93,11 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
         "baseline",
         "noise",
         "drift",
+        "pressure",
+        "high pressure",
+        "increasing pressure",
+        "broad peak",
+        "broad peaks",
         "tailing",
         "fronting",
         "پهن شدن پیک",
@@ -204,6 +209,7 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
     has_price_intent = any(keyword in text for keyword in price_keywords)
     has_suggestion_intent = any(keyword in text for keyword in suggestion_keywords)
     has_comparison_intent = any(keyword in text for keyword in comparison_keywords)
+    has_chemical_intent = any(keyword in text for keyword in chemical_keywords)
 
     if has_price_intent and not has_suggestion_intent:
         intent = "commercial_request"
@@ -225,11 +231,11 @@ def detect_question_intent(message: str, domain: str = "auto") -> Dict:
         intent = "lab_analysis"
         label = "تحلیل تست یا داده آزمایشگاهی"
 
-    elif any(keyword in text for keyword in suggestion_keywords):
+    elif has_suggestion_intent and not has_chemical_intent:
         intent = "equipment_recommendation"
         label = "پیشنهاد دستگاه یا روش"
 
-    elif any(keyword in text for keyword in chemical_keywords):
+    elif has_chemical_intent:
         intent = "chemical_or_catalyst"
         label = "مواد شیمیایی، کاتالیست یا جاذب"
 
