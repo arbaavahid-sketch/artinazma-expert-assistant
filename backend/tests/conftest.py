@@ -15,6 +15,8 @@ os.environ["TESTING"] = "1"  # غیرفعال‌سازی CSRF و rate limit در
 os.environ.setdefault("OPENAI_API_KEY", "test_offline_mode")
 os.environ.setdefault("ADMIN_API_KEY", "test-admin-key-12345")
 os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-testing-only")
+os.environ["QDRANT_URL"] = ""
+os.environ["QDRANT_API_KEY"] = ""
 
 
 @pytest.fixture(scope="session")
