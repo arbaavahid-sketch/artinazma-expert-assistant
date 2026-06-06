@@ -1,8 +1,8 @@
-import logging
 """
 JWT Authentication Service
 """
 
+import logging
 import os
 import secrets
 from typing import Optional
@@ -24,6 +24,20 @@ ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "72"))
 
 JWT_COOKIE_NAME = "artin_jwt"
 
+
+def _cookie_secure() -> bool:
+    """Send auth cookies only over HTTPS in production.
+
+    Override with COOKIE_SECURE=true/false; otherwise defaults to secure
+    when ENVIRONMENT=production (the app runs behind HTTPS via nginx in prod).
+    """
+    override = os.getenv("COOKIE_SECURE", "").strip().lower()
+    if override in ("1", "true", "yes"):
+        return True
+    if override in ("0", "false", "no"):
+        return False
+    return os.getenv("ENVIRONMENT", "production").strip().lower() == "production"
+
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -33,7 +47,7 @@ def set_jwt_cookie(response: Response, token: str) -> None:
         key=JWT_COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=False,
+        secure=_cookie_secure(),
         samesite="lax",
         max_age=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
         path="/",

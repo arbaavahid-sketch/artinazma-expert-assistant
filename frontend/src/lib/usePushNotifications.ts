@@ -11,11 +11,17 @@ type PushPermission = "granted" | "denied" | "default" | "unsupported";
  */
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
-  return Uint8Array.from(rawData, (c) => c.charCodeAt(0));
+  // Build on a fresh ArrayBuffer so the result is a valid BufferSource for
+  // pushManager.subscribe (not backed by a SharedArrayBuffer).
+  const outputArray = new Uint8Array(new ArrayBuffer(rawData.length));
+  for (let i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 export function usePushNotifications(customerId?: number) {

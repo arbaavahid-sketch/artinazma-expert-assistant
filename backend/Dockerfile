@@ -24,4 +24,7 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# --proxy-headers + --forwarded-allow-ips: trust X-Forwarded-For/X-Real-IP from nginx
+# so request.client.host is the real client IP (required for per-IP rate limiting and
+# brute-force lockout). Safe here because only nginx reaches the backend on the internal network.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]

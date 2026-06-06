@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiUrl, adminUrl } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { categoryOptions, getCategoryLabel } from "./knowledge-constants";
 import {
   AlertCircle,
   CheckCircle2,
@@ -77,27 +78,6 @@ type DriveSyncResult = {
   mime_type?: string;
   source_type?: string;
 };
-const categoryOptions = [
-  { value: "general", label: "عمومی" },
-  { value: "ASTM Standards", label: "استانداردهای ASTM" },
-  { value: "catalyst", label: "کاتالیست" },
-  { value: "equipment", label: "تجهیزات" },
-  { value: "chromatography", label: "کروماتوگرافی" },
-  { value: "mercury-analysis", label: "آنالیز جیوه" },
-  { value: "sulfur-analysis", label: "آنالیز سولفور" },
-  { value: "troubleshooting", label: "عیب‌یابی" },
-  { value: "application-note", label: "اپلیکیشن نوت" },
-  { value: "expert-faq", label: "FAQ تاییدشده" },
-];
-
-function getCategoryLabel(category: string) {
-  return (
-    categoryOptions.find((item) => item.value === category)?.label ||
-    category ||
-    "بدون دسته‌بندی"
-  );
-}
-
 export default function KnowledgePage() {
   const [knowledgeFile, setKnowledgeFile] = useState<File | null>(null);
   const [knowledgeTitle, setKnowledgeTitle] = useState("");

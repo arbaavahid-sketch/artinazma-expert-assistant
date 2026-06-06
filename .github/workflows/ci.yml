@@ -64,6 +64,13 @@ jobs:
           ADMIN_API_KEY: test-admin-key
           JWT_SECRET: test-jwt-secret
 
+      - name: Dependency vulnerability scan (pip-audit)
+        # Informational — does not fail the build yet. Review findings in the log.
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --desc
+
   # ── Frontend ──────────────────────────────────────────────────────────────────
   frontend:
     name: Frontend (typecheck + lint + build)
@@ -83,6 +90,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Dependency vulnerability scan (npm audit)
+        # Informational — does not fail the build yet. Review findings in the log.
+        continue-on-error: true
+        run: npm audit --audit-level=high
 
       - name: TypeScript type-check
         run: npx tsc --noEmit
