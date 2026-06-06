@@ -6,7 +6,7 @@ JWT Authentication Service
 import os
 import secrets
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import Request, HTTPException, Depends, Response
@@ -46,7 +46,7 @@ def clear_jwt_cookie(response: Response) -> None:
 
 
 def create_access_token(customer_id: int, email: str) -> str:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     payload = {
         "sub": str(customer_id),
         "email": email,

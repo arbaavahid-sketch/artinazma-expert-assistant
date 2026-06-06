@@ -14,7 +14,7 @@ Table: admin_audit_log
 The table is created lazily on first write so no migration is required.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from repositories.base import get_connection
@@ -70,7 +70,7 @@ def log_admin_action(
                     detail,
                     ip,
                     performed_by,
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
                 ),
             )
     except Exception as exc:
@@ -115,7 +115,7 @@ def get_admin_audit_log(
 def clear_admin_audit_log(older_than_days: int = 90) -> int:
     """Delete log entries older than N days. Returns number deleted."""
     _ensure_table()
-    cutoff = datetime.utcnow().replace(
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
     from datetime import timedelta

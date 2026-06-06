@@ -1,6 +1,6 @@
 import secrets
 import bcrypt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 from repositories.base import get_connection, DBIntegrityError
@@ -288,7 +288,7 @@ def create_password_reset_token(customer_id: int) -> str:
         conn.execute("UPDATE password_reset_tokens SET used = 1 WHERE customer_id = ? AND used = 0", (customer_id,))
 
         token = secrets.token_urlsafe(48)
-        expires_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+        expires_at = (datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)).isoformat()
 
         conn.execute(
             "INSERT INTO password_reset_tokens (customer_id, token, expires_at) VALUES (?, ?, ?)",
@@ -313,7 +313,7 @@ def verify_reset_token(token: str) -> dict | None:
             return None
         if row["used"]:
             return None
-        if datetime.utcnow().isoformat() > row["expires_at"]:
+        if datetime.now(timezone.utc).replace(tzinfo=None).isoformat() > row["expires_at"]:
             return None
 
         return {"token_id": row["id"], "customer_id": row["customer_id"]}

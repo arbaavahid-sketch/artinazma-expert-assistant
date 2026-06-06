@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from datetime import datetime as _dt
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -132,7 +132,7 @@ def run_gdrive_sync_now(_=Depends(require_admin)):
         raise HTTPException(status_code=400, detail="GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است.")
     try:
         result = sync_google_drive_folder(root_folder_id=folder_id, max_files=200, force_resync=False)
-        set_setting("gdrive_last_sync", _dt.utcnow().isoformat())
+        set_setting("gdrive_last_sync", _dt.now(timezone.utc).replace(tzinfo=None).isoformat())
         set_setting("gdrive_last_sync_result", str(result.get("synced_files", 0)) + " فایل")
         return {"success": True, "result": result}
     except Exception as exc:
@@ -219,7 +219,7 @@ def send_weekly_report_now(_=Depends(require_admin)):
     }
     success, message = send_weekly_report(settings, stats)
     if success:
-        set_setting("email_last_sent", _dt.utcnow().isoformat())
+        set_setting("email_last_sent", _dt.now(timezone.utc).replace(tzinfo=None).isoformat())
     return {"success": success, "message": message}
 
 
@@ -228,7 +228,7 @@ def admin_export_report(period: str = "week", _=Depends(require_admin)):
     """گزارش خلاصه هفتگی/ماهانه: سوالات، مشتریان، درخواست‌ها — خروجی CSV."""
     import csv, io
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     if period == "month":
         cutoff = now - timedelta(days=30)
         label = "ماهانه (۳۰ روز)"

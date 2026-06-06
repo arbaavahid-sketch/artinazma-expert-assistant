@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from repositories.base import get_connection
 
 
@@ -22,7 +22,7 @@ def set_setting(key: str, value: str) -> None:
             VALUES (?, ?, ?)
             ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
             """,
-            (key, value, datetime.utcnow().isoformat()),
+            (key, value, datetime.now(timezone.utc).replace(tzinfo=None).isoformat()),
         )
         conn.commit()
     finally:

@@ -3,7 +3,7 @@ import threading
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
-from datetime import datetime as _dt
+from datetime import datetime as _dt, timezone
 
 from logging_config import setup_logging
 setup_logging()
@@ -66,7 +66,7 @@ def _run_gdrive_sync():
     try:
         logger.info("Starting scheduled Google Drive sync...")
         result = sync_google_drive_folder(root_folder_id=folder_id, max_files=200, force_resync=False)
-        set_setting("gdrive_last_sync", _dt.utcnow().isoformat())
+        set_setting("gdrive_last_sync", _dt.now(timezone.utc).replace(tzinfo=None).isoformat())
         set_setting("gdrive_last_sync_result", str(result.get("synced_files", 0)) + " فایل")
         logger.info("Scheduled Google Drive sync complete: %s", result)
     except Exception as exc:

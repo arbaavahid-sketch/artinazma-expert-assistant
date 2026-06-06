@@ -3,7 +3,7 @@
 import smtplib
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
@@ -26,7 +26,7 @@ def save_email_settings(set_setting_fn, settings: dict) -> None:
 
 def build_weekly_report_html(stats: dict) -> str:
     """Build an HTML email body for the weekly report."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     week_start = (now - timedelta(days=7)).strftime("%Y-%m-%d")
     week_end = now.strftime("%Y-%m-%d")
 
@@ -126,7 +126,7 @@ def send_weekly_report(settings: dict, stats: dict) -> tuple[bool, str]:
     html_body = build_weekly_report_html(stats)
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"گزارش هفتگی آرتین آزما — {datetime.utcnow().strftime('%Y-%m-%d')}"
+    msg["Subject"] = f"گزارش هفتگی آرتین آزما — {datetime.now(timezone.utc).replace(tzinfo=None).strftime('%Y-%m-%d')}"
     msg["From"] = from_addr
     msg["To"] = to_addr
     msg.attach(MIMEText(html_body, "html", "utf-8"))

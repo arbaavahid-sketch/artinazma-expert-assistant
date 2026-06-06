@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from repositories.base import get_connection
@@ -28,7 +28,7 @@ def log_knowledge_action(
                 category,
                 detail,
                 performed_by,
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             ),
         )
         conn.commit()

@@ -1,6 +1,6 @@
 import json
 import re
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Any, Dict, List
 
 from repositories.base import get_connection
@@ -360,7 +360,7 @@ def save_question_feedback(question_id: int, rating: str, comment: str = "") -> 
             SET user_rating = ?, user_rating_comment = ?, updated_at = ?
             WHERE id = ?
             """,
-            (rating, comment, datetime.utcnow().isoformat(), question_id),
+            (rating, comment, datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), question_id),
         )
         conn.commit()
         return conn.execute("SELECT changes()").fetchone()[0] > 0
@@ -402,7 +402,7 @@ def get_response_time_stats(days: int = 30) -> dict:
     """آمار زمان پاسخ‌دهی AI."""
     conn = get_connection()
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+        cutoff = (datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)).strftime("%Y-%m-%d")
         row = conn.execute(
             """SELECT
                 AVG(response_time_ms) as avg_ms,

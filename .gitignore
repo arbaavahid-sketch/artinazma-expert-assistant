@@ -95,3 +95,9 @@ backend/*.xml
 # Production certs (issued by certbot) stay on the server and are NEVER committed.
 !nginx/certs/fullchain.pem
 !nginx/certs/privkey.pem
+
+
+# TLS certificates / private keys (generate at deploy, never commit)
+nginx/certs/*.pem
+nginx/certs/*.key
+nginx/certs/*.crt

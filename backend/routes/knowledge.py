@@ -3,7 +3,7 @@ import re
 import shutil
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request, UploadFile, File, Form, Depends, HTTPException
 from fastapi.responses import FileResponse, Response
@@ -251,7 +251,7 @@ def create_backup(_=Depends(require_admin)):
     import sqlite3 as _sqlite3
     from db_service import DB_PATH
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y%m%d_%H%M%S")
     backup_name = f"app_backup_{timestamp}.db"
     backup_path = BACKUP_DIR / backup_name
 

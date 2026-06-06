@@ -3,7 +3,7 @@ import time
 import logging
 
 from fastapi import APIRouter, Request
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ai_service import ask_expert_assistant
 from knowledge_service import get_knowledge_stats
@@ -27,7 +27,7 @@ def home():
 def health_check():
     """بررسی سلامت سرویس: دیتابیس + OpenAI."""
     start = time.monotonic()
-    status = {"ok": True, "timestamp": datetime.utcnow().isoformat(), "checks": {}}
+    status = {"ok": True, "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), "checks": {}}
 
     # DB check
     try:

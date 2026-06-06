@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from repositories.base import get_connection
@@ -11,7 +11,7 @@ def save_customer_notification(customer_id: int, message: str, sender: str = "ad
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO customer_notifications (customer_id, message, sender, is_read, created_at) VALUES (?, ?, ?, 0, ?)",
-            (customer_id, message, sender, datetime.utcnow().isoformat()),
+            (customer_id, message, sender, datetime.now(timezone.utc).replace(tzinfo=None).isoformat()),
         )
         conn.commit()
         return cursor.lastrowid
