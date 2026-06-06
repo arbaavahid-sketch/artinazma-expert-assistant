@@ -346,12 +346,18 @@ def search_knowledge_base(
 
 def get_knowledge_stats() -> Dict[str, Any]:
     import qdrant_service as _qs
+    backend = "qdrant" if _qs.is_enabled() else "json"
+    qdrant_status: Dict[str, Any] = {}
+
     if _qs.is_enabled():
         try:
             store = _qs.all_payloads()
+            qdrant_status = _qs.collection_stats()
         except Exception as exc:
             logger.warning("Qdrant stats failed, falling back to JSON: %s", exc)
             store = load_vector_store()
+            backend = "json_fallback"
+            qdrant_status = {"error": str(exc)}
     else:
         store = load_vector_store()
 
@@ -370,10 +376,19 @@ def get_knowledge_stats() -> Dict[str, Any]:
                 "category": item.get("category", "general"),
                 "categories": set(),
                 "chunks": 0,
+                "embedded_chunks": 0,
+                "missing_embedding_chunks": 0,
             }
 
         file_map[file_name]["chunks"] += 1
         file_map[file_name]["categories"].add(item.get("category", "general"))
+        embedding = item.get("embedding")
+        if _qs.is_enabled() and backend == "qdrant":
+            file_map[file_name]["embedded_chunks"] += 1
+        elif isinstance(embedding, list) and len(embedding) > 0:
+            file_map[file_name]["embedded_chunks"] += 1
+        else:
+            file_map[file_name]["missing_embedding_chunks"] += 1
 
         if item.get("title"):
             file_map[file_name]["title"] = item.get("title")
@@ -381,6 +396,30 @@ def get_knowledge_stats() -> Dict[str, Any]:
     file_details = []
 
     for file_name, data in file_map.items():
+        source_path = Path("knowledge_files") / file_name
+        source_exists = source_path.exists()
+        source_updated_at = ""
+        source_size_kb = 0.0
+        if source_exists:
+            try:
+                stat = source_path.stat()
+                source_size_kb = round(stat.st_size / 1024, 1)
+                source_updated_at = time.strftime(
+                    "%Y-%m-%dT%H:%M:%S",
+                    time.localtime(stat.st_mtime),
+                )
+            except OSError:
+                source_exists = False
+
+        if data["chunks"] == 0:
+            embedding_status = "missing"
+        elif data["missing_embedding_chunks"] == 0:
+            embedding_status = "embedded"
+        elif data["embedded_chunks"] == 0:
+            embedding_status = "missing"
+        else:
+            embedding_status = "partial"
+
         file_details.append(
             {
                 "file_name": data["file_name"],
@@ -388,6 +427,12 @@ def get_knowledge_stats() -> Dict[str, Any]:
                 "category": data["category"],
                 "categories": sorted(list(data["categories"])),
                 "chunks": data["chunks"],
+                "embedding_status": embedding_status,
+                "embedded_chunks": data["embedded_chunks"],
+                "missing_embedding_chunks": data["missing_embedding_chunks"],
+                "source_exists": source_exists,
+                "source_size_kb": source_size_kb,
+                "source_updated_at": source_updated_at,
             }
         )
 
@@ -404,6 +449,29 @@ def get_knowledge_stats() -> Dict[str, Any]:
         for cat, cnt in sorted(cat_counts.items(), key=lambda x: -x[1])
     ]
 
+    vector_store_updated_at = ""
+    vector_store_size_mb = 0.0
+    if VECTOR_STORE_PATH.exists():
+        try:
+            stat = VECTOR_STORE_PATH.stat()
+            vector_store_size_mb = round(stat.st_size / 1_048_576, 2)
+            vector_store_updated_at = time.strftime(
+                "%Y-%m-%dT%H:%M:%S",
+                time.localtime(stat.st_mtime),
+            )
+        except OSError:
+            pass
+
+    last_sync = ""
+    last_sync_result = ""
+    try:
+        from db_service import get_setting
+
+        last_sync = get_setting("gdrive_last_sync", "")
+        last_sync_result = get_setting("gdrive_last_sync_result", "")
+    except Exception:
+        pass
+
     return {
         "total_chunks": len(store),
         "total_files": len(files),
@@ -411,6 +479,15 @@ def get_knowledge_stats() -> Dict[str, Any]:
         "categories": categories,
         "file_details": file_details,
         "category_breakdown": category_breakdown,
+        "backend": backend,
+        "embedding_model": EMBEDDING_MODEL,
+        "vector_store_path": str(VECTOR_STORE_PATH),
+        "vector_store_exists": VECTOR_STORE_PATH.exists(),
+        "vector_store_size_mb": vector_store_size_mb,
+        "vector_store_updated_at": vector_store_updated_at,
+        "last_sync": last_sync,
+        "last_sync_result": last_sync_result,
+        "qdrant": qdrant_status,
     }
 
 

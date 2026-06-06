@@ -29,6 +29,12 @@ type KnowledgeFileDetail = {
   category: string;
   categories: string[];
   chunks: number;
+  embedding_status?: "embedded" | "partial" | "missing";
+  embedded_chunks?: number;
+  missing_embedding_chunks?: number;
+  source_exists?: boolean;
+  source_size_kb?: number;
+  source_updated_at?: string;
 };
 
 type KnowledgeStats = {
@@ -38,6 +44,13 @@ type KnowledgeStats = {
   categories: string[];
   file_details?: KnowledgeFileDetail[];
   category_breakdown?: { category: string; chunks: number; percent: number }[];
+  backend?: string;
+  embedding_model?: string;
+  vector_store_exists?: boolean;
+  vector_store_size_mb?: number;
+  vector_store_updated_at?: string;
+  last_sync?: string;
+  last_sync_result?: string;
 };
 
 type KnowledgeSearchResult = {
@@ -78,6 +91,26 @@ type DriveSyncResult = {
   mime_type?: string;
   source_type?: string;
 };
+
+function formatDateTime(value?: string) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("fa-IR");
+}
+
+function getEmbeddingLabel(status?: KnowledgeFileDetail["embedding_status"]) {
+  if (status === "partial") return "ناقص";
+  if (status === "missing") return "ندارد";
+  return "آماده";
+}
+
+function getEmbeddingBadgeClass(status?: KnowledgeFileDetail["embedding_status"]) {
+  if (status === "partial") return "bg-amber-50 text-amber-700";
+  if (status === "missing") return "bg-red-50 text-red-700";
+  return "bg-emerald-50 text-emerald-700";
+}
+
 export default function KnowledgePage() {
   const [knowledgeFile, setKnowledgeFile] = useState<File | null>(null);
   const [knowledgeTitle, setKnowledgeTitle] = useState("");
@@ -527,7 +560,7 @@ export default function KnowledgePage() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <div className="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-bold text-slate-500">
               تعداد فایل‌ها
@@ -550,6 +583,36 @@ export default function KnowledgePage() {
             <div className="text-sm font-bold text-blue-700">دسته‌بندی‌ها</div>
             <div className="mt-2 text-3xl font-black text-blue-700">
               {stats?.categories?.length || 0}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
+            <div className="text-sm font-bold text-emerald-700">موتور ذخیره</div>
+            <div className="mt-2 truncate text-2xl font-black text-emerald-700">
+              {stats?.backend || "json"}
+            </div>
+            <div className="mt-2 truncate text-xs font-bold text-emerald-600">
+              {stats?.embedding_model || "-"}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="text-sm font-bold text-slate-500">Vector store</div>
+            <div className="mt-2 text-2xl font-black text-slate-900">
+              {stats?.vector_store_exists ? `${stats.vector_store_size_mb ?? 0} MB` : "ندارد"}
+            </div>
+            <div className="mt-2 text-xs font-bold text-slate-500">
+              {formatDateTime(stats?.vector_store_updated_at)}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
+            <div className="text-sm font-bold text-amber-700">آخرین sync</div>
+            <div className="mt-2 truncate text-sm font-black leading-7 text-amber-800">
+              {formatDateTime(stats?.last_sync)}
+            </div>
+            <div className="mt-1 truncate text-xs font-bold text-amber-700">
+              {stats?.last_sync_result || "-"}
             </div>
           </div>
         </div>
@@ -1057,6 +1120,8 @@ export default function KnowledgePage() {
                         <th className="p-4 font-bold">فایل</th>
                         <th className="p-4 font-bold">دسته‌بندی</th>
                         <th className="p-4 font-bold">Chunk</th>
+                        <th className="p-4 font-bold">Embedding</th>
+                        <th className="p-4 font-bold">فایل منبع</th>
                         <th className="p-4 font-bold">عملیات</th>
                       </tr>
                     </thead>
@@ -1106,6 +1171,36 @@ export default function KnowledgePage() {
                               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
                                 {item.chunks}
                               </span>
+                            </td>
+
+                            <td className="p-4 align-top">
+                              <div className="space-y-1.5">
+                                <span className={`rounded-full px-3 py-1 text-xs font-black ${getEmbeddingBadgeClass(item.embedding_status)}`}>
+                                  {getEmbeddingLabel(item.embedding_status)}
+                                </span>
+                                <div className="text-xs font-bold text-slate-500">
+                                  {item.embedded_chunks ?? item.chunks} / {item.chunks}
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="p-4 align-top">
+                              <div className="space-y-1.5 text-xs leading-6">
+                                <span
+                                  className={`rounded-full px-3 py-1 font-black ${
+                                    item.source_exists
+                                      ? "bg-emerald-50 text-emerald-700"
+                                      : "bg-slate-100 text-slate-500"
+                                  }`}
+                                >
+                                  {item.source_exists ? "موجود" : "فقط vector"}
+                                </span>
+                                {item.source_exists && (
+                                  <div className="text-slate-500">
+                                    {item.source_size_kb ?? 0} KB · {formatDateTime(item.source_updated_at)}
+                                  </div>
+                                )}
+                              </div>
                             </td>
 
                             <td className="p-4 align-top">

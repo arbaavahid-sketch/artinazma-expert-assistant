@@ -43,6 +43,45 @@ class TestKnowledgeSearch:
         # باید حداقل یک فیلد عددی داشته باشد
         assert any(isinstance(v, int) for v in data.values())
 
+    def test_knowledge_stats_file_status_fields(self, monkeypatch):
+        import knowledge_service
+
+        monkeypatch.setattr(
+            knowledge_service,
+            "load_vector_store",
+            lambda: [
+                {
+                    "file_name": "sample.txt",
+                    "title": "Sample",
+                    "category": "general",
+                    "chunk_index": 0,
+                    "content": "sample content",
+                    "embedding": [0.1, 0.2],
+                },
+                {
+                    "file_name": "sample.txt",
+                    "title": "Sample",
+                    "category": "general",
+                    "chunk_index": 1,
+                    "content": "sample content without embedding",
+                },
+            ],
+        )
+
+        stats = knowledge_service.get_knowledge_stats()
+        detail = stats["file_details"][0]
+
+        assert stats["backend"] in ("json", "json_fallback")
+        assert stats["embedding_model"]
+        assert "vector_store_exists" in stats
+        assert "last_sync" in stats
+        assert detail["file_name"] == "sample.txt"
+        assert detail["chunks"] == 2
+        assert detail["embedded_chunks"] == 1
+        assert detail["missing_embedding_chunks"] == 1
+        assert detail["embedding_status"] == "partial"
+        assert "source_exists" in detail
+
     def test_knowledge_upload_requires_admin(self, app_client):
         """آپلود knowledge بدون کلید ادمین باید رد شود."""
         fake_file = io.BytesIO(b"test content for knowledge base")
