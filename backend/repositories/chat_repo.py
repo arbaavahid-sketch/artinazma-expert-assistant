@@ -162,6 +162,72 @@ def get_chat_messages(session_id: int, customer_id: int) -> List[Dict[str, Any]]
     ]
 
 
+def search_customer_chat_history(
+    customer_id: int, query: str, limit: int = 20
+) -> List[Dict[str, Any]]:
+    clean_query = query.strip()
+    if len(clean_query) < 2:
+        return []
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    search_text = f"%{clean_query}%"
+    cursor.execute(
+        """
+        SELECT
+            m.id AS message_id,
+            m.session_id,
+            m.role,
+            m.content,
+            m.created_at,
+            s.title AS session_title,
+            s.updated_at AS session_updated_at
+        FROM chat_messages m
+        INNER JOIN chat_sessions s ON s.id = m.session_id
+        WHERE s.customer_id = ?
+          AND (m.content LIKE ? OR s.title LIKE ?)
+        ORDER BY m.created_at DESC, m.id DESC
+        LIMIT ?
+        """,
+        (customer_id, search_text, search_text, max(1, min(limit, 50))),
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    results = []
+    query_lower = clean_query.lower()
+    for row in rows:
+        content = row["content"] or ""
+        content_lower = content.lower()
+        match_index = content_lower.find(query_lower)
+        if match_index >= 0:
+            start = max(0, match_index - 90)
+            end = min(len(content), match_index + len(clean_query) + 160)
+            snippet = content[start:end].strip()
+            if start > 0:
+                snippet = "..." + snippet
+            if end < len(content):
+                snippet = snippet + "..."
+        else:
+            snippet = content[:220] + ("..." if len(content) > 220 else "")
+
+        results.append(
+            {
+                "message_id": row["message_id"],
+                "session_id": row["session_id"],
+                "session_title": row["session_title"],
+                "role": row["role"],
+                "snippet": snippet,
+                "created_at": row["created_at"],
+                "session_updated_at": row["session_updated_at"],
+            }
+        )
+
+    return results
+
+
 def update_chat_session_title(session_id: int, customer_id: int, title: str) -> bool:
     conn = get_connection()
     cursor = conn.cursor()

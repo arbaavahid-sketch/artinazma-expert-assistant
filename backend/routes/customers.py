@@ -35,6 +35,7 @@ from db_service import (
     save_chat_message,
     get_customer_chat_sessions,
     get_chat_messages,
+    search_customer_chat_history,
     update_chat_session_title,
     delete_chat_session,
     delete_all_customer_chat_sessions,
@@ -305,6 +306,18 @@ def customer_change_password(customer_id: int, request: CustomerChangePasswordRe
 def customer_chat_sessions(customer_id: int, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], customer_id)
     return {"success": True, "sessions": get_customer_chat_sessions(customer_id)}
+
+
+@router.get("/customers/{customer_id}/chat-history/search", tags=["Chat Sessions"], summary="Search chat history")
+def customer_chat_history_search(
+    customer_id: int,
+    q: str = "",
+    limit: int = 20,
+    current_user: dict = Depends(get_current_customer),
+):
+    require_customer_match(current_user["customer_id"], customer_id)
+    results = search_customer_chat_history(customer_id, q, limit=limit)
+    return {"success": True, "query": q, "total": len(results), "results": results}
 
 
 @router.post("/customers/chat-sessions", tags=["Chat Sessions"], summary="Create chat session")

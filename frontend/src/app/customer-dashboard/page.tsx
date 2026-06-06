@@ -46,6 +46,15 @@ type ChatSession = {
   last_message_preview?: string;
 };
 
+type ChatHistorySearchResult = {
+  message_id: number;
+  session_id: number;
+  session_title: string;
+  role: "user" | "assistant";
+  snippet: string;
+  created_at: string;
+};
+
 function formatDate(value?: string) {
   if (!value) return "نامشخص";
 
@@ -83,6 +92,8 @@ export default function CustomerDashboardPage() {
   const [clearingAllSessions, setClearingAllSessions] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
   const [sessionSearch, setSessionSearch] = useState("");
+  const [historySearchResults, setHistorySearchResults] = useState<ChatHistorySearchResult[]>([]);
+  const [historySearchLoading, setHistorySearchLoading] = useState(false);
 
   // Notifications
   type Notification = { id: number; message: string; sender: string; is_read: number; created_at: string };
@@ -125,6 +136,39 @@ export default function CustomerDashboardPage() {
       /* ignore */
     }
   }
+
+  useEffect(() => {
+    if (!customer) return;
+    const query = sessionSearch.trim();
+    if (query.length < 2) {
+      setHistorySearchResults([]);
+      setHistorySearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setHistorySearchLoading(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q: query, limit: "20" });
+        const res = await customerFetch(
+          apiUrl(`/customers/${customer.id}/chat-history/search?${params}`),
+          { cache: "no-store" },
+        );
+        const data = await res.json();
+        if (!cancelled) setHistorySearchResults(data.results || []);
+      } catch {
+        if (!cancelled) setHistorySearchResults([]);
+      } finally {
+        if (!cancelled) setHistorySearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [customer, sessionSearch]);
 
   useEffect(() => {
     const raw = localStorage.getItem("artin_customer");

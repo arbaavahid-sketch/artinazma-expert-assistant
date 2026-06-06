@@ -162,3 +162,44 @@ class TestChatMessages:
         cid = registered_customer["customer_id"]
         res = app_client.get(f"/customers/{cid}/chat-sessions/999/messages")
         assert res.status_code == 401
+
+    def test_search_chat_history(self, app_client, test_db):
+        cust = _make_customer_via_repo()
+        cid = cust["customer_id"]
+        headers = cust["headers"]
+
+        create_res = app_client.post(
+            "/customers/chat-sessions",
+            json={"customer_id": cid, "title": "HPLC troubleshooting"},
+            headers=headers,
+        )
+        session_id = create_res.json()["session_id"]
+
+        app_client.post(
+            "/customers/chat-messages",
+            json={
+                "customer_id": cid,
+                "session_id": session_id,
+                "role": "assistant",
+                "content": "برای فشار بالای HPLC ابتدا ستون و فریت ورودی را بررسی کنید.",
+                "metadata": {},
+            },
+            headers=headers,
+        )
+
+        res = app_client.get(
+            f"/customers/{cid}/chat-history/search?q=HPLC",
+            headers=headers,
+        )
+
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert data["total"] >= 1
+        assert data["results"][0]["session_id"] == session_id
+        assert "HPLC" in data["results"][0]["snippet"]
+
+    def test_search_chat_history_requires_auth(self, app_client, registered_customer):
+        cid = registered_customer["customer_id"]
+        res = app_client.get(f"/customers/{cid}/chat-history/search?q=HPLC")
+        assert res.status_code == 401
