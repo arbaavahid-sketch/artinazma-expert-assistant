@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { adminUrl } from "@/lib/api";
 import {
@@ -56,7 +56,7 @@ function formatDate(value?: string) {
   }
 }
 
-export default function AdminCustomersPage() {
+function AdminCustomersContent() {
   const searchParams = useSearchParams();
   const autoSessions = searchParams.get("sessions") === "1";
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -685,5 +685,13 @@ export default function AdminCustomersPage() {
         </div>
       )}
     </section>
+  );
+}
+
+export default function AdminCustomersPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminCustomersContent />
+    </Suspense>
   );
 }

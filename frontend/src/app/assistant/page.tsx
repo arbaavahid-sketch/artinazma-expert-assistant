@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { debounce } from "@/lib/debounce";
@@ -8,11 +8,6 @@ import { getOrCreateUserId } from "@/lib/user";
 import {
   Loader,
   Paperclip,
-  Wrench,
-  Settings,
-  FlaskConical,
-  UserRound,
-  RefreshCw,
   Plus,
   Mic,
   MicOff,
@@ -22,9 +17,8 @@ import {
   SlidersHorizontal,
   Volume2,
 } from "lucide-react";
-import { findRelatedDevices, type DeviceAsset } from "@/lib/device-assets";
+import { findRelatedDevices } from "@/lib/device-assets";
 import {
-  hasPersianText,
   getTextFont,
   shouldShowRelatedDeviceCards,
   testTypes,
@@ -89,6 +83,7 @@ function AssistantPageInner() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isAtBottomRef = useRef(true);
+  const debouncedScrollRef = useRef<(() => void) | null>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -426,20 +421,20 @@ ${cleanAnswer}`,
     return () => window.removeEventListener("keydown", onGlobalKeyDown);
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/refs
-  const handleChatScroll = useMemo(
-    () =>
-      debounce(() => {
-        // Refs are only read inside the debounced scroll handler, never during render.
-        const el = scrollContainerRef.current;
-        if (!el) return;
-        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-        const atBottom = distanceFromBottom < 80;
-        isAtBottomRef.current = atBottom;
-        setShowScrollBtn(!atBottom);
-      }, 50),
-    [],
-  );
+  useEffect(() => {
+    debouncedScrollRef.current = debounce(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      const atBottom = distanceFromBottom < 80;
+      isAtBottomRef.current = atBottom;
+      setShowScrollBtn(!atBottom);
+    }, 50);
+  }, []);
+
+  function handleChatScroll() {
+    debouncedScrollRef.current?.();
+  }
 
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

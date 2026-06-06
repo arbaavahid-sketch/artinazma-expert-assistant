@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
@@ -9,12 +8,6 @@ import InstallPrompt from "@/components/InstallPrompt";
 import NetworkStatus from "@/components/NetworkStatus";
 import ThemeProvider from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
-
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic", "latin"],
-  variable: "--font-persian",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "آرتین آزما | دستیار هوشمند تخصصی",
@@ -69,7 +62,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={vazirmatn.variable}>
+      <body>
         <ThemeProvider>
           <I18nProvider>
           <ConfirmDialogProvider>
