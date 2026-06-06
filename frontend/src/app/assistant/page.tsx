@@ -13,6 +13,7 @@ import {
   MicOff,
   Download,
   ImagePlus,
+  StopCircle,
   X as XIcon,
   SlidersHorizontal,
   Volume2,
@@ -78,6 +79,8 @@ function AssistantPageInner() {
   const { showExportMenu, setShowExportMenu, exportChat, exportChatWord, exportChatText } = useExportChat(messages);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const abortIntentRef = useRef<"undo" | "stop" | null>(null);
+  const lastPromptRef = useRef<{ actual: string; visible: string } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedMsgRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -190,6 +193,7 @@ ${cleanAnswer}`,
 
   function undoSend() {
     if (abortControllerRef.current) {
+      abortIntentRef.current = "undo";
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
@@ -201,6 +205,32 @@ ${cleanAnswer}`,
     setLoading(false);
     setMessage(savedMsgRef.current);
     setMessages((prev) => prev.slice(0, -2)); // remove user msg + placeholder
+  }
+
+  function stopStreaming() {
+    if (!abortControllerRef.current) return;
+    abortIntentRef.current = "stop";
+    abortControllerRef.current.abort();
+    abortControllerRef.current = null;
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+    setCanUndo(false);
+  }
+
+  function regenerateLastResponse() {
+    if (loading) return;
+    const lastPrompt = lastPromptRef.current;
+    if (!lastPrompt) return;
+
+    const lastAssistantIndex = [...messages].reverse().findIndex((item) => item.role === "assistant");
+    if (lastAssistantIndex === -1) return;
+    const indexFromStart = messages.length - 1 - lastAssistantIndex;
+    const baseMessages = messages.slice(0, Math.max(0, indexFromStart - 1));
+    setMessages(baseMessages);
+
+    sendMessage(lastPrompt.actual, lastPrompt.visible, baseMessages);
   }
 
 
@@ -412,8 +442,7 @@ ${cleanAnswer}`,
 
       // Escape → abort in-flight request
       if (e.key === "Escape" && abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
+        stopStreaming();
         return;
       }
     }
@@ -476,7 +505,8 @@ ${cleanAnswer}`,
     }, 18);
   }
 
-  async function sendMessage(customMessage?: string, displayMessage?: string) {
+  async function sendMessage(customMessage?: string, displayMessage?: string, historyOverride?: ChatMessage[]) {
+    if (loading) return;
     // If there's a staged image, route to image analysis instead
     if (stagedImage && !customMessage) {
       const imgFile = stagedImage;
@@ -492,8 +522,9 @@ ${cleanAnswer}`,
 
     if (!finalMessage.trim()) return;
 
-    const previousMessages = messages;
+    const previousMessages = historyOverride || messages;
     const userId = getOrCreateUserId();
+    lastPromptRef.current = { actual: finalMessage, visible: visibleMessage };
 
     const userMessage: ChatMessage = {
       role: "user",
@@ -514,6 +545,7 @@ ${cleanAnswer}`,
     setLoading(true);
     setShowTools(false);
     // Undo window: 5 seconds before Artin responds
+    abortIntentRef.current = null;
     abortControllerRef.current = new AbortController();
     setCanUndo(true);
     undoTimerRef.current = setTimeout(() => { setCanUndo(false); }, 5000);
@@ -539,6 +571,9 @@ ${cleanAnswer}`,
         return { role: item.role, content };
       }),
     };
+
+    let accumulatedText = "";
+    let finalAssistantMsg: ChatMessage = { role: "assistant", content: "" };
 
     try {
       const res = await fetch(apiUrl("/chat/stream"), {
@@ -571,9 +606,7 @@ ${cleanAnswer}`,
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let accumulatedText = "";
       let metaData: Record<string, unknown> = {};
-      let finalAssistantMsg: ChatMessage = { role: "assistant", content: "" };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -658,6 +691,23 @@ ${cleanAnswer}`,
       }
     } catch (error) {
       console.error("CHAT ERROR:", error);
+      const aborted =
+        (error instanceof DOMException && error.name === "AbortError") ||
+        (error instanceof Error && error.name === "AbortError");
+      if (aborted && abortIntentRef.current === "undo") {
+        return;
+      }
+      if (aborted && abortIntentRef.current === "stop") {
+        const stoppedContent = accumulatedText.trim()
+          ? `${accumulatedText}\n\n_پاسخ متوقف شد._`
+          : "پاسخ متوقف شد.";
+        setMessages([
+          ...previousMessages,
+          userMessage,
+          { ...finalAssistantMsg, content: stoppedContent },
+        ]);
+        return;
+      }
       const isOffline = !navigator.onLine;
       setMessages([
         ...previousMessages,
@@ -671,6 +721,13 @@ ${cleanAnswer}`,
       ]);
     } finally {
       setLoading(false);
+      setCanUndo(false);
+      abortControllerRef.current = null;
+      abortIntentRef.current = null;
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+      }
     }
   }
 
@@ -1281,11 +1338,14 @@ ${cleanAnswer}`,
                       </button>
                     )}
                     <button
-                      onClick={() => sendMessage()}
-                      disabled={loading || !message.trim() || rateLimitCountdown > 0}
-                      className="ui-btn ui-btn-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300"
+                      onClick={loading ? stopStreaming : () => sendMessage()}
+                      disabled={(!loading && !message.trim()) || rateLimitCountdown > 0}
+                      className={`ui-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300 ${
+                        loading ? "bg-red-600 text-white hover:bg-red-700" : "ui-btn-primary"
+                      }`}
+                      title={loading ? "توقف پاسخ" : "ارسال"}
                     >
-                      ↑
+                      {loading ? <StopCircle size={19} /> : "↑"}
                     </button>
                   </div>
                 </div>
@@ -1330,6 +1390,8 @@ ${cleanAnswer}`,
                   onSpeak={speakMessage}
                   isSpeaking={speakingIndex === index}
                   onEdit={handleEditMessage}
+                  onRegenerate={regenerateLastResponse}
+                  canRegenerate={!loading && item.role === "assistant" && index === messages.length - 1}
                 />
               ))}
 
@@ -1503,11 +1565,22 @@ ${cleanAnswer}`,
                   )}
 
                   <button
-                    onClick={() => sendMessage()}
-                    disabled={loading || (!message.trim() && !stagedImage)}
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition disabled:bg-slate-200 disabled:text-slate-400 ${stagedImage ? "bg-blue-600 hover:bg-blue-700" : "bg-slate-800 hover:bg-slate-700"}`}
+                    onClick={loading ? stopStreaming : () => sendMessage()}
+                    disabled={!loading && !message.trim() && !stagedImage}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition disabled:bg-slate-200 disabled:text-slate-400 ${
+                      loading
+                        ? "bg-red-600 hover:bg-red-700"
+                        : stagedImage
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "bg-slate-800 hover:bg-slate-700"
+                    }`}
+                    title={loading ? "توقف پاسخ" : "ارسال"}
                   >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                    {loading ? (
+                      <StopCircle size={18} />
+                    ) : (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                    )}
                   </button>
                 </div>
               </div>
