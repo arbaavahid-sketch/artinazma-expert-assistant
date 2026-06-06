@@ -1,4 +1,4 @@
-.PHONY: help dev-backend dev-frontend dev lint test build docker-build docker-up docker-down certs-dev certs-prod backup backup-list
+.PHONY: help dev-backend dev-frontend dev lint type-check test build docker-build docker-up docker-down certs-dev certs-prod backup backup-list
 
 # ─── Help ─────────────────────────────────────────────────────────────────────
 help:
@@ -26,16 +26,11 @@ help:
 	@echo "    make certs-dev       Generate self-signed cert for localhost dev"
 	@echo "    make certs-prod      Issue Let's Encrypt cert  (requires DOMAIN + port 80 open)"
 
-  Backup
-    make backup          Run one-off backup (Postgres + Qdrant → backup_data volume)
-    make backup-list     List files in the backup volume
-
 	@echo "                         Example: make certs-prod DOMAIN=artinazma.net CERTBOT_EMAIL=info@artinazma.net"
-
-  Backup
-    make backup          Run one-off backup (Postgres + Qdrant → backup_data volume)
-    make backup-list     List files in the backup volume
-
+	@echo ""
+	@echo "  Backup"
+	@echo "    make backup          Run one-off backup (Postgres + Qdrant -> backup_data volume)"
+	@echo "    make backup-list     List files in the backup volume"
 	@echo ""
 
 # ─── Development ──────────────────────────────────────────────────────────────
@@ -54,6 +49,10 @@ lint:
 
 type-check:
 	cd frontend && npx tsc --noEmit
+
+test:
+	cd backend && python -m pytest tests/ -q --tb=short
+	cd frontend && npm test
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 build:
