@@ -20,6 +20,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATASET = ROOT / "docs" / "evals" / "chat_eval_set.json"
 DEFAULT_OUTPUT = ROOT / "docs" / "evals" / "latest_eval_report.json"
+DEFAULT_MARKDOWN_OUTPUT = ROOT / "docs" / "evals" / "latest_eval_report.md"
 BACKEND_DIR = ROOT / "backend"
 
 
@@ -178,6 +179,65 @@ def print_summary(report: dict[str, Any]) -> None:
             print(f"  forbidden_terms_found: {', '.join(checks['forbidden_terms_found'])}")
 
 
+def markdown_report(report: dict[str, Any]) -> str:
+    lines = [
+        "# Chat Eval Report",
+        "",
+        f"- Mode: `{report['mode']}`",
+        f"- Dataset: `{report['dataset']}`",
+        f"- Total: `{report['total']}`",
+        f"- Passed: `{report['passed']}`",
+        f"- Failed: `{report['failed']}`",
+        f"- Duration: `{report['duration_seconds']}s`",
+    ]
+    if report.get("api_url"):
+        lines.append(f"- API URL: `{report['api_url']}`")
+
+    lines.extend(
+        [
+            "",
+            "| Status | Case | Intent | Expected | Notes |",
+            "|---|---|---|---|---|",
+        ]
+    )
+
+    for result in report["results"]:
+        checks = result["checks"]
+        status = "PASS" if result["passed"] else "FAIL"
+        notes: list[str] = []
+        if result.get("error"):
+            notes.append(str(result["error"]))
+        if checks.get("missing_terms"):
+            notes.append("missing: " + ", ".join(checks["missing_terms"]))
+        if checks.get("forbidden_terms_found"):
+            notes.append("forbidden: " + ", ".join(checks["forbidden_terms_found"]))
+        if "web_ok" in checks and not checks["web_ok"]:
+            notes.append(f"web expected {checks.get('web_expected')} got {checks.get('web_actual')}")
+        if checks.get("search_mode"):
+            notes.append(f"search: {checks['search_mode']}")
+        if checks.get("source_count") is not None:
+            notes.append(f"sources: {checks['source_count']}")
+
+        lines.append(
+            "| {status} | `{case_id}` | `{actual}` | `{expected}` | {notes} |".format(
+                status=status,
+                case_id=result["id"],
+                actual=checks.get("actual_intent", "-"),
+                expected=checks.get("expected_intent", "-"),
+                notes="; ".join(notes) or "-",
+            )
+        )
+
+    failed = [result for result in report["results"] if not result["passed"]]
+    if failed:
+        lines.extend(["", "## Failed Cases", ""])
+        for result in failed:
+            lines.append(f"- `{result['id']}`: {result.get('error') or result['checks']}")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run ArtinAzma chat evals")
     parser.add_argument("--dataset", default=str(DEFAULT_DATASET), help="Path to eval JSON")
@@ -190,6 +250,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--api-url", default="http://127.0.0.1:8000", help="Backend base URL")
     parser.add_argument("--timeout", type=int, default=90, help="API request timeout seconds")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help="Report JSON output path")
+    parser.add_argument(
+        "--markdown-output",
+        default=str(DEFAULT_MARKDOWN_OUTPUT),
+        help="Report Markdown output path",
+    )
     return parser.parse_args()
 
 
@@ -199,11 +264,14 @@ def main() -> int:
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    markdown_output = Path(args.markdown_output)
+    markdown_output.parent.mkdir(parents=True, exist_ok=True)
+    markdown_output.write_text(markdown_report(report), encoding="utf-8")
     print_summary(report)
     print(f"Report written to {output}")
+    print(f"Markdown report written to {markdown_output}")
     return 0 if report["failed"] == 0 else 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

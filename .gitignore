@@ -93,6 +93,7 @@ backend/*.xml
 
 # Generated eval reports
 docs/evals/latest_eval_report.json
+docs/evals/latest_eval_report.md
 
 # Exception: self-signed dev certs committed so docker compose works out of the box.
 # Production certs (issued by certbot) stay on the server and are NEVER committed.
