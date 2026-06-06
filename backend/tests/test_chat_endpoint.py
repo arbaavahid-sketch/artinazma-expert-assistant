@@ -67,6 +67,16 @@ def test_chat_persists_question(app_client, monkeypatch):
     assert isinstance(data["question_id"], int)
     assert data["question_id"] > 0
 
+    from repositories.questions_repo import get_question_by_id
+
+    saved = get_question_by_id(data["question_id"])
+    assert saved is not None
+    assert saved["metadata"]["search_mode"] == data["search_mode"]
+    assert saved["metadata"]["web_search_used"] == data["web_search_used"]
+    assert saved["metadata"]["question_intent"] == data["question_intent"]
+    assert saved["metadata"]["answer_mode"] == data["answer_mode"]
+    assert saved["metadata"]["source_count"] == len(data["sources"])
+
 
 def test_chat_requires_message_field(app_client, monkeypatch):
     _patch_externals(monkeypatch)

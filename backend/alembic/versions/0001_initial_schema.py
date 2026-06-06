@@ -23,6 +23,7 @@ def upgrade() -> None:
             answer TEXT NOT NULL,
             detected_domain TEXT,
             sources_json TEXT,
+            metadata_json TEXT DEFAULT '{}',
             expert_status TEXT DEFAULT 'pending',
             expert_note TEXT DEFAULT '',
             reviewed_answer TEXT DEFAULT '',

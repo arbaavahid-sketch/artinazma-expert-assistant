@@ -11,6 +11,7 @@ VALID_EXPERT_STATUSES = {"pending", "approved", "needs_edit", "rejected"}
 def save_expert_question(
     question: str, answer: str, sources: List[Dict[str, Any]], detected_domain: str,
     response_time_ms: int = None,
+    metadata: Dict[str, Any] | None = None,
 ) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -18,14 +19,15 @@ def save_expert_question(
     cursor.execute(
         """
         INSERT INTO expert_questions
-        (question, answer, detected_domain, sources_json, expert_status, expert_note, reviewed_answer, created_at, updated_at, response_time_ms)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (question, answer, detected_domain, sources_json, metadata_json, expert_status, expert_note, reviewed_answer, created_at, updated_at, response_time_ms)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             question,
             answer,
             detected_domain,
             json.dumps(sources, ensure_ascii=False),
+            json.dumps(metadata or {}, ensure_ascii=False),
             "pending",
             "",
             "",
@@ -49,7 +51,7 @@ def get_recent_questions(limit: int = 20) -> List[Dict[str, Any]]:
 
     cursor.execute(
         """
-        SELECT id, question, answer, detected_domain, sources_json,
+        SELECT id, question, answer, detected_domain, sources_json, metadata_json,
                expert_status, expert_note, reviewed_answer, created_at, updated_at
         FROM expert_questions
         ORDER BY id DESC
@@ -71,6 +73,7 @@ def get_recent_questions(limit: int = 20) -> List[Dict[str, Any]]:
                 "answer": row["answer"],
                 "detected_domain": row["detected_domain"],
                 "sources": json.loads(row["sources_json"] or "[]"),
+                "metadata": json.loads(row["metadata_json"] or "{}"),
                 "expert_status": row["expert_status"] or "pending",
                 "expert_note": row["expert_note"] or "",
                 "reviewed_answer": row["reviewed_answer"] or "",
@@ -222,7 +225,7 @@ def get_question_by_id(question_id: int) -> Dict[str, Any] | None:
 
     cursor.execute(
         """
-        SELECT id, question, answer, detected_domain, sources_json,
+        SELECT id, question, answer, detected_domain, sources_json, metadata_json,
                expert_status, expert_note, reviewed_answer, created_at, updated_at
         FROM expert_questions
         WHERE id = ?
@@ -242,6 +245,7 @@ def get_question_by_id(question_id: int) -> Dict[str, Any] | None:
         "answer": row["answer"],
         "detected_domain": row["detected_domain"],
         "sources": json.loads(row["sources_json"] or "[]"),
+        "metadata": json.loads(row["metadata_json"] or "{}"),
         "expert_status": row["expert_status"] or "pending",
         "expert_note": row["expert_note"] or "",
         "reviewed_answer": row["reviewed_answer"] or "",

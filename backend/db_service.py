@@ -115,6 +115,7 @@ def init_db():
             answer TEXT NOT NULL,
             detected_domain TEXT,
             sources_json TEXT,
+            metadata_json TEXT DEFAULT '{}',
             expert_status TEXT DEFAULT 'pending',
             expert_note TEXT DEFAULT '',
             reviewed_answer TEXT DEFAULT '',
@@ -131,6 +132,11 @@ def init_db():
     if "response_time_ms" not in existing_columns:
         cursor.execute(
             "ALTER TABLE expert_questions ADD COLUMN response_time_ms INTEGER DEFAULT NULL"
+        )
+
+    if "metadata_json" not in existing_columns:
+        cursor.execute(
+            "ALTER TABLE expert_questions ADD COLUMN metadata_json TEXT DEFAULT '{}'"
         )
 
     if "expert_status" not in existing_columns:

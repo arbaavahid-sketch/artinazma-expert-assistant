@@ -240,6 +240,7 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         "question_intent": question_intent,
         "question_intent_label": question_intent_label,
         "related_docs": related_docs,
+        "best_score": best_score,
         "search_mode": search_mode,
         "allow_web_search": allow_web_search,
         "context": context,
@@ -251,6 +252,25 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         "customer_context": customer_context,
         "response_mode": body.response_mode or "auto",
     }
+
+
+def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_ms: int | None = None) -> dict:
+    metadata = {
+        "question_intent": p["question_intent"],
+        "question_intent_label": p["question_intent_label"],
+        "search_mode": p["search_mode"],
+        "best_score": p["best_score"],
+        "web_search_used": p["allow_web_search"],
+        "source_count": len(p["sources"]),
+        "resource_link_count": len(p["resource_links"]),
+        "resource_image_count": len(p["resource_images"]),
+        "response_mode": p["response_mode"],
+    }
+    if answer_mode:
+        metadata["answer_mode"] = answer_mode
+    if response_time_ms is not None:
+        metadata["response_time_ms"] = response_time_ms
+    return metadata
 
 
 @router.post("/chat", tags=["Chat"], summary="Send message and get AI response")
@@ -286,6 +306,7 @@ def chat(body: ChatRequest, request: Request):
         sources=p["sources"],
         detected_domain=p["detected_domain"],
         response_time_ms=_response_time_ms,
+        metadata=_build_chat_metadata(p, answer_mode, _response_time_ms),
     )
 
     memory_id = None
@@ -299,13 +320,9 @@ def chat(body: ChatRequest, request: Request):
             metadata={
                 "question_id": question_id,
                 "sources": p["sources"],
-                "search_mode": p["search_mode"],
-                "web_search_used": p["allow_web_search"],
-                "answer_mode": answer_mode,
                 "resource_links": p["resource_links"],
                 "resource_images": p["resource_images"],
-                "question_intent": p["question_intent"],
-                "question_intent_label": p["question_intent_label"],
+                **_build_chat_metadata(p, answer_mode, _response_time_ms),
             },
         )
 
@@ -321,6 +338,8 @@ def chat(body: ChatRequest, request: Request):
         "web_search_used": p["allow_web_search"],
         "question_intent": p["question_intent"],
         "question_intent_label": p["question_intent_label"],
+        "best_score": p["best_score"],
+        "source_count": len(p["sources"]),
         "response_mode": p["response_mode"],
         "answer_mode": answer_mode,
     }
@@ -385,10 +404,14 @@ def chat_stream(body: ChatRequest, request: Request):
             "web_search_used": allow_web_search,
             "question_intent": question_intent,
             "question_intent_label": question_intent_label,
+            "best_score": p["best_score"],
+            "source_count": len(sources),
         }
         yield f"data: {_json_local.dumps(meta, ensure_ascii=False)}\n\n"
 
         full_answer = ""
+        _stream_t0 = _time.monotonic()
+        answer_mode = "ai"
         try:
             for chunk in ask_expert_assistant_stream(
                 message=body.message,
@@ -402,6 +425,7 @@ def chat_stream(body: ChatRequest, request: Request):
                 payload = {"type": "chunk", "text": chunk}
                 yield f"data: {_json_local.dumps(payload, ensure_ascii=False)}\n\n"
         except Exception as exc:
+            answer_mode = "error"
             _exc_str = str(exc).lower()
             if "nameresolution" in _exc_str or "getaddrinfo" in _exc_str or "name or service not known" in _exc_str:
                 _err_msg = "⚠️ خطای اتصال: سرور نمی‌تواند به OpenAI متصل شود (مشکل DNS). لطفاً VPN یا پروکسی را فعال کنید و دوباره امتحان کنید."
@@ -428,6 +452,12 @@ def chat_stream(body: ChatRequest, request: Request):
                 answer=full_answer,
                 sources=sources,
                 detected_domain=detected_domain,
+                response_time_ms=int((_time.monotonic() - _stream_t0) * 1000),
+                metadata=_build_chat_metadata(
+                    p,
+                    answer_mode=answer_mode,
+                    response_time_ms=int((_time.monotonic() - _stream_t0) * 1000),
+                ),
             )
             memory_id = None
             if body.user_id and body.user_id != "anonymous":
@@ -437,8 +467,15 @@ def chat_stream(body: ChatRequest, request: Request):
                     answer=full_answer,
                     detected_domain=detected_domain,
                     memory_type="chat",
-                    metadata={"question_id": question_id, "sources": sources,
-                               "search_mode": search_mode, "web_search_used": allow_web_search},
+                    metadata={
+                        "question_id": question_id,
+                        "sources": sources,
+                        **_build_chat_metadata(
+                            p,
+                            answer_mode=answer_mode,
+                            response_time_ms=int((_time.monotonic() - _stream_t0) * 1000),
+                        ),
+                    },
                 )
             done = {"type": "done", "question_id": question_id, "memory_id": memory_id}
         except Exception:
