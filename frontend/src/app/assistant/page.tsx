@@ -160,21 +160,50 @@ function AssistantPageInner() {
   }
 
   function sendQuickAction(
-    action: "shorter" | "technical" | "table",
+    action: "shorter" | "technical" | "table" | "sources",
     answerText: string,
   ) {
     const cleanAnswer = answerText.trim();
 
-    const prompts = {
-      shorter: `این متن را خلاصه‌تر، کاربردی‌تر و منظم‌تر بازنویسی کن. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+    const prompts: Record<typeof action, string> = isEn
+      ? {
+          shorter: `Rewrite the following answer in a shorter, more practical, well-structured form. Return only the final version and do not add an introduction:
 
 ${cleanAnswer}`,
 
-      technical: `این متن را فنی‌تر، دقیق‌تر و کامل‌تر بازنویسی کن. توضیح باید منظم، قابل فهم و مناسب کارشناس آزمایشگاه باشد. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+          technical: `Rewrite the following answer in a more technical, precise, and complete form. It should be structured, clear, and suitable for a laboratory or process expert. Return only the final version and do not add an introduction:
 
 ${cleanAnswer}`,
 
-      table: `درخواست امن و مجاز: فقط متن فنی زیر را از حالت توضیحی به جدول Markdown تبدیل کن.
+          table: `Safe and allowed request: convert only the technical text below from prose into a Markdown table.
+Do not add new facts.
+If the text is about a laboratory method, device, standard, or sample, summarize only the existing information in the table.
+Write the output in English.
+First provide the Markdown table, then add one short one-line summary.
+
+Text to convert:
+${cleanAnswer}`,
+
+          sources: `From the following answer, create a compact follow-up section in English with these headings:
+1. Key technical points
+2. Evidence or source hints already mentioned in the answer
+3. Missing information to confirm
+4. Recommended next action
+Do not invent sources or facts. If the answer does not mention a source, say that no explicit source was included.
+
+Answer:
+${cleanAnswer}`,
+        }
+      : {
+          shorter: `این متن را خلاصه‌تر، کاربردی‌تر و منظم‌تر بازنویسی کن. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+
+${cleanAnswer}`,
+
+          technical: `این متن را فنی‌تر، دقیق‌تر و کامل‌تر بازنویسی کن. توضیح باید منظم، قابل فهم و مناسب کارشناس آزمایشگاه باشد. فقط نسخه نهایی را بده و مقدمه اضافه نکن:
+
+${cleanAnswer}`,
+
+          table: `درخواست امن و مجاز: فقط متن فنی زیر را از حالت توضیحی به جدول Markdown تبدیل کن.
 هیچ اطلاعات جدیدی اضافه نکن.
 اگر متن درباره روش‌های آزمایشگاهی، دستگاه، استاندارد یا نمونه است، همان اطلاعات موجود را در جدول خلاصه کن.
 خروجی فقط فارسی باشد.
@@ -182,12 +211,23 @@ ${cleanAnswer}`,
 
 متن برای تبدیل به جدول:
 ${cleanAnswer}`,
-    };
+
+          sources: `از پاسخ زیر یک بخش پیگیری کوتاه و منظم به فارسی بساز، با این تیترها:
+1. نکات فنی کلیدی
+2. شواهد یا اشاره‌های منبعی که در خود پاسخ آمده
+3. اطلاعات ناقص برای تأیید نهایی
+4. اقدام بعدی پیشنهادی
+منبع یا واقعیت جدید نساز. اگر در پاسخ منبع صریحی نیامده، بنویس منبع صریحی در پاسخ ذکر نشده است.
+
+پاسخ:
+${cleanAnswer}`,
+        };
 
     const visibleMessages = {
-      shorter: "خلاصه‌تر کن",
-      technical: "فنی‌تر توضیح بده",
-      table: "تبدیل به جدول",
+      shorter: isEn ? "Make it shorter" : "خلاصه‌تر کن",
+      technical: isEn ? "Make it more technical" : "فنی‌تر توضیح بده",
+      table: isEn ? "Convert to table" : "تبدیل به جدول",
+      sources: isEn ? "Extract sources and next steps" : "منابع و اقدام بعدی را استخراج کن",
     };
 
     sendMessage(prompts[action], visibleMessages[action]);

@@ -187,7 +187,7 @@ interface MessageBubbleProps {
   onCopy: (text: string) => void;
   onRequest: () => void;
   onQuickAction: (
-    action: "shorter" | "technical" | "table",
+    action: "shorter" | "technical" | "table" | "sources",
     answerText: string,
   ) => void;
   onFeedback: (
@@ -491,6 +491,12 @@ function MessageBubble({
                 className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
               >
                 {isEn ? "Table" : "جدول"}
+              </button>
+              <button
+                onClick={() => onQuickAction("sources", item.content)}
+                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                {isEn ? "Next steps" : "منابع/اقدام"}
               </button>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
               <Tooltip label={isEn ? "Helpful" : "مفید بود"} position="top">
