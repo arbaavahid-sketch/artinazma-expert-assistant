@@ -1,7 +1,7 @@
 import http from "node:http";
 import { spawn } from "node:child_process";
 
-const port = process.env.PLAYWRIGHT_PORT || "3001";
+const port = process.env.PLAYWRIGHT_PORT || "3002";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${port}`;
 const isWindows = process.platform === "win32";
 
@@ -41,6 +41,15 @@ function waitForServer(url, timeoutMs = 120_000) {
   });
 }
 
+async function isServerUp(url) {
+  try {
+    await waitForServer(url, 1_000);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function killProcessTree(child) {
   if (!child.pid) return;
   if (isWindows) {
@@ -50,21 +59,29 @@ function killProcessTree(child) {
   child.kill("SIGTERM");
 }
 
-const server = spawnCommand(
-  `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
-  {
-    stdio: "inherit",
-    env: {
-      ...process.env,
-      NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:8000",
-    },
-  },
-);
+const serverAlreadyRunning = await isServerUp(baseURL);
+const server = serverAlreadyRunning
+  ? null
+  : spawnCommand(
+      `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+      {
+        stdio: "inherit",
+        env: {
+          ...process.env,
+          ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "smoke-admin-password",
+          ADMIN_SESSION_TOKEN: process.env.ADMIN_SESSION_TOKEN || "smoke-admin-session",
+          ADMIN_API_KEY: process.env.ADMIN_API_KEY || "smoke-admin-api-key",
+          NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:8000",
+        },
+      },
+    );
 
 let exitCode = 1;
 
 try {
-  await waitForServer(baseURL);
+  if (!serverAlreadyRunning) {
+    await waitForServer(baseURL);
+  }
   const tests = spawnCommand("npx playwright test --workers=1", {
     stdio: "inherit",
     env: {
@@ -80,7 +97,9 @@ try {
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
 } finally {
-  killProcessTree(server);
+  if (server) {
+    killProcessTree(server);
+  }
 }
 
 process.exit(exitCode);

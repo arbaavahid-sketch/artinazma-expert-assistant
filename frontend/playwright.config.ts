@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = process.env.PLAYWRIGHT_PORT || "3001";
+const PORT = process.env.PLAYWRIGHT_PORT || "3002";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${PORT}`;
 const browserChannel = process.env.PLAYWRIGHT_CHANNEL || (process.env.CI ? undefined : "chrome");
 

@@ -60,8 +60,10 @@
 
 - [x] 5.1 Playwright smoke test برای home، login، assistant، admin
   - Status: added Playwright config, local Chrome-based runner, and smoke specs for home, customer login, assistant, and admin login.
-- [ ] 5.2 E2E مسیر customer login و chat
-- [ ] 5.3 E2E مسیر admin login و upload knowledge
+- [x] 5.2 E2E مسیر customer login و chat
+  - Status: added mocked customer login/session/chat E2E flow that verifies redirect to assistant, chat stream POST, and rendered chat messages.
+- [x] 5.3 E2E مسیر admin login و upload knowledge
+  - Status: added mocked admin login + knowledge upload E2E flow and isolated E2E dev port/env to avoid stale local server conflicts.
 - [ ] 5.4 CI برای backend tests، frontend lint/typecheck/test/build
 - [ ] 5.5 smoke test برای Docker image build
 
