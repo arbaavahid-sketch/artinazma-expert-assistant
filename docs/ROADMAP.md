@@ -58,7 +58,8 @@
 
 هدف: مسیرهای اصلی اپ با تست end-to-end پوشش داده شوند و هر تغییر خطرناک زود دیده شود.
 
-- [ ] 5.1 Playwright smoke test برای home، login، assistant، admin
+- [x] 5.1 Playwright smoke test برای home، login، assistant، admin
+  - Status: added Playwright config, local Chrome-based runner, and smoke specs for home, customer login, assistant, and admin login.
 - [ ] 5.2 E2E مسیر customer login و chat
 - [ ] 5.3 E2E مسیر admin login و upload knowledge
 - [ ] 5.4 CI برای backend tests، frontend lint/typecheck/test/build
