@@ -7,6 +7,20 @@ on:
     branches: [main]
 
 jobs:
+  security:
+    name: Security checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Secret and runtime-file scan
+        run: python scripts/check_no_secrets.py
+
   # ── Backend ───────────────────────────────────────────────────────────────────
   backend:
     name: Backend (lint + test)
@@ -73,7 +87,7 @@ jobs:
 
   # ── Frontend ──────────────────────────────────────────────────────────────────
   frontend:
-    name: Frontend (typecheck + lint + build)
+    name: Frontend (typecheck + lint + test + e2e + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -91,6 +105,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
       - name: Dependency vulnerability scan (npm audit)
         # Informational — does not fail the build yet. Review findings in the log.
         continue-on-error: true
@@ -105,6 +122,9 @@ jobs:
       - name: Unit tests (Vitest)
         run: npm test
 
+      - name: E2E smoke tests (Playwright)
+        run: npm run test:e2e
+
       - name: Production build
         run: npm run build
         env:
@@ -116,7 +136,7 @@ jobs:
     name: Docker images build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend, frontend]   # only build if tests pass
+    needs: [security, backend, frontend]   # only build if checks pass
 
     steps:
       - uses: actions/checkout@v4

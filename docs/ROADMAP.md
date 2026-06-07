@@ -64,7 +64,8 @@
   - Status: added mocked customer login/session/chat E2E flow that verifies redirect to assistant, chat stream POST, and rendered chat messages.
 - [x] 5.3 E2E مسیر admin login و upload knowledge
   - Status: added mocked admin login + knowledge upload E2E flow and isolated E2E dev port/env to avoid stale local server conflicts.
-- [ ] 5.4 CI برای backend tests، frontend lint/typecheck/test/build
+- [x] 5.4 CI برای backend tests، frontend lint/typecheck/test/build
+  - Status: CI now includes secret/runtime-file scan, backend lint/tests, frontend typecheck/lint/unit tests/E2E Playwright smoke tests, production build, and gated Docker image build on main.
 - [ ] 5.5 smoke test برای Docker image build
 
 ## فاز 6: قابلیت‌های کسب‌وکاری
