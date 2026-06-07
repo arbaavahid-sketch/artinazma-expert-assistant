@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "crypto";
+import {
+  checkAdminLoginRateLimit,
+  getAdminLoginClientId,
+  recordAdminLoginFailure,
+  resetAdminLoginRateLimit,
+} from "@/lib/admin-login-rate-limit";
 
 /** Hash a string with SHA-256 so timingSafeEqual always compares same-length buffers */
 function sha256(value: string): Buffer {
@@ -9,6 +15,22 @@ function sha256(value: string): Buffer {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const password = body.password || "";
+  const clientId = getAdminLoginClientId(request.headers);
+  const rateLimit = checkAdminLoginRateLimit(clientId);
+
+  if (rateLimit.limited) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "تلاش‌های ناموفق زیاد بوده است. چند دقیقه بعد دوباره امتحان کنید.",
+        retry_after_seconds: rateLimit.retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
 
   const adminPassword = process.env.ADMIN_PASSWORD || "";
   const sessionToken = process.env.ADMIN_SESSION_TOKEN || "";
@@ -28,14 +50,27 @@ export async function POST(request: NextRequest) {
   const passwordMatch = timingSafeEqual(sha256(password), sha256(adminPassword));
 
   if (!passwordMatch) {
+    const failure = recordAdminLoginFailure(clientId);
+    const status = failure.blocked ? 429 : 401;
+
     return NextResponse.json(
       {
         success: false,
-        message: "رمز ادمین اشتباه است.",
+        message: failure.blocked
+          ? "تلاش‌های ناموفق زیاد بوده است. چند دقیقه بعد دوباره امتحان کنید."
+          : "رمز ادمین اشتباه است.",
+        retry_after_seconds: failure.retryAfterSeconds,
       },
-      { status: 401 },
+      {
+        status,
+        headers: failure.blocked
+          ? { "Retry-After": String(failure.retryAfterSeconds) }
+          : undefined,
+      },
     );
   }
+
+  resetAdminLoginRateLimit(clientId);
 
   const response = NextResponse.json({
     success: true,
