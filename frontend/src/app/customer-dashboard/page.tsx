@@ -434,10 +434,9 @@ export default function CustomerDashboardPage() {
 <head>
 <meta charset="UTF-8"/>
 <title>${title} - ArtinAzma</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: ${isEn ? "ltr" : "rtl"}; }
+  body { font-family: Tahoma, Arial, 'Segoe UI', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: ${isEn ? "ltr" : "rtl"}; }
   .header { border-bottom: 2px solid #1d4ed8; padding-bottom: 16px; margin-bottom: 28px; }
   .header h1 { font-size: 18px; font-weight: 900; color: #1d4ed8; }
   .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }

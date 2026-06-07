@@ -39,7 +39,7 @@
 - [x] 3.2 جستجو در history چت‌های مشتری
 - [x] 3.3 بهبود کارت‌های محصول/دستگاه مرتبط
 - [x] 3.4 quick actions بعد از پاسخ: خلاصه، جدول، منابع/اقدام بعدی
-- [ ] 3.5 بهبود export Word/PDF بدون وابستگی به Google Fonts
+- [x] 3.5 بهبود export Word/PDF بدون وابستگی به Google Fonts
 
 ## فاز 4: امنیت و production readiness
 

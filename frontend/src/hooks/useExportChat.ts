@@ -26,16 +26,13 @@ export function useExportChat(messages: ChatMessage[]) {
         return `<div class="bubble artin"><div class="label">آرتین</div><p>${safe}</p></div>`;
       }
     }).join("");
-    const font = forWord ? "Arial, sans-serif" : "'Vazirmatn', sans-serif";
-    const fontLink = forWord ? "" : `<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>`;
+    const font = "Tahoma, Arial, 'Segoe UI', sans-serif";
     const printScript = forWord ? "" : `<script>window.onload=function(){window.print();}<\/script>`;
     return `<!DOCTYPE html>
 <html dir="rtl" lang="fa">
 <head>
 <meta charset="UTF-8"/>
 <title>گفتگو با آرتین — آرتین آزما</title>
-${fontLink}
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: ${font}; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: rtl; }

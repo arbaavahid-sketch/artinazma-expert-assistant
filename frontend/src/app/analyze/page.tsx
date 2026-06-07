@@ -376,8 +376,7 @@ export default function AnalyzePage() {
 <meta charset="utf-8"/>
 <title>${isEn ? "Artin analysis report" : "گزارش تحلیل آرتین"}</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
-  body { font-family: 'Vazirmatn', Tahoma, sans-serif; padding: 40px; color: #1e293b; line-height: 2; direction: ${isEn ? "ltr" : "rtl"}; }
+  body { font-family: Tahoma, Arial, 'Segoe UI', sans-serif; padding: 40px; color: #1e293b; line-height: 2; direction: ${isEn ? "ltr" : "rtl"}; }
   h1 { font-size: 22px; font-weight: 900; color: #065f46; border-bottom: 2px solid #065f46; padding-bottom: 10px; }
   .meta { font-size: 13px; color: #64748b; margin-bottom: 24px; }
   .content { white-space: pre-wrap; font-size: 14px; background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; }
