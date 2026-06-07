@@ -1,17 +1,19 @@
 import os
 import time
 import logging
+import smtplib
 
 from fastapi import APIRouter, Request
 from datetime import datetime, timezone
 
 from ai_service import ask_expert_assistant
 from knowledge_service import get_knowledge_stats
-from db_service import get_connection, get_response_time_stats
+from db_service import get_connection, get_response_time_stats, get_setting
 from push_service import is_push_configured
 from security_middleware import generate_csrf_token
 from utils.deps import require_admin
 from fastapi import Depends
+from email_service import get_email_settings
 
 logger = logging.getLogger("artin_scheduler")
 
@@ -59,6 +61,127 @@ def health_check():
 
     status["response_ms"] = round((time.monotonic() - start) * 1000, 2)
     return status
+
+
+def _service_check(ok: bool, status: str, **extra):
+    return {"ok": ok, "status": status, **extra}
+
+
+def _check_google_drive_config():
+    folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
+    service_account_json = os.getenv("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON", "").strip()
+    service_account_file = os.getenv("GOOGLE_DRIVE_SERVICE_ACCOUNT_FILE", "").strip()
+    configured = bool(folder_id and (service_account_json or service_account_file))
+
+    details = {
+        "configured": configured,
+        "folder_configured": bool(folder_id),
+        "credential_source": "json" if service_account_json else ("file" if service_account_file else "none"),
+    }
+
+    if service_account_file:
+      details["service_account_file_exists"] = os.path.exists(service_account_file)
+
+    if not configured:
+        return _service_check(False, "not_configured", **details)
+
+    return _service_check(True, "configured", **details)
+
+
+def _check_email_config(check_external: bool):
+    settings = get_email_settings(get_setting)
+    smtp_host = (settings.get("smtp_host") or "").strip()
+    smtp_port = int(settings.get("smtp_port") or 587)
+    smtp_user = (settings.get("smtp_user") or "").strip()
+    smtp_pass = (settings.get("smtp_pass") or "").strip()
+    from_addr = (settings.get("from_addr") or smtp_user).strip()
+    to_addr = (settings.get("to_addr") or "").strip()
+    configured = bool(smtp_host and from_addr and to_addr)
+
+    details = {
+        "configured": configured,
+        "smtp_host_configured": bool(smtp_host),
+        "smtp_port": smtp_port if smtp_host else None,
+        "smtp_user_configured": bool(smtp_user),
+        "smtp_password_configured": bool(smtp_pass),
+        "from_addr_configured": bool(from_addr),
+        "to_addr_configured": bool(to_addr),
+    }
+
+    if not configured:
+        return _service_check(False, "not_configured", **details)
+
+    if not check_external:
+        return _service_check(True, "configured", **details)
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server.ehlo()
+            server.starttls()
+
+        if smtp_user and smtp_pass:
+            server.login(smtp_user, smtp_pass)
+        server.quit()
+        return _service_check(True, "connected", **details)
+    except Exception as exc:
+        return _service_check(False, "failed", error=str(exc), **details)
+
+
+@router.get("/admin/deep-health", tags=["Admin"], summary="Deep dependency health check")
+def admin_deep_health(check_external: bool = False, _=Depends(require_admin)):
+    """Admin-only deep health check without exposing secrets."""
+    started = time.monotonic()
+    checks = {}
+
+    try:
+        conn = get_connection()
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        checks["database"] = _service_check(True, "connected")
+    except Exception as exc:
+        checks["database"] = _service_check(False, "failed", error=str(exc))
+
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    openai_configured = bool(openai_key and not openai_key.startswith("x-") and openai_key != "test_offline_mode")
+    if not openai_configured:
+        checks["openai"] = _service_check(False, "not_configured", configured=False)
+    elif not check_external:
+        checks["openai"] = _service_check(True, "configured", configured=True)
+    else:
+        try:
+            answer = ask_expert_assistant(
+                message="Return only OK.",
+                context="",
+                history=[],
+                domain="health-check",
+            )
+            checks["openai"] = _service_check(bool(answer), "connected" if answer else "empty_response", configured=True)
+        except Exception as exc:
+            checks["openai"] = _service_check(False, "failed", configured=True, error=str(exc))
+
+    import qdrant_service as _qs
+    if _qs.is_enabled():
+        try:
+            checks["qdrant"] = _service_check(True, "connected", enabled=True, **_qs.collection_stats())
+        except Exception as exc:
+            checks["qdrant"] = _service_check(False, "failed", enabled=True, error=str(exc))
+    else:
+        checks["qdrant"] = _service_check(True, "disabled", enabled=False, backend="json")
+
+    checks["google_drive"] = _check_google_drive_config()
+    checks["email"] = _check_email_config(check_external=check_external)
+
+    ok = all(item.get("ok") for item in checks.values())
+    return {
+        "ok": ok,
+        "check_external": check_external,
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+        "response_ms": round((time.monotonic() - started) * 1000, 2),
+        "checks": checks,
+    }
 
 
 @router.get("/system/status")

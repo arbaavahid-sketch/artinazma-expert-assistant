@@ -77,12 +77,39 @@ function getCategoryLabel(category: string) {
   return category || "بدون دسته‌بندی";
 }
 
+function getHealthTone(check?: DeepHealthCheck) {
+  if (!check) return "border-slate-200 bg-slate-50 text-slate-600";
+  if (check.ok) return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  if (check.status === "not_configured") return "border-amber-100 bg-amber-50 text-amber-700";
+  return "border-red-100 bg-red-50 text-red-700";
+}
+
+function getHealthIcon(check?: DeepHealthCheck) {
+  if (!check) return <Clock size={16} />;
+  if (check.ok) return <CheckCircle2 size={16} />;
+  return <AlertCircle size={16} />;
+}
+
 type GDriveSchedule = {
   interval_hours: number;
   enabled: boolean;
   last_sync: string;
   last_sync_result: string;
   folder_id_configured: boolean;
+};
+
+type DeepHealthCheck = {
+  ok: boolean;
+  status: string;
+  configured?: boolean;
+  enabled?: boolean;
+  error?: string;
+};
+
+type DeepHealth = {
+  ok: boolean;
+  response_ms: number;
+  checks: Record<string, DeepHealthCheck>;
 };
 
 export default function AdminSettingsPage() {
@@ -95,6 +122,8 @@ export default function AdminSettingsPage() {
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [syncingNow, setSyncingNow] = useState(false);
   const [gdriveMessage, setGdriveMessage] = useState("");
+  const [deepHealth, setDeepHealth] = useState<DeepHealth | null>(null);
+  const [loadingDeepHealth, setLoadingDeepHealth] = useState(false);
 
   // Qdrant status
   type QdrantStatus = { enabled: boolean; backend: string; points_count?: number; vectors_count?: number; status?: string; error?: string };
@@ -155,6 +184,20 @@ export default function AdminSettingsPage() {
         }
       }
     } catch { /* ignore */ }
+  }
+
+  async function loadDeepHealth(checkExternal = false) {
+    setLoadingDeepHealth(true);
+    try {
+      const res = await fetch(adminUrl(`/admin/deep-health${checkExternal ? "?check_external=true" : ""}`), { cache: "no-store" });
+      if (res.ok) {
+        const data: DeepHealth = await res.json();
+        setDeepHealth(data);
+      }
+    } catch { /* ignore */ }
+    finally {
+      setLoadingDeepHealth(false);
+    }
   }
 
   async function saveGdriveSchedule(enabled: boolean) {
@@ -300,6 +343,7 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     loadStatus(false);
+    loadDeepHealth(false);
     loadGdriveSchedule();
     loadEmailSettings();
     loadQdrantStatus();
@@ -349,6 +393,58 @@ export default function AdminSettingsPage() {
             <span>{message}</span>
           </div>
         )}
+
+        <div className="mb-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">Deep Health Check</h2>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                Database, OpenAI, Qdrant, Google Drive and email readiness.
+                {deepHealth ? ` Response: ${deepHealth.response_ms}ms` : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => loadDeepHealth(false)}
+                disabled={loadingDeepHealth}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={loadingDeepHealth ? "animate-spin" : ""} />
+                Refresh
+              </button>
+              <button
+                onClick={() => loadDeepHealth(true)}
+                disabled={loadingDeepHealth}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
+              >
+                <Play size={16} />
+                External check
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {["database", "openai", "qdrant", "google_drive", "email"].map((name) => {
+              const check = deepHealth?.checks?.[name];
+              return (
+                <div key={name} className={`rounded-2xl border px-4 py-3 ${getHealthTone(check)}`}>
+                  <div className="mb-1 flex items-center gap-2 text-sm font-black">
+                    {getHealthIcon(check)}
+                    <span>{name.replace("_", " ")}</span>
+                  </div>
+                  <div className="text-xs font-bold opacity-80">
+                    {check?.status || (loadingDeepHealth ? "checking" : "not checked")}
+                  </div>
+                  {check?.error && (
+                    <div className="mt-2 line-clamp-2 text-xs leading-5 opacity-90">
+                      {check.error}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatusCard

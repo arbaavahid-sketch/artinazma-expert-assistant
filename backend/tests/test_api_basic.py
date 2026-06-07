@@ -29,6 +29,22 @@ class TestHealthAndStatus:
         data = res.json()
         assert data["backend_status"] == "running"
 
+    def test_deep_health_requires_admin(self, app_client):
+        res = app_client.get("/admin/deep-health")
+        assert res.status_code == 401
+
+    def test_deep_health_admin_structure(self, app_client, admin_headers):
+        res = app_client.get("/admin/deep-health", headers=admin_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert "ok" in data
+        assert "checks" in data
+        for key in ["database", "openai", "qdrant", "google_drive", "email"]:
+            assert key in data["checks"]
+            assert "ok" in data["checks"][key]
+            assert "status" in data["checks"][key]
+        assert data["checks"]["database"]["ok"] is True
+
     def test_knowledge_stats(self, app_client):
         res = app_client.get("/knowledge/stats")
         assert res.status_code == 200

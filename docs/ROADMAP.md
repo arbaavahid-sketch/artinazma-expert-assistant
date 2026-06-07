@@ -48,7 +48,7 @@
 - [ ] 4.1 تست و اصلاح نهایی Docker Compose روی محیطی که Docker دارد
   - وضعیت: اصلاح استاتیک انجام شد؛ backend image برای healthcheck به `curl` مجهز شد و برای frontend healthcheck اضافه شد. تست runtime با `docker compose config/build/up` هنوز به محیط دارای Docker نیاز دارد.
 - [x] 4.2 rate limit برای admin login سمت Next.js
-- [ ] 4.3 health check عمیق برای OpenAI، DB، Qdrant، Google Drive، email
+- [x] 4.3 health check عمیق برای OpenAI، DB، Qdrant، Google Drive، email
 - [ ] 4.4 بررسی secrets و جلوگیری از نشت service account در backup/public
 - [ ] 4.5 تنظیم Sentry یا داشبورد error log
 
