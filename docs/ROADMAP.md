@@ -51,7 +51,8 @@
 - [x] 4.3 health check عمیق برای OpenAI، DB، Qdrant، Google Drive، email
 - [x] 4.4 بررسی secrets و جلوگیری از نشت service account در backup/public
   - Status: hardened ignore rules, removed tracked runtime DB/Google Drive files from git index, constrained admin backup downloads/deletes to managed backup files, and added `scripts/check_no_secrets.py`.
-- [ ] 4.5 تنظیم Sentry یا داشبورد error log
+- [x] 4.5 تنظیم Sentry یا داشبورد error log
+  - Status: Sentry is enabled when `SENTRY_DSN` is configured; added admin-only `/admin/error-log` endpoint and `/admin/error-log` UI for local warning/error log inspection.
 
 ## فاز 5: تست E2E و CI کامل‌تر
 

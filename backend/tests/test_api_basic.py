@@ -119,6 +119,55 @@ class TestAdminBackupSecurity:
         assert unmanaged.exists()
 
 
+class TestAdminErrorLog:
+    """Admin can inspect backend warning/error logs without exposing public access."""
+
+    def test_error_log_requires_admin(self, app_client):
+        res = app_client.get("/admin/error-log")
+        assert res.status_code == 401
+
+    def test_error_log_reads_recent_json_entries(self, app_client, admin_headers, tmp_path, monkeypatch):
+        import json
+
+        log_file = tmp_path / "app.log"
+        log_file.write_text(
+            "\n".join([
+                json.dumps({"ts": "2026-06-07T10:00:00", "level": "WARNING", "logger": "test", "msg": "slow request"}),
+                json.dumps({"ts": "2026-06-07T10:01:00", "level": "ERROR", "logger": "test", "msg": "boom", "endpoint": "/chat"}),
+            ]),
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("LOG_FILE", str(log_file))
+
+        res = app_client.get("/admin/error-log?limit=10", headers=admin_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["log_file_exists"] is True
+        assert data["summary"]["WARNING"] == 1
+        assert data["summary"]["ERROR"] == 1
+        assert data["entries"][0]["msg"] == "boom"
+        assert data["entries"][0]["endpoint"] == "/chat"
+
+    def test_error_log_level_filter(self, app_client, admin_headers, tmp_path, monkeypatch):
+        import json
+
+        log_file = tmp_path / "app.log"
+        log_file.write_text(
+            "\n".join([
+                json.dumps({"level": "WARNING", "msg": "warn"}),
+                json.dumps({"level": "ERROR", "msg": "err"}),
+            ]),
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("LOG_FILE", str(log_file))
+
+        res = app_client.get("/admin/error-log?level=ERROR", headers=admin_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["count"] == 1
+        assert data["entries"][0]["level"] == "ERROR"
+
+
 class TestCustomerAuth:
     """تست‌های احراز هویت مشتری با JWT."""
 

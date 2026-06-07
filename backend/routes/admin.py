@@ -1,7 +1,9 @@
 import os
 import logging
+import json
 from datetime import datetime, timedelta, timezone
 from datetime import datetime as _dt
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from repositories.admin_audit_repo import log_admin_action, get_admin_audit_log, clear_admin_audit_log
@@ -53,6 +55,81 @@ def set_response_cache(cache):
 def set_schedule_gdrive(fn):
     global _schedule_gdrive_fn
     _schedule_gdrive_fn = fn
+
+
+def _parse_log_line(line: str) -> dict:
+    try:
+        data = json.loads(line)
+        return {
+            "ts": data.get("ts", ""),
+            "level": data.get("level", ""),
+            "logger": data.get("logger", ""),
+            "msg": data.get("msg", ""),
+            "endpoint": data.get("endpoint", ""),
+            "status_code": data.get("status_code"),
+            "duration_ms": data.get("duration_ms"),
+            "exc": data.get("exc", ""),
+            "raw": "",
+        }
+    except json.JSONDecodeError:
+        return {
+            "ts": "",
+            "level": "",
+            "logger": "",
+            "msg": line.strip(),
+            "endpoint": "",
+            "status_code": None,
+            "duration_ms": None,
+            "exc": "",
+            "raw": line.strip(),
+        }
+
+
+def _read_recent_error_logs(limit: int = 100, level: str = "") -> dict:
+    log_path = Path(os.getenv("LOG_FILE", "storage/app.log"))
+    requested_limit = max(1, min(limit, 500))
+    selected_level = level.strip().upper()
+    allowed_levels = {"", "WARNING", "ERROR", "CRITICAL"}
+    if selected_level not in allowed_levels:
+        selected_level = ""
+
+    if not log_path.exists():
+        return {
+            "entries": [],
+            "count": 0,
+            "summary": {"WARNING": 0, "ERROR": 0, "CRITICAL": 0},
+            "log_file": str(log_path),
+            "log_file_exists": False,
+            "sentry_enabled": bool(os.getenv("SENTRY_DSN", "").strip()),
+        }
+
+    try:
+        lines = log_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not read log file: {exc}") from exc
+
+    entries = [_parse_log_line(line) for line in lines[-2000:] if line.strip()]
+    summary = {"WARNING": 0, "ERROR": 0, "CRITICAL": 0}
+    filtered = []
+
+    for entry in reversed(entries):
+        entry_level = str(entry.get("level") or "").upper()
+        if entry_level in summary:
+            summary[entry_level] += 1
+        if selected_level and entry_level != selected_level:
+            continue
+        filtered.append(entry)
+        if len(filtered) >= requested_limit:
+            break
+
+    return {
+        "entries": filtered,
+        "count": len(filtered),
+        "summary": summary,
+        "log_file": str(log_path),
+        "log_file_exists": True,
+        "sentry_enabled": bool(os.getenv("SENTRY_DSN", "").strip()),
+    }
 
 
 @router.get("/admin/dashboard-stats")
@@ -402,3 +479,9 @@ def admin_audit_log_clear(days: int = 90, _=Depends(require_admin)):
     """Delete audit log entries older than N days."""
     deleted = clear_admin_audit_log(older_than_days=days)
     return {"deleted": deleted, "older_than_days": days}
+
+
+@router.get("/admin/error-log")
+def admin_error_log(limit: int = 100, level: str = "", _=Depends(require_admin)):
+    """Return recent warning/error log entries from the backend rotating log file."""
+    return _read_recent_error_logs(limit=limit, level=level)

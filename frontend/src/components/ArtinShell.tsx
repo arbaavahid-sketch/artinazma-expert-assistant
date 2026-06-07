@@ -18,6 +18,7 @@ import {
   HardDrive,
   Home,
   Inbox,
+  ListX,
   LayoutDashboard,
   LogOut,
   MessagesSquare,
@@ -72,6 +73,7 @@ const adminItems: SidebarItem[] = [
   { href: "/admin/requests", label: "درخواست‌ها", Icon: Inbox },
   { href: "/admin/customers", label: "مشتریان", Icon: Users },
   { href: "/admin/dashboard", label: "داشبورد", Icon: ChartBar },
+  { href: "/admin/error-log", label: "Error Log", Icon: ListX },
   { href: "/admin/backup", label: "پشتیبان‌گیری", Icon: HardDrive },
   { href: "/admin/settings", label: "تنظیمات سیستم", Icon: Settings },
 ];
