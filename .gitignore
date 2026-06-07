@@ -8,6 +8,9 @@
 backend/venv/
 backend/__pycache__/
 backend/*.pyc
+__pycache__/
+**/__pycache__/
+*.pyc
 backend/.env
 backend/.env.*
 
@@ -16,10 +19,30 @@ backend/uploads/
 backend/storage/
 backend/knowledge_files/
 backend/google_drive_files/
+storage/
+backups/
+backup_data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sql.gz
+*.dump
+*.bak
+*.snapshot
 
 # Service account credentials
 backend/google-service-account.json
 *.service-account.json
+*.service_account.json
+*service-account*.json
+*service_account*.json
+credentials*.json
+*credentials*.json
+client_secret*.json
+*client_secret*.json
+google-service-account.json
 
 # Qdrant local data
 backend/qdrant_data/

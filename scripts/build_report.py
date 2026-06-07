@@ -221,7 +221,7 @@ def main():
              "fallback هاردکدشده بکار می‌رود:")
     add_code(doc, "frontend/src/app/api/admin/customers/route.ts:6")
     add_code(doc, "frontend/src/app/api/admin/customers/[id]/[action]/route.ts:6")
-    add_code(doc, 'const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "ArtinAzma1*2#amzanitra!@#";')
+    add_code(doc, 'const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "[redacted-old-hardcoded-key]";')
     add_para(doc,
              "این کلید در تاریخچه git ذخیره شده و در هر buildای که env درست تنظیم "
              "نشده باشد، به‌عنوان کلید معتبر پذیرفته می‌شود. باید fallback حذف و "

@@ -82,6 +82,43 @@ class TestAdminAuth:
         assert "requests" in data
 
 
+class TestAdminBackupSecurity:
+    """Backup files must stay constrained to the managed backup directory."""
+
+    def test_backup_list_only_shows_managed_db_files(self, app_client, admin_headers, tmp_path, monkeypatch):
+        from routes import knowledge as knowledge_routes
+
+        monkeypatch.setattr(knowledge_routes, "BACKUP_DIR", tmp_path)
+        (tmp_path / "app_backup_20260607_120000.db").write_bytes(b"ok")
+        (tmp_path / "manual.db").write_bytes(b"hidden")
+        (tmp_path / "app_backup_bad.db").write_bytes(b"hidden")
+
+        res = app_client.get("/admin/backup/list", headers=admin_headers)
+        assert res.status_code == 200
+        names = [item["file_name"] for item in res.json()["backups"]]
+        assert names == ["app_backup_20260607_120000.db"]
+
+    def test_backup_download_rejects_unmanaged_file_names(self, app_client, admin_headers, tmp_path, monkeypatch):
+        from routes import knowledge as knowledge_routes
+
+        monkeypatch.setattr(knowledge_routes, "BACKUP_DIR", tmp_path)
+        (tmp_path / "manual.db").write_bytes(b"hidden")
+
+        res = app_client.get("/admin/backup/download/manual.db", headers=admin_headers)
+        assert res.status_code == 404
+
+    def test_backup_delete_rejects_unmanaged_file_names(self, app_client, admin_headers, tmp_path, monkeypatch):
+        from routes import knowledge as knowledge_routes
+
+        monkeypatch.setattr(knowledge_routes, "BACKUP_DIR", tmp_path)
+        unmanaged = tmp_path / "manual.db"
+        unmanaged.write_bytes(b"hidden")
+
+        res = app_client.delete("/admin/backup/manual.db", headers=admin_headers)
+        assert res.status_code == 404
+        assert unmanaged.exists()
+
+
 class TestCustomerAuth:
     """تست‌های احراز هویت مشتری با JWT."""
 

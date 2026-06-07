@@ -49,7 +49,8 @@
   - وضعیت: اصلاح استاتیک انجام شد؛ backend image برای healthcheck به `curl` مجهز شد و برای frontend healthcheck اضافه شد. تست runtime با `docker compose config/build/up` هنوز به محیط دارای Docker نیاز دارد.
 - [x] 4.2 rate limit برای admin login سمت Next.js
 - [x] 4.3 health check عمیق برای OpenAI، DB، Qdrant، Google Drive، email
-- [ ] 4.4 بررسی secrets و جلوگیری از نشت service account در backup/public
+- [x] 4.4 بررسی secrets و جلوگیری از نشت service account در backup/public
+  - Status: hardened ignore rules, removed tracked runtime DB/Google Drive files from git index, constrained admin backup downloads/deletes to managed backup files, and added `scripts/check_no_secrets.py`.
 - [ ] 4.5 تنظیم Sentry یا داشبورد error log
 
 ## فاز 5: تست E2E و CI کامل‌تر

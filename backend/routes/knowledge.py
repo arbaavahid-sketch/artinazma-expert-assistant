@@ -32,6 +32,19 @@ router = APIRouter()
 
 BACKUP_DIR = Path("storage/backups")
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+BACKUP_FILE_RE = re.compile(r"^app_backup_\d{8}_\d{6}\.db$")
+
+
+def _resolve_backup_path(file_name: str) -> Path:
+    safe_name = Path(file_name).name
+    if safe_name != file_name or not BACKUP_FILE_RE.fullmatch(safe_name):
+        raise HTTPException(status_code=404, detail="فایل پیدا نشد.")
+
+    backup_root = BACKUP_DIR.resolve()
+    backup_path = (BACKUP_DIR / safe_name).resolve()
+    if backup_path.parent != backup_root:
+        raise HTTPException(status_code=404, detail="فایل پیدا نشد.")
+    return backup_path
 
 
 @router.post("/knowledge/upload", tags=["Knowledge"], summary="Upload knowledge file")
@@ -296,7 +309,9 @@ def create_backup(_=Depends(require_admin)):
 def list_backups(_=Depends(require_admin)):
     """فهرست فایل‌های پشتیبان موجود را برمی‌گرداند."""
     backups = []
-    for f in sorted(BACKUP_DIR.glob("*.db"), reverse=True):
+    for f in sorted(BACKUP_DIR.glob("app_backup_*.db"), reverse=True):
+        if not BACKUP_FILE_RE.fullmatch(f.name):
+            continue
         backups.append({
             "file_name": f.name,
             "size_kb": round(f.stat().st_size / 1024, 1),
@@ -308,13 +323,12 @@ def list_backups(_=Depends(require_admin)):
 @router.get("/admin/backup/download/{file_name}")
 def download_backup(file_name: str, _=Depends(require_admin)):
     """دانلود یک فایل پشتیبان مشخص."""
-    safe_name = Path(file_name).name
-    backup_path = BACKUP_DIR / safe_name
-    if not backup_path.exists() or not backup_path.suffix == ".db":
+    backup_path = _resolve_backup_path(file_name)
+    if not backup_path.exists():
         raise HTTPException(status_code=404, detail="فایل پیدا نشد.")
     return FileResponse(
         path=backup_path,
-        filename=safe_name,
+        filename=backup_path.name,
         media_type="application/octet-stream",
     )
 
@@ -322,8 +336,7 @@ def download_backup(file_name: str, _=Depends(require_admin)):
 @router.delete("/admin/backup/{file_name}")
 def delete_backup(file_name: str, _=Depends(require_admin)):
     """حذف یک فایل پشتیبان."""
-    safe_name = Path(file_name).name
-    backup_path = BACKUP_DIR / safe_name
+    backup_path = _resolve_backup_path(file_name)
     if not backup_path.exists():
         raise HTTPException(status_code=404, detail="فایل پیدا نشد.")
     backup_path.unlink()
