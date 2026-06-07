@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { debounce } from "@/lib/debounce";
-import { apiUrl, customerFetch, getCsrfToken } from "@/lib/api";
+import { apiUrl, backendFetch, customerFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
   Loader,
@@ -45,6 +45,62 @@ import type {
 } from "@/lib/chat-types";
 
 import ToolMenu from "@/app/assistant/ToolMenu";
+
+type AnalysisResponse = Record<string, unknown> & {
+  ai_analysis?: string;
+  error?: string;
+  detail?: string;
+  file_name?: string;
+  file_url?: string;
+  file_type?: string;
+  test_type?: string;
+  test_type_label?: string;
+  image_type?: string;
+  image_type_label?: string;
+};
+
+async function readAnalysisResponse(res: Response): Promise<AnalysisResponse> {
+  let data: AnalysisResponse = {};
+
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
+  }
+
+  if (!res.ok) {
+    const detail =
+      data.detail ||
+      data.error ||
+      (res.status >= 500
+        ? "Backend connection failed. Make sure the FastAPI server is running on port 8000."
+        : `HTTP ${res.status}`);
+    throw new Error(detail);
+  }
+
+  return data;
+}
+
+function formatAnalysisUploadError(error: unknown, kind: "file" | "image", isEn: boolean) {
+  const message = error instanceof Error ? error.message : "";
+  const looksLikeBackendDown =
+    !message ||
+    /failed to fetch|network error|econnrefused|econnreset|socket hang up|fetch failed|connection/i.test(message);
+
+  if (looksLikeBackendDown) {
+    return isEn
+      ? "Could not connect to the analysis server. Please make sure the backend is running on port 8000, then try again."
+      : "اتصال به سرور تحلیل برقرار نشد. لطفا مطمئن شوید بک‌اند روی پورت 8000 اجراست و دوباره امتحان کنید.";
+  }
+
+  const label = kind === "image"
+    ? isEn ? "image" : "عکس"
+    : isEn ? "file" : "فایل";
+
+  return isEn
+    ? `Upload or analysis failed for this ${label}: ${message}`
+    : `خطا در آپلود یا تحلیل ${label}: ${message}`;
+}
 
 function AssistantPageInner() {
   const router = useRouter();
@@ -847,13 +903,12 @@ ${cleanAnswer}`,
     formData.append("user_note", chatUserNote);
 
     try {
-      const res = await fetch(apiUrl("/analyze-file"), {
+      const res = await backendFetch(apiUrl("/analyze-file"), {
         method: "POST",
-        headers: { "X-CSRF-Token": getCsrfToken() },
         body: formData,
       });
 
-      const data = await res.json();
+      const data = await readAnalysisResponse(res);
 
       const relatedDevices = shouldShowRelatedDeviceCards(
         `${file.name}\n${chatUserNote}`,
@@ -891,13 +946,13 @@ ${cleanAnswer}`,
       );
 
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
-    } catch {
+    } catch (error) {
       setMessages([
         ...previousMessages,
         userMessage,
         {
           role: "assistant",
-          content: "خطا در آپلود یا تحلیل فایل.",
+          content: formatAnalysisUploadError(error, "file", isEn),
         },
       ]);
     } finally {
@@ -947,13 +1002,12 @@ ${cleanAnswer}`,
     formData.append("user_note", note);
 
     try {
-      const res = await fetch(apiUrl("/analyze-image"), {
+      const res = await backendFetch(apiUrl("/analyze-image"), {
         method: "POST",
-        headers: { "X-CSRF-Token": getCsrfToken() },
         body: formData,
       });
 
-      const data = await res.json();
+      const data = await readAnalysisResponse(res);
 
       const relatedDevices = shouldShowRelatedDeviceCards(
         `${file.name}\n${note}`,
@@ -991,13 +1045,13 @@ ${cleanAnswer}`,
       );
 
       typeAssistantMessage(previousMessages, userMessage, assistantMessage);
-    } catch {
+    } catch (error) {
       setMessages([
         ...previousMessages,
         userMessage,
         {
           role: "assistant",
-          content: "خطا در آپلود یا تحلیل عکس.",
+          content: formatAnalysisUploadError(error, "image", isEn),
         },
       ]);
     } finally {

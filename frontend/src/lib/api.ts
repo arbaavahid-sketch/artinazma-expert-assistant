@@ -82,6 +82,29 @@ export async function customerFetch(url: string, options: RequestInit = {}): Pro
 
 // ─── CSRF Token Management ────────────────────────────────────────────────
 
+/**
+ * General backend fetch wrapper for non-customer endpoints.
+ * It keeps dev calls same-origin through /api/backend and attaches CSRF for
+ * state-changing requests, without applying customer-login redirects.
+ */
+export async function backendFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const method = (options.method || "GET").toUpperCase();
+  const headers = new Headers(options.headers || {});
+
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrf = getCsrfToken();
+    if (csrf && !headers.has("X-CSRF-Token")) {
+      headers.set("X-CSRF-Token", csrf);
+    }
+  }
+
+  return fetch(toProxyUrl(url), { ...options, headers });
+}
+
+export function backendRequestUrl(url: string): string {
+  return toProxyUrl(url);
+}
+
 /** Read the CSRF cookie set by the backend. */
 export function getCsrfToken(): string {
   if (typeof document === "undefined") return "";

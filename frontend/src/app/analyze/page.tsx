@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { apiUrl, getCsrfToken } from "@/lib/api";
+import { apiUrl, backendRequestUrl, getCsrfToken } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import {
   AlertCircle,
@@ -307,7 +307,7 @@ export default function AnalyzePage() {
     try {
       const data = await new Promise<Record<string, unknown>>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", apiUrl(endpoint));
+        xhr.open("POST", backendRequestUrl(apiUrl(endpoint)));
         const csrfToken = getCsrfToken();
         if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken);
         xhr.upload.onprogress = (e) => {
@@ -329,7 +329,9 @@ export default function AnalyzePage() {
       return JSON.stringify(data, null, 2);
     } catch {
       clearInterval(interval);
-      return isEn ? "⚠️ Could not connect to the server." : "⚠️ اتصال به سرور برقرار نشد.";
+      return isEn
+        ? "⚠️ Could not connect to the analysis server. Make sure the backend is running on port 8000 and try again."
+        : "⚠️ اتصال به سرور تحلیل برقرار نشد. مطمئن شوید بک‌اند روی پورت 8000 اجراست و دوباره امتحان کنید.";
     }
   }
 
