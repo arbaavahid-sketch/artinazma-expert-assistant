@@ -42,4 +42,35 @@ describe("MessageBubble", () => {
     render(<MessageBubble {...makeProps(item)} />);
     expect(screen.getByText(/نتیجه نهایی تست/)).toBeInTheDocument();
   });
+  it("renders ArtinAzma resource links as product cards", () => {
+    const item: ChatMessage = {
+      role: "assistant",
+      content: "Related product:",
+      resource_links: [
+        {
+          title: "RA-915M mercury analyzer",
+          url: "https://artinazma.net/product/ra-915m-mercury-measuring-device/",
+          source: "artinazma.net",
+          score: 42,
+        },
+      ],
+      resource_images: [
+        {
+          title: "RA-915M mercury analyzer",
+          url: "https://artinazma.net/wp-content/uploads/ra-915m.jpg",
+          page_url: "https://artinazma.net/product/ra-915m-mercury-measuring-device/",
+          source: "artinazma.net",
+        },
+      ],
+    };
+
+    render(<MessageBubble {...makeProps(item)} />);
+
+    expect(screen.getByText("RA-915M mercury analyzer")).toBeInTheDocument();
+    expect(screen.getByText(/artinazma\.net/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /RA-915M mercury analyzer/i })).toHaveAttribute(
+      "href",
+      item.resource_links?.[0].url,
+    );
+  });
 });

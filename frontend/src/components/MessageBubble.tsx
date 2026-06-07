@@ -8,6 +8,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   Copy,
+  ExternalLink,
+  ImageIcon,
   RotateCcw,
   ThumbsUp,
   ThumbsDown,
@@ -37,9 +39,111 @@ function ArtinazmaResourceCards({
   const hasImages = images && images.length > 0;
   if (!hasLinks && !hasImages) return null;
 
+  const imageByPageUrl = new Map(
+    (images || [])
+      .filter((image) => image.page_url || image.url)
+      .map((image) => [image.page_url || image.url, image]),
+  );
+
+  function pageKind(url: string) {
+    if (url.includes("/product/") || url.includes("/en/product/")) {
+      return isEn ? "Product page" : "صفحه محصول";
+    }
+    if (url.includes("/product_cat/")) {
+      return isEn ? "Product category" : "دسته محصول";
+    }
+    if (url.includes("/portfolio/")) {
+      return isEn ? "Portfolio" : "نمونه کار";
+    }
+    return isEn ? "ArtinAzma page" : "صفحه آرتین آزما";
+  }
+
+  function hostname(url: string) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return "artinazma.net";
+    }
+  }
+
   return (
-    <div className="mt-4 space-y-3">
-      {hasImages && (
+    <div className="mt-4 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-slate-50 p-3 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-black text-slate-900">
+            {isEn ? "Related ArtinAzma products/pages" : "محصولات و صفحه‌های مرتبط آرتین آزما"}
+          </div>
+          <div className="mt-0.5 text-xs font-semibold text-slate-500">
+            {isEn ? "Matched from the ArtinAzma website index" : "بر اساس جستجو در ایندکس سایت آرتین آزما"}
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-black text-blue-700">
+          {links?.length || images?.length || 0}
+        </span>
+      </div>
+
+      {hasLinks ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          {links.map((link) => {
+            const image = imageByPageUrl.get(link.url);
+            const score = typeof link.score === "number" ? Math.round(link.score) : null;
+
+            return (
+              <a
+                key={link.url}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-md"
+              >
+                <div className="flex min-h-[132px]">
+                  <div className="relative w-28 shrink-0 bg-slate-100 sm:w-32">
+                    {image?.url ? (
+                      <img
+                        src={image.url}
+                        alt={image.title || link.title}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-slate-300">
+                        <ImageIcon size={28} strokeWidth={1.6} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex min-w-0 flex-1 flex-col p-3">
+                    <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-600">
+                        {pageKind(link.url)}
+                      </span>
+                      {score !== null && (
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-700">
+                          {isEn ? "match" : "تطابق"} {score}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="line-clamp-2 text-sm font-black leading-6 text-slate-900 group-hover:text-blue-700">
+                      {link.title}
+                    </div>
+                    <div className="mt-1 truncate text-xs font-semibold text-slate-400">
+                      {hostname(link.url)}
+                    </div>
+
+                    <div className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-black text-blue-700">
+                      {isEn ? "Open page" : "مشاهده صفحه"}
+                      <ExternalLink size={13} />
+                    </div>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      ) : hasImages ? (
         <div className="grid gap-3 md:grid-cols-2">
           {images.map((image) => (
             <a
@@ -65,28 +169,7 @@ function ArtinazmaResourceCards({
             </a>
           ))}
         </div>
-      )}
-
-      {hasLinks && (
-        <div className="rounded-[18px] border border-blue-100 bg-blue-50 p-3">
-          <div className="mb-2 text-xs font-black text-blue-800">
-            {isEn ? "Related page on ArtinAzma website" : "صفحه مرتبط در سایت آرتین آزما"}
-          </div>
-          <div className="space-y-1">
-            {links.map((link) => (
-              <a
-                key={link.url}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                className="block text-sm font-bold text-blue-700 hover:text-blue-900"
-              >
-                {link.title}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
