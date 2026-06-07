@@ -85,6 +85,7 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
 export default function ArtinShell({ children }: ArtinShellProps) {
   const pathname = usePathname();
   const { t, locale } = useI18n();
+  const isRtl = locale === "fa";
 
   const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
 
@@ -285,7 +286,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
   return (
     <ToastProvider>
-    <main className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]">
+    <main className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]" dir={isRtl ? "rtl" : "ltr"}>
       {/* Offline banner */}
       {!isOnline && (
         <div className="absolute inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
@@ -312,16 +313,20 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
       {/* Sidebar — absolute positioning, visibility controlled by display (translate unreliable in RTL) */}
       <aside
-        className={`absolute inset-y-0 right-0 z-40 flex-col border-l border-[--border-soft] bg-[--sidebar-bg] transition-all duration-300 ${
+        className={`absolute inset-y-0 z-40 flex-col border-[--border-soft] bg-[--sidebar-bg] transition-all duration-300 ${
+          isRtl ? "right-0 border-l" : "left-0 border-r"
+        } ${
           sidebarCollapsed ? "w-[88px]" : "w-[300px]"
         } ${mobileSidebarOpen ? "flex" : "hidden md:flex"}`}
       >
           <div className="relative shrink-0 px-4 pb-7 pt-14">
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="absolute left-4 top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-blue-50 dark:hover:bg-slate-800 md:flex"
-              title={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
-              aria-label={sidebarCollapsed ? "باز کردن منو" : "جمع کردن منو"}
+              className={`absolute top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-blue-50 dark:hover:bg-slate-800 md:flex ${
+                isRtl ? "left-4" : "right-4"
+              }`}
+              title={sidebarCollapsed ? (isRtl ? "باز کردن منو" : "Open menu") : (isRtl ? "جمع کردن منو" : "Collapse menu")}
+              aria-label={sidebarCollapsed ? (isRtl ? "باز کردن منو" : "Open menu") : (isRtl ? "جمع کردن منو" : "Collapse menu")}
             >
               <SidebarToggleIcon collapsed={sidebarCollapsed} />
             </button>
@@ -331,14 +336,14 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 <div className="mx-auto w-[78%]">
                   <img
                     src="/images/artinazma-logo.png"
-                    alt="آرتین آزما"
+                    alt={isRtl ? "آرتین آزما" : "ArtinAzma"}
                     className="mx-auto h-auto max-h-14 w-full object-contain"
                   />
                 </div>
 
                 <div className="mt-3 text-center">
                   <div className="text-sm font-bold text-slate-900">
-                    دستیار هوشمند آرتین آزما
+                    {isRtl ? "دستیار هوشمند آرتین آزما" : "ArtinAzma Intelligent Assistant"}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
                     ArtinAzma Expert Assistant
@@ -349,11 +354,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
               <Link
                 href="/"
                 className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden"
-                title="آرتین آزما"
+                title={isRtl ? "آرتین آزما" : "ArtinAzma"}
               >
                 <img
                   src="/images/artinazma-logo.png"
-                  alt="آرتین آزما"
+                  alt={isRtl ? "آرتین آزما" : "ArtinAzma"}
                   className="h-10 w-10 object-contain"
                 />
               </Link>
@@ -440,7 +445,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                 onClick={() => renameChatSession(session.id)}
                                 className="ui-btn ui-btn-primary flex-1 text-xs"
                               >
-                                ذخیره
+                                {isRtl ? "ذخیره" : "Save"}
                               </button>
 
                               <button
@@ -450,7 +455,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                 }}
                                 className="ui-btn ui-btn-ghost flex-1 text-xs"
                               >
-                                انصراف
+                                {isRtl ? "انصراف" : "Cancel"}
                               </button>
                             </div>
                           </div>
@@ -470,7 +475,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                 isActiveSession ? "font-bold" : ""
                               }`}
                             >
-                              {session.title || "گفتگوی جدید"}
+                              {session.title || (isRtl ? "گفتگوی جدید" : "New conversation")}
                             </Link>
 
                             <div className="hidden shrink-0 items-center gap-1 pl-2 group-hover:flex">
@@ -478,11 +483,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                 onClick={() => {
                                   setRenamingSessionId(session.id);
                                   setRenameTitle(
-                                    session.title || "گفتگوی جدید",
+                                    session.title || (isRtl ? "گفتگوی جدید" : "New conversation"),
                                   );
                                 }}
                                 className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"
-                                aria-label="تغییر نام گفتگو"
+                                aria-label={isRtl ? "تغییر نام گفتگو" : "Rename conversation"}
                               >
                                 <Pencil size={14} strokeWidth={2} />
                               </button>
@@ -492,7 +497,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                   deleteCustomerChatSession(session.id)
                                 }
                                 className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                                aria-label="حذف گفتگو"
+                                aria-label={isRtl ? "حذف گفتگو" : "Delete conversation"}
                               >
                                 <Trash2 size={14} strokeWidth={2} />
                               </button>
@@ -516,7 +521,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
                 <button
                   onClick={logoutCustomer}
-                  title="خروج از حساب مشتری"
+                  title={isRtl ? "خروج از حساب مشتری" : "Logout"}
                   className={`ui-btn ui-btn-danger group mb-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm ${
                     sidebarCollapsed ? "justify-center px-2" : ""
                   }`}
@@ -598,7 +603,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                     <Link
                       href="/admin-logout"
                       onClick={() => setMobileSidebarOpen(false)}
-                      title="خروج از ادمین"
+                      title={isRtl ? "خروج از ادمین" : "Logout from admin"}
                       className={`group mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
                         sidebarCollapsed ? "justify-center px-2" : ""
                       }`}
@@ -607,7 +612,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                         <LogOut size={19} strokeWidth={1.9} />
                       </span>
 
-                      {!sidebarCollapsed && <span>خروج از ادمین</span>}
+                      {!sidebarCollapsed && <span>{isRtl ? "خروج از ادمین" : "Logout from admin"}</span>}
                     </Link>
                   </>
                 )}
@@ -623,7 +628,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             <div className={`mt-4 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
               <button
                 onClick={toggleDarkMode}
-                title={darkMode ? "حالت روشن" : "حالت تاریک"}
+                title={darkMode ? (isRtl ? "حالت روشن" : "Light Mode") : (isRtl ? "حالت تاریک" : "Dark Mode")}
                 className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-white dark:hover:bg-slate-800 ${
                   sidebarCollapsed ? "justify-center px-2" : "w-full"
                 }`}
@@ -647,13 +652,13 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         {/* Mobile topbar — part of layout flow, never overlaps page content */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-2 md:hidden dark:bg-slate-900 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">آرتین آزما</span>
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{isRtl ? "آرتین آزما" : "ArtinAzma"}</span>
             <ServerStatus />
           </div>
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
-            aria-label="باز کردن منو"
+            aria-label={isRtl ? "باز کردن منو" : "Open menu"}
           >
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="3" y="5" width="14" height="1.8" rx="0.9" fill="currentColor" className="text-slate-600"/>

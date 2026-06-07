@@ -3,6 +3,8 @@
  * مودال آپلود فایل/تصویر — استخراج‌شده از assistant/page.tsx
  */
 
+import { useI18n } from "@/lib/i18n";
+
 interface UploadModalProps {
   title: string;
   fileName: string;
@@ -36,13 +38,16 @@ export default function UploadModal({
   onCancel,
   footer,
 }: UploadModalProps) {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
-      <div className="ui-card w-full max-w-xl rounded-[36px] p-6 shadow-2xl">
+      <div className="ui-card w-full max-w-xl rounded-[36px] p-6 shadow-2xl" dir={dir}>
         <div className="mb-5">
           <h2 className="text-2xl font-black text-slate-900">{title}</h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            فایل انتخاب‌شده: <span className="font-bold">{fileName}</span>
+            {isEn ? "Selected file:" : "فایل انتخاب‌شده:"} <span className="font-bold">{fileName}</span>
           </p>
         </div>
 
@@ -87,7 +92,7 @@ export default function UploadModal({
             onClick={onCancel}
             className="ui-btn ui-btn-ghost rounded-2xl border-slate-300 px-5 py-4"
           >
-            انصراف
+            {isEn ? "Cancel" : "انصراف"}
           </button>
         </div>
       </div>

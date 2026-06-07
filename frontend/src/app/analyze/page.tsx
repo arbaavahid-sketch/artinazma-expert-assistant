@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { apiUrl, getCsrfToken } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   AlertCircle,
   Beaker,
@@ -21,21 +22,21 @@ import {
 } from "lucide-react";
 
 const testTypes = [
-  { value: "general", label: "گزارش عمومی آزمایشگاهی" },
-  { value: "catalyst", label: "تست کاتالیست" },
-  { value: "chromatography", label: "کروماتوگرافی GC/HPLC" },
-  { value: "mercury", label: "آنالیز جیوه" },
-  { value: "sulfur", label: "آنالیز سولفور" },
-  { value: "metals", label: "آنالیز عنصری / فلزات" },
+  { value: "general", fa: "گزارش عمومی آزمایشگاهی", en: "General laboratory report" },
+  { value: "catalyst", fa: "تست کاتالیست", en: "Catalyst test" },
+  { value: "chromatography", fa: "کروماتوگرافی GC/HPLC", en: "GC/HPLC chromatography" },
+  { value: "mercury", fa: "آنالیز جیوه", en: "Mercury analysis" },
+  { value: "sulfur", fa: "آنالیز سولفور", en: "Sulfur analysis" },
+  { value: "metals", fa: "آنالیز عنصری / فلزات", en: "Elemental / metals analysis" },
 ];
 
 const imageTypes = [
-  { value: "general", label: "تصویر عمومی" },
-  { value: "device-error", label: "خطای دستگاه" },
-  { value: "chromatogram", label: "کروماتوگرام" },
-  { value: "chart", label: "نمودار تست" },
-  { value: "software-screen", label: "صفحه نرم‌افزار دستگاه" },
-  { value: "lab-report", label: "گزارش تصویری آزمایشگاهی" },
+  { value: "general", fa: "تصویر عمومی", en: "General image" },
+  { value: "device-error", fa: "خطای دستگاه", en: "Device error" },
+  { value: "chromatogram", fa: "کروماتوگرام", en: "Chromatogram" },
+  { value: "chart", fa: "نمودار تست", en: "Test chart" },
+  { value: "software-screen", fa: "صفحه نرم‌افزار دستگاه", en: "Instrument software screen" },
+  { value: "lab-report", fa: "گزارش تصویری آزمایشگاهی", en: "Visual lab report" },
 ];
 
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
@@ -208,6 +209,14 @@ function AnalysisRenderer({ text }: { text: string }) {
 }
 
 export default function AnalyzePage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
+  const progressStepsImage = isEn
+    ? ["Uploading image...", "Extracting text with OCR...", "Sending to Artin for analysis...", "Running specialized analysis..."]
+    : PROGRESS_STEPS_IMAGE;
+  const progressStepsFile = isEn
+    ? ["Uploading file...", "Processing and reading data...", "Sending to Artin for analysis...", "Running specialized analysis..."]
+    : PROGRESS_STEPS_FILE;
   const [files, setFiles] = useState<File[]>([]);
   const [testType, setTestType] = useState("general");
   const [imageType, setImageType] = useState("general");
@@ -240,7 +249,7 @@ export default function AnalyzePage() {
     });
     if (invalid.length) {
       setResultType("error");
-      setFileAnalysis(`فرمت پشتیبانی نمی‌شود: ${invalid.map((f) => f.name).join(", ")}`);
+      setFileAnalysis(isEn ? `Unsupported format: ${invalid.map((f) => f.name).join(", ")}` : `فرمت پشتیبانی نمی‌شود: ${invalid.map((f) => f.name).join(", ")}`);
     }
     const next = [...files, ...valid].slice(0, 5); // max 5 files
     setFiles(next);
@@ -279,8 +288,8 @@ export default function AnalyzePage() {
 
   async function analyzeSingleFile(f: File, idx: number, total: number): Promise<string> {
     const img = isImageFile(f);
-    const steps = img ? PROGRESS_STEPS_IMAGE : PROGRESS_STEPS_FILE;
-    setProgressLabel(`فایل ${idx + 1} از ${total}: ${f.name}`);
+    const steps = img ? progressStepsImage : progressStepsFile;
+    setProgressLabel(isEn ? `File ${idx + 1} of ${total}: ${f.name}` : `فایل ${idx + 1} از ${total}: ${f.name}`);
     setProgressStep(0);
 
     const interval = setInterval(() => {
@@ -316,11 +325,11 @@ export default function AnalyzePage() {
       });
       clearInterval(interval);
       if (data.ai_analysis) return data.ai_analysis as string;
-      if (data.error) return `⚠️ خطا: ${friendlyError(data.error as string)}`;
+      if (data.error) return isEn ? `⚠️ Error: ${data.error as string}` : `⚠️ خطا: ${friendlyError(data.error as string)}`;
       return JSON.stringify(data, null, 2);
     } catch {
       clearInterval(interval);
-      return "⚠️ اتصال به سرور برقرار نشد.";
+      return isEn ? "⚠️ Could not connect to the server." : "⚠️ اتصال به سرور برقرار نشد.";
     }
   }
 
@@ -336,7 +345,7 @@ export default function AnalyzePage() {
       const result = await analyzeSingleFile(files[i], i, files.length);
       results.push(
         files.length > 1
-          ? `━━━ فایل ${i + 1}: ${files[i].name} ━━━\n${result}`
+          ? `${isEn ? "File" : "فایل"} ${i + 1}: ${files[i].name}\n${result}`
           : result
       );
     }
@@ -359,16 +368,16 @@ export default function AnalyzePage() {
 
   function exportPDF() {
     if (!fileAnalysis) return;
-    const now = new Date().toLocaleString("fa-IR");
-    const fileNames = files.map((f) => f.name).join("، ");
+    const now = new Date().toLocaleString(isEn ? "en-US" : "fa-IR");
+    const fileNames = files.map((f) => f.name).join(isEn ? ", " : "، ");
     const html = `<!DOCTYPE html>
-<html dir="rtl" lang="fa">
+<html dir="${isEn ? "ltr" : "rtl"}" lang="${isEn ? "en" : "fa"}">
 <head>
 <meta charset="utf-8"/>
-<title>گزارش تحلیل آرتین</title>
+<title>${isEn ? "Artin analysis report" : "گزارش تحلیل آرتین"}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
-  body { font-family: 'Vazirmatn', Tahoma, sans-serif; padding: 40px; color: #1e293b; line-height: 2; direction: rtl; }
+  body { font-family: 'Vazirmatn', Tahoma, sans-serif; padding: 40px; color: #1e293b; line-height: 2; direction: ${isEn ? "ltr" : "rtl"}; }
   h1 { font-size: 22px; font-weight: 900; color: #065f46; border-bottom: 2px solid #065f46; padding-bottom: 10px; }
   .meta { font-size: 13px; color: #64748b; margin-bottom: 24px; }
   .content { white-space: pre-wrap; font-size: 14px; background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; }
@@ -380,17 +389,17 @@ export default function AnalyzePage() {
 </style>
 </head>
 <body>
-<h1>گزارش تحلیل تخصصی آرتین</h1>
+<h1>${isEn ? "Artin specialized analysis report" : "گزارش تحلیل تخصصی آرتین"}</h1>
 <div class="meta">
-  <div>تاریخ: ${now}</div>
-  <div>فایل‌ها: ${fileNames}</div>
+  <div>${isEn ? "Date" : "تاریخ"}: ${now}</div>
+  <div>${isEn ? "Files" : "فایل‌ها"}: ${fileNames}</div>
 </div>
 <div class="content">${fileAnalysis.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
 ${followUpHistory.length ? `
 <div class="followup">
-  <h2>سوالات پیگیری</h2>
+  <h2>${isEn ? "Follow-up questions" : "سوالات پیگیری"}</h2>
   ${followUpHistory.map((item) => `
-    <div class="q">سوال: ${item.q.replace(/</g, "&lt;")}</div>
+    <div class="q">${isEn ? "Question" : "سوال"}: ${item.q.replace(/</g, "&lt;")}</div>
     <div class="a">${item.a.replace(/</g, "&lt;")}</div>
   `).join("")}
 </div>` : ""}
@@ -407,8 +416,8 @@ ${followUpHistory.length ? `
 
   function exportWord() {
     if (!fileAnalysis) return;
-    const now = new Date().toLocaleString("fa-IR");
-    const fileNames = files.map((f) => f.name).join("، ");
+    const now = new Date().toLocaleString(isEn ? "en-US" : "fa-IR");
+    const fileNames = files.map((f) => f.name).join(isEn ? ", " : "، ");
     const htmlBody = fileAnalysis
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
@@ -418,13 +427,13 @@ ${followUpHistory.length ? `
       .replace(/\n/g, "<br/>");
     const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
 <head><meta charset='utf-8'/><style>
-  body{font-family:Tahoma,Arial,sans-serif;direction:rtl;padding:40px;font-size:13pt;}
+  body{font-family:Tahoma,Arial,sans-serif;direction:${isEn ? "ltr" : "rtl"};padding:40px;font-size:13pt;}
   h1,h2,h3{color:#065f46;} table{border-collapse:collapse;width:100%;}
   td,th{border:1px solid #ccc;padding:6px 10px;}
 </style></head>
 <body>
-<h1>گزارش تحلیل آرتین آزما</h1>
-<p><b>تاریخ:</b> ${now} &nbsp;&nbsp; <b>فایل‌ها:</b> ${fileNames}</p>
+<h1>${isEn ? "ArtinAzma analysis report" : "گزارش تحلیل آرتین آزما"}</h1>
+<p><b>${isEn ? "Date" : "تاریخ"}:</b> ${now} &nbsp;&nbsp; <b>${isEn ? "Files" : "فایل‌ها"}:</b> ${fileNames}</p>
 <hr/>
 ${htmlBody}
 </body></html>`;
@@ -443,9 +452,11 @@ ${htmlBody}
     setFollowUpLoading(true);
     setFollowUpQ("");
 
-    const fileNames = files.map((f) => f.name).join("، ");
+    const fileNames = files.map((f) => f.name).join(isEn ? ", " : "، ");
     // Build context: file analysis result as system context
-    const context = `آرتین، فایل(های) زیر توسط کاربر آپلود و قبلاً تحلیل شده‌اند:\nنام فایل: ${fileNames}\n\nخلاصه تحلیل:\n${fileAnalysis.slice(0, 3000)}`;
+    const context = isEn
+      ? `Artin, the following file(s) were uploaded by the user and already analyzed:\nFile name(s): ${fileNames}\n\nAnalysis summary:\n${fileAnalysis.slice(0, 3000)}`
+      : `آرتین، فایل(های) زیر توسط کاربر آپلود و قبلاً تحلیل شده‌اند:\nنام فایل: ${fileNames}\n\nخلاصه تحلیل:\n${fileAnalysis.slice(0, 3000)}`;
 
     // Build conversation history from previous follow-up exchanges
     const history = followUpHistory.flatMap((item) => [
@@ -460,17 +471,17 @@ ${htmlBody}
         body: JSON.stringify({ message: question, context, history }),
       });
       const data = await res.json();
-      const answer = data.answer || data.response || "پاسخی دریافت نشد.";
+      const answer = data.answer || data.response || (isEn ? "No answer received." : "پاسخی دریافت نشد.");
       setFollowUpHistory((prev) => [...prev, { q: question, a: answer }]);
     } catch {
-      setFollowUpHistory((prev) => [...prev, { q: question, a: "خطا در دریافت پاسخ." }]);
+      setFollowUpHistory((prev) => [...prev, { q: question, a: isEn ? "Error receiving the answer." : "خطا در دریافت پاسخ." }]);
     } finally {
       setFollowUpLoading(false);
     }
   }
 
   return (
-    <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8">
+    <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="brand-panel hero-grid-bg mb-6 overflow-hidden rounded-[34px]">
           <div className="bg-gradient-to-l from-emerald-50/80 via-white/80 to-blue-50/50 p-6 md:p-8">
@@ -482,20 +493,20 @@ ${htmlBody}
                 </div>
 
                 <h1 className="text-3xl font-black leading-[1.55] text-slate-950 md:text-4xl">
-                  تحلیل تخصصی فایل تست با آرتین
+                  {isEn ? "Specialized test file analysis with Artin" : "تحلیل تخصصی فایل تست با آرتین"}
                 </h1>
 
                 <p className="mt-4 max-w-4xl leading-8 text-slate-600">
-                  فایل تست، گزارش آزمایشگاهی یا داده خام را آپلود کنید تا آرتین
-                  بر اساس نوع آزمون، داده‌ها را بررسی و نکات فنی، خطاهای احتمالی
-                  و پیشنهاد اقدام بعدی را ارائه کند.
+                  {isEn
+                    ? "Upload a test file, lab report, or raw data so Artin can review it based on the test type and provide technical notes, likely issues, and next-step suggestions."
+                    : "فایل تست، گزارش آزمایشگاهی یا داده خام را آپلود کنید تا آرتین بر اساس نوع آزمون، داده‌ها را بررسی و نکات فنی، خطاهای احتمالی و پیشنهاد اقدام بعدی را ارائه کند."}
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
                 <div className="rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-sm">
                   <div className="text-sm font-bold text-slate-500">
-                    فرمت‌های قابل تحلیل
+                    {isEn ? "Supported formats" : "فرمت‌های قابل تحلیل"}
                   </div>
                   <div className="mt-2 font-black text-slate-950">
                     PDF، Excel، CSV، JPG، PNG
@@ -503,10 +514,10 @@ ${htmlBody}
                 </div>
                 <div className="rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-sm">
                   <div className="text-sm font-bold text-slate-500">
-                    خروجی پیشنهادی
+                    {isEn ? "Suggested output" : "خروجی پیشنهادی"}
                   </div>
                   <div className="mt-2 font-black text-slate-950">
-                    تحلیل فنی و اقدام بعدی
+                    {isEn ? "Technical analysis and next action" : "تحلیل فنی و اقدام بعدی"}
                   </div>
                 </div>
               </div>
@@ -524,47 +535,47 @@ ${htmlBody}
 
                 <div>
                   <h2 className="text-xl font-black text-slate-950">
-                    اطلاعات تحلیل
+                    {isEn ? "Analysis information" : "اطلاعات تحلیل"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    نوع تست و توضیحات نمونه را مشخص کنید.
+                    {isEn ? "Specify the test type and sample notes." : "نوع تست و توضیحات نمونه را مشخص کنید."}
                   </p>
                 </div>
               </div>
 
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                {allImages ? "نوع تصویر" : "نوع تست یا گزارش"}
+                {allImages ? (isEn ? "Image type" : "نوع تصویر") : (isEn ? "Test or report type" : "نوع تست یا گزارش")}
               </label>
 
               {allImages ? (
                 <select value={imageType} onChange={(e) => setImageType(e.target.value)}
                   className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
                   {imageTypes.map((item) => (
-                    <option key={item.value} value={item.value}>{item.label}</option>
+                    <option key={item.value} value={item.value}>{item[locale]}</option>
                   ))}
                 </select>
               ) : (
                 <select value={testType} onChange={(e) => setTestType(e.target.value)}
                   className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
                   {testTypes.map((item) => (
-                    <option key={item.value} value={item.value}>{item.label}</option>
+                    <option key={item.value} value={item.value}>{item[locale]}</option>
                   ))}
                 </select>
               )}
 
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
-                توضیح اختیاری درباره نمونه یا شرایط تست
+                {isEn ? "Optional note about the sample or test conditions" : "توضیح اختیاری درباره نمونه یا شرایط تست"}
               </label>
               <textarea
                 value={userNote}
                 onChange={(e) => setUserNote(e.target.value)}
                 className="ui-textarea h-28 resize-none rounded-2xl p-4 leading-8 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
-                placeholder="مثلاً: نمونه LPG است، هدف بررسی ترکیبات گوگردی است..."
+                placeholder={isEn ? "Example: The sample is LPG and the goal is checking sulfur compounds..." : "مثلاً: نمونه LPG است، هدف بررسی ترکیبات گوگردی است..."}
               />
 
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
-                فایل یا تصویر
-                <span className="mr-2 font-normal text-slate-400">(تا ۵ فایل)</span>
+                {isEn ? "File or image" : "فایل یا تصویر"}
+                <span className="mx-2 font-normal text-slate-400">{isEn ? "(up to 5 files)" : "(تا ۵ فایل)"}</span>
               </label>
 
               <div
@@ -588,10 +599,10 @@ ${htmlBody}
                     <UploadCloud size={26} />
                   </div>
                   <div className="font-black text-slate-950">
-                    {isDragging ? "رها کنید…" : "فایل‌ها را انتخاب یا اینجا رها کنید"}
+                    {isDragging ? (isEn ? "Drop files..." : "رها کنید…") : (isEn ? "Select files or drop them here" : "فایل‌ها را انتخاب یا اینجا رها کنید")}
                   </div>
                   <div className="mt-1 text-sm text-slate-500">
-                    PDF، Excel، CSV یا تصویر — تا ۵ فایل با هم
+                    {isEn ? "PDF, Excel, CSV, or image — up to 5 files together" : "PDF، Excel، CSV یا تصویر — تا ۵ فایل با هم"}
                   </div>
                 </label>
               </div>
@@ -638,8 +649,8 @@ ${htmlBody}
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Beaker size={18} />}
                 {loading
-                  ? `در حال تحلیل ${files.length > 1 ? `(${files.length} فایل)` : ""}…`
-                  : `شروع تحلیل${files.length > 1 ? ` (${files.length} فایل)` : " تخصصی"}`
+                  ? (isEn ? `Analyzing ${files.length > 1 ? `(${files.length} files)` : ""}...` : `در حال تحلیل ${files.length > 1 ? `(${files.length} فایل)` : ""}…`)
+                  : (isEn ? `Start analysis${files.length > 1 ? ` (${files.length} files)` : ""}` : `شروع تحلیل${files.length > 1 ? ` (${files.length} فایل)` : " تخصصی"}`)
                 }
               </button>
             </div>
@@ -650,22 +661,22 @@ ${htmlBody}
                   <ShieldCheck size={21} />
                 </div>
                 <h3 className="text-lg font-black text-slate-950">
-                  نکات بهتر برای تحلیل دقیق‌تر
+                  {isEn ? "Tips for more accurate analysis" : "نکات بهتر برای تحلیل دقیق‌تر"}
                 </h3>
               </div>
 
               <div className="space-y-3 text-sm leading-7 text-slate-600">
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  نوع نمونه، ماتریس و هدف آزمون را در توضیحات بنویسید.
+                  {isEn ? "Write the sample type, matrix, and test goal in the notes." : "نوع نمونه، ماتریس و هدف آزمون را در توضیحات بنویسید."}
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  برای عکس دستگاه، نوع تصویر مناسب را از منوی بالا انتخاب کنید.
+                  {isEn ? "For instrument photos, choose the proper image type from the menu above." : "برای عکس دستگاه، نوع تصویر مناسب را از منوی بالا انتخاب کنید."}
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را اضافه کنید.
+                  {isEn ? "If the file is a chromatogram or QC file, add the instrument type and test method." : "اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را اضافه کنید."}
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی شود.
+                  {isEn ? "For final decisions, review the result against real laboratory conditions." : "برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی شود."}
                 </div>
               </div>
             </div>
@@ -680,10 +691,10 @@ ${htmlBody}
 
                 <div>
                   <h2 className="text-xl font-black text-slate-950">
-                    نتیجه تحلیل
+                    {isEn ? "Analysis result" : "نتیجه تحلیل"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    خروجی تخصصی آرتین بعد از تحلیل فایل اینجا نمایش داده می‌شود.
+                    {isEn ? "Artin's specialized output will appear here after file analysis." : "خروجی تخصصی آرتین بعد از تحلیل فایل اینجا نمایش داده می‌شود."}
                   </p>
                 </div>
               </div>
@@ -695,7 +706,7 @@ ${htmlBody}
                     className={`ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm transition-all ${copied ? "text-emerald-700" : ""}`}
                   >
                     {copied ? <CheckCircle2 size={16} /> : <ClipboardCopy size={16} />}
-                    {copied ? "کپی شد!" : "کپی"}
+                    {copied ? (isEn ? "Copied!" : "کپی شد!") : (isEn ? "Copy" : "کپی")}
                   </button>
                   <button
                     onClick={exportPDF}
@@ -723,12 +734,13 @@ ${htmlBody}
                   </div>
 
                   <h3 className="text-lg font-black text-slate-950">
-                    هنوز تحلیلی انجام نشده است
+                    {isEn ? "No analysis has been run yet" : "هنوز تحلیلی انجام نشده است"}
                   </h3>
 
                   <p className="mt-3 max-w-md leading-8 text-slate-500">
-                    ابتدا نوع تست را انتخاب کنید، فایل را آپلود کنید و روی شروع
-                    تحلیل تخصصی بزنید.
+                    {isEn
+                      ? "Select a test type, upload a file, and start the specialized analysis."
+                      : "ابتدا نوع تست را انتخاب کنید، فایل را آپلود کنید و روی شروع تحلیل تخصصی بزنید."}
                   </p>
                 </div>
               </div>
@@ -739,7 +751,7 @@ ${htmlBody}
                 <div className="w-full max-w-sm">
                   <Loader2 size={34} className="mx-auto mb-5 animate-spin text-emerald-700" />
                   <h3 className="text-lg font-black text-slate-950">
-                    آرتین در حال تحلیل است…
+                    {isEn ? "Artin is analyzing..." : "آرتین در حال تحلیل است…"}
                   </h3>
                   {progressLabel && (
                     <p className="mt-1 text-sm text-slate-500">{progressLabel}</p>
@@ -747,8 +759,8 @@ ${htmlBody}
                   {uploadPercent > 0 && uploadPercent < 100 && (
                     <div className="mt-4">
                       <div className="mb-1 flex justify-between text-xs font-bold text-slate-500">
-                        <span>آپلود فایل</span>
-                        <span>{uploadPercent}٪</span>
+                        <span>{isEn ? "File upload" : "آپلود فایل"}</span>
+                        <span>{uploadPercent}%</span>
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                         <div
@@ -759,7 +771,7 @@ ${htmlBody}
                     </div>
                   )}
                   <div className="mt-6 space-y-2">
-                    {(allImages ? PROGRESS_STEPS_IMAGE : PROGRESS_STEPS_FILE).map((step, i) => (
+                    {(allImages ? progressStepsImage : progressStepsFile).map((step, i) => (
                       <div
                         key={i}
                         className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
@@ -803,12 +815,12 @@ ${htmlBody}
                     {resultType === "error" ? (
                       <>
                         <AlertCircle size={18} />
-                        خطا در تحلیل
+                        {isEn ? "Analysis error" : "خطا در تحلیل"}
                       </>
                     ) : (
                       <>
                         <CheckCircle2 size={18} className="text-emerald-700" />
-                        تحلیل آماده شد
+                        {isEn ? "Analysis is ready" : "تحلیل آماده شد"}
                       </>
                     )}
                   </div>
@@ -825,8 +837,8 @@ ${htmlBody}
                         <MessageSquare size={20} />
                       </div>
                       <div>
-                        <div className="font-black text-slate-950">سوال پیگیری</div>
-                        <div className="text-sm text-slate-500">درباره این نتیجه از آرتین بپرسید</div>
+                        <div className="font-black text-slate-950">{isEn ? "Follow-up question" : "سوال پیگیری"}</div>
+                        <div className="text-sm text-slate-500">{isEn ? "Ask Artin about this result" : "درباره این نتیجه از آرتین بپرسید"}</div>
                       </div>
                     </div>
 
@@ -851,7 +863,7 @@ ${htmlBody}
                             sendFollowUp();
                           }
                         }}
-                        placeholder="مثلاً: این نتیجه برای استاندارد ASTM قابل قبوله؟"
+                        placeholder={isEn ? "Example: Is this result acceptable for the ASTM standard?" : "مثلاً: این نتیجه برای استاندارد ASTM قابل قبوله؟"}
                         className="ui-textarea h-14 flex-1 resize-none rounded-2xl p-3 text-sm leading-7 focus:border-emerald-600"
                         disabled={followUpLoading}
                       />
@@ -871,8 +883,9 @@ ${htmlBody}
         </div>
 
         <div className="mt-6 rounded-[26px] border border-blue-100 bg-blue-50/90 p-5 text-sm leading-8 text-blue-900 shadow-sm">
-          این فایل فقط برای تحلیل موقت استفاده می‌شود و به بانک دانش داخلی آرتین
-          آزما اضافه نمی‌شود، مگر اینکه کارشناس بعداً آن را تایید و ثبت کند.
+          {isEn
+            ? "This file is used only for temporary analysis and is not added to ArtinAzma's internal knowledge base unless an expert later approves and registers it."
+            : "این فایل فقط برای تحلیل موقت استفاده می‌شود و به بانک دانش داخلی آرتین آزما اضافه نمی‌شود، مگر اینکه کارشناس بعداً آن را تایید و ثبت کند."}
         </div>
       </div>
     </section>

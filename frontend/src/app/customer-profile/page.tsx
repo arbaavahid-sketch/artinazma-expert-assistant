@@ -46,7 +46,8 @@ export default function CustomerProfilePage() {
   const { permission, isSubscribed, loading: pushLoading, subscribe, unsubscribe, isSupported } = usePushNotifications(customer?.id);
 
   // i18n
-  const { locale, setLocale } = useI18n();
+  const { locale, setLocale, dir } = useI18n();
+  const isEn = locale === "en";
 
   useEffect(() => {
     // Load theme preference
@@ -103,7 +104,7 @@ export default function CustomerProfilePage() {
       });
       const data = await res.json();
       if (data.success) {
-        setProfileMsg("اطلاعات با موفقیت ذخیره شد.");
+        setProfileMsg(isEn ? "Information saved successfully." : "اطلاعات با موفقیت ذخیره شد.");
         // Update localStorage
         const stored = localStorage.getItem("artin_customer");
         if (stored) {
@@ -114,10 +115,10 @@ export default function CustomerProfilePage() {
           localStorage.setItem("artin_customer", JSON.stringify(c));
         }
       } else {
-        setProfileErr(data.message || "خطا در ذخیره اطلاعات");
+        setProfileErr(data.message || (isEn ? "Error saving information." : "خطا در ذخیره اطلاعات"));
       }
     } catch {
-      setProfileErr("خطای شبکه. لطفاً دوباره تلاش کنید.");
+      setProfileErr(isEn ? "Network error. Please try again." : "خطای شبکه. لطفاً دوباره تلاش کنید.");
     } finally {
       setSavingProfile(false);
     }
@@ -130,11 +131,11 @@ export default function CustomerProfilePage() {
     setPwdErr("");
 
     if (newPassword.length < 6) {
-      setPwdErr("رمز عبور جدید باید حداقل ۶ کاراکتر باشد.");
+      setPwdErr(isEn ? "New password must be at least 6 characters." : "رمز عبور جدید باید حداقل ۶ کاراکتر باشد.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPwdErr("رمز عبور جدید و تکرار آن مطابقت ندارد.");
+      setPwdErr(isEn ? "New password and confirmation do not match." : "رمز عبور جدید و تکرار آن مطابقت ندارد.");
       return;
     }
 
@@ -150,15 +151,15 @@ export default function CustomerProfilePage() {
       });
       const data = await res.json();
       if (data.success) {
-        setPwdMsg("رمز عبور با موفقیت تغییر کرد.");
+        setPwdMsg(isEn ? "Password changed successfully." : "رمز عبور با موفقیت تغییر کرد.");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        setPwdErr(data.message || "خطا در تغییر رمز عبور");
+        setPwdErr(data.message || (isEn ? "Error changing password." : "خطا در تغییر رمز عبور"));
       }
     } catch {
-      setPwdErr("خطای شبکه. لطفاً دوباره تلاش کنید.");
+      setPwdErr(isEn ? "Network error. Please try again." : "خطای شبکه. لطفاً دوباره تلاش کنید.");
     } finally {
       setSavingPwd(false);
     }
@@ -187,19 +188,19 @@ export default function CustomerProfilePage() {
   if (!customer) return null;
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-8 px-4" dir={dir}>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <User className="w-6 h-6 text-blue-600" />
-            پروفایل کاربری
+            {isEn ? "User Profile" : "پروفایل کاربری"}
           </h1>
           <button
             onClick={() => router.push("/customer-dashboard")}
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors"
           >
-            بازگشت
+            {isEn ? "Back" : "بازگشت"}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -207,13 +208,13 @@ export default function CustomerProfilePage() {
         {/* Profile Info Card */}
         <div className="ui-card rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
-            اطلاعات شخصی
+            {isEn ? "Personal Information" : "اطلاعات شخصی"}
           </h2>
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                 <User className="w-4 h-4 inline ml-1" />
-                نام و نام خانوادگی
+                {isEn ? "Full name" : "نام و نام خانوادگی"}
               </label>
               <input
                 type="text"
@@ -226,7 +227,7 @@ export default function CustomerProfilePage() {
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                 <Mail className="w-4 h-4 inline ml-1" />
-                ایمیل
+                {isEn ? "Email" : "ایمیل"}
               </label>
               <input
                 type="email"
@@ -234,32 +235,32 @@ export default function CustomerProfilePage() {
                 className="ui-input bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
                 disabled
               />
-              <p className="text-xs text-gray-400 mt-1">ایمیل قابل تغییر نیست.</p>
+              <p className="text-xs text-gray-400 mt-1">{isEn ? "Email cannot be changed." : "ایمیل قابل تغییر نیست."}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                 <Building2 className="w-4 h-4 inline ml-1" />
-                شرکت / سازمان
+                {isEn ? "Company / Organization" : "شرکت / سازمان"}
               </label>
               <input
                 type="text"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 className="ui-input"
-                placeholder="اختیاری"
+                placeholder={isEn ? "Optional" : "اختیاری"}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                 <Phone className="w-4 h-4 inline ml-1" />
-                شماره تماس
+                {isEn ? "Phone number" : "شماره تماس"}
               </label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="ui-input"
-                placeholder="اختیاری"
+                placeholder={isEn ? "Optional" : "اختیاری"}
                 dir="ltr"
               />
             </div>
@@ -283,7 +284,7 @@ export default function CustomerProfilePage() {
               className="ui-btn ui-btn-primary gap-2 w-full justify-center"
             >
               <Save className="w-4 h-4" />
-              {savingProfile ? "در حال ذخیره..." : "ذخیره تغییرات"}
+              {savingProfile ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save changes" : "ذخیره تغییرات")}
             </button>
           </form>
         </div>
@@ -292,12 +293,12 @@ export default function CustomerProfilePage() {
         <div className="ui-card rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <Lock className="w-5 h-5 text-blue-600" />
-            تغییر رمز عبور
+            {isEn ? "Change Password" : "تغییر رمز عبور"}
           </h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                رمز عبور فعلی
+                {isEn ? "Current password" : "رمز عبور فعلی"}
               </label>
               <input
                 type="password"
@@ -310,7 +311,7 @@ export default function CustomerProfilePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                رمز عبور جدید
+                {isEn ? "New password" : "رمز عبور جدید"}
               </label>
               <input
                 type="password"
@@ -324,7 +325,7 @@ export default function CustomerProfilePage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                تکرار رمز عبور جدید
+                {isEn ? "Confirm new password" : "تکرار رمز عبور جدید"}
               </label>
               <input
                 type="password"
@@ -355,7 +356,7 @@ export default function CustomerProfilePage() {
               className="ui-btn ui-btn-ghost gap-2 w-full justify-center"
             >
               <Lock className="w-4 h-4" />
-              {savingPwd ? "در حال تغییر..." : "تغییر رمز عبور"}
+              {savingPwd ? (isEn ? "Changing..." : "در حال تغییر...") : (isEn ? "Change password" : "تغییر رمز عبور")}
             </button>
           </form>
         </div>
@@ -365,36 +366,36 @@ export default function CustomerProfilePage() {
           <div className="ui-card rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
               <Bell className="w-5 h-5 text-blue-600" />
-              اعلان‌های Push
+              {isEn ? "Push Notifications" : "اعلان‌های Push"}
             </h2>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
                 {isSubscribed ? (
                   <Bell className="w-5 h-5 text-blue-500" />
                 ) : (
                   <BellOff className="w-5 h-5 text-gray-400" />
                 )}
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-gray-700 dark:text-gray-200">
-                    {isSubscribed ? "اعلان‌ها فعال" : "اعلان‌ها غیرفعال"}
+                    {isSubscribed ? (isEn ? "Notifications enabled" : "اعلان‌ها فعال") : (isEn ? "Notifications disabled" : "اعلان‌ها غیرفعال")}
                   </p>
                   <p className="text-xs text-gray-400">
                     {permission === "denied"
-                      ? "دسترسی اعلان در مرورگر مسدود شده است"
-                      : "دریافت اعلان‌های مهم از آرتین آزما"}
+                      ? (isEn ? "Notification access is blocked in the browser" : "دسترسی اعلان در مرورگر مسدود شده است")
+                      : (isEn ? "Receive important notifications from ArtinAzma" : "دریافت اعلان‌های مهم از آرتین آزما")}
                   </p>
                 </div>
               </div>
               <button
                 onClick={isSubscribed ? unsubscribe : subscribe}
                 disabled={pushLoading || permission === "denied"}
-                className={`relative w-14 h-7 rounded-full transition-colors duration-300 disabled:opacity-50 ${
+                className={`relative h-7 w-14 shrink-0 overflow-hidden rounded-full transition-colors duration-300 disabled:opacity-50 ${
                   isSubscribed ? "bg-blue-600" : "bg-gray-300"
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
-                    isSubscribed ? "translate-x-0.5" : "translate-x-7.5"
+                  className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
+                    isSubscribed ? "translate-x-0.5" : "translate-x-7"
                   }`}
                 />
               </button>
@@ -405,33 +406,33 @@ export default function CustomerProfilePage() {
         {/* Theme Settings Card */}
         <div className="ui-card rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
-            تنظیمات ظاهری
+            {isEn ? "Appearance Settings" : "تنظیمات ظاهری"}
           </h2>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
               {darkMode ? (
                 <Moon className="w-5 h-5 text-indigo-400" />
               ) : (
                 <Sun className="w-5 h-5 text-amber-500" />
               )}
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium text-gray-700 dark:text-gray-200">
-                  {darkMode ? "حالت تاریک" : "حالت روشن"}
+                  {darkMode ? (isEn ? "Dark Mode" : "حالت تاریک") : (isEn ? "Light Mode" : "حالت روشن")}
                 </p>
                 <p className="text-xs text-gray-400">
-                  تغییر تم ظاهری برنامه
+                  {isEn ? "Change app theme" : "تغییر تم ظاهری برنامه"}
                 </p>
               </div>
             </div>
             <button
               onClick={toggleTheme}
-              className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
+              className={`relative h-7 w-14 shrink-0 overflow-hidden rounded-full transition-colors duration-300 ${
                 darkMode ? "bg-indigo-600" : "bg-gray-300"
               }`}
             >
               <span
-                className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
-                  darkMode ? "translate-x-0.5" : "translate-x-7.5"
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
+                  darkMode ? "translate-x-0.5" : "translate-x-7"
                 }`}
               />
             </button>
@@ -442,7 +443,7 @@ export default function CustomerProfilePage() {
         <div className="ui-card rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <Languages className="w-5 h-5 text-blue-600" />
-            زبان / Language
+            {isEn ? "Language" : "زبان / Language"}
           </h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -452,7 +453,7 @@ export default function CustomerProfilePage() {
                   {locale === "fa" ? "فارسی" : "English"}
                 </p>
                 <p className="text-xs text-gray-400">
-                  تغییر زبان رابط کاربری / Change UI language
+                  {isEn ? "Change user interface language" : "تغییر زبان رابط کاربری / Change UI language"}
                 </p>
               </div>
             </div>

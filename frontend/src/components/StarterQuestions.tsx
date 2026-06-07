@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
-const STARTER_QUESTIONS: { category: string; icon: string; questions: string[] }[] = [
+const STARTER_QUESTIONS_FA: { category: string; icon: string; questions: string[] }[] = [
   {
     category: "کروماتوگرافی",
     icon: "📊",
@@ -36,20 +37,58 @@ const STARTER_QUESTIONS: { category: string; icon: string; questions: string[] }
   },
 ];
 
+const STARTER_QUESTIONS_EN: { category: string; icon: string; questions: string[] }[] = [
+  {
+    category: "Chromatography",
+    icon: "📊",
+    questions: [
+      "What is the difference between GC-FID and GC-TCD in natural gas analysis?",
+      "What causes baseline fluctuation in chromatography, and how can it be fixed?",
+    ],
+  },
+  {
+    category: "Catalyst",
+    icon: "⚗️",
+    questions: [
+      "What properties should a suitable naphtha reforming catalyst have?",
+      "How is hydrocracking catalyst activity evaluated?",
+    ],
+  },
+  {
+    category: "Standards",
+    icon: "📋",
+    questions: [
+      "Explain ASTM D5453 for sulfur measurement.",
+      "Which ASTM standard is suitable for determining aromatics in gasoline?",
+    ],
+  },
+  {
+    category: "Equipment",
+    icon: "🔬",
+    questions: [
+      "Which device do you recommend for measuring mercury in crude oil?",
+      "What is the difference between XRF and ICP-OES in elemental analysis?",
+    ],
+  },
+];
+
 export default function StarterQuestions({ onSelect }: { onSelect: (q: string) => void }) {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
+  const starterQuestions = locale === "en" ? STARTER_QUESTIONS_EN : STARTER_QUESTIONS_FA;
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const allQuestions = STARTER_QUESTIONS.flatMap((c) => c.questions);
+  const allQuestions = starterQuestions.flatMap((c) => c.questions);
   const displayQuestions =
     activeCategory
-      ? (STARTER_QUESTIONS.find((c) => c.category === activeCategory)?.questions ?? [])
+      ? (starterQuestions.find((c) => c.category === activeCategory)?.questions ?? [])
       : allQuestions.slice(0, 4);
 
   return (
-    <div className="mt-8 w-full max-w-3xl px-1 md:px-0" dir="rtl">
+    <div className="mt-8 w-full max-w-3xl px-1 md:px-0" dir={dir}>
       <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-xs font-bold text-slate-400 ml-1">موضوع:</span>
-        {STARTER_QUESTIONS.map((cat) => (
+        <span className="text-xs font-bold text-slate-400 ml-1">{isEn ? "Topic:" : "موضوع:"}</span>
+        {starterQuestions.map((cat) => (
           <button
             key={cat.category}
             onClick={() => setActiveCategory(activeCategory === cat.category ? null : cat.category)}
@@ -69,10 +108,12 @@ export default function StarterQuestions({ onSelect }: { onSelect: (q: string) =
           <button
             key={i}
             onClick={() => onSelect(q)}
-            className="group flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-right text-sm font-medium text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800"
+            className={`group flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800 ${
+              isEn ? "text-left" : "text-right"
+            }`}
           >
             <svg
-              className="mt-0.5 shrink-0 text-slate-300 transition group-hover:text-violet-400"
+              className={`mt-0.5 shrink-0 text-slate-300 transition group-hover:text-violet-400 ${isEn ? "" : "rotate-180"}`}
               xmlns="http://www.w3.org/2000/svg"
               width="14"
               height="14"
@@ -85,7 +126,7 @@ export default function StarterQuestions({ onSelect }: { onSelect: (q: string) =
             >
               <polyline points="9 18 15 12 9 6" />
             </svg>
-            <span className="leading-6">{q}</span>
+            <span className={`min-w-0 flex-1 leading-6 ${isEn ? "text-left" : "text-right"}`}>{q}</span>
           </button>
         ))}
       </div>

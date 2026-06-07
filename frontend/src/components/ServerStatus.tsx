@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 
 type Status = "online" | "offline" | "checking";
 
@@ -9,6 +10,8 @@ const POLL_INTERVAL = 30_000; // 30 seconds
 const TIMEOUT_MS = 5_000;
 
 export default function ServerStatus() {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const [status, setStatus] = useState<Status>("checking");
   const [latency, setLatency] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -54,11 +57,11 @@ export default function ServerStatus() {
   const label =
     status === "online"
       ? latency !== null
-        ? `سرور آنلاین • ${latency}ms`
-        : "سرور آنلاین"
+        ? `${isEn ? "Server online" : "سرور آنلاین"} • ${latency}ms`
+        : isEn ? "Server online" : "سرور آنلاین"
       : status === "offline"
-      ? "سرور آفلاین"
-      : "در حال بررسی...";
+      ? isEn ? "Server offline" : "سرور آفلاین"
+      : isEn ? "Checking..." : "در حال بررسی...";
 
   return (
     <button
@@ -75,7 +78,7 @@ export default function ServerStatus() {
         <span className={`relative inline-flex h-2 w-2 rounded-full ${dot}`} />
       </span>
       <span className="hidden text-[11px] font-bold text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300 sm:inline">
-        {status === "online" ? "آنلاین" : status === "offline" ? "آفلاین" : "..."}
+        {status === "online" ? (isEn ? "Online" : "آنلاین") : status === "offline" ? (isEn ? "Offline" : "آفلاین") : "..."}
       </span>
     </button>
   );

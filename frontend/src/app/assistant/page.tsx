@@ -33,6 +33,7 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTTS } from "@/hooks/useTTS";
 import { useExportChat } from "@/hooks/useExportChat";
 import StarterQuestions from "@/components/StarterQuestions";
+import { useI18n } from "@/lib/i18n";
 import type {
   Source,
   ChatMessage,
@@ -48,6 +49,8 @@ import ToolMenu from "@/app/assistant/ToolMenu";
 function AssistantPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, locale, dir } = useI18n();
+  const isEn = locale === "en";
   const sessionIdParam = searchParams.get("session_id");
   const [message, setMessage] = useState("");
   const [domain, setDomain] = useState("auto");
@@ -78,6 +81,22 @@ function AssistantPageInner() {
   const [canUndo, setCanUndo] = useState(false);
   const { showExportMenu, setShowExportMenu, exportChat, exportChatWord, exportChatText } = useExportChat(messages);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const domainLabels = {
+    auto: isEn ? "Auto detect" : "تشخیص خودکار",
+    catalyst: isEn ? "Catalyst" : "کاتالیست",
+    equipment: isEn ? "Equipment" : "تجهیزات",
+    chromatography: isEn ? "Chromatography" : "کروماتوگرافی",
+    "mercury-analysis": isEn ? "Mercury analysis" : "آنالیز جیوه",
+    "sulfur-analysis": isEn ? "Sulfur analysis" : "آنالیز سولفور",
+    troubleshooting: isEn ? "Troubleshooting" : "عیب‌یابی",
+    analysis: isEn ? "Analysis & testing" : "آنالیز و تست",
+  };
+  const responseModeLabels = {
+    auto: isEn ? "Smart answer" : "پاسخ هوشمند",
+    brief: isEn ? "Brief" : "خلاصه",
+    technical: isEn ? "Full technical" : "فنی کامل",
+    checklist: isEn ? "Checklist" : "چک‌لیست",
+  };
   const abortControllerRef = useRef<AbortController | null>(null);
   const abortIntentRef = useRef<"undo" | "stop" | null>(null);
   const lastPromptRef = useRef<{ actual: string; visible: string } | null>(null);
@@ -1012,7 +1031,9 @@ ${cleanAnswer}`,
     if (action === "troubleshooting") {
       setDomain("troubleshooting");
       setMessage(
-        "برای عیب‌یابی این مشکل دستگاه، علت‌های احتمالی و چک‌لیست مرحله‌ای بده: ",
+        isEn
+          ? "For troubleshooting this equipment issue, provide likely causes and a step-by-step checklist: "
+          : "برای عیب‌یابی این مشکل دستگاه، علت‌های احتمالی و چک‌لیست مرحله‌ای بده: ",
       );
       return;
     }
@@ -1020,7 +1041,9 @@ ${cleanAnswer}`,
     if (action === "device-suggestion") {
       setDomain("equipment");
       setMessage(
-        "برای این کاربرد یا نوع نمونه، دستگاه/تجهیز مناسب آرتین آزما را پیشنهاد بده: ",
+        isEn
+          ? "For this application or sample type, suggest the suitable ArtinAzma device/equipment: "
+          : "برای این کاربرد یا نوع نمونه، دستگاه/تجهیز مناسب آرتین آزما را پیشنهاد بده: ",
       );
       return;
     }
@@ -1028,7 +1051,9 @@ ${cleanAnswer}`,
     if (action === "catalyst-suggestion") {
       setDomain("catalyst");
       setMessage(
-        "برای این فرایند یا مشکل، کاتالیست مناسب یا تست‌های لازم برای بررسی کاتالیست را پیشنهاد بده: ",
+        isEn
+          ? "For this process or issue, suggest the suitable catalyst or the tests needed to evaluate the catalyst: "
+          : "برای این فرایند یا مشکل، کاتالیست مناسب یا تست‌های لازم برای بررسی کاتالیست را پیشنهاد بده: ",
       );
     }
   }
@@ -1037,11 +1062,13 @@ ${cleanAnswer}`,
       <section className="flex h-full items-center justify-center bg-white px-6">
         <div className="ui-card rounded-[28px] p-8 text-center shadow-sm">
           <div className="text-lg font-bold text-slate-900">
-            در حال بررسی ورود مشتری...
+            {isEn ? "Checking customer login..." : "در حال بررسی ورود مشتری..."}
           </div>
 
           <div className="mt-3 text-sm text-slate-500">
-            برای استفاده از آرتین باید وارد حساب کاربری شوید.
+            {isEn
+              ? "You need to sign in to use Artin."
+              : "برای استفاده از آرتین باید وارد حساب کاربری شوید."}
           </div>
         </div>
       </section>
@@ -1071,17 +1098,21 @@ ${cleanAnswer}`,
       />
       {showFileOptions && pendingFile && (
         <UploadModal
-          title="تنظیمات تحلیل فایل"
+          title={isEn ? "File analysis settings" : "تنظیمات تحلیل فایل"}
           fileName={pendingFile.name}
-          label="نوع تست یا گزارش"
+          label={isEn ? "Test or report type" : "نوع تست یا گزارش"}
           selectValue={chatTestType}
           onSelectChange={setChatTestType}
           options={testTypes}
           noteValue={chatUserNote}
           onNoteChange={setChatUserNote}
-          noteLabel="توضیح اختیاری درباره نمونه یا شرایط تست"
-          placeholder="مثلاً: نمونه LPG است، baseline نوسان دارد، تست کاتالیست در دمای 350 درجه انجام شده..."
-          confirmLabel="شروع تحلیل فایل"
+          noteLabel={isEn ? "Optional note about the sample or test conditions" : "توضیح اختیاری درباره نمونه یا شرایط تست"}
+          placeholder={
+            isEn
+              ? "Example: The sample is LPG, the baseline fluctuates, the catalyst test was run at 350 C..."
+              : "مثلاً: نمونه LPG است، baseline نوسان دارد، تست کاتالیست در دمای 350 درجه انجام شده..."
+          }
+          confirmLabel={isEn ? "Start file analysis" : "شروع تحلیل فایل"}
           onConfirm={confirmFileAnalysis}
           onCancel={cancelFileAnalysis}
         />
@@ -1089,30 +1120,34 @@ ${cleanAnswer}`,
 
       {showImageOptions && pendingImage && (
         <UploadModal
-          title="تنظیمات تحلیل عکس"
+          title={isEn ? "Image analysis settings" : "تنظیمات تحلیل عکس"}
           fileName={pendingImage.name}
-          label="نوع تصویر"
+          label={isEn ? "Image type" : "نوع تصویر"}
           selectValue={chatImageType}
           onSelectChange={setChatImageType}
           options={imageTypes}
           noteValue={chatImageNote}
           onNoteChange={setChatImageNote}
-          noteLabel="توضیح اختیاری درباره تصویر"
-          placeholder="مثلاً: این عکس مربوط به ارور دستگاه GC است یا کروماتوگرام نمونه LPG است..."
-          confirmLabel="شروع تحلیل عکس"
+          noteLabel={isEn ? "Optional note about the image" : "توضیح اختیاری درباره تصویر"}
+          placeholder={
+            isEn
+              ? "Example: This image shows a GC instrument error or an LPG sample chromatogram..."
+              : "مثلاً: این عکس مربوط به ارور دستگاه GC است یا کروماتوگرام نمونه LPG است..."
+          }
+          confirmLabel={isEn ? "Start image analysis" : "شروع تحلیل عکس"}
           onConfirm={confirmImageAnalysis}
           onCancel={cancelImageAnalysis}
-          footer="فرمت‌های مجاز تصویر: JPG, PNG, WEBP"
+          footer={isEn ? "Allowed image formats: JPG, PNG, WEBP" : "فرمت‌های مجاز تصویر: JPG, PNG, WEBP"}
         />
       )}
 
       {voiceState === "listening" && (
-        <div className="flex items-center justify-center gap-2 bg-red-50 py-2 text-sm font-medium text-red-600" dir="rtl">
+        <div className="flex items-center justify-center gap-2 bg-red-50 py-2 text-sm font-medium text-red-600" dir={dir}>
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
           </span>
-          در حال ضبط صدا... صحبت کنید
+          {isEn ? "Recording... speak now" : "در حال ضبط صدا... صحبت کنید"}
         </div>
       )}
 
@@ -1121,15 +1156,15 @@ ${cleanAnswer}`,
           <div className="flex items-center gap-2.5">
             <img
               src="/images/artin-avatar.png"
-              alt="آرتین"
+              alt={isEn ? "Artin" : "آرتین"}
               className="h-8 w-8 shrink-0 rounded-full border border-slate-200 object-cover shadow-sm"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
             />
-            <span className="text-[15px] font-bold text-slate-800">آرتین</span>
+            <span className="text-[15px] font-bold text-slate-800">{isEn ? "Artin" : "آرتین"}</span>
             <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
-              آنلاین
+              {isEn ? "Online" : "آنلاین"}
             </span>
           </div>
 
@@ -1140,29 +1175,29 @@ ${cleanAnswer}`,
               onChange={(e) => setDomain(e.target.value)}
               className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
             >
-              <option value="auto">تشخیص خودکار</option>
-              <option value="catalyst">کاتالیست</option>
-              <option value="equipment">تجهیزات</option>
-              <option value="chromatography">کروماتوگرافی</option>
-              <option value="mercury-analysis">آنالیز جیوه</option>
-              <option value="sulfur-analysis">آنالیز سولفور</option>
-              <option value="troubleshooting">عیب‌یابی</option>
-              <option value="analysis">آنالیز و تست</option>
+              <option value="auto">{domainLabels.auto}</option>
+              <option value="catalyst">{domainLabels.catalyst}</option>
+              <option value="equipment">{domainLabels.equipment}</option>
+              <option value="chromatography">{domainLabels.chromatography}</option>
+              <option value="mercury-analysis">{domainLabels["mercury-analysis"]}</option>
+              <option value="sulfur-analysis">{domainLabels["sulfur-analysis"]}</option>
+              <option value="troubleshooting">{domainLabels.troubleshooting}</option>
+              <option value="analysis">{domainLabels.analysis}</option>
             </select>
             <select
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
               className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
             >
-              <option value="auto">پاسخ هوشمند</option>
-              <option value="brief">خلاصه</option>
-              <option value="technical">فنی کامل</option>
-              <option value="checklist">چک‌لیست</option>
+              <option value="auto">{responseModeLabels.auto}</option>
+              <option value="brief">{responseModeLabels.brief}</option>
+              <option value="technical">{responseModeLabels.technical}</option>
+              <option value="checklist">{responseModeLabels.checklist}</option>
             </select>
             {/* Mobile settings toggle — only on mobile */}
             <button
               onClick={() => setShowMobileSettings((v) => !v)}
-              title="تنظیمات"
+              title={isEn ? "Settings" : "تنظیمات"}
               className={`flex h-8 w-8 items-center justify-center rounded-xl border transition md:hidden ${
                 showMobileSettings
                   ? "border-blue-300 bg-blue-50 text-blue-600"
@@ -1179,7 +1214,7 @@ ${cleanAnswer}`,
                   className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                 >
                   <Download size={13} />
-                  دانلود
+                  {isEn ? "Download" : "دانلود"}
                 </button>
                 {showExportMenu && (
                   <>
@@ -1216,7 +1251,7 @@ ${cleanAnswer}`,
               className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
             >
               <Plus size={13} />
-              جدید
+              {isEn ? "New" : "جدید"}
             </button>
           </div>
         </div>
@@ -1224,33 +1259,33 @@ ${cleanAnswer}`,
 
       {/* Mobile settings panel — slides in below header on small screens */}
       {showMobileSettings && (
-        <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-3 md:hidden" dir="rtl">
+        <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-3 md:hidden" dir={dir}>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="text-xs font-bold text-slate-500">حوزه:</label>
+            <label className="text-xs font-bold text-slate-500">{isEn ? "Domain:" : "حوزه:"}</label>
             <select
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
               className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
-              <option value="auto">تشخیص خودکار</option>
-              <option value="catalyst">کاتالیست</option>
-              <option value="equipment">تجهیزات</option>
-              <option value="chromatography">کروماتوگرافی</option>
-              <option value="mercury-analysis">آنالیز جیوه</option>
-              <option value="sulfur-analysis">آنالیز سولفور</option>
-              <option value="troubleshooting">عیب‌یابی</option>
-              <option value="analysis">آنالیز و تست</option>
+              <option value="auto">{domainLabels.auto}</option>
+              <option value="catalyst">{domainLabels.catalyst}</option>
+              <option value="equipment">{domainLabels.equipment}</option>
+              <option value="chromatography">{domainLabels.chromatography}</option>
+              <option value="mercury-analysis">{domainLabels["mercury-analysis"]}</option>
+              <option value="sulfur-analysis">{domainLabels["sulfur-analysis"]}</option>
+              <option value="troubleshooting">{domainLabels.troubleshooting}</option>
+              <option value="analysis">{domainLabels.analysis}</option>
             </select>
-            <label className="text-xs font-bold text-slate-500">پاسخ:</label>
+            <label className="text-xs font-bold text-slate-500">{isEn ? "Answer:" : "پاسخ:"}</label>
             <select
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
               className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
             >
-              <option value="auto">پاسخ هوشمند</option>
-              <option value="brief">خلاصه</option>
-              <option value="technical">فنی کامل</option>
-              <option value="checklist">چک‌لیست</option>
+              <option value="auto">{responseModeLabels.auto}</option>
+              <option value="brief">{responseModeLabels.brief}</option>
+              <option value="technical">{responseModeLabels.technical}</option>
+              <option value="checklist">{responseModeLabels.checklist}</option>
             </select>
           </div>
         </div>
@@ -1263,26 +1298,27 @@ ${cleanAnswer}`,
       >
         {loadingSavedSession && (
           <div className="ui-alert ui-alert-info mx-auto mt-6 max-w-xl text-center text-sm font-bold">
-            در حال بارگذاری گفتگوی ذخیره‌شده...
+            {isEn ? "Loading saved conversation..." : "در حال بارگذاری گفتگوی ذخیره‌شده..."}
           </div>
         )}
         <div className="mx-auto w-full max-w-6xl px-3 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6">
           {messages.length === 0 ? (
             <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
               <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-                امروز چه کمکی از آرتین می‌خواهید؟
+                {isEn ? "How can Artin help you today?" : "امروز چه کمکی از آرتین می‌خواهید؟"}
               </h2>
 
               <p className="mt-4 max-w-2xl text-base leading-8 text-slate-500">
-                سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا درخواست
-                مشاوره ثبت کنید.
+                {isEn
+                  ? "Ask a technical question, upload a test file or error photo, or submit a consultation request."
+                  : "سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا درخواست مشاوره ثبت کنید."}
               </p>
 
               {rateLimitCountdown > 0 && (
                 <div className="mb-3 w-full max-w-3xl overflow-hidden rounded-2xl border border-amber-200 bg-amber-50">
                   <div className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-amber-700">
                     <span className="text-lg">⏳</span>
-                    <span className="flex-1">محدودیت ارسال — لطفاً صبر کنید</span>
+                    <span className="flex-1">{isEn ? "Rate limit — please wait" : "محدودیت ارسال — لطفاً صبر کنید"}</span>
                     <span className="rounded-xl bg-amber-100 px-3 py-1 text-base font-black tabular-nums">
                       {rateLimitCountdown}s
                     </span>
@@ -1299,7 +1335,7 @@ ${cleanAnswer}`,
 
               <div className="relative mt-5 w-full max-w-3xl px-1 md:mt-8 md:px-0">
                 {showTools && (
-                  <div className="absolute top-full right-0 z-50 mt-2">
+                  <div className={`absolute top-full z-50 mt-2 ${isEn ? "left-0" : "right-0"}`}>
                     <ToolMenu onSelect={handleToolClick} />
                   </div>
                 )}
@@ -1316,9 +1352,9 @@ ${cleanAnswer}`,
                     <textarea
                       ref={chatInputRef}
                       dir="auto"
-                      style={{ fontFamily: getTextFont(message || "فارسی") }}
+                      style={{ fontFamily: getTextFont(message || (isEn ? "English" : "فارسی")) }}
                       className="max-h-32 min-h-[46px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[17px] leading-7 outline-none"
-                      placeholder="از آرتین بپرسید..."
+                      placeholder={isEn ? "Ask Artin..." : "از آرتین بپرسید..."}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       onKeyDown={handleKeyDown}
@@ -1327,7 +1363,7 @@ ${cleanAnswer}`,
                     {isVoiceSupported && (
                       <button
                         onClick={toggleVoice}
-                        title={voiceState === "listening" ? "توقف ضبط" : "ورودی صوتی"}
+                        title={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : t("assistant.voiceInput")}
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
                           voiceState === "listening"
                             ? "animate-pulse bg-red-100 text-red-500"
@@ -1343,7 +1379,7 @@ ${cleanAnswer}`,
                       className={`ui-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300 ${
                         loading ? "bg-red-600 text-white hover:bg-red-700" : "ui-btn-primary"
                       }`}
-                      title={loading ? "توقف پاسخ" : "ارسال"}
+                      title={loading ? (isEn ? "Stop response" : "توقف پاسخ") : t("common.send")}
                     >
                       {loading ? <StopCircle size={19} /> : "↑"}
                     </button>
@@ -1356,14 +1392,14 @@ ${cleanAnswer}`,
                   onClick={() => handleToolClick("upload")}
                   className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
                 >
-                  آپلود فایل یا عکس
+                  {isEn ? "Upload file or image" : "آپلود فایل یا عکس"}
                 </button>
 
                 <button
                   onClick={() => handleToolClick("customer-request")}
                   className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
                 >
-                  درخواست مشاوره
+                  {isEn ? "Request consultation" : "درخواست مشاوره"}
                 </button>
               </div>
 
@@ -1440,7 +1476,7 @@ ${cleanAnswer}`,
                     <div className="relative shrink-0">
                       <img
                         src="/images/artin-avatar.png"
-                        alt="آرتین"
+                        alt={isEn ? "Artin" : "آرتین"}
                         className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
                       />
                       <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900">
@@ -1448,9 +1484,11 @@ ${cleanAnswer}`,
                       </span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">آرتین</span>
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{isEn ? "Artin" : "آرتین"}</span>
                       <span className="flex items-center gap-1.5">
-                        <span className="text-sm font-persian text-slate-500 dark:text-slate-400">در حال تایپ</span>
+                        <span className="text-sm font-persian text-slate-500 dark:text-slate-400">
+                          {isEn ? "Typing" : "در حال تایپ"}
+                        </span>
                         <span className="flex gap-1 pb-1">
                           <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "0ms"}} />
                           <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "200ms"}} />
@@ -1484,7 +1522,7 @@ ${cleanAnswer}`,
           <div className="mx-auto w-full max-w-3xl px-4">
             <div className="relative">
               {showTools && (
-                <div className="absolute bottom-full left-0 right-auto z-50 mb-2 md:left-auto md:right-0">
+                <div className={`absolute bottom-full z-50 mb-2 ${isEn ? "left-0 right-auto" : "left-auto right-0"}`}>
                   <ToolMenu onSelect={handleToolClick} />
                 </div>
               )}
@@ -1541,7 +1579,11 @@ ${cleanAnswer}`,
                     dir="auto"
                     style={{ fontFamily: getTextFont(message || "فارسی") }}
                     className="max-h-40 min-h-[44px] flex-1 resize-none border-none bg-transparent px-1 py-2 text-[15px] leading-7 text-slate-800 placeholder-slate-400 outline-none"
-                    placeholder={stagedImage ? "توضیحی برای عکس بنویسید (اختیاری)..." : "از آرتین بپرسید..."}
+                    placeholder={
+                      stagedImage
+                        ? (isEn ? "Write an optional note for the image..." : "توضیحی برای عکس بنویسید (اختیاری)...")
+                        : (isEn ? "Ask Artin..." : "از آرتین بپرسید...")
+                    }
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -1586,7 +1628,9 @@ ${cleanAnswer}`,
               </div>
 
               <p className="mt-2 text-center text-[11px] text-slate-400">
-                آرتین ممکن است اشتباه کند. برای تصمیم‌های مهم مشاوره کارشناسی ثبت کنید.
+                {isEn
+                  ? "Artin can make mistakes. For important decisions, submit an expert consultation request."
+                  : "آرتین ممکن است اشتباه کند. برای تصمیم‌های مهم مشاوره کارشناسی ثبت کنید."}
               </p>
             </div>
           </div>

@@ -13,44 +13,41 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ToolAction } from "@/lib/chat-types";
+import { useI18n } from "@/lib/i18n";
 
 export const tools: {
-  label: string;
-  description: string;
   action: ToolAction;
   icon: string;
 }[] = [
   {
-    label: "آپلود فایل یا عکس",
-    description: "تحلیل PDF، Excel، CSV، عکس خطا یا کروماتوگرام",
     action: "upload",
     icon: "📎",
   },
   {
-    label: "عیب‌یابی تجهیزات",
-    description: "ساخت قالب سوال برای خطا یا مشکل دستگاه",
     action: "troubleshooting",
     icon: "🛠️",
   },
   {
-    label: "پیشنهاد دستگاه",
-    description: "انتخاب تجهیز مناسب برای کاربرد یا نمونه",
     action: "device-suggestion",
     icon: "⚙️",
   },
   {
-    label: "پیشنهاد کاتالیست",
-    description: "بررسی کاتالیست یا تست‌های تکمیلی",
     action: "catalyst-suggestion",
     icon: "🧪",
   },
   {
-    label: "ثبت درخواست مشاوره",
-    description: "ارسال اطلاعات تماس برای پیگیری کارشناس",
     action: "customer-request",
     icon: "👤",
   },
 ];
+
+const toolLabels: Record<ToolAction, { fa: string; en: string }> = {
+  upload: { fa: "آپلود فایل یا عکس", en: "Upload file or image" },
+  troubleshooting: { fa: "عیب‌یابی تجهیزات", en: "Equipment troubleshooting" },
+  "device-suggestion": { fa: "پیشنهاد دستگاه", en: "Device suggestion" },
+  "catalyst-suggestion": { fa: "پیشنهاد کاتالیست", en: "Catalyst suggestion" },
+  "customer-request": { fa: "ثبت درخواست مشاوره", en: "Request consultation" },
+};
 
 export function getToolIcon(action: ToolAction): LucideIcon {
   if (action === "upload") return Paperclip;
@@ -65,8 +62,9 @@ export default function ToolMenu({
 }: {
   onSelect: (action: ToolAction) => void;
 }) {
+  const { locale, dir } = useI18n();
   return (
-    <div className="ui-card w-[245px] overflow-hidden rounded-[18px] py-1.5 shadow-xl shadow-slate-300/40">
+    <div className="ui-card w-[245px] overflow-hidden rounded-[18px] py-1.5 shadow-xl shadow-slate-300/40" dir={dir}>
       {tools.map((tool, index) => {
         const Icon = getToolIcon(tool.action);
 
@@ -82,7 +80,7 @@ export default function ToolMenu({
               <Icon size={17} strokeWidth={1.9} />
             </span>
 
-            <span className="flex-1">{tool.label}</span>
+            <span className="flex-1">{toolLabels[tool.action][locale]}</span>
           </button>
         );
       })}

@@ -15,6 +15,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
+import { useI18n } from "@/lib/i18n";
 import {
   cleanMarkdownText,
   getTextDirection,
@@ -30,6 +31,8 @@ function ArtinazmaResourceCards({
   links?: ResourceLink[];
   images?: ResourceImage[];
 }) {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const hasLinks = links && links.length > 0;
   const hasImages = images && images.length > 0;
   if (!hasLinks && !hasImages) return null;
@@ -67,7 +70,7 @@ function ArtinazmaResourceCards({
       {hasLinks && (
         <div className="rounded-[18px] border border-blue-100 bg-blue-50 p-3">
           <div className="mb-2 text-xs font-black text-blue-800">
-            صفحه مرتبط در سایت آرتین آزما
+            {isEn ? "Related page on ArtinAzma website" : "صفحه مرتبط در سایت آرتین آزما"}
           </div>
           <div className="space-y-1">
             {links.map((link) => (
@@ -89,14 +92,10 @@ function ArtinazmaResourceCards({
 }
 
 /* ── MessageBubble ── */
-const FEEDBACK_REASONS = [
-  "پاسخ ناقص بود",
-  "اطلاعات اشتباه داشت",
-  "ربطی به سوالم نداشت",
-  "خیلی طولانی بود",
-  "خیلی کوتاه بود",
-  "دیگر",
-];
+const FEEDBACK_REASONS = {
+  fa: ["پاسخ ناقص بود", "اطلاعات اشتباه داشت", "ربطی به سوالم نداشت", "خیلی طولانی بود", "خیلی کوتاه بود", "دیگر"],
+  en: ["The answer was incomplete", "It contained incorrect information", "It was not related to my question", "It was too long", "It was too short", "Other"],
+};
 
 interface MessageBubbleProps {
   item: ChatMessage;
@@ -136,6 +135,8 @@ function MessageBubble({
   onRegenerate,
   canRegenerate,
 }: MessageBubbleProps) {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.content);
@@ -167,7 +168,7 @@ function MessageBubble({
         {!isUser && (
           <img
             src="/images/artin-avatar.png"
-            alt="آرتین"
+            alt={isEn ? "Artin" : "آرتین"}
             className="mt-1 h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover p-1 shadow-sm"
           />
         )}
@@ -192,7 +193,7 @@ function MessageBubble({
           >
             {isUser ? (
               isEditing ? (
-                <div className="flex flex-col gap-2" dir="rtl">
+                <div className="flex flex-col gap-2" dir={dir}>
                   <textarea
                     className="w-full rounded-xl bg-white/20 p-2 text-sm text-white placeholder-white/60 outline-none ring-2 ring-white/40 focus:ring-white/70 resize-none"
                     value={editText}
@@ -212,14 +213,14 @@ function MessageBubble({
                     }}
                     rows={Math.max(2, editText.split("\n").length)}
                     autoFocus
-                    dir="rtl"
+                    dir={dir}
                   />
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => { setEditText(item.content); setIsEditing(false); }}
                       className="rounded-lg px-3 py-1 text-xs text-white/70 hover:text-white"
                     >
-                      انصراف
+                      {isEn ? "Cancel" : "انصراف"}
                     </button>
                     <button
                       onClick={() => {
@@ -230,7 +231,7 @@ function MessageBubble({
                       }}
                       className="rounded-lg bg-white/20 px-3 py-1 text-xs font-bold text-white hover:bg-white/30"
                     >
-                      ارسال مجدد ↵
+                      {isEn ? "Resend ↵" : "ارسال مجدد ↵"}
                     </button>
                   </div>
                 </div>
@@ -240,10 +241,10 @@ function MessageBubble({
                   <button
                     onClick={() => { setEditText(item.content); setIsEditing(true); }}
                     className="mr-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-white/50 opacity-0 transition hover:bg-white/20 hover:text-white group-hover/edit:opacity-100"
-                    title="ویرایش پیام"
+                    title={isEn ? "Edit message" : "ویرایش پیام"}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                    ویرایش
+                    {isEn ? "Edit" : "ویرایش"}
                   </button>
                 </div>
               )
@@ -334,13 +335,13 @@ function MessageBubble({
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="font-black">
                   {item.attachment.kind === "image"
-                    ? "تصویر پیوست‌شده"
-                    : "فایل پیوست‌شده"}
+                    ? (isEn ? "Attached image" : "تصویر پیوست‌شده")
+                    : (isEn ? "Attached file" : "فایل پیوست‌شده")}
                 </div>
                 <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
                   {loading && item.attachment.status === "analyzing"
-                    ? "در حال تحلیل"
-                    : "ارسال شد"}
+                    ? (isEn ? "Analyzing" : "در حال تحلیل")
+                    : (isEn ? "Sent" : "ارسال شد")}
                 </span>
               </div>
               {item.attachment.kind === "image" &&
@@ -353,12 +354,12 @@ function MessageBubble({
                     />
                   </div>
                 )}
-              <div>نام: {item.attachment.name}</div>
+              <div>{isEn ? "Name:" : "نام:"} {item.attachment.name}</div>
               {item.attachment.analysisType && (
-                <div>نوع تحلیل: {item.attachment.analysisType}</div>
+                <div>{isEn ? "Analysis type:" : "نوع تحلیل:"} {item.attachment.analysisType}</div>
               )}
               {item.attachment.note && (
-                <div>توضیح کاربر: {item.attachment.note}</div>
+                <div>{isEn ? "User note:" : "توضیح کاربر:"} {item.attachment.note}</div>
               )}
             </div>
           )}
@@ -375,7 +376,7 @@ function MessageBubble({
                 className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
               >
                 <Copy size={13} />
-                {copied ? "کپی شد" : "کپی"}
+                {copied ? (isEn ? "Copied" : "کپی شد") : (isEn ? "Copy" : "کپی")}
               </button>
               <button
                 onClick={() => onSpeak(displayContent, index)}
@@ -384,32 +385,32 @@ function MessageBubble({
                     ? "bg-indigo-50 text-indigo-600"
                     : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                 }`}
-                title={isSpeaking ? "توقف" : "پخش صوتی"}
+                title={isSpeaking ? (isEn ? "Stop" : "توقف") : (isEn ? "Read aloud" : "پخش صوتی")}
               >
                 {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
-                {isSpeaking ? "توقف" : "بخوان"}
+                {isSpeaking ? (isEn ? "Stop" : "توقف") : (isEn ? "Read" : "بخوان")}
               </button>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
               <button
                 onClick={() => onQuickAction("shorter", item.content)}
                 className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
               >
-                خلاصه‌تر
+                {isEn ? "Shorter" : "خلاصه‌تر"}
               </button>
               <button
                 onClick={() => onQuickAction("technical", item.content)}
                 className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
               >
-                فنی‌تر
+                {isEn ? "More technical" : "فنی‌تر"}
               </button>
               <button
                 onClick={() => onQuickAction("table", item.content)}
                 className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
               >
-                جدول
+                {isEn ? "Table" : "جدول"}
               </button>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
-              <Tooltip label="مفید بود" position="top">
+              <Tooltip label={isEn ? "Helpful" : "مفید بود"} position="top">
                 <button
                   onClick={() => onFeedback(item.question_id, "up")}
                   disabled={!!feedbackValue}
@@ -425,7 +426,7 @@ function MessageBubble({
                 </button>
               </Tooltip>
               <div className="relative">
-                <Tooltip label="نیاز به بهبود" position="top">
+                <Tooltip label={isEn ? "Needs improvement" : "نیاز به بهبود"} position="top">
                   <button
                     onClick={() => {
                       if (feedbackValue) return;
@@ -446,9 +447,9 @@ function MessageBubble({
                 {showFeedbackMenu && !feedbackValue && (
                   <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800">
                     <p className="mb-1.5 px-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                      چه مشکلی داشت؟
+                      {isEn ? "What was wrong?" : "چه مشکلی داشت؟"}
                     </p>
-                    {FEEDBACK_REASONS.map((reason) => (
+                    {FEEDBACK_REASONS[locale].map((reason) => (
                       <button
                         key={reason}
                         onClick={() => {
@@ -464,7 +465,7 @@ function MessageBubble({
                       onClick={() => setShowFeedbackMenu(false)}
                       className="mt-1 block w-full rounded-xl px-3 py-1 text-center text-[11px] text-slate-400 hover:text-slate-600"
                     >
-                      انصراف
+                      {isEn ? "Cancel" : "انصراف"}
                     </button>
                   </div>
                 )}
@@ -476,7 +477,7 @@ function MessageBubble({
                   className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                 >
                   <RotateCcw size={13} />
-                  تولید دوباره
+                  {isEn ? "Regenerate" : "تولید دوباره"}
                 </button>
               )}
               {canRegenerate && onRegenerate && (
@@ -486,7 +487,7 @@ function MessageBubble({
                 onClick={onRequest}
                 className="rounded-lg px-2.5 py-1.5 text-[12px] text-blue-600 transition hover:bg-blue-50"
               >
-                ثبت مشاوره
+                {isEn ? "Request consultation" : "ثبت مشاوره"}
               </button>
             </div>
           )}

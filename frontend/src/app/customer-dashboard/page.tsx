@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useI18n } from "@/lib/i18n";
 import Tooltip from "@/components/Tooltip";
 import {
   Bell,
@@ -55,17 +56,48 @@ type ChatHistorySearchResult = {
   created_at: string;
 };
 
-function formatDate(value?: string) {
-  if (!value) return "نامشخص";
+function formatDate(value?: string, locale: "fa" | "en" = "fa") {
+  if (!value) return locale === "en" ? "Unknown" : "نامشخص";
 
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(value));
   } catch {
     return value;
   }
+}
+
+function displayNameForLocale(name: string | undefined) {
+  return (name || "").trim();
+}
+
+function latinizePersianName(name: string) {
+  const normalized = name.trim();
+  if (!/[\u0600-\u06FF]/.test(normalized)) return normalized;
+
+  const knownNames: Record<string, string> = {
+    "وحید": "Vahid",
+  };
+  if (knownNames[normalized]) return knownNames[normalized];
+
+  const map: Record<string, string> = {
+    ا: "a", آ: "a", ب: "b", پ: "p", ت: "t", ث: "s", ج: "j", چ: "ch", ح: "h", خ: "kh",
+    د: "d", ذ: "z", ر: "r", ز: "z", ژ: "zh", س: "s", ش: "sh", ص: "s", ض: "z", ط: "t",
+    ظ: "z", ع: "", غ: "gh", ف: "f", ق: "gh", ک: "k", ك: "k", گ: "g", ل: "l", م: "m",
+    ن: "n", و: "v", ه: "h", ی: "i", ي: "i", ء: "", ئ: "i", أ: "a", إ: "e", ؤ: "o",
+    "‌": " ", " ": " ", "-": "-",
+  };
+
+  return normalized
+    .split("")
+    .map((char) => map[char] ?? char)
+    .join("")
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((part) => part ? part[0].toUpperCase() + part.slice(1) : part)
+    .join(" ");
 }
 
 export default function CustomerDashboardPage() {
@@ -85,6 +117,8 @@ export default function CustomerDashboardPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const { toast } = useToast();
   const { confirm } = useConfirm();
+  const { dir, locale } = useI18n();
+  const isEn = locale === "en";
   const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
   const [renamingSessionId, setRenamingSessionId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -193,7 +227,7 @@ export default function CustomerDashboardPage() {
     setProfileMessage("");
 
     if (!profileFullName.trim()) {
-      setProfileMessage("نام و نام خانوادگی الزامی است.");
+      setProfileMessage(isEn ? "Full name is required." : "نام و نام خانوادگی الزامی است.");
       return;
     }
 
@@ -215,7 +249,7 @@ export default function CustomerDashboardPage() {
       const data = await res.json();
 
       if (!data.success) {
-        setProfileMessage(data.message || "خطا در بروزرسانی اطلاعات حساب.");
+        setProfileMessage(data.message || (isEn ? "Error updating account information." : "خطا در بروزرسانی اطلاعات حساب."));
         return;
       }
 
@@ -223,9 +257,9 @@ export default function CustomerDashboardPage() {
       localStorage.setItem("artin_customer", JSON.stringify(data.customer));
       setEditingProfile(false);
       setProfileMessage("");
-      toast("اطلاعات حساب با موفقیت بروزرسانی شد.", "success");
+      toast(isEn ? "Account information updated successfully." : "اطلاعات حساب با موفقیت بروزرسانی شد.", "success");
     } catch {
-      setProfileMessage("خطا در اتصال به سرور.");
+      setProfileMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {
       setSavingProfile(false);
     }
@@ -233,8 +267,8 @@ export default function CustomerDashboardPage() {
 
   async function changePassword() {
     if (!customer) return;
-    if (newPassword.length < 8) { toast("رمز عبور جدید باید حداقل ۸ کاراکتر باشد.", "warning"); return; }
-    if (newPassword !== confirmPassword) { toast("رمز عبور جدید و تکرار آن یکسان نیستند.", "warning"); return; }
+    if (newPassword.length < 8) { toast(isEn ? "New password must be at least 8 characters." : "رمز عبور جدید باید حداقل ۸ کاراکتر باشد.", "warning"); return; }
+    if (newPassword !== confirmPassword) { toast(isEn ? "New password and confirmation do not match." : "رمز عبور جدید و تکرار آن یکسان نیستند.", "warning"); return; }
     setSavingPassword(true);
     try {
       const res = await customerFetch(apiUrl(`/customers/${customer.id}/change-password`), {
@@ -244,14 +278,14 @@ export default function CustomerDashboardPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast("رمز عبور با موفقیت تغییر یافت.", "success");
+        toast(isEn ? "Password changed successfully." : "رمز عبور با موفقیت تغییر یافت.", "success");
         setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
         setShowChangePassword(false);
       } else {
-        toast(data.message || "خطا در تغییر رمز عبور.", "error");
+        toast(data.message || (isEn ? "Error changing password." : "خطا در تغییر رمز عبور."), "error");
       }
     } catch {
-      toast("خطا در اتصال به سرور.", "error");
+      toast(isEn ? "Server connection error." : "خطا در اتصال به سرور.", "error");
     } finally {
       setSavingPassword(false);
     }
@@ -269,7 +303,12 @@ export default function CustomerDashboardPage() {
   async function deleteOneSession(sessionId: number) {
     if (!customer) return;
 
-    const confirmed = await confirm({ message: "این گفتگو حذف شود؟", variant: "danger", confirmLabel: "حذف", title: "حذف گفتگو" });
+    const confirmed = await confirm({
+      message: isEn ? "Delete this conversation?" : "این گفتگو حذف شود؟",
+      variant: "danger",
+      confirmLabel: isEn ? "Delete" : "حذف",
+      title: isEn ? "Delete conversation" : "حذف گفتگو",
+    });
 
     if (!confirmed) return;
 
@@ -287,14 +326,14 @@ export default function CustomerDashboardPage() {
       const data = await res.json();
 
       if (!data.success) {
-        setSessionMessage(data.message || "خطا در حذف گفتگو.");
+        setSessionMessage(data.message || (isEn ? "Error deleting conversation." : "خطا در حذف گفتگو."));
         return;
       }
 
       setSessions((prev) => prev.filter((item) => item.id !== sessionId));
-      setSessionMessage("گفتگو با موفقیت حذف شد.");
+      setSessionMessage(isEn ? "Conversation deleted successfully." : "گفتگو با موفقیت حذف شد.");
     } catch {
-      setSessionMessage("خطا در اتصال به سرور.");
+      setSessionMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {
       setDeletingSessionId(null);
     }
@@ -303,7 +342,12 @@ export default function CustomerDashboardPage() {
   async function deleteAllSessions() {
     if (!customer) return;
 
-    const confirmed = await confirm({ message: "همه گفتگوهای شما حذف شود؟ این عملیات قابل بازگشت نیست.", variant: "danger", confirmLabel: "حذف همه", title: "حذف همه گفتگوها" });
+    const confirmed = await confirm({
+      message: isEn ? "Delete all your conversations? This action cannot be undone." : "همه گفتگوهای شما حذف شود؟ این عملیات قابل بازگشت نیست.",
+      variant: "danger",
+      confirmLabel: isEn ? "Delete all" : "حذف همه",
+      title: isEn ? "Delete all conversations" : "حذف همه گفتگوها",
+    });
 
     if (!confirmed) return;
 
@@ -321,14 +365,14 @@ export default function CustomerDashboardPage() {
       const data = await res.json();
 
       if (!data.success) {
-        setSessionMessage(data.message || "خطا در حذف گفتگوها.");
+        setSessionMessage(data.message || (isEn ? "Error deleting conversations." : "خطا در حذف گفتگوها."));
         return;
       }
 
       setSessions([]);
-      setSessionMessage("همه گفتگوها با موفقیت حذف شدند.");
+      setSessionMessage(isEn ? "All conversations deleted successfully." : "همه گفتگوها با موفقیت حذف شدند.");
     } catch {
-      setSessionMessage("خطا در اتصال به سرور.");
+      setSessionMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {
       setClearingAllSessions(false);
     }
@@ -348,12 +392,12 @@ export default function CustomerDashboardPage() {
         setSessions((prev) =>
           prev.map((s) => (s.id === sessionId ? { ...s, title } : s))
         );
-        toast("نام گفتگو تغییر کرد", "success");
+        toast(isEn ? "Conversation renamed." : "نام گفتگو تغییر کرد", "success");
       } else {
-        toast(data.message || "خطا در تغییر نام", "error");
+        toast(data.message || (isEn ? "Error renaming conversation." : "خطا در تغییر نام"), "error");
       }
     } catch {
-      toast("خطا در اتصال به سرور", "error");
+      toast(isEn ? "Server connection error." : "خطا در اتصال به سرور", "error");
     } finally {
       setSavingRename(false);
       setRenamingSessionId(null);
@@ -370,8 +414,9 @@ export default function CustomerDashboardPage() {
       );
       const data = await res.json();
       const msgs: { role: string; content: string }[] = data.messages || [];
-      const now = new Date().toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" });
-      const title = session.title || "گفتگوی بدون عنوان";
+      const now = new Date().toLocaleDateString(isEn ? "en-US" : "fa-IR", { year: "numeric", month: "long", day: "numeric" });
+      const title = session.title || (isEn ? "Untitled conversation" : "گفتگوی بدون عنوان");
+      const exportedCustomerName = displayNameForLocale(customer.full_name) || (isEn ? "Customer" : "مشتری");
 
       const msgHtml = msgs.map((msg) => {
         const safe = (msg.content || "")
@@ -379,26 +424,26 @@ export default function CustomerDashboardPage() {
           .replace(/\*(.*?)\*/g, "<em>$1</em>")
           .replace(/\n/g, "<br/>");
         if (msg.role === "user") {
-          return `<div class="bubble user"><div class="label">کاربر</div><p>${safe}</p></div>`;
+          return `<div class="bubble user"><div class="label">${isEn ? "User" : "کاربر"}</div><p>${safe}</p></div>`;
         }
-        return `<div class="bubble artin"><div class="label">آرتین</div><p>${safe}</p></div>`;
+        return `<div class="bubble artin"><div class="label">${isEn ? "Artin" : "آرتین"}</div><p>${safe}</p></div>`;
       }).join("");
 
       const html = `<!DOCTYPE html>
-<html dir="rtl" lang="fa">
+<html dir="${isEn ? "ltr" : "rtl"}" lang="${isEn ? "en" : "fa"}">
 <head>
 <meta charset="UTF-8"/>
-<title>${title} — آرتین آزما</title>
+<title>${title} - ArtinAzma</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; }
+  body { font-family: 'Vazirmatn', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: ${isEn ? "ltr" : "rtl"}; }
   .header { border-bottom: 2px solid #1d4ed8; padding-bottom: 16px; margin-bottom: 28px; }
   .header h1 { font-size: 18px; font-weight: 900; color: #1d4ed8; }
   .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }
   .bubble { margin-bottom: 20px; padding: 14px 16px; border-radius: 16px; page-break-inside: avoid; }
-  .bubble.user { background: #dbeafe; border-right: 4px solid #1d4ed8; }
-  .bubble.artin { background: #f1f5f9; border-right: 4px solid #0ea5e9; }
+  .bubble.user { background: #dbeafe; ${isEn ? "border-left" : "border-right"}: 4px solid #1d4ed8; }
+  .bubble.artin { background: #f1f5f9; ${isEn ? "border-left" : "border-right"}: 4px solid #0ea5e9; }
   .label { font-size: 10px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.05em; }
   .bubble.user .label { color: #1d4ed8; }
   .bubble.artin .label { color: #0ea5e9; }
@@ -410,17 +455,17 @@ export default function CustomerDashboardPage() {
 <body>
 <div class="header">
   <h1>${title}</h1>
-  <div class="meta">مشتری: ${customer.full_name} | تاریخ: ${now}</div>
+  <div class="meta">${isEn ? "Customer" : "مشتری"}: ${exportedCustomerName} | ${isEn ? "Date" : "تاریخ"}: ${now}</div>
 </div>
 ${msgHtml}
-<div class="footer">آرتین آزما مهر — artinazma.net</div>
+<div class="footer">${isEn ? "ArtinAzma Mehr" : "آرتین آزما مهر"} - artinazma.net</div>
 <script>window.onload=function(){window.print();}<\/script>
 </body>
 </html>`;
       const w = window.open("", "_blank");
       if (w) { w.document.write(html); w.document.close(); }
     } catch {
-      alert("خطا در بارگذاری پیام‌های گفتگو.");
+      alert(isEn ? "Error loading conversation messages." : "خطا در بارگذاری پیام‌های گفتگو.");
     }
   }
 
@@ -441,44 +486,50 @@ ${msgHtml}
       <section className="flex min-h-screen items-center justify-center bg-[#f7f7f8] px-6">
         <div className="ui-card rounded-[32px] p-8 text-center shadow-sm">
           <div className="text-lg font-black text-slate-900">
-            در حال بررسی حساب کاربری...
+            {isEn ? "Checking your account..." : "در حال بررسی حساب کاربری..."}
           </div>
           <div className="mt-3 text-sm text-slate-500">
-            لطفاً چند لحظه صبر کنید.
+            {isEn ? "Please wait a moment." : "لطفاً چند لحظه صبر کنید."}
           </div>
         </div>
       </section>
     );
   }
 
+  const visibleCustomerName = displayNameForLocale(customer.full_name);
+  const localizedCustomerName = isEn ? latinizePersianName(visibleCustomerName) : visibleCustomerName;
+
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
-      <div className="mx-auto max-w-7xl">
+    <section className="min-h-full w-full max-w-full overflow-x-hidden bg-[#f7f7f8] px-3 py-6 md:px-6 md:py-8" dir={dir}>
+      <div className="mx-auto w-full max-w-7xl min-w-0 overflow-hidden">
         <div className="ui-card mb-6 overflow-hidden rounded-[36px] shadow-sm">
-          <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
+          <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-5 md:p-8">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-700 text-white shadow-sm">
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-blue-700 text-white shadow-sm">
                   <CircleUserRound size={34} strokeWidth={1.8} />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <div className="mb-2 text-sm font-bold text-blue-700">
-                    حساب کاربری مشتری
+                    {isEn ? "Customer account" : "حساب کاربری مشتری"}
                   </div>
 
                   <h1 className="text-3xl font-black text-slate-900">
-                    سلام {customer.full_name}
+                    {isEn
+                      ? localizedCustomerName ? `Hello ${localizedCustomerName}` : "Hello"
+                      : `سلام ${customer.full_name}`}
                   </h1>
 
-                  <p className="mt-2 leading-8 text-slate-600">
-                    گفتگوهای قبلی، اطلاعات حساب و مسیر ارتباط با آرتین اینجا در
-                    دسترس شماست.
+                  <p className="mt-2 max-w-3xl leading-8 text-slate-600">
+                    {isEn
+                      ? "Your previous conversations, account information, and contact path with Artin are available here."
+                      : "گفتگوهای قبلی، اطلاعات حساب و مسیر ارتباط با آرتین اینجا در دسترس شماست."}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="grid w-full min-w-0 grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-start md:w-auto md:justify-end">
                 {/* Notification bell */}
                 <button
                   onClick={() => {
@@ -487,10 +538,10 @@ ${msgHtml}
                       markNotificationsRead(customer.id);
                     }
                   }}
-                  className="relative inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  className="relative inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:px-4"
                 >
                   <Bell size={18} />
-                  اعلان‌ها
+                  {isEn ? "Notifications" : "اعلان‌ها"}
                   {unreadCount > 0 && (
                     <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-black text-white">
                       {unreadCount}
@@ -500,26 +551,26 @@ ${msgHtml}
 
                 <Link
                   href="/assistant"
-                  className="ui-btn ui-btn-primary inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm"
+                  className="ui-btn ui-btn-primary inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm sm:px-5"
                 >
                   <Plus size={18} />
-                  گفتگوی جدید
+                  {isEn ? "New conversation" : "گفتگوی جدید"}
                 </Link>
 
                 <Link
                   href="/customer-profile"
-                  className="ui-btn ui-btn-ghost inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm"
+                  className="ui-btn ui-btn-ghost col-span-2 inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm sm:col-span-1 sm:px-5"
                 >
                   <CircleUserRound size={18} />
-                  پروفایل و تنظیمات
+                  {isEn ? "Profile and settings" : "پروفایل و تنظیمات"}
                 </Link>
 
                 <button
                   onClick={logout}
-                  className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-5 py-3 text-sm"
+                  className="ui-btn ui-btn-danger inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl border border-red-200 px-3 py-3 text-sm sm:px-5"
                 >
                   <LogOut size={18} />
-                  خروج
+                  {isEn ? "Logout" : "خروج"}
                 </button>
               </div>
             </div>
@@ -531,7 +582,7 @@ ${msgHtml}
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold text-blue-700">
                   <Bell size={16} />
-                  پیام‌های تیم آرتین آزما
+                  {isEn ? "Messages from the ArtinAzma team" : "پیام‌های تیم آرتین آزما"}
                 </div>
                 <button
                   onClick={() => setShowNotifications(false)}
@@ -542,7 +593,7 @@ ${msgHtml}
               </div>
               {notifications.length === 0 ? (
                 <div className="rounded-2xl bg-white px-5 py-4 text-center text-sm text-slate-500">
-                  پیامی از تیم ما دریافت نکرده‌اید.
+                  {isEn ? "You have not received any messages from our team." : "پیامی از تیم ما دریافت نکرده‌اید."}
                 </div>
               ) : (
                 <div className="max-h-64 space-y-2 overflow-y-auto">
@@ -563,7 +614,7 @@ ${msgHtml}
                         }).format(new Date(n.created_at + "Z"))}
                         {!n.is_read && (
                           <span className="mr-2 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                            جدید
+                            {isEn ? "New" : "جدید"}
                           </span>
                         )}
                       </div>
@@ -582,33 +633,33 @@ ${msgHtml}
                 className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
               >
                 <Sparkles size={15} />
-                دستیار آرتین
+                {isEn ? "Artin assistant" : "دستیار آرتین"}
               </Link>
               <Link
                 href="/analyze"
                 className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
               >
                 <FlaskConical size={15} />
-                تحلیل تست
+                {isEn ? "Test analysis" : "تحلیل تست"}
               </Link>
               <Link
                 href="/customer-request"
                 className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
               >
                 <PhoneCall size={15} />
-                درخواست مشاوره
+                {isEn ? "Request consultation" : "درخواست مشاوره"}
               </Link>
             </div>
           </div>
 
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-          <aside className="space-y-6">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+          <aside className="min-w-0 space-y-6">
             <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h2 className="text-xl font-black text-slate-900">
-                  اطلاعات حساب
+                  {isEn ? "Account information" : "اطلاعات حساب"}
                 </h2>
 
                 {!editingProfile ? (
@@ -617,7 +668,7 @@ ${msgHtml}
                     className="ui-btn ui-btn-ghost inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs"
                   >
                     <Pencil size={15} />
-                    ویرایش
+                    {isEn ? "Edit" : "ویرایش"}
                   </button>
                 ) : (
                   <button
@@ -625,7 +676,7 @@ ${msgHtml}
                     className="ui-btn ui-btn-ghost inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs text-slate-600"
                   >
                     <X size={15} />
-                    انصراف
+                    {isEn ? "Cancel" : "انصراف"}
                   </button>
                 )}
               </div>
@@ -636,7 +687,7 @@ ${msgHtml}
                     <Mail className="mt-1 shrink-0 text-blue-700" size={18} />
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-slate-500">
-                        ایمیل
+                        {isEn ? "Email" : "ایمیل"}
                       </div>
                       <div className="mt-1 break-words text-sm font-bold text-slate-900">
                         {customer.email}
@@ -648,10 +699,10 @@ ${msgHtml}
                     <Phone className="mt-1 shrink-0 text-blue-700" size={18} />
                     <div>
                       <div className="text-xs font-bold text-slate-500">
-                        شماره تماس
+                        {isEn ? "Phone number" : "شماره تماس"}
                       </div>
                       <div className="mt-1 text-sm font-bold text-slate-900">
-                        {customer.phone || "ثبت نشده"}
+                        {customer.phone || (isEn ? "Not provided" : "ثبت نشده")}
                       </div>
                     </div>
                   </div>
@@ -663,10 +714,10 @@ ${msgHtml}
                     />
                     <div>
                       <div className="text-xs font-bold text-slate-500">
-                        شرکت
+                        {isEn ? "Company" : "شرکت"}
                       </div>
                       <div className="mt-1 text-sm font-bold text-slate-900">
-                        {customer.company || "ثبت نشده"}
+                        {customer.company || (isEn ? "Not provided" : "ثبت نشده")}
                       </div>
                     </div>
                   </div>
@@ -675,7 +726,7 @@ ${msgHtml}
                 <div className="space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      نام و نام خانوادگی
+                      {isEn ? "Full name" : "نام و نام خانوادگی"}
                     </label>
                     <input
                       value={profileFullName}
@@ -686,7 +737,7 @@ ${msgHtml}
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      شرکت / سازمان
+                      {isEn ? "Company / Organization" : "شرکت / سازمان"}
                     </label>
                     <input
                       value={profileCompany}
@@ -697,7 +748,7 @@ ${msgHtml}
 
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      شماره تماس
+                      {isEn ? "Phone number" : "شماره تماس"}
                     </label>
                     <input
                       value={profilePhone}
@@ -712,7 +763,7 @@ ${msgHtml}
                     className="ui-btn ui-btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm"
                   >
                     <Save size={17} />
-                    {savingProfile ? "در حال ذخیره..." : "ذخیره تغییرات"}
+                    {savingProfile ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save changes" : "ذخیره تغییرات")}
                   </button>
                 </div>
               )}
@@ -723,13 +774,13 @@ ${msgHtml}
                 </div>
               )}
 
-              {/* تغییر رمز عبور */}
+              {/* Password change */}
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <button
                   onClick={() => setShowChangePassword((v) => !v)}
                   className="text-sm font-bold text-slate-500 transition hover:text-slate-800"
                 >
-                  {showChangePassword ? "▲ بستن" : "🔒 تغییر رمز عبور"}
+                  {showChangePassword ? (isEn ? "Close" : "▲ بستن") : (isEn ? "Change password" : "🔒 تغییر رمز عبور")}
                 </button>
                 {showChangePassword && (
                   <div className="mt-4 space-y-3">
@@ -738,28 +789,28 @@ ${msgHtml}
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       className="ui-input rounded-2xl p-3 text-sm"
-                      placeholder="رمز عبور فعلی"
+                      placeholder={isEn ? "Current password" : "رمز عبور فعلی"}
                     />
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="ui-input rounded-2xl p-3 text-sm"
-                      placeholder="رمز عبور جدید (حداقل ۸ کاراکتر)"
+                      placeholder={isEn ? "New password (at least 8 characters)" : "رمز عبور جدید (حداقل ۸ کاراکتر)"}
                     />
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="ui-input rounded-2xl p-3 text-sm"
-                      placeholder="تکرار رمز عبور جدید"
+                      placeholder={isEn ? "Confirm new password" : "تکرار رمز عبور جدید"}
                     />
                     <button
                       onClick={changePassword}
                       disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword}
                       className="ui-btn ui-btn-primary rounded-2xl px-5 py-3 text-sm disabled:opacity-50"
                     >
-                      {savingPassword ? "در حال ذخیره..." : "ذخیره رمز جدید"}
+                      {savingPassword ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save new password" : "ذخیره رمز جدید")}
                     </button>
                   </div>
                 )}
@@ -770,34 +821,34 @@ ${msgHtml}
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-2xl bg-blue-50 p-4 text-center">
                   <div className="text-2xl font-black text-blue-700">{sessions.length}</div>
-                  <div className="mt-1 text-xs font-bold text-blue-600">گفتگو</div>
+                  <div className="mt-1 text-xs font-bold text-blue-600">{isEn ? "Conversations" : "گفتگو"}</div>
                 </div>
                 <div className="rounded-2xl bg-emerald-50 p-4 text-center">
                   <div className="text-2xl font-black text-emerald-700">
                     {sessions.reduce((sum, s) => sum + (s.message_count || 0), 0)}
                   </div>
-                  <div className="mt-1 text-xs font-bold text-emerald-600">پیام</div>
+                  <div className="mt-1 text-xs font-bold text-emerald-600">{isEn ? "Messages" : "پیام"}</div>
                 </div>
               </div>
               {sessions.length > 0 && (
                 <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-center">
-                  <div className="text-xs font-bold text-slate-400">آخرین فعالیت</div>
+                  <div className="text-xs font-bold text-slate-400">{isEn ? "Last activity" : "آخرین فعالیت"}</div>
                   <div className="mt-1 text-sm font-black text-slate-700">
-                    {formatDate(sessions[0]?.updated_at || sessions[0]?.created_at)}
+                    {formatDate(sessions[0]?.updated_at || sessions[0]?.created_at, locale)}
                   </div>
                 </div>
               )}
             </div>
           </aside>
 
-          <div className="ui-card rounded-[32px] p-6 shadow-sm">
+          <div className="ui-card min-w-0 rounded-[32px] p-4 shadow-sm md:p-6">
             <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-slate-900">
-                  گفتگوهای من
+                  {isEn ? "My conversations" : "گفتگوهای من"}
                 </h2>
                 <p className="mt-2 text-sm text-slate-500">
-                  برای ادامه هر گفتگو، روی آن کلیک کنید.
+                  {isEn ? "Click any conversation to continue it." : "برای ادامه هر گفتگو، روی آن کلیک کنید."}
                 </p>
               </div>
 
@@ -809,7 +860,7 @@ ${msgHtml}
                     className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-center text-sm"
                   >
                     <Trash2 size={16} />
-                    {clearingAllSessions ? "در حال حذف..." : "حذف همه گفتگوها"}
+                    {clearingAllSessions ? (isEn ? "Deleting..." : "در حال حذف...") : (isEn ? "Delete all conversations" : "حذف همه گفتگوها")}
                   </button>
                 )}
 
@@ -817,28 +868,69 @@ ${msgHtml}
                   href="/assistant"
                   className="ui-btn ui-btn-ghost rounded-2xl px-4 py-3 text-center text-sm"
                 >
-                  شروع گفتگوی تازه
+                  {isEn ? "Start a new conversation" : "شروع گفتگوی تازه"}
                 </Link>
               </div>
             </div>
 
             {sessions.length > 1 && (
-              <div className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <Search size={16} className="shrink-0 text-slate-400" />
-                <input
-                  type="text"
-                  value={sessionSearch}
-                  onChange={(e) => setSessionSearch(e.target.value)}
-                  placeholder="جستجو در گفتگوها..."
-                  className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
-                />
-                {sessionSearch && (
-                  <button
-                    onClick={() => setSessionSearch("")}
-                    className="shrink-0 text-slate-400 hover:text-slate-600"
-                  >
-                    <X size={15} />
-                  </button>
+              <div className="mb-4 space-y-3">
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <Search size={16} className="shrink-0 text-slate-400" />
+                  <input
+                    type="text"
+                    value={sessionSearch}
+                    onChange={(e) => setSessionSearch(e.target.value)}
+                    placeholder={isEn ? "Search conversation titles and message text..." : "جستجو در عنوان و متن پیام‌های گفتگو..."}
+                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                  />
+                  {historySearchLoading && <Loader2 size={15} className="shrink-0 animate-spin text-blue-500" />}
+                  {sessionSearch && (
+                    <button
+                      onClick={() => setSessionSearch("")}
+                      className="shrink-0 text-slate-400 hover:text-slate-600"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
+
+                {sessionSearch.trim().length >= 2 && (
+                  <div className="rounded-3xl border border-blue-100 bg-blue-50/50 p-3">
+                    <div className="mb-2 text-xs font-black text-blue-700">
+                      {isEn ? "Results inside messages" : "نتیجه‌های داخل پیام‌ها"}
+                    </div>
+                    {historySearchResults.length > 0 ? (
+                      <div className="space-y-2">
+                        {historySearchResults.map((result) => (
+                          <Link
+                            key={result.message_id}
+                            href={`/assistant?session_id=${result.session_id}`}
+                            className="block rounded-2xl border border-blue-100 bg-white p-3 transition hover:border-blue-200 hover:shadow-sm"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="font-black text-slate-800">
+                                {result.session_title || (isEn ? "New conversation" : "گفتگوی جدید")}
+                              </div>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
+                                {result.role === "user" ? (isEn ? "You" : "شما") : (isEn ? "Artin" : "آرتین")}
+                              </span>
+                            </div>
+                            <p className="mt-2 max-h-14 overflow-hidden text-sm leading-7 text-slate-600">
+                              {result.snippet}
+                            </p>
+                            <div className="mt-1 text-xs text-slate-400">
+                              {formatDate(result.created_at, locale)}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl bg-white p-4 text-sm text-slate-500">
+                        {historySearchLoading ? (isEn ? "Searching..." : "در حال جستجو...") : (isEn ? "No message matched this phrase." : "پیامی با این عبارت پیدا نشد.")}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -857,11 +949,13 @@ ${msgHtml}
                 </div>
               </div>
             ) : sessions.length > 0 ? (() => {
+              const matchedSessionIds = new Set(historySearchResults.map((item) => item.session_id));
               const filteredSessions = sessionSearch.trim()
                 ? sessions.filter((s) =>
-                    (s.title || "گفتگوی جدید")
+                    (s.title || (isEn ? "New conversation" : "گفتگوی جدید"))
                       .toLowerCase()
-                      .includes(sessionSearch.toLowerCase())
+                      .includes(sessionSearch.toLowerCase()) ||
+                    matchedSessionIds.has(s.id)
                   )
                 : sessions;
               return filteredSessions.length > 0 ? (
@@ -905,7 +999,7 @@ ${msgHtml}
                         ) : (
                           <div className="flex items-center gap-2">
                             <div className="truncate text-base font-black text-slate-900 group-hover:text-blue-700">
-                              {session.title || "گفتگوی جدید"}
+                              {session.title || (isEn ? "New conversation" : "گفتگوی جدید")}
                             </div>
                             <button
                               onClick={(e) => {
@@ -915,7 +1009,7 @@ ${msgHtml}
                                 setRenameValue(session.title || "");
                               }}
                               className="shrink-0 rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
-                              title="تغییر نام"
+                              title={isEn ? "Rename" : "تغییر نام"}
                             >
                               <Pencil size={13} />
                             </button>
@@ -930,22 +1024,22 @@ ${msgHtml}
                       </div>
 
                       {/* Bottom row: date/count + action buttons */}
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs text-slate-400">
                           <span className="flex items-center gap-1">
                             <Clock3 size={13} />
-                            {formatDate(session.updated_at || session.created_at)}
+                            {formatDate(session.updated_at || session.created_at, locale)}
                           </span>
                           {(session.message_count ?? 0) > 0 && (
                             <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-600">
                               <Hash size={11} />
-                              {session.message_count} پیام
+                              {session.message_count} {isEn ? "messages" : "پیام"}
                             </span>
                           )}
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.preventDefault()}>
-                          <Tooltip label="خروجی PDF" position="top">
+                        <div className="flex max-w-full flex-wrap items-center gap-2 sm:justify-end" onClick={(e) => e.preventDefault()}>
+                          <Tooltip label={isEn ? "Export PDF" : "خروجی PDF"} position="top">
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
@@ -958,7 +1052,7 @@ ${msgHtml}
                             </button>
                           </Tooltip>
 
-                          <Tooltip label="حذف گفتگو" position="top">
+                          <Tooltip label={isEn ? "Delete conversation" : "حذف گفتگو"} position="top">
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
@@ -966,14 +1060,19 @@ ${msgHtml}
                                 deleteOneSession(session.id);
                               }}
                               disabled={deletingSessionId === session.id}
-                              className="ui-btn ui-btn-danger inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 p-0 text-red-600"
+                              className="inline-flex h-10 min-w-[76px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-black text-red-700 transition hover:bg-red-100 disabled:opacity-50"
                             >
-                              <Trash2 size={15} />
+                              {deletingSessionId === session.id ? (
+                                <Loader2 size={15} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={17} />
+                              )}
+                              {isEn ? "Delete" : "حذف"}
                             </button>
                           </Tooltip>
 
-                          <span className="rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-                            ادامه ←
+                          <span className="inline-flex items-center rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                            {isEn ? "Continue" : "ادامه ←"}
                           </span>
                         </div>
                       </div>
@@ -987,16 +1086,16 @@ ${msgHtml}
                   <Search size={26} strokeWidth={1.8} />
                 </div>
                 <h3 className="mt-4 text-base font-black text-slate-700">
-                  نتیجه‌ای یافت نشد
+                  {isEn ? "No results found" : "نتیجه‌ای یافت نشد"}
                 </h3>
                 <p className="mt-2 text-sm text-slate-500">
-                  گفتگویی با عبارت «{sessionSearch}» پیدا نشد.
+                  {isEn ? `No conversation matched "${sessionSearch}".` : `گفتگویی با عبارت «${sessionSearch}» پیدا نشد.`}
                 </p>
                 <button
                   onClick={() => setSessionSearch("")}
                   className="mt-4 text-sm font-bold text-blue-700 hover:underline"
                 >
-                  پاک کردن جستجو
+                  {isEn ? "Clear search" : "پاک کردن جستجو"}
                 </button>
               </div>
             );
@@ -1007,19 +1106,20 @@ ${msgHtml}
                 </div>
 
                 <h3 className="mt-5 text-lg font-black text-slate-900">
-                  هنوز گفتگویی ذخیره نشده است
+                  {isEn ? "No conversations saved yet" : "هنوز گفتگویی ذخیره نشده است"}
                 </h3>
 
                 <p className="mt-3 leading-7 text-slate-500">
-                  اولین سوال خود را از آرتین بپرسید تا گفتگو در حساب شما ذخیره
-                  شود.
+                  {isEn
+                    ? "Ask Artin your first question so the conversation is saved in your account."
+                    : "اولین سوال خود را از آرتین بپرسید تا گفتگو در حساب شما ذخیره شود."}
                 </p>
 
                 <Link
                   href="/assistant"
                   className="ui-btn ui-btn-primary mt-6 inline-flex rounded-2xl px-6 py-3"
                 >
-                  شروع گفتگو با آرتین
+                  {isEn ? "Start conversation with Artin" : "شروع گفتگو با آرتین"}
                 </Link>
               </div>
             )}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 
 type Stat = {
   value: number | null;
@@ -33,7 +34,7 @@ function useCountUp(target: number | null, duration = 1200) {
   return display;
 }
 
-function StatCard({ stat, delay }: { stat: Stat; delay: number }) {
+function StatCard({ stat, delay, numberLocale }: { stat: Stat; delay: number; numberLocale: string }) {
   const [visible, setVisible] = useState(false);
   const count = useCountUp(visible ? (stat.value ?? 0) : null);
 
@@ -47,7 +48,7 @@ function StatCard({ stat, delay }: { stat: Stat; delay: number }) {
       <div className={`text-xl font-black ${stat.color}`}>
         {stat.value === null
           ? "—"
-          : `${stat.prefix}${count.toLocaleString("fa-IR")}${stat.suffix}`
+          : `${stat.prefix}${count.toLocaleString(numberLocale)}${stat.suffix}`
         }
       </div>
       <div className="mt-0.5 text-[11px] font-bold text-slate-500">{stat.label}</div>
@@ -56,11 +57,20 @@ function StatCard({ stat, delay }: { stat: Stat; delay: number }) {
 }
 
 export default function LiveStats() {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
+  const numberLocale = isEn ? "en-US" : "fa-IR";
+  const labels = useMemo(() => ({
+    online: isEn ? "Online support" : "پاسخ‌گویی آنلاین",
+    satisfaction: isEn ? "User satisfaction" : "رضایت کاربران",
+    knowledge: isEn ? "Knowledge sections" : "بخش دانش تخصصی",
+    answered: isEn ? "Answered questions" : "سوالات پاسخ‌داده‌شده",
+  }), [isEn]);
   const [stats, setStats] = useState<Stat[]>([
-    { value: null, prefix: "", suffix: "", label: "پاسخ‌گویی آنلاین", color: "text-blue-700" },
-    { value: null, prefix: "", suffix: "٪", label: "رضایت کاربران", color: "text-emerald-700" },
-    { value: null, prefix: "", suffix: "", label: "بخش دانش تخصصی", color: "text-purple-700" },
-    { value: null, prefix: "", suffix: "", label: "سوالات پاسخ‌داده‌شده", color: "text-amber-700" },
+    { value: null, prefix: "", suffix: "", label: labels.online, color: "text-blue-700" },
+    { value: null, prefix: "", suffix: "%", label: labels.satisfaction, color: "text-emerald-700" },
+    { value: null, prefix: "", suffix: "", label: labels.knowledge, color: "text-purple-700" },
+    { value: null, prefix: "", suffix: "", label: labels.answered, color: "text-amber-700" },
   ]);
 
   useEffect(() => {
@@ -79,49 +89,49 @@ export default function LiveStats() {
           {
             value: 24,
             prefix: "",
-            suffix: "/۷",
-            label: "پاسخ‌گویی آنلاین",
+            suffix: "/7",
+            label: labels.online,
             color: "text-blue-700",
           },
           {
             value: questions?.satisfaction_pct ?? 95,
             prefix: "",
-            suffix: "٪",
-            label: "رضایت کاربران",
+            suffix: "%",
+            label: labels.satisfaction,
             color: "text-emerald-700",
           },
           {
             value: knowledge?.total_chunks ?? 200,
             prefix: "+",
             suffix: "",
-            label: "بخش دانش تخصصی",
+            label: labels.knowledge,
             color: "text-purple-700",
           },
           {
             value: questions?.total_questions ?? 0,
             prefix: "",
             suffix: "",
-            label: "سوالات پاسخ‌داده‌شده",
+            label: labels.answered,
             color: "text-amber-700",
           },
         ]);
       } catch {
         // fallback to static values
         setStats([
-          { value: 24,  prefix: "", suffix: "/۷", label: "پاسخ‌گویی آنلاین",       color: "text-blue-700"    },
-          { value: 95,  prefix: "", suffix: "٪",  label: "رضایت کاربران",           color: "text-emerald-700" },
-          { value: 200, prefix: "+",suffix: "",   label: "بخش دانش تخصصی",          color: "text-purple-700"  },
-          { value: 0,   prefix: "", suffix: "",   label: "سوالات پاسخ‌داده‌شده",    color: "text-amber-700"   },
+          { value: 24,  prefix: "", suffix: "/7", label: labels.online,       color: "text-blue-700"    },
+          { value: 95,  prefix: "", suffix: "%",  label: labels.satisfaction, color: "text-emerald-700" },
+          { value: 200, prefix: "+",suffix: "",   label: labels.knowledge,    color: "text-purple-700"  },
+          { value: 0,   prefix: "", suffix: "",   label: labels.answered,     color: "text-amber-700"   },
         ]);
       }
     }
     fetchStats();
-  }, []);
+  }, [labels.answered, labels.knowledge, labels.online, labels.satisfaction]);
 
   return (
     <div className="mt-5 grid grid-cols-2 gap-2">
       {stats.map((s, i) => (
-        <StatCard key={s.label} stat={s} delay={i * 150} />
+        <StatCard key={s.label} stat={s} delay={i * 150} numberLocale={numberLocale} />
       ))}
     </div>
   );
