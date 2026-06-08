@@ -86,7 +86,8 @@
 
 - [x] 7.1 اولویت و یادداشت داخلی برای درخواست‌های مشتری
   - Status: added request priority (`low`, `normal`, `high`, `urgent`) and internal admin note fields to SQLite/PostgreSQL schema, admin API, request repository, tests, and `/admin/requests` UI.
-- [ ] 7.2 مسئول پیگیری و تاریخ پیگیری بعدی برای هر درخواست
+- [x] 7.2 مسئول پیگیری و تاریخ پیگیری بعدی برای هر درخواست
+  - Status: added `assigned_to` and `follow_up_at` fields to schema/migrations/repository/API/tests and surfaced them in `/admin/requests` CRM controls and request cards.
 - [ ] 7.3 فیلتر و مرتب‌سازی درخواست‌ها بر اساس اولویت، وضعیت و موعد پیگیری
 - [ ] 7.4 یادآوری درخواست‌های معطل‌مانده در داشبورد و اعلان ادمین
 - [ ] 7.5 خلاصه هوشمند مشتری و پیشنهاد اقدام بعدی در صفحه مشتری/درخواست

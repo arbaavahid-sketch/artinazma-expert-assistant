@@ -402,7 +402,12 @@ class TestCustomerRequest:
         update_res = app_client.patch(
             f"/customer-requests/{request_id}/crm",
             headers=admin_headers,
-            json={"priority": "urgent", "internal_note": "Call before noon."},
+            json={
+                "priority": "urgent",
+                "internal_note": "Call before noon.",
+                "assigned_to": "Sales Team",
+                "follow_up_at": "2026-06-12",
+            },
         )
         assert update_res.status_code == 200
         assert update_res.json()["success"] is True
@@ -412,6 +417,8 @@ class TestCustomerRequest:
         saved = next(item for item in list_res.json()["requests"] if item["id"] == request_id)
         assert saved["priority"] == "urgent"
         assert saved["internal_note"] == "Call before noon."
+        assert saved["assigned_to"] == "Sales Team"
+        assert saved["follow_up_at"] == "2026-06-12"
 
     def test_customer_request_invalid_priority_falls_back_to_normal(self, app_client, admin_headers):
         create_res = app_client.post("/customer-requests", json={

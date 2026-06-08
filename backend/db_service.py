@@ -232,6 +232,8 @@ def init_db():
             status TEXT DEFAULT 'new',
             priority TEXT DEFAULT 'normal',
             internal_note TEXT DEFAULT '',
+            assigned_to TEXT DEFAULT '',
+            follow_up_at TEXT DEFAULT '',
             created_at TEXT NOT NULL,
             updated_at TEXT
         )
@@ -242,6 +244,10 @@ def init_db():
         cursor.execute("ALTER TABLE customer_requests ADD COLUMN priority TEXT DEFAULT 'normal'")
     if "internal_note" not in request_cols:
         cursor.execute("ALTER TABLE customer_requests ADD COLUMN internal_note TEXT DEFAULT ''")
+    if "assigned_to" not in request_cols:
+        cursor.execute("ALTER TABLE customer_requests ADD COLUMN assigned_to TEXT DEFAULT ''")
+    if "follow_up_at" not in request_cols:
+        cursor.execute("ALTER TABLE customer_requests ADD COLUMN follow_up_at TEXT DEFAULT ''")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS app_settings (
@@ -308,6 +314,7 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_email ON customer_requests(email)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_status ON customer_requests(status)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_priority ON customer_requests(priority)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_follow_up ON customer_requests(follow_up_at)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_customer ON customer_notifications(customer_id, is_read)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_memories_user ON user_memories(user_id)")

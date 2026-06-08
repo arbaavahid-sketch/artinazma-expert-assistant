@@ -30,6 +30,8 @@ type CustomerRequest = {
   status: string;
   priority: string;
   internal_note: string;
+  assigned_to: string;
+  follow_up_at: string;
   created_at: string;
   updated_at: string | null;
 };
@@ -182,7 +184,12 @@ export default function AdminRequestsPage() {
   const [message, setMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
-  const [crmDrafts, setCrmDrafts] = useState<Record<number, { priority: string; internal_note: string }>>({});
+  const [crmDrafts, setCrmDrafts] = useState<Record<number, {
+    priority: string;
+    internal_note: string;
+    assigned_to: string;
+    follow_up_at: string;
+  }>>({});
   const [savingCrmId, setSavingCrmId] = useState<number | null>(null);
 
   const filteredRequests = useMemo(() => {
@@ -201,6 +208,8 @@ export default function AdminRequestsPage() {
         item.subject,
         item.message,
         item.internal_note,
+        item.assigned_to,
+        item.follow_up_at,
         getPriorityMeta(item.priority).label,
         getTypeLabel(item.request_type),
         getStatusLabel(item.status),
@@ -245,6 +254,8 @@ export default function AdminRequestsPage() {
             {
               priority: normalizePriority(item.priority),
               internal_note: item.internal_note || "",
+              assigned_to: item.assigned_to || "",
+              follow_up_at: item.follow_up_at || "",
             },
           ]),
         ),
@@ -284,19 +295,34 @@ export default function AdminRequestsPage() {
     }
   }
 
-  function updateCrmDraft(requestId: number, patch: Partial<{ priority: string; internal_note: string }>) {
+  function updateCrmDraft(
+    requestId: number,
+    patch: Partial<{
+      priority: string;
+      internal_note: string;
+      assigned_to: string;
+      follow_up_at: string;
+    }>,
+  ) {
     setCrmDrafts((prev) => ({
       ...prev,
       [requestId]: {
         priority: prev[requestId]?.priority || "normal",
         internal_note: prev[requestId]?.internal_note || "",
+        assigned_to: prev[requestId]?.assigned_to || "",
+        follow_up_at: prev[requestId]?.follow_up_at || "",
         ...patch,
       },
     }));
   }
 
   async function saveCrmFields(requestId: number) {
-    const draft = crmDrafts[requestId] || { priority: "normal", internal_note: "" };
+    const draft = crmDrafts[requestId] || {
+      priority: "normal",
+      internal_note: "",
+      assigned_to: "",
+      follow_up_at: "",
+    };
     setMessage("");
     setSavingCrmId(requestId);
 
@@ -520,6 +546,21 @@ export default function AdminRequestsPage() {
                         <Clock3 size={15} />
                         ثبت شده در {formatDate(item.created_at)}
                       </div>
+
+                      {(item.assigned_to || item.follow_up_at) && (
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+                          {item.assigned_to && (
+                            <span className="rounded-full bg-white px-3 py-1">
+                              مسئول: {item.assigned_to}
+                            </span>
+                          )}
+                          {item.follow_up_at && (
+                            <span className="rounded-full bg-white px-3 py-1">
+                              پیگیری: {formatDate(item.follow_up_at)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -653,6 +694,32 @@ export default function AdminRequestsPage() {
                           className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm leading-7 text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
                           placeholder="مثلا: با مشتری تماس گرفته شد، نیاز به پیش‌فاکتور GC دارد..."
                         />
+
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-2 block text-xs font-bold text-slate-500">
+                              مسئول پیگیری
+                            </label>
+                            <input
+                              value={crmDrafts[item.id]?.assigned_to ?? item.assigned_to ?? ""}
+                              onChange={(event) => updateCrmDraft(item.id, { assigned_to: event.target.value })}
+                              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
+                              placeholder="مثلا: واحد فروش"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="mb-2 block text-xs font-bold text-slate-500">
+                              پیگیری بعدی
+                            </label>
+                            <input
+                              type="date"
+                              value={crmDrafts[item.id]?.follow_up_at ?? item.follow_up_at ?? ""}
+                              onChange={(event) => updateCrmDraft(item.id, { follow_up_at: event.target.value })}
+                              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
+                            />
+                          </div>
+                        </div>
 
                         <button
                           onClick={() => saveCrmFields(item.id)}

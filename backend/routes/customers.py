@@ -198,6 +198,8 @@ def customer_request_crm(request_id: int, request: CustomerRequestCrmUpdate, _=D
         request_id=request_id,
         priority=request.priority,
         internal_note=request.internal_note,
+        assigned_to=request.assigned_to,
+        follow_up_at=request.follow_up_at,
     )
     if not updated:
         return {"success": False, "message": "Request not found."}

@@ -110,6 +110,8 @@ class CustomerRequestStatusUpdate(BaseModel):
 class CustomerRequestCrmUpdate(BaseModel):
     priority: str = "normal"
     internal_note: str = ""
+    assigned_to: str = ""
+    follow_up_at: str = ""
 
 
 class CustomerRegisterRequest(BaseModel):

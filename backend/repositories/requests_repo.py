@@ -71,7 +71,8 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
     cursor.execute(
         """
         SELECT id, full_name, company, phone, email, request_type,
-               subject, message, status, priority, internal_note, created_at, updated_at
+               subject, message, status, priority, internal_note,
+               assigned_to, follow_up_at, created_at, updated_at
         FROM customer_requests
         ORDER BY id DESC
         LIMIT ?
@@ -95,6 +96,8 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
             "status": normalize_request_status(row["status"]),
             "priority": normalize_request_priority(row["priority"]),
             "internal_note": row["internal_note"] or "",
+            "assigned_to": row["assigned_to"] or "",
+            "follow_up_at": row["follow_up_at"] or "",
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         }
@@ -109,7 +112,8 @@ def get_customer_request_by_id(request_id: int) -> Dict[str, Any] | None:
     cursor.execute(
         """
         SELECT id, full_name, company, phone, email, request_type,
-               subject, message, status, priority, internal_note, created_at, updated_at
+               subject, message, status, priority, internal_note,
+               assigned_to, follow_up_at, created_at, updated_at
         FROM customer_requests
         WHERE id = ?
         """,
@@ -134,6 +138,8 @@ def get_customer_request_by_id(request_id: int) -> Dict[str, Any] | None:
         "status": normalize_request_status(row["status"]),
         "priority": normalize_request_priority(row["priority"]),
         "internal_note": row["internal_note"] or "",
+        "assigned_to": row["assigned_to"] or "",
+        "follow_up_at": row["follow_up_at"] or "",
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -167,9 +173,13 @@ def update_customer_request_crm_fields(
     request_id: int,
     priority: str | None = None,
     internal_note: str | None = None,
+    assigned_to: str | None = None,
+    follow_up_at: str | None = None,
 ) -> bool:
     priority = normalize_request_priority(priority)
     internal_note = (internal_note or "").strip()[:2000]
+    assigned_to = (assigned_to or "").strip()[:120]
+    follow_up_at = (follow_up_at or "").strip()[:40]
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -179,10 +189,19 @@ def update_customer_request_crm_fields(
         UPDATE customer_requests
         SET priority = ?,
             internal_note = ?,
+            assigned_to = ?,
+            follow_up_at = ?,
             updated_at = ?
         WHERE id = ?
         """,
-        (priority, internal_note, datetime.now().isoformat(timespec="seconds"), request_id),
+        (
+            priority,
+            internal_note,
+            assigned_to,
+            follow_up_at,
+            datetime.now().isoformat(timespec="seconds"),
+            request_id,
+        ),
     )
 
     updated = cursor.rowcount > 0
