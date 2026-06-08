@@ -228,3 +228,84 @@ def send_customer_request_confirmation(
     except Exception as e:
         logger.warning("Confirmation email failed for %s: %s", to_addr, e)
         return False, str(e)
+
+
+def send_new_customer_request_admin_alert(
+    settings: dict,
+    request_id: int,
+    full_name: str,
+    company: str,
+    phone: str,
+    email: str,
+    request_type: str,
+    subject: str,
+    message: str,
+) -> tuple[bool, str]:
+    """
+    Send a new-request alert to the admin inbox configured in email settings.
+    """
+    if settings.get("request_alerts_enabled") is False:
+        return False, "request alerts disabled"
+
+    smtp_host = settings.get("smtp_host", "").strip()
+    smtp_port = int(settings.get("smtp_port", 587))
+    smtp_user = settings.get("smtp_user", "").strip()
+    smtp_pass = settings.get("smtp_pass", "").strip()
+    from_addr = settings.get("from_addr", smtp_user).strip() or smtp_user
+    to_addr = settings.get("to_addr", "").strip()
+
+    if not smtp_host or not to_addr:
+        return False, "SMTP not configured or no admin recipient"
+
+    safe_message = (message or "").replace("\n", "<br/>")
+    html = f"""<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f7f7f8;font-family:Tahoma,Arial,sans-serif;direction:rtl">
+<div style="max-width:620px;margin:32px auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.07)">
+  <div style="background:#1d4ed8;padding:24px 30px;color:#fff">
+    <div style="font-size:20px;font-weight:bold">درخواست جدید مشتری #{request_id}</div>
+    <div style="font-size:13px;margin-top:6px;color:#dbeafe">{subject or "بدون موضوع"}</div>
+  </div>
+  <div style="padding:24px 30px;color:#374151">
+    <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.8">
+      <tr><td style="font-weight:bold;width:130px">نام</td><td>{full_name or "-"}</td></tr>
+      <tr><td style="font-weight:bold">شرکت</td><td>{company or "-"}</td></tr>
+      <tr><td style="font-weight:bold">تلفن</td><td dir="ltr" style="text-align:right">{phone or "-"}</td></tr>
+      <tr><td style="font-weight:bold">ایمیل</td><td dir="ltr" style="text-align:right">{email or "-"}</td></tr>
+      <tr><td style="font-weight:bold">نوع درخواست</td><td>{request_type or "-"}</td></tr>
+    </table>
+    <div style="margin-top:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px">
+      <div style="font-size:13px;font-weight:bold;color:#475569;margin-bottom:8px">متن درخواست</div>
+      <div style="font-size:14px;line-height:1.9;color:#334155">{safe_message or "-"}</div>
+    </div>
+  </div>
+  <div style="background:#f1f5f9;padding:14px 30px;font-size:12px;color:#64748b">
+    برای پیگیری، وارد پنل ادمین آرتین آزما شوید و بخش درخواست‌های مشتریان را بررسی کنید.
+  </div>
+</div>
+</body>
+</html>"""
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"درخواست جدید مشتری #{request_id} — {subject or full_name}"
+    msg["From"] = from_addr
+    msg["To"] = to_addr
+    msg.attach(MIMEText(html, "html", "utf-8"))
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server.ehlo()
+            server.starttls()
+        if smtp_user and smtp_pass:
+            server.login(smtp_user, smtp_pass)
+        server.sendmail(from_addr, [to_addr], msg.as_string())
+        server.quit()
+        logger.info("New request admin alert sent to %s", to_addr)
+        return True, "sent"
+    except Exception as e:
+        logger.warning("New request admin alert failed: %s", e)
+        return False, str(e)

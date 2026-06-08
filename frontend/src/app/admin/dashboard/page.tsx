@@ -104,6 +104,29 @@ type CustomerStats = {
   new_requests: number;
 };
 
+type BusinessAnalytics = {
+  days: number;
+  frequent_questions: {
+    question: string;
+    count: number;
+    domain: string;
+    latest_question_id: number;
+    latest_at: string;
+  }[];
+  top_products: { label: string; count: number }[];
+  active_customers: {
+    id: number;
+    full_name: string;
+    email: string;
+    company: string;
+    session_count: number;
+    message_count: number;
+    request_count: number;
+    last_active: string | null;
+    score: number;
+  }[];
+};
+
 const REQUEST_STATUS_LABELS: Record<string, string> = {
   new: "جدید",
   reviewing: "در حال بررسی",
@@ -188,6 +211,7 @@ export default function DashboardPage() {
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
   const [responseTimeStats, setResponseTimeStats] = useState<ResponseTimeStats | null>(null);
+  const [businessAnalytics, setBusinessAnalytics] = useState<BusinessAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [analyticsDays, setAnalyticsDays] = useState(14);
 
@@ -195,7 +219,7 @@ export default function DashboardPage() {
     setLoading(true);
 
     try {
-      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes, cacheRes, feedbackRes, responseTimeRes] = await Promise.all([
+      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes, cacheRes, feedbackRes, responseTimeRes, businessRes] = await Promise.all([
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
         fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
@@ -204,6 +228,7 @@ export default function DashboardPage() {
         fetch(adminUrl("/admin/cache/stats"), { cache: "no-store" }),
         fetch(adminUrl("/admin/feedback-stats"), { cache: "no-store" }),
         fetch(adminUrl("/admin/response-time-stats"), { cache: "no-store" }),
+        fetch(adminUrl(`/admin/business-analytics?days=${analyticsDays}`), { cache: "no-store" }),
       ]);
 
       const results = await Promise.allSettled([
@@ -215,6 +240,7 @@ export default function DashboardPage() {
         cacheRes.json(),
         feedbackRes.json(),
         responseTimeRes.json(),
+        businessRes.json(),
       ]);
 
       setKnowledgeStats(results[0].status === "fulfilled" ? results[0].value : null);
@@ -225,12 +251,14 @@ export default function DashboardPage() {
       setCacheStats(results[5].status === "fulfilled" ? results[5].value : null);
       setFeedbackStats(results[6].status === "fulfilled" ? results[6].value : null);
       setResponseTimeStats(results[7]?.status === "fulfilled" ? results[7].value : null);
+      setBusinessAnalytics(results[8]?.status === "fulfilled" ? results[8].value : null);
     } catch {
       setKnowledgeStats(null);
       setQuestionStats(null);
       setRequestStats(null);
       setAnalyticsData(null);
       setCustomerStats(null);
+      setBusinessAnalytics(null);
     } finally {
       setLoading(false);
     }
@@ -440,23 +468,139 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
-          <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="mb-5 grid auto-rows-[340px] gap-4 xl:grid-cols-3">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 shrink-0">
+              <h2 className="text-lg font-black text-slate-900">سوالات پرتکرار</h2>
+              <p className="mt-1 text-xs font-bold text-slate-500">
+                سوال‌هایی که در بازه انتخاب‌شده با متن مشابه چندبار پرسیده شده‌اند.
+              </p>
+            </div>
+            {businessAnalytics?.frequent_questions?.length ? (
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pl-1">
+                {businessAnalytics.frequent_questions.map((item) => (
+                  <Link
+                    key={`${item.latest_question_id}-${item.question}`}
+                    href={`/admin/questions/${item.latest_question_id}`}
+                    className="block rounded-2xl bg-slate-50 p-3 transition hover:bg-white hover:shadow-sm"
+                  >
+                    <div className="line-clamp-2 text-xs font-bold leading-6 text-slate-800">
+                      {item.question}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                        {getDomainLabel(item.domain)}
+                      </span>
+                      <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-black text-white">
+                        {item.count} بار
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <EmptyState text="هنوز سوال تکراری کافی در این بازه دیده نشده است." />
+            )}
+          </div>
+
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 shrink-0">
+              <h2 className="text-lg font-black text-slate-900">محصولات و موضوعات پرتکرار</h2>
+              <p className="mt-1 text-xs font-bold text-slate-500">
+                استخراج‌شده از متن سوال‌ها و درخواست‌های مشتریان.
+              </p>
+            </div>
+            {businessAnalytics?.top_products?.length ? (
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pl-1">
+                {(() => {
+                  const visibleProducts = businessAnalytics.top_products;
+                  const maxCount = Math.max(...visibleProducts.map((item) => item.count), 1);
+                  return visibleProducts.map((item) => (
+                    <div key={item.label}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="font-black text-slate-800">{item.label}</span>
+                        <span className="font-black text-emerald-700">{item.count}</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                          style={{ width: `${Math.max(12, Math.round((item.count / maxCount) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            ) : (
+              <EmptyState text="هنوز محصول یا موضوع پرتکراری شناسایی نشده است." />
+            )}
+          </div>
+
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex shrink-0 items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">مشتریان فعال</h2>
+                <p className="mt-1 text-xs font-bold text-slate-500">
+                  بر اساس پیام‌ها، جلسات گفتگو و درخواست‌های ثبت‌شده.
+                </p>
+              </div>
+              <Link
+                href="/admin/customers"
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-white"
+              >
+                همه
+              </Link>
+            </div>
+            {businessAnalytics?.active_customers?.length ? (
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pl-1">
+                {businessAnalytics.active_customers.map((customer) => (
+                  <Link
+                    key={customer.id}
+                    href={`/admin/customers?customer=${customer.id}`}
+                    className="block rounded-2xl bg-slate-50 p-3 transition hover:bg-white hover:shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-black text-slate-900">{customer.full_name}</div>
+                        <div className="mt-1 truncate text-xs font-bold text-slate-500">
+                          {customer.company || customer.email}
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-black text-purple-700">
+                        {customer.score}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+                      <span>{customer.message_count} پیام</span>
+                      <span>{customer.session_count} جلسه</span>
+                      <span>{customer.request_count} درخواست</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <EmptyState text="هنوز مشتری فعالی در این بازه دیده نشده است." />
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="space-y-5">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-xl font-black text-slate-900">
+                    <h2 className="text-lg font-black text-slate-900">
                       وضعیت درخواست‌های مشتریان
                     </h2>
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className="mt-1 text-xs font-bold text-slate-500">
                       تفکیک درخواست‌ها بر اساس وضعیت پیگیری.
                     </p>
                   </div>
 
                   <Link
                     href="/admin/requests"
-                    className="inline-flex items-center gap-2 rounded-2xl bg-purple-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-purple-800"
+                    className="inline-flex items-center gap-2 rounded-xl bg-purple-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-purple-800"
                   >
                     مشاهده
                     <ArrowUpRight size={16} />
@@ -464,17 +608,17 @@ export default function DashboardPage() {
                 </div>
 
                 {requestStats && requestStats.statuses?.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {requestStats.statuses.map((item) => (
                       <div
                         key={item.status}
-                        className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"
+                        className="flex items-center justify-between rounded-2xl bg-slate-50 p-3"
                       >
-                        <span className="font-bold text-slate-700">
+                        <span className="text-sm font-bold text-slate-700">
                           {getStatusLabel(item.status)}
                         </span>
 
-                        <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-purple-700">
+                        <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black text-purple-700">
                           {item.count}
                         </span>
                       </div>
@@ -485,28 +629,28 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-5">
-                  <h2 className="text-xl font-black text-slate-900">
+              <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="mb-3">
+                  <h2 className="text-lg font-black text-slate-900">
                     نوع درخواست‌های مشتریان
                   </h2>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-1 text-xs font-bold text-slate-500">
                     موضوعاتی که مشتریان بیشتر درباره آن‌ها درخواست ثبت کرده‌اند.
                   </p>
                 </div>
 
                 {requestStats && requestStats.types?.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {requestStats.types.map((item) => (
                       <div
                         key={item.request_type}
-                        className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"
+                        className="flex items-center justify-between rounded-2xl bg-slate-50 p-3"
                       >
-                        <span className="font-bold text-slate-700">
+                        <span className="text-sm font-bold text-slate-700">
                           {getTypeLabel(item.request_type)}
                         </span>
 
-                        <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-emerald-700">
+                        <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black text-emerald-700">
                           {item.count}
                         </span>
                       </div>
@@ -518,39 +662,39 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex h-[380px] min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-lg font-black text-slate-900">
                     آخرین سوالات کاربران
                   </h2>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-1 text-xs font-bold text-slate-500">
                     سوالات اخیر که توسط کاربران از آرتین پرسیده شده‌اند.
                   </p>
                 </div>
 
                 <Link
                   href="/admin/questions"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-white"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-white"
                 >
                   همه سوالات
                 </Link>
               </div>
 
               {recentQuestions.length > 0 ? (
-                <div className="space-y-3">
+                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pl-1">
                   {recentQuestions.map((item) => (
                     <Link
                       key={item.id}
                       href={`/admin/questions/${item.id}`}
-                      className="group block rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm"
+                      className="group block rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-purple-200 hover:bg-white hover:shadow-sm"
                     >
-                      <div className="line-clamp-2 font-bold leading-8 text-slate-900 group-hover:text-purple-700">
+                      <div className="line-clamp-2 text-sm font-bold leading-7 text-slate-900 group-hover:text-purple-700">
                         {item.question}
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
-                        <span className="rounded-full bg-white px-3 py-1 font-bold text-purple-700">
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                        <span className="rounded-full bg-white px-2.5 py-1 font-bold text-purple-700">
                           {getDomainLabel(item.detected_domain)}
                         </span>
 
@@ -568,21 +712,21 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <aside className="space-y-6">
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center justify-between gap-3">
+          <aside className="grid auto-rows-[260px] items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-lg font-black text-slate-900">
                     حوزه‌های پرتکرار سوالات
                   </h2>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-1 text-xs font-bold text-slate-500">
                     حوزه‌هایی که کاربران بیشتر درباره آن‌ها سوال پرسیده‌اند.
                   </p>
                 </div>
               </div>
 
               {topDomains.length > 0 ? (
-                <div className="space-y-2.5">
+                <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pl-1">
                   {(() => {
                     const maxCount = Math.max(...topDomains.map(d => d.count), 1);
                     return topDomains.map((item) => (
@@ -606,32 +750,14 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* ─── Analytics Date Range Selector ──────────────────────── */}
-            <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
-              <span className="text-sm font-bold text-slate-600">بازه زمانی نمودار:</span>
-              <div className="flex gap-2">
-                {[7, 14, 30, 90].map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => setAnalyticsDays(d)}
-                    className={`rounded-2xl px-4 py-2 text-sm font-bold transition ${
-                      analyticsDays === d
-                        ? "bg-purple-600 text-white shadow-sm"
-                        : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-purple-50 hover:text-purple-700"
-                    }`}
-                  >
-                    {d} روز
-                  </button>
-                ))}
-              </div>
-              {loading && (
-                <span className="text-xs text-slate-400">در حال بارگذاری...</span>
-              )}
-            </div>
-
             {/* ─── Daily Activity Line Chart ────────────────────────── */}
             {analyticsData?.daily && analyticsData.daily.length > 0 && (
-              <DailyLineChart data={analyticsData.daily} />
+              <DailyLineChart
+                data={analyticsData.daily}
+                analyticsDays={analyticsDays}
+                loading={loading}
+                onDaysChange={setAnalyticsDays}
+              />
             )}
 
             {/* ─── Domain Pie Chart ─────────────────────────────────── */}
@@ -654,19 +780,19 @@ export default function DashboardPage() {
 
             {/* ─── Trending Keywords ────────────────────────────────────── */}
             {analyticsData?.top_keywords && analyticsData.top_keywords.length > 0 && (
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-5">
-                  <h2 className="text-xl font-black text-slate-900">کلمات پرتکرار {analyticsDays} روز اخیر</h2>
-                  <p className="mt-2 text-sm text-slate-500">موضوعاتی که کاربران بیشتر جستجو کرده‌اند.</p>
+              <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="mb-3 shrink-0">
+                  <h2 className="text-lg font-black text-slate-900">کلمات پرتکرار {analyticsDays} روز اخیر</h2>
+                  <p className="mt-1 text-xs font-bold text-slate-500">موضوعاتی که کاربران بیشتر جستجو کرده‌اند.</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex min-h-0 flex-1 flex-wrap content-start gap-1.5 overflow-y-auto pl-1">
                   {analyticsData.top_keywords.map((kw) => (
                     <span
                       key={kw.word}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-bold text-indigo-700"
+                      className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700"
                     >
                       {kw.word}
-                      <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-xs font-black text-indigo-600">
+                      <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[11px] font-black text-indigo-600">
                         {kw.count}
                       </span>
                     </span>
@@ -685,24 +811,24 @@ export default function DashboardPage() {
               <FeedbackStatsWidget stats={feedbackStats} />
             )}
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-lg font-black text-slate-900">
                     دسته‌بندی‌های بانک دانش
                   </h2>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-1 text-xs font-bold text-slate-500">
                     دسته‌بندی‌های فعال در بانک دانش آرتین.
                   </p>
                 </div>
               </div>
 
               {knowledgeCategories.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto pl-1">
                   {knowledgeCategories.map((category) => (
                     <span
                       key={category}
-                      className="rounded-full bg-purple-50 px-3 py-2 text-xs font-bold text-purple-700"
+                      className="rounded-full bg-purple-50 px-2.5 py-1.5 text-xs font-bold text-purple-700"
                     >
                       {getCategoryLabel(category)}
                     </span>
@@ -713,24 +839,24 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-lg font-black text-slate-900">
                     فایل‌های اخیر بانک دانش
                   </h2>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-1 text-xs font-bold text-slate-500">
                     بخشی از فایل‌های ثبت‌شده در بانک دانش.
                   </p>
                 </div>
               </div>
 
               {knowledgeFiles.length > 0 ? (
-                <div className="space-y-3">
-                  {knowledgeFiles.slice(0, 8).map((file) => (
+                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pl-1">
+                  {knowledgeFiles.map((file) => (
                     <div
                       key={file}
-                      className="rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-700"
+                      className="rounded-2xl bg-slate-50 p-3 text-xs font-bold leading-6 text-slate-700"
                     >
                       {file}
                     </div>
@@ -742,7 +868,7 @@ export default function DashboardPage() {
 
               <Link
                 href="/admin/knowledge"
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-purple-800"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800"
               >
                 مدیریت بانک دانش
                 <ArrowUpRight size={16} />
@@ -780,8 +906,18 @@ function downloadCSV(filename: string, headers: string[], rows: (string | number
 }
 
 // ─── Line Chart: daily questions ────────────────────────────────────────────
-function DailyLineChart({ data }: { data: DailyCount[] }) {
-  const W = 360, H = 110, PAD = { top: 12, right: 8, bottom: 28, left: 28 };
+function DailyLineChart({
+  data,
+  analyticsDays,
+  loading,
+  onDaysChange,
+}: {
+  data: DailyCount[];
+  analyticsDays: number;
+  loading: boolean;
+  onDaysChange: (days: number) => void;
+}) {
+  const W = 360, H = 96, PAD = { top: 10, right: 8, bottom: 24, left: 28 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
 
@@ -813,24 +949,41 @@ function DailyLineChart({ data }: { data: DailyCount[] }) {
     .filter(({ i }) => i % labelStep === 0 || i === n - 1);
 
   return (
-    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-xl font-black text-slate-900">فعالیت روزانه</h2>
-          <p className="mt-1 text-sm text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز</p>
+          <h2 className="text-lg font-black text-slate-900">فعالیت روزانه</h2>
+          <p className="mt-1 text-xs font-bold text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز</p>
         </div>
-        <button
-          onClick={() => downloadCSV("daily-activity.csv", ["تاریخ", "تعداد سوال"], data.map((d) => [d.day, d.count]))}
-          className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
-          title="دانلود CSV"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          CSV
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <span className="text-xs font-black text-slate-500">بازه:</span>
+          {[7, 14, 30, 90].map((d) => (
+            <button
+              key={d}
+              onClick={() => onDaysChange(d)}
+              className={`rounded-xl px-2.5 py-1.5 text-xs font-black transition ${
+                analyticsDays === d
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-purple-50 hover:text-purple-700"
+              }`}
+            >
+              {d} روز
+            </button>
+          ))}
+          <button
+            onClick={() => downloadCSV("daily-activity.csv", ["تاریخ", "تعداد سوال"], data.map((d) => [d.day, d.count]))}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
+            title="دانلود CSV"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+          </button>
+          {loading && <span className="text-xs font-bold text-slate-400">در حال بارگذاری...</span>}
+        </div>
       </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
+        className="min-h-0 w-full flex-1"
         style={{ direction: "ltr", fontFamily: "inherit" }}
         aria-hidden="true"
       >
@@ -914,11 +1067,11 @@ function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
   });
 
   return (
-    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-2 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-black text-slate-900">توزیع حوزه‌های سوالات</h2>
-          <p className="mt-1 text-sm text-slate-500">سهم هر حوزه از کل سوالات دریافتی</p>
+          <h2 className="text-base font-black text-slate-900">توزیع حوزه‌های سوالات</h2>
+          <p className="mt-1 text-xs font-bold text-slate-500">سهم هر حوزه از کل سوالات دریافتی</p>
         </div>
         <button
           onClick={() => downloadCSV("domain-distribution.csv", ["حوزه", "تعداد", "درصد"], domains.map((d) => [d.domain, d.count, total > 0 ? ((d.count / total) * 100).toFixed(1) : 0]))}
@@ -929,8 +1082,8 @@ function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
           CSV
         </button>
       </div>
-      <div className="flex items-center gap-4" style={{ direction: "ltr" }}>
-        <svg viewBox="0 0 160 160" className="w-36 shrink-0" aria-hidden="true">
+      <div className="flex min-h-0 flex-1 items-center gap-3" style={{ direction: "ltr" }}>
+        <svg viewBox="0 0 160 160" className="w-24 shrink-0" aria-hidden="true">
           {slices.map((s, i) => (
             <path key={i} d={s.path} fill={s.color} stroke="white" strokeWidth="2">
               <title>{`${s.label}: ${s.count} (${s.pct}%)`}</title>
@@ -961,8 +1114,8 @@ function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
     : 0;
 
   return (
-    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
           <Star size={20} />
         </div>
@@ -973,8 +1126,8 @@ function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
       </div>
 
       {/* Satisfaction score */}
-      <div className="mb-5 flex items-end gap-3">
-        <div className="text-5xl font-black text-slate-900">
+      <div className="mb-3 flex items-end gap-3">
+        <div className="text-3xl font-black text-slate-900">
           {pct !== null ? `${pct}٪` : "—"}
         </div>
         <div className="mb-1 text-sm font-bold text-emerald-600">رضایت</div>
@@ -1000,7 +1153,7 @@ function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
       )}
 
       {/* Like / Dislike row */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="mb-3 grid grid-cols-2 gap-2">
         <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-3">
           <ThumbsUp size={16} className="text-emerald-600" />
           <div>
@@ -1048,13 +1201,13 @@ function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
   const color = pct > 80 ? "#ef4444" : pct > 50 ? "#f59e0b" : "#10b981";
 
   return (
-    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-3">
-        <h2 className="text-xl font-black text-slate-900">وضعیت Cache هوشمند</h2>
-        <p className="mt-1 text-sm text-slate-500">پاسخ‌های ذخیره‌شده برای کاهش هزینه API</p>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-2">
+        <h2 className="text-base font-black text-slate-900">وضعیت Cache هوشمند</h2>
+        <p className="mt-1 text-xs font-bold text-slate-500">پاسخ‌های ذخیره‌شده برای کاهش هزینه API</p>
       </div>
-      <div className="flex items-center gap-6">
-        <svg viewBox="0 0 140 80" className="w-36 shrink-0" aria-hidden="true" style={{ direction: "ltr" }}>
+      <div className="flex items-center justify-between gap-3">
+        <svg viewBox="0 0 140 80" className="w-24 shrink-0" aria-hidden="true" style={{ direction: "ltr" }}>
           <path d={bgD} fill="none" stroke="#e2e8f0" strokeWidth="10" strokeLinecap="round" />
           {pct > 0 && (
             <path d={arcD} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round" />
@@ -1064,14 +1217,14 @@ function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
           <text x="8" y={CY + 16} textAnchor="middle" fontSize="7" fill="#94a3b8">۰</text>
           <text x="132" y={CY + 16} textAnchor="middle" fontSize="7" fill="#94a3b8">{stats.max_entries}</text>
         </svg>
-        <div className="flex flex-col gap-2 text-sm" style={{ direction: "rtl" }}>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs" style={{ direction: "rtl" }}>
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full" style={{ background: color }} />
             <span className="font-bold text-slate-700">{stats.total_entries} پاسخ کش‌شده</span>
           </div>
           <div className="text-slate-500">حداکثر: {stats.max_entries} ورودی</div>
           <div className="text-slate-500">مدت نگهداری: {stats.ttl_hours} ساعت</div>
-          <div className="mt-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+          <div className="mt-1 w-fit rounded-xl bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
             {stats.total_entries} بار صرفه‌جویی API
           </div>
         </div>
@@ -1095,16 +1248,16 @@ function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
   }
 
   return (
-    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4">
-        <h2 className="text-xl font-black text-slate-900">ساعات پرتردد</h2>
-        <p className="mt-1 text-sm text-slate-500">فعالیت کاربران به تفکیک ساعت روز</p>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-2">
+        <h2 className="text-base font-black text-slate-900">ساعات پرتردد</h2>
+        <p className="mt-1 text-xs font-bold text-slate-500">فعالیت کاربران به تفکیک ساعت روز</p>
       </div>
       <div className="grid grid-cols-12 gap-1.5" style={{ direction: "ltr" }}>
         {data.map((d) => (
           <div key={d.hour} className="flex flex-col items-center gap-1">
             <div
-              className="w-full aspect-square rounded-lg transition-all hover:scale-110"
+              className="aspect-square w-full rounded-md transition-all hover:scale-110"
               style={{ background: getColor(d.count) }}
               title={`ساعت ${d.hour}: ${d.count} سوال`}
             />
@@ -1114,7 +1267,7 @@ function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
           </div>
         ))}
       </div>
-      <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-slate-400">
+      <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-slate-400">
         <span>کم</span>
         <div className="flex gap-0.5">
           {["#f1f5f9", "#c7d2fe", "#818cf8", "#6366f1", "#4338ca"].map((c) => (
@@ -1135,8 +1288,8 @@ function ResponseTimeWidget({ avgMs, totalAnswered }: { avgMs: number; totalAnsw
   const barPct = Math.min(100, Math.round((avgMs / 20000) * 100));
 
   return (
-    <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
           <Clock3 size={20} />
         </div>
@@ -1146,8 +1299,8 @@ function ResponseTimeWidget({ avgMs, totalAnswered }: { avgMs: number; totalAnsw
         </div>
       </div>
 
-      <div className="mb-4 flex items-end gap-3">
-        <div className="text-5xl font-black text-slate-900">{avgSec}</div>
+      <div className="mb-3 flex items-end gap-3">
+        <div className="text-3xl font-black text-slate-900">{avgSec}</div>
         <div className="mb-1 text-sm font-bold text-slate-500">ثانیه</div>
         <div className={`mb-1 mr-2 text-sm font-black ${ratingColor}`}>{rating}</div>
       </div>

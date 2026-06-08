@@ -1,6 +1,8 @@
 import os
 import logging
 import json
+import re
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from datetime import datetime as _dt
 from pathlib import Path
@@ -237,6 +239,7 @@ def save_email_settings_endpoint(body: EmailSettingsRequest, _=Depends(require_a
         "from_addr": body.from_addr,
         "to_addr": body.to_addr,
         "weekly_enabled": body.weekly_enabled,
+        "request_alerts_enabled": body.request_alerts_enabled,
         "smtp_pass": body.smtp_pass if body.smtp_pass and body.smtp_pass != "••••••••" else existing.get("smtp_pass", ""),
     }
     save_email_settings(set_setting, new_settings)
@@ -358,6 +361,154 @@ def admin_export_report(period: str = "week", _=Depends(require_admin)):
     )
 
 
+_PRODUCT_KEYWORDS = [
+    ("GC", ["gc", "گاز کروماتوگراف", "کروماتوگراف گازی", "gc-fid", "gc-tcd"]),
+    ("HPLC", ["hplc", "کروماتوگراف مایع"]),
+    ("GC-MS", ["gc-ms", "gcms"]),
+    ("XRF", ["xrf"]),
+    ("Sulfur analyzer", ["sulfur", "گوگرد", "سولفور"]),
+    ("Mercury analyzer", ["mercury", "جیوه"]),
+    ("Catalyst", ["catalyst", "کاتالیست", "جاذب"]),
+    ("BET", ["bet", "سطح ویژه"]),
+    ("ICP", ["icp", "icp-oes", "icp-ms"]),
+    ("Karl Fischer", ["karl fischer", "کارل فیشر"]),
+    ("ASTM", ["astm"]),
+    ("Column", ["column", "ستون"]),
+    ("Detector", ["detector", "دتکتور", "fid", "tcd"]),
+]
+
+
+def _normalize_question_text(text: str) -> str:
+    text = (text or "").lower()
+    text = re.sub(r"[^\w\s\u0600-\u06FF-]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:180]
+
+
+def _top_product_mentions(texts: list[str], limit: int = 8) -> list[dict]:
+    counts: Counter[str] = Counter()
+    for raw in texts:
+        text = (raw or "").lower()
+        for label, terms in _PRODUCT_KEYWORDS:
+            if any(term in text for term in terms):
+                counts[label] += 1
+    return [{"label": label, "count": count} for label, count in counts.most_common(limit)]
+
+
+@router.get("/admin/business-analytics")
+def business_analytics(days: int = 30, _=Depends(require_admin)):
+    """Business analytics: frequent questions, product/topic demand, active customers."""
+    days = max(1, min(days, 365))
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    cutoff_str = cutoff.strftime("%Y-%m-%d")
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    question_rows = c.execute(
+        """
+        SELECT id, question, detected_domain, created_at
+        FROM expert_questions
+        WHERE created_at >= ?
+        ORDER BY id DESC
+        LIMIT 1000
+        """,
+        (cutoff_str,),
+    ).fetchall()
+
+    request_rows = c.execute(
+        """
+        SELECT id, request_type, subject, message, status, created_at
+        FROM customer_requests
+        WHERE created_at >= ?
+        ORDER BY id DESC
+        LIMIT 1000
+        """,
+        (cutoff_str,),
+    ).fetchall()
+
+    active_rows = c.execute(
+        """
+        SELECT
+            c.id,
+            c.full_name,
+            c.email,
+            c.company,
+            COUNT(DISTINCT cs.id) AS session_count,
+            COUNT(cm.id) AS message_count,
+            COUNT(DISTINCT cr.id) AS request_count,
+            MAX(COALESCE(cm.created_at, cr.created_at, cs.updated_at, cs.created_at, c.created_at)) AS last_active
+        FROM customers c
+        LEFT JOIN chat_sessions cs ON cs.customer_id = c.id
+        LEFT JOIN chat_messages cm ON cm.session_id = cs.id AND cm.created_at >= ?
+        LEFT JOIN customer_requests cr ON lower(cr.email) = lower(c.email) AND cr.created_at >= ?
+        GROUP BY c.id
+        HAVING message_count > 0 OR request_count > 0 OR session_count > 0
+        ORDER BY (message_count + request_count * 4 + session_count * 2) DESC, last_active DESC
+        LIMIT 8
+        """,
+        (cutoff_str, cutoff_str),
+    ).fetchall()
+    conn.close()
+
+    grouped_questions: dict[str, dict] = {}
+    for row in question_rows:
+        key = _normalize_question_text(row["question"])
+        if not key:
+            continue
+        item = grouped_questions.setdefault(
+            key,
+            {
+                "question": row["question"],
+                "count": 0,
+                "domain": row["detected_domain"] or "",
+                "latest_question_id": row["id"],
+                "latest_at": row["created_at"],
+            },
+        )
+        item["count"] += 1
+        if row["id"] > item["latest_question_id"]:
+            item["question"] = row["question"]
+            item["latest_question_id"] = row["id"]
+            item["latest_at"] = row["created_at"]
+
+    frequent_questions = sorted(
+        grouped_questions.values(),
+        key=lambda item: (item["count"], item["latest_question_id"]),
+        reverse=True,
+    )[:8]
+
+    product_texts = [row["question"] for row in question_rows] + [
+        f"{row['subject']} {row['message']} {row['request_type']}" for row in request_rows
+    ]
+    request_type_counts = Counter(row["request_type"] or "consultation" for row in request_rows)
+    status_counts = Counter(row["status"] or "new" for row in request_rows)
+
+    active_customers = [
+        {
+            "id": row["id"],
+            "full_name": row["full_name"],
+            "email": row["email"],
+            "company": row["company"] or "",
+            "session_count": row["session_count"] or 0,
+            "message_count": row["message_count"] or 0,
+            "request_count": row["request_count"] or 0,
+            "last_active": row["last_active"],
+            "score": (row["message_count"] or 0) + (row["request_count"] or 0) * 4 + (row["session_count"] or 0) * 2,
+        }
+        for row in active_rows
+    ]
+
+    return {
+        "days": days,
+        "frequent_questions": frequent_questions,
+        "top_products": _top_product_mentions(product_texts),
+        "request_types": [{"request_type": key, "count": count} for key, count in request_type_counts.most_common(8)],
+        "request_statuses": [{"status": key, "count": count} for key, count in status_counts.most_common(8)],
+        "active_customers": active_customers,
+    }
+
+
 @router.get("/admin/customers")
 def admin_list_customers(limit: int = 200, offset: int = 0, _=Depends(require_admin)):
     """لیست همه مشتریان برای ادمین."""
@@ -427,7 +578,16 @@ def admin_notify_customer(customer_id: int, body: CustomerNotifyRequest, _=Depen
     """ارسال اعلان داخل اپ برای یک مشتری."""
     if not body.message.strip():
         return {"success": False, "message": "متن پیام نمی‌تواند خالی باشد."}
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
     nid = save_customer_notification(customer_id, body.message.strip())
+    from telegram_service import notify_important_customer_message
+    notify_important_customer_message(
+        full_name=customer.get("full_name", ""),
+        email=customer.get("email", ""),
+        message=body.message.strip(),
+    )
     push_sent = 0
     if is_push_configured():
         push_sent = send_push_to_customer(

@@ -213,6 +213,7 @@ class EmailSettingsRequest(BaseModel):
     from_addr: str = ""
     to_addr: str = ""
     weekly_enabled: bool = False
+    request_alerts_enabled: bool = True
 
 
 class TelegramSettingsRequest(BaseModel):

@@ -132,6 +132,43 @@ class TestGoogleDriveService:
         assert summary["has_errors"] is True
 
 
+class TestNotificationServices:
+    def test_admin_request_alert_respects_disabled_setting(self):
+        from email_service import send_new_customer_request_admin_alert
+
+        ok, message = send_new_customer_request_admin_alert(
+            settings={"request_alerts_enabled": False},
+            request_id=1,
+            full_name="Customer",
+            company="Company",
+            phone="09120000000",
+            email="customer@example.com",
+            request_type="consultation",
+            subject="Test",
+            message="Long enough request message",
+        )
+
+        assert ok is False
+        assert "disabled" in message
+
+    def test_telegram_status_notification_uses_send_message(self, monkeypatch):
+        import telegram_service
+
+        sent: list[str] = []
+        monkeypatch.setattr(telegram_service, "send_message", sent.append)
+
+        telegram_service.notify_request_status_changed(
+            request_id=42,
+            full_name="Customer",
+            subject="Quote",
+            status_label="قیمت‌گذاری",
+        )
+
+        assert sent
+        assert "#42" in sent[0]
+        assert "قیمت‌گذاری" in sent[0]
+
+
 class TestHelperFunctions:
     """تست توابع کمکی main.py."""
 

@@ -26,6 +26,49 @@ const requestTypes = [
   { value: "price-inquiry", fa: "استعلام قیمت یا موجودی", en: "Price or availability inquiry" },
 ];
 
+type SmartField = {
+  key: string;
+  fa: string;
+  en: string;
+  placeholderFa: string;
+  placeholderEn: string;
+  multiline?: boolean;
+};
+
+const smartQuoteFields: Record<string, SmartField[]> = {
+  equipment: [
+    { key: "device", fa: "دستگاه یا کاربرد موردنظر", en: "Instrument or application", placeholderFa: "مثلاً GC، HPLC، آنالایزر گوگرد، جیوه، XRF", placeholderEn: "e.g. GC, HPLC, sulfur analyzer, mercury analyzer, XRF" },
+    { key: "sample", fa: "نوع نمونه / ماتریس", en: "Sample / matrix", placeholderFa: "مثلاً نفتا، LPG، گاز طبیعی، پساب، کاتالیست", placeholderEn: "e.g. naphtha, LPG, natural gas, wastewater, catalyst" },
+    { key: "range", fa: "محدوده اندازه‌گیری یا حساسیت", en: "Measurement range or sensitivity", placeholderFa: "مثلاً ppm، ppb، درصد، trace", placeholderEn: "e.g. ppm, ppb, percent, trace level" },
+    { key: "standard", fa: "استاندارد یا روش آزمون", en: "Standard or method", placeholderFa: "مثلاً ASTM D4294، UOP، ISO، روش داخلی", placeholderEn: "e.g. ASTM D4294, UOP, ISO, internal method" },
+  ],
+  chemical: [
+    { key: "material", fa: "نام ماده / گرید", en: "Material / grade", placeholderFa: "نام ماده، خلوص، گرید صنعتی یا آزمایشگاهی", placeholderEn: "Material name, purity, industrial or lab grade" },
+    { key: "quantity", fa: "مقدار موردنیاز", en: "Required quantity", placeholderFa: "مثلاً 1 کیلو، 20 لیتر، سفارش دوره‌ای", placeholderEn: "e.g. 1 kg, 20 L, recurring order" },
+    { key: "application", fa: "کاربرد", en: "Application", placeholderFa: "فرایند، آزمایشگاه، آماده‌سازی نمونه، افزودنی", placeholderEn: "Process, laboratory, sample prep, additive" },
+  ],
+  catalyst: [
+    { key: "process", fa: "فرایند یا سرویس", en: "Process or service", placeholderFa: "مثلاً هیدروکراکینگ، ریفرمینگ، جذب گوگرد", placeholderEn: "e.g. hydrocracking, reforming, sulfur adsorption" },
+    { key: "feed", fa: "خوراک / شرایط عملیاتی", en: "Feed / operating conditions", placeholderFa: "نوع خوراک، دما، فشار، دبی، آلاینده‌ها", placeholderEn: "Feed, temperature, pressure, flow, contaminants", multiline: true },
+    { key: "target", fa: "هدف عملکردی", en: "Performance target", placeholderFa: "افزایش conversion، کاهش گوگرد، طول عمر، selectivity", placeholderEn: "Conversion, sulfur removal, lifetime, selectivity" },
+  ],
+  "test-analysis": [
+    { key: "test", fa: "نوع تست یا داده", en: "Test or data type", placeholderFa: "کروماتوگرام، گزارش ICP، BET، GC، HPLC", placeholderEn: "Chromatogram, ICP report, BET, GC, HPLC" },
+    { key: "question", fa: "سوال اصلی از تحلیل", en: "Main analysis question", placeholderFa: "چه چیزی باید تفسیر شود یا چه مشکلی دیده شده؟", placeholderEn: "What should be interpreted or what issue is visible?", multiline: true },
+    { key: "context", fa: "زمینه نمونه / دستگاه", en: "Sample / instrument context", placeholderFa: "نمونه، مدل دستگاه، ستون، روش، شرایط تست", placeholderEn: "Sample, instrument model, column, method, test conditions", multiline: true },
+  ],
+  troubleshooting: [
+    { key: "instrument", fa: "مدل دستگاه / نرم‌افزار", en: "Instrument / software model", placeholderFa: "مدل دستگاه، برند، نسخه نرم‌افزار", placeholderEn: "Instrument model, brand, software version" },
+    { key: "symptom", fa: "علائم یا خطا", en: "Symptoms or error", placeholderFa: "متن خطا، زمان وقوع، تغییرات اخیر", placeholderEn: "Error text, timing, recent changes", multiline: true },
+    { key: "checks", fa: "کارهایی که انجام شده", en: "Checks already done", placeholderFa: "تعویض ستون، leak check، کالیبراسیون، ری‌استارت", placeholderEn: "Column change, leak check, calibration, restart", multiline: true },
+  ],
+  "price-inquiry": [
+    { key: "item", fa: "کالا / خدمت موردنظر", en: "Item or service", placeholderFa: "نام دستگاه، قطعه، ماده، تست یا خدمت", placeholderEn: "Instrument, part, material, test, or service" },
+    { key: "quantity", fa: "تعداد / مقدار", en: "Quantity", placeholderFa: "تعداد، مقدار، بازه زمانی تامین", placeholderEn: "Quantity, amount, required supply timeline" },
+    { key: "delivery", fa: "شرایط تحویل یا فوریت", en: "Delivery or urgency", placeholderFa: "فوری، پروژه‌ای، شهر/کشور مقصد، محدودیت زمانی", placeholderEn: "Urgent, project-based, destination, deadline" },
+  ],
+};
+
 type SavedCustomer = {
   id: number;
   full_name?: string;
@@ -48,6 +91,7 @@ export default function CustomerRequestPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [requestType, setRequestType] = useState("consultation");
+  const [quoteDetails, setQuoteDetails] = useState<Record<string, string>>({});
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -78,6 +122,21 @@ export default function CustomerRequestPage() {
 
     setLoading(true);
 
+    const activeSmartFields = smartQuoteFields[requestType] || [];
+    const structuredQuote = activeSmartFields
+      .map((field) => {
+        const value = (quoteDetails[field.key] || "").trim();
+        return value ? `${field[locale]}: ${value}` : "";
+      })
+      .filter(Boolean)
+      .join("\n");
+    const finalMessage = [
+      message.trim(),
+      structuredQuote
+        ? `${isEn ? "Structured quote details" : "اطلاعات ساختاریافته برای استعلام"}:\n${structuredQuote}`
+        : "",
+    ].filter(Boolean).join("\n\n");
+
     try {
       const res = await fetch(apiUrl("/customer-requests"), {
         method: "POST",
@@ -89,7 +148,7 @@ export default function CustomerRequestPage() {
           email,
           request_type: requestType,
           subject: subject || typeLabel(requestType),
-          message,
+          message: finalMessage,
         }),
       });
 
@@ -99,6 +158,7 @@ export default function CustomerRequestPage() {
         setResultType("success");
         setResultMessage(data.message || (isEn ? "Your request was submitted successfully. ArtinAzma experts will follow up soon." : "درخواست شما با موفقیت ثبت شد. کارشناسان آرتین آزما در اولین فرصت پیگیری خواهند کرد."));
         setRequestType("consultation");
+        setQuoteDetails({});
         setSubject("");
         setMessage("");
       } else {
@@ -120,6 +180,7 @@ export default function CustomerRequestPage() {
   const usefulInfo = isEn
     ? ["Sample or process type", "Required range or sensitivity", "Instrument model, brand, or test method", "Issue, error, or final test goal"]
     : ["نوع نمونه یا فرایند", "محدوده اندازه‌گیری یا حساسیت موردنیاز", "مدل دستگاه، برند یا روش آزمون", "مشکل، خطا یا هدف نهایی از تست"];
+  const activeSmartFields = smartQuoteFields[requestType] || [];
 
   return (
     <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8" dir={dir}>
@@ -194,6 +255,58 @@ export default function CustomerRequestPage() {
                 <option key={type.value} value={type.value}>{type[locale]}</option>
               ))}
             </select>
+
+            {activeSmartFields.length > 0 && (
+              <div className="mt-5 rounded-[24px] border border-blue-100 bg-blue-50/70 p-4">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-black text-blue-900">
+                      {isEn ? "Smart quote details" : "اطلاعات هوشمند استعلام"}
+                    </div>
+                    <div className="mt-1 text-xs font-bold text-blue-700/80">
+                      {isEn
+                        ? "These fields help the expert prepare a faster and more accurate quote."
+                        : "این اطلاعات به کارشناس کمک می‌کند استعلام دقیق‌تر و سریع‌تری آماده کند."}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setQuoteDetails({})}
+                    className="rounded-xl bg-white px-3 py-2 text-xs font-black text-blue-700 shadow-sm transition hover:bg-blue-100"
+                  >
+                    {isEn ? "Clear" : "پاک کردن"}
+                  </button>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  {activeSmartFields.map((field) => (
+                    <label
+                      key={field.key}
+                      className={field.multiline ? "md:col-span-2" : ""}
+                    >
+                      <span className="mb-1.5 block text-xs font-black text-slate-700">
+                        {field[locale]}
+                      </span>
+                      {field.multiline ? (
+                        <textarea
+                          value={quoteDetails[field.key] || ""}
+                          onChange={(e) => setQuoteDetails((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                          className="ui-textarea min-h-24 rounded-2xl p-3 text-sm leading-7"
+                          placeholder={isEn ? field.placeholderEn : field.placeholderFa}
+                        />
+                      ) : (
+                        <input
+                          value={quoteDetails[field.key] || ""}
+                          onChange={(e) => setQuoteDetails((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                          className="ui-input rounded-2xl p-3 text-sm"
+                          placeholder={isEn ? field.placeholderEn : field.placeholderFa}
+                        />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">{isEn ? "Request subject" : "موضوع درخواست"}</label>
             <input value={subject} onChange={(e) => setSubject(e.target.value)} className="ui-input rounded-2xl p-4" placeholder={isEn ? "Example: Selecting an instrument for sulfur analysis in LPG" : "مثلاً: انتخاب دستگاه برای آنالیز سولفور در LPG"} />

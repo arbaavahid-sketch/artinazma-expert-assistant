@@ -24,8 +24,10 @@ from utils.deps import limiter, require_admin
 from db_service import (
     save_customer_request,
     get_customer_requests,
+    get_customer_request_by_id,
     update_customer_request_status,
     get_customer_request_stats,
+    get_setting,
     create_customer,
     authenticate_customer,
     get_customer_by_id,
@@ -52,7 +54,12 @@ from db_service import (
     search_user_memories,
     get_user_memory_stats,
 )
-from telegram_service import notify_new_customer, notify_new_request
+from telegram_service import (
+    notify_important_customer_message,
+    notify_new_customer,
+    notify_new_request,
+    notify_request_status_changed,
+)
 import threading
 from auth_service import (
     create_access_token,
@@ -68,6 +75,15 @@ from security_middleware import login_tracker
 logger = logging.getLogger("artin_scheduler")
 
 router = APIRouter()
+
+
+REQUEST_STATUS_LABELS = {
+    "new": "جدید",
+    "reviewing": "در حال بررسی",
+    "pricing": "قیمت‌گذاری",
+    "sent": "ارسال‌شده",
+    "closed": "بسته‌شده",
+}
 
 
 # -- Memory endpoints ---------------------------------------------------------
@@ -106,12 +122,12 @@ def create_customer_request(request: CustomerRequestCreate):
         subject=request.subject or "",
         request_type=request.request_type or "",
     )
-    # Fire-and-forget confirmation email (non-blocking)
+
+    # Fire-and-forget email notifications (non-blocking)
     if request.email and request.email.strip():
         def _send_confirmation():
             try:
                 from email_service import get_email_settings, send_customer_request_confirmation
-                from db_service import get_setting
                 settings = get_email_settings(get_setting)
                 send_customer_request_confirmation(
                     settings=settings,
@@ -123,6 +139,26 @@ def create_customer_request(request: CustomerRequestCreate):
             except Exception as exc:
                 logger.warning("Confirmation email error: %s", exc)
         threading.Thread(target=_send_confirmation, daemon=True).start()
+
+    def _send_admin_alert():
+        try:
+            from email_service import get_email_settings, send_new_customer_request_admin_alert
+            settings = get_email_settings(get_setting)
+            send_new_customer_request_admin_alert(
+                settings=settings,
+                request_id=request_id,
+                full_name=request.full_name or "",
+                company=request.company or "",
+                phone=request.phone or "",
+                email=request.email or "",
+                request_type=request.request_type or "",
+                subject=request.subject or "",
+                message=request.message or "",
+            )
+        except Exception as exc:
+            logger.warning("Admin request alert email error: %s", exc)
+
+    threading.Thread(target=_send_admin_alert, daemon=True).start()
 
     return {
         "success": True,
@@ -141,6 +177,16 @@ def customer_request_status(request_id: int, request: CustomerRequestStatusUpdat
     updated = update_customer_request_status(request_id=request_id, status=request.status)
     if not updated:
         return {"success": False, "message": "Request not found."}
+
+    updated_request = get_customer_request_by_id(request_id)
+    if updated_request:
+        notify_request_status_changed(
+            request_id=request_id,
+            full_name=updated_request.get("full_name", ""),
+            subject=updated_request.get("subject", ""),
+            status_label=REQUEST_STATUS_LABELS.get(updated_request.get("status", ""), updated_request.get("status", "")),
+        )
+
     return {"success": True, "message": "Status updated."}
 
 

@@ -81,6 +81,18 @@ class TestAdminAuth:
         assert "customers" in data
         assert "requests" in data
 
+    def test_admin_business_analytics_structure(self, app_client, admin_headers):
+        res = app_client.get("/admin/business-analytics?days=30", headers=admin_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["days"] == 30
+        assert "frequent_questions" in data
+        assert "top_products" in data
+        assert "active_customers" in data
+        assert isinstance(data["frequent_questions"], list)
+        assert isinstance(data["top_products"], list)
+        assert isinstance(data["active_customers"], list)
+
 
 class TestAdminBackupSecurity:
     """Backup files must stay constrained to the managed backup directory."""

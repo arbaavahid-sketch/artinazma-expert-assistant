@@ -85,6 +85,7 @@ from repositories.notifications_repo import (
 from repositories.requests_repo import (
     save_customer_request,
     get_customer_requests,
+    get_customer_request_by_id,
     update_customer_request_status,
     get_customer_request_stats,
 )

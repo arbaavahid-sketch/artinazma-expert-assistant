@@ -132,7 +132,7 @@ export default function AdminSettingsPage() {
   // Email settings state
   const [emailSettings, setEmailSettings] = useState({
     smtp_host: "", smtp_port: 587, smtp_user: "", smtp_pass: "",
-    from_addr: "", to_addr: "", weekly_enabled: false,
+    from_addr: "", to_addr: "", weekly_enabled: false, request_alerts_enabled: true,
   });
   const [savingEmail, setSavingEmail] = useState(false);
   const [sendingReport, setSendingReport] = useState(false);
@@ -805,6 +805,15 @@ export default function AdminSettingsPage() {
               onChange={(e) => setEmailSettings((s) => ({ ...s, weekly_enabled: e.target.checked }))}
             />
             <span className="font-bold">ارسال خودکار گزارش هر هفته یک‌بار</span>
+          </label>
+
+          <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <input
+              type="checkbox"
+              checked={emailSettings.request_alerts_enabled}
+              onChange={(e) => setEmailSettings((s) => ({ ...s, request_alerts_enabled: e.target.checked }))}
+            />
+            <span className="font-bold">ارسال ایمیل فوری به ادمین برای درخواست جدید مشتری</span>
           </label>
 
           <div className="mt-5 flex flex-wrap gap-3">

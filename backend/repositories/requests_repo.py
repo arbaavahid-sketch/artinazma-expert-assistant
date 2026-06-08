@@ -93,6 +93,41 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
     ]
 
 
+def get_customer_request_by_id(request_id: int) -> Dict[str, Any] | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, full_name, company, phone, email, request_type,
+               subject, message, status, created_at, updated_at
+        FROM customer_requests
+        WHERE id = ?
+        """,
+        (request_id,),
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row["id"],
+        "full_name": row["full_name"],
+        "company": row["company"] or "",
+        "phone": row["phone"],
+        "email": row["email"] or "",
+        "request_type": row["request_type"] or "consultation",
+        "subject": row["subject"] or "",
+        "message": row["message"],
+        "status": normalize_request_status(row["status"]),
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+
+
 def update_customer_request_status(request_id: int, status: str) -> bool:
     status = normalize_request_status(status)
 
