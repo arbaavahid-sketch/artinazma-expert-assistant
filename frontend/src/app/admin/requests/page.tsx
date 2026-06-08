@@ -30,27 +30,83 @@ type CustomerRequest = {
   updated_at: string | null;
 };
 
+const REQUEST_WORKFLOW = [
+  {
+    value: "new",
+    label: "جدید",
+    actionLabel: "شروع بررسی",
+    badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
+    filterClass: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+    activeClass: "bg-blue-600 text-white",
+    cardClass: "border-blue-200 bg-blue-50/40 hover:bg-blue-50",
+  },
+  {
+    value: "reviewing",
+    label: "در حال بررسی",
+    actionLabel: "ارسال به قیمت‌گذاری",
+    badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
+    filterClass: "bg-amber-50 text-amber-700 hover:bg-amber-100",
+    activeClass: "bg-amber-500 text-white",
+    cardClass: "border-amber-200 bg-amber-50/40 hover:bg-amber-50",
+  },
+  {
+    value: "pricing",
+    label: "قیمت‌گذاری",
+    actionLabel: "ثبت ارسال پیشنهاد",
+    badgeClass: "bg-purple-50 text-purple-700 border-purple-100",
+    filterClass: "bg-purple-50 text-purple-700 hover:bg-purple-100",
+    activeClass: "bg-purple-600 text-white",
+    cardClass: "border-purple-200 bg-purple-50/30 hover:bg-purple-50",
+  },
+  {
+    value: "sent",
+    label: "ارسال‌شده",
+    actionLabel: "بستن درخواست",
+    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    filterClass: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+    activeClass: "bg-emerald-600 text-white",
+    cardClass: "border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50",
+  },
+  {
+    value: "closed",
+    label: "بسته‌شده",
+    actionLabel: "بازگشایی",
+    badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
+    filterClass: "bg-slate-50 text-slate-500 hover:bg-slate-100",
+    activeClass: "bg-slate-500 text-white",
+    cardClass: "border-slate-200 bg-slate-50 hover:bg-white",
+  },
+] as const;
+
+type RequestStatusValue = (typeof REQUEST_WORKFLOW)[number]["value"];
+
+const NEXT_STATUS: Partial<Record<RequestStatusValue, RequestStatusValue>> = {
+  new: "reviewing",
+  reviewing: "pricing",
+  pricing: "sent",
+  sent: "closed",
+  closed: "new",
+};
+
+function normalizeStatus(status: string): RequestStatusValue {
+  if (status === "in_progress") return "reviewing";
+  if (status === "done") return "sent";
+  return REQUEST_WORKFLOW.some((item) => item.value === status)
+    ? (status as RequestStatusValue)
+    : "new";
+}
+
+function getStatusMeta(status: string) {
+  const normalized = normalizeStatus(status);
+  return REQUEST_WORKFLOW.find((item) => item.value === normalized) || REQUEST_WORKFLOW[0];
+}
+
 function getStatusLabel(status: string) {
-  if (status === "in_progress") return "در حال پیگیری";
-  if (status === "done") return "انجام شده";
-  if (status === "closed") return "بسته شده";
-  return "جدید";
+  return getStatusMeta(status).label;
 }
 
 function getStatusClass(status: string) {
-  if (status === "in_progress") {
-    return "bg-amber-50 text-amber-700 border-amber-100";
-  }
-
-  if (status === "done") {
-    return "bg-emerald-50 text-emerald-700 border-emerald-100";
-  }
-
-  if (status === "closed") {
-    return "bg-slate-100 text-slate-600 border-slate-200";
-  }
-
-  return "bg-blue-50 text-blue-700 border-blue-100";
+  return getStatusMeta(status).badgeClass;
 }
 
 function getTypeLabel(type: string) {
@@ -88,7 +144,7 @@ export default function AdminRequestsPage() {
 
     return requests.filter((item) => {
       const matchesStatus =
-        statusFilter === "all" || item.status === statusFilter;
+        statusFilter === "all" || normalizeStatus(item.status) === statusFilter;
 
       const searchableText = [
         item.full_name,
@@ -111,11 +167,17 @@ export default function AdminRequestsPage() {
     });
   }, [requests, searchText, statusFilter]);
 
-  const newCount = requests.filter((item) => item.status === "new").length;
-  const inProgressCount = requests.filter(
-    (item) => item.status === "in_progress",
-  ).length;
-  const doneCount = requests.filter((item) => item.status === "done").length;
+  const statusCounts = useMemo(() => {
+    const counts = Object.fromEntries(
+      REQUEST_WORKFLOW.map((item) => [item.value, 0]),
+    ) as Record<RequestStatusValue, number>;
+
+    requests.forEach((item) => {
+      counts[normalizeStatus(item.status)] += 1;
+    });
+
+    return counts;
+  }, [requests]);
 
   async function loadRequests() {
     setLoading(true);
@@ -204,7 +266,7 @@ export default function AdminRequestsPage() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <div className="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-bold text-slate-500">
               کل درخواست‌ها
@@ -217,23 +279,39 @@ export default function AdminRequestsPage() {
           <div className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
             <div className="text-sm font-bold text-blue-700">جدید</div>
             <div className="mt-2 text-3xl font-black text-blue-700">
-              {newCount}
+              {statusCounts.new}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
             <div className="text-sm font-bold text-amber-700">
-              در حال پیگیری
+              در حال بررسی
             </div>
             <div className="mt-2 text-3xl font-black text-amber-700">
-              {inProgressCount}
+              {statusCounts.reviewing}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-purple-100 bg-purple-50 p-5">
+            <div className="text-sm font-bold text-purple-700">
+              قیمت‌گذاری
+            </div>
+            <div className="mt-2 text-3xl font-black text-purple-700">
+              {statusCounts.pricing}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
-            <div className="text-sm font-bold text-emerald-700">انجام شده</div>
+            <div className="text-sm font-bold text-emerald-700">ارسال‌شده</div>
             <div className="mt-2 text-3xl font-black text-emerald-700">
-              {doneCount}
+              {statusCounts.sent}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
+            <div className="text-sm font-bold text-slate-600">بسته‌شده</div>
+            <div className="mt-2 text-3xl font-black text-slate-600">
+              {statusCounts.closed}
             </div>
           </div>
         </div>
@@ -256,11 +334,20 @@ export default function AdminRequestsPage() {
           {/* ─── Quick filter pills ──────────────────────────────────── */}
           <div className="mb-5 flex flex-wrap gap-2">
             {[
-              { value: "all",         label: "همه",            count: requests.length,      cls: "bg-slate-100 text-slate-700 hover:bg-slate-200",                     active: "bg-slate-800 text-white" },
-              { value: "new",         label: "جدید",           count: newCount,              cls: "bg-blue-50 text-blue-700 hover:bg-blue-100",                         active: "bg-blue-600 text-white" },
-              { value: "in_progress", label: "در پیگیری",      count: inProgressCount,      cls: "bg-amber-50 text-amber-700 hover:bg-amber-100",                      active: "bg-amber-500 text-white" },
-              { value: "done",        label: "انجام شده",      count: doneCount,             cls: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",                active: "bg-emerald-600 text-white" },
-              { value: "closed",      label: "بسته شده",       count: requests.filter(r => r.status === "closed").length, cls: "bg-slate-50 text-slate-500 hover:bg-slate-100", active: "bg-slate-500 text-white" },
+              {
+                value: "all",
+                label: "همه",
+                count: requests.length,
+                cls: "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                active: "bg-slate-800 text-white",
+              },
+              ...REQUEST_WORKFLOW.map((item) => ({
+                value: item.value,
+                label: item.label,
+                count: statusCounts[item.value],
+                cls: item.filterClass,
+                active: item.activeClass,
+              })),
             ].map(({ value, label, count, cls, active }) => (
               <button
                 key={value}
@@ -288,18 +375,15 @@ export default function AdminRequestsPage() {
             </div>
           ) : filteredRequests.length > 0 ? (
             <div className="space-y-4">
-              {filteredRequests.map((item) => (
+              {filteredRequests.map((item) => {
+                const statusMeta = getStatusMeta(item.status);
+                const normalizedStatus = normalizeStatus(item.status);
+                const nextStatus = NEXT_STATUS[normalizedStatus];
+
+                return (
                 <article
                   key={item.id}
-                  className={`rounded-[30px] border p-5 transition hover:shadow-md ${
-                    item.status === "new"
-                      ? "border-blue-200 bg-blue-50/40 hover:bg-blue-50"
-                      : item.status === "in_progress"
-                      ? "border-amber-200 bg-amber-50/40 hover:bg-amber-50"
-                      : item.status === "done"
-                      ? "border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50"
-                      : "border-slate-200 bg-slate-50 hover:bg-white"
-                  }`}
+                  className={`rounded-[30px] border p-5 transition hover:shadow-md ${statusMeta.cardClass}`}
                 >
                   <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
@@ -332,7 +416,24 @@ export default function AdminRequestsPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {item.status === "new" && (
+                      {nextStatus && (
+                        <button
+                          onClick={() => updateStatus(item.id, nextStatus)}
+                          className={`inline-flex items-center gap-1.5 rounded-2xl border px-4 py-2 text-sm font-bold transition ${statusMeta.badgeClass}`}
+                        >
+                          {normalizedStatus === "closed" ? (
+                            <RefreshCw size={15} />
+                          ) : normalizedStatus === "sent" ? (
+                            <XCircle size={15} />
+                          ) : normalizedStatus === "pricing" ? (
+                            <CheckCircle2 size={15} />
+                          ) : (
+                            <PlayCircle size={15} />
+                          )}
+                          {statusMeta.actionLabel}
+                        </button>
+                      )}
+                      {false && item.status === "new" && (
                         <button
                           onClick={() => updateStatus(item.id, "in_progress")}
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100 border border-amber-100"
@@ -341,7 +442,7 @@ export default function AdminRequestsPage() {
                           شروع پیگیری
                         </button>
                       )}
-                      {item.status === "in_progress" && (
+                      {false && item.status === "in_progress" && (
                         <button
                           onClick={() => updateStatus(item.id, "done")}
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 border border-emerald-100"
@@ -350,7 +451,7 @@ export default function AdminRequestsPage() {
                           انجام شد
                         </button>
                       )}
-                      {item.status !== "closed" && (
+                      {false && item.status !== "closed" && (
                         <button
                           onClick={() => updateStatus(item.id, "closed")}
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500 transition hover:bg-slate-200"
@@ -359,7 +460,7 @@ export default function AdminRequestsPage() {
                           بستن
                         </button>
                       )}
-                      {item.status === "closed" && (
+                      {false && item.status === "closed" && (
                         <button
                           onClick={() => updateStatus(item.id, "new")}
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-50 px-3 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-100"
@@ -432,7 +533,8 @@ export default function AdminRequestsPage() {
                     </div>
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">

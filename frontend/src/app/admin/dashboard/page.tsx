@@ -104,11 +104,22 @@ type CustomerStats = {
   new_requests: number;
 };
 
+const REQUEST_STATUS_LABELS: Record<string, string> = {
+  new: "جدید",
+  reviewing: "در حال بررسی",
+  pricing: "قیمت‌گذاری",
+  sent: "ارسال‌شده",
+  closed: "بسته‌شده",
+};
+
+function normalizeRequestStatus(status: string) {
+  if (status === "in_progress") return "reviewing";
+  if (status === "done") return "sent";
+  return REQUEST_STATUS_LABELS[status] ? status : "new";
+}
+
 function getStatusLabel(status: string) {
-  if (status === "in_progress") return "در حال پیگیری";
-  if (status === "done") return "انجام شده";
-  if (status === "closed") return "بسته شده";
-  return "جدید";
+  return REQUEST_STATUS_LABELS[normalizeRequestStatus(status)] || REQUEST_STATUS_LABELS.new;
 }
 
 function getTypeLabel(type: string) {
@@ -160,7 +171,12 @@ function formatDate(value?: string) {
 }
 
 function getStatusCount(stats: RequestStats | null, status: string) {
-  return stats?.statuses?.find((item) => item.status === status)?.count ?? 0;
+  const normalizedTarget = normalizeRequestStatus(status);
+  return stats?.statuses?.reduce((total, item) => {
+    return normalizeRequestStatus(item.status) === normalizedTarget
+      ? total + item.count
+      : total;
+  }, 0) ?? 0;
 }
 
 export default function DashboardPage() {
@@ -334,8 +350,8 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="در حال پیگیری"
-            value={getStatusCount(requestStats, "in_progress")}
+            title="در حال بررسی"
+            value={getStatusCount(requestStats, "reviewing")}
             icon={<Activity size={24} />}
             tone="red"
             href="/admin/requests"

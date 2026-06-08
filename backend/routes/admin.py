@@ -146,7 +146,7 @@ def admin_dashboard_stats(_=Depends(require_admin)):
         total_sessions = cursor.execute("SELECT COUNT(*) FROM chat_sessions").fetchone()[0]
         total_messages = cursor.execute("SELECT COUNT(*) FROM chat_messages").fetchone()[0]
         new_requests = cursor.execute(
-            "SELECT COUNT(*) FROM customer_requests WHERE status='pending'"
+            "SELECT COUNT(*) FROM customer_requests WHERE status='new'"
         ).fetchone()[0]
 
     return {

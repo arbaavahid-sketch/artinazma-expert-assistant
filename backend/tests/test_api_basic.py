@@ -303,6 +303,31 @@ class TestCustomerRequest:
         assert data["success"] is True
         assert "request_id" in data
 
+    def test_customer_request_workflow_statuses(self, app_client, admin_headers):
+        create_res = app_client.post("/customer-requests", json={
+            "full_name": "Workflow Test",
+            "phone": "09120000000",
+            "message": "Please follow this request through the sales workflow.",
+            "subject": "Workflow",
+        })
+        assert create_res.status_code == 200
+        request_id = create_res.json()["request_id"]
+
+        for status in ["reviewing", "pricing", "sent", "closed"]:
+            res = app_client.patch(
+                f"/customer-requests/{request_id}/status",
+                headers=admin_headers,
+                json={"status": status},
+            )
+            assert res.status_code == 200
+            assert res.json()["success"] is True
+
+            list_res = app_client.get("/customer-requests?limit=10", headers=admin_headers)
+            assert list_res.status_code == 200
+            requests = list_res.json()["requests"]
+            saved = next(item for item in requests if item["id"] == request_id)
+            assert saved["status"] == status
+
     def test_create_request_short_message(self, app_client):
         res = app_client.post("/customer-requests", json={
             "full_name": "تست",

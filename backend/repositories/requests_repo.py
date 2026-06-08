@@ -3,7 +3,18 @@ from typing import Any, Dict, List
 
 from repositories.base import get_connection
 
-VALID_REQUEST_STATUSES = {"new", "in_progress", "done", "closed"}
+REQUEST_STATUS_FLOW = ("new", "reviewing", "pricing", "sent", "closed")
+VALID_REQUEST_STATUSES = set(REQUEST_STATUS_FLOW)
+LEGACY_REQUEST_STATUS_ALIASES = {
+    "in_progress": "reviewing",
+    "done": "sent",
+}
+
+
+def normalize_request_status(status: str | None) -> str:
+    normalized = (status or "new").strip()
+    normalized = LEGACY_REQUEST_STATUS_ALIASES.get(normalized, normalized)
+    return normalized if normalized in VALID_REQUEST_STATUSES else "new"
 
 
 def save_customer_request(
@@ -74,7 +85,7 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
             "request_type": row["request_type"] or "consultation",
             "subject": row["subject"] or "",
             "message": row["message"],
-            "status": row["status"] or "new",
+            "status": normalize_request_status(row["status"]),
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         }
@@ -83,8 +94,7 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
 
 
 def update_customer_request_status(request_id: int, status: str) -> bool:
-    if status not in VALID_REQUEST_STATUSES:
-        status = "new"
+    status = normalize_request_status(status)
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -134,11 +144,16 @@ def get_customer_request_stats() -> Dict[str, Any]:
 
     conn.close()
 
+    status_counts = {status: 0 for status in REQUEST_STATUS_FLOW}
+    for row in status_rows:
+        normalized_status = normalize_request_status(row["status"])
+        status_counts[normalized_status] += row["count"]
+
     return {
         "total_requests": total,
         "statuses": [
-            {"status": row["status"] or "new", "count": row["count"]}
-            for row in status_rows
+            {"status": status, "count": count}
+            for status, count in status_counts.items()
         ],
         "types": [
             {

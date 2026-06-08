@@ -8,7 +8,7 @@ logger = logging.getLogger("db_service")
 
 DB_PATH = STORAGE_DIR / "app.db"
 VALID_EXPERT_STATUSES = {"pending", "approved", "needs_edit", "rejected"}
-VALID_REQUEST_STATUSES = {"new", "in_progress", "done", "closed"}
+VALID_REQUEST_STATUSES = {"new", "reviewing", "pricing", "sent", "closed"}
 STORAGE_DIR.mkdir(exist_ok=True)
 
 # Re-exports from repository modules
