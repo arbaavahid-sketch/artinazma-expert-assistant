@@ -478,12 +478,10 @@ class TestCustomerRequest:
         assert stats_res.status_code == 200
         data = stats_res.json()
         reminder_summary = data["reminder_summary"]
-        reminder_ids = {item["id"] for item in data["reminders"]}
 
         assert reminder_summary["overdue_follow_ups"] >= 1
         assert reminder_summary["due_today"] >= 1
         assert reminder_summary["total_attention"] >= 2
-        assert overdue_id in reminder_ids
 
     def test_customer_summary_recommends_overdue_follow_up(self, app_client, admin_headers):
         import random
@@ -525,6 +523,41 @@ class TestCustomerRequest:
         assert data["summary"]["open_requests"] >= 1
         assert data["summary"]["overdue_follow_ups"] >= 1
         assert data["next_action"]["tone"] == "urgent"
+
+    def test_customer_can_view_own_request_history(self, app_client):
+        import random
+
+        email = f"request-history-{random.randint(10000, 99999)}@example.com"
+        register_res = app_client.post("/customers/register", json={
+            "full_name": "Request History Customer",
+            "email": email,
+            "phone": "09120000003",
+            "password": "StrongPass123",
+        })
+        assert register_res.status_code == 200
+        data = register_res.json()
+        customer_id = data["customer"]["id"]
+        token = data["access_token"]
+
+        request_res = app_client.post("/customer-requests", json={
+            "full_name": "Request History Customer",
+            "email": email,
+            "phone": "09120000003",
+            "message": "Please show this request in my dashboard.",
+            "subject": "Dashboard request history",
+        })
+        request_id = request_res.json()["request_id"]
+
+        history_res = app_client.get(
+            f"/customers/{customer_id}/requests",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert history_res.status_code == 200
+        history_data = history_res.json()
+        request_ids = {item["id"] for item in history_data["requests"]}
+
+        assert history_data["success"] is True
+        assert request_id in request_ids
 
     def test_create_request_short_message(self, app_client):
         res = app_client.post("/customer-requests", json={

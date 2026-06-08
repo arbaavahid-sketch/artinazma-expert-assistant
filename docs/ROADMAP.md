@@ -95,6 +95,17 @@
 - [x] 7.5 خلاصه هوشمند مشتری و پیشنهاد اقدام بعدی در صفحه مشتری/درخواست
   - Status: added admin customer summary API with rule-based next-action recommendations and surfaced it in `/admin/customers` with request counts, overdue/open indicators, latest related request, and recommended follow-up action.
 
+## فاز 8: شفافیت پیگیری برای مشتری
+
+هدف: مشتری بتواند مسیر درخواست‌ها، پاسخ‌ها و اقدام‌های بعدی را بدون نیاز به تماس مکرر در حساب خودش دنبال کند.
+
+- [x] 8.1 نمایش درخواست‌های ثبت‌شده و وضعیت پیگیری در داشبورد مشتری
+  - Status: added authenticated customer request-history API and surfaced submitted requests, open count, status, assigned owner, and follow-up date in `/customer-dashboard`.
+- [ ] 8.2 صفحه جزئیات درخواست مشتری با timeline تغییر وضعیت و پیام‌های مرتبط
+- [ ] 8.3 اعلان خودکار داخل اپ وقتی وضعیت درخواست تغییر می‌کند
+- [ ] 8.4 امکان ارسال توضیح/فایل تکمیلی از سمت مشتری برای درخواست باز
+- [ ] 8.5 خروجی/چاپ خلاصه درخواست برای مشتری و تیم فروش
+
 ## ترتیب اجرای پیشنهادی
 
 1. شروع از فاز 1، مورد 1.1

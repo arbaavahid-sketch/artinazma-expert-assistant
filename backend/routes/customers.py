@@ -25,6 +25,7 @@ from utils.deps import limiter, require_admin
 from db_service import (
     save_customer_request,
     get_customer_requests,
+    get_customer_requests_for_contact,
     get_customer_request_by_id,
     update_customer_request_status,
     update_customer_request_crm_fields,
@@ -361,6 +362,21 @@ def customer_change_password(customer_id: int, request: CustomerChangePasswordRe
         new_password=request.new_password,
     )
     return result
+
+
+@router.get("/customers/{customer_id}/requests", tags=["Customers"], summary="List customer request history")
+def customer_request_history(customer_id: int, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        return {"success": False, "requests": [], "total": 0}
+
+    requests = get_customer_requests_for_contact(
+        email=customer.get("email", ""),
+        phone=customer.get("phone", ""),
+        limit=20,
+    )
+    return {"success": True, "requests": requests, "total": len(requests)}
 
 
 # -- Chat Sessions ------------------------------------------------------------

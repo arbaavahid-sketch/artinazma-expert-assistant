@@ -28,6 +28,7 @@ import {
   Search,
   Hash,
   Loader2,
+  FileText,
 } from "lucide-react";
 
 type Customer = {
@@ -56,6 +57,19 @@ type ChatHistorySearchResult = {
   created_at: string;
 };
 
+type CustomerRequestItem = {
+  id: number;
+  request_type: string;
+  subject: string;
+  message: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+  follow_up_at: string;
+  created_at: string;
+  updated_at?: string | null;
+};
+
 function formatDate(value?: string, locale: "fa" | "en" = "fa") {
   if (!value) return locale === "en" ? "Unknown" : "نامشخص";
 
@@ -71,6 +85,22 @@ function formatDate(value?: string, locale: "fa" | "en" = "fa") {
 
 function displayNameForLocale(name: string | undefined) {
   return (name || "").trim();
+}
+
+function getRequestStatusLabel(status: string, isEn: boolean) {
+  if (status === "reviewing") return isEn ? "Under review" : "در حال بررسی";
+  if (status === "pricing") return isEn ? "Pricing" : "قیمت‌گذاری";
+  if (status === "sent") return isEn ? "Sent" : "ارسال‌شده";
+  if (status === "closed") return isEn ? "Closed" : "بسته‌شده";
+  return isEn ? "New" : "جدید";
+}
+
+function getRequestStatusClass(status: string) {
+  if (status === "closed") return "bg-slate-100 text-slate-600";
+  if (status === "sent") return "bg-emerald-50 text-emerald-700";
+  if (status === "pricing") return "bg-purple-50 text-purple-700";
+  if (status === "reviewing") return "bg-amber-50 text-amber-700";
+  return "bg-blue-50 text-blue-700";
 }
 
 function latinizePersianName(name: string) {
@@ -128,6 +158,8 @@ export default function CustomerDashboardPage() {
   const [sessionSearch, setSessionSearch] = useState("");
   const [historySearchResults, setHistorySearchResults] = useState<ChatHistorySearchResult[]>([]);
   const [historySearchLoading, setHistorySearchLoading] = useState(false);
+  const [customerRequests, setCustomerRequests] = useState<CustomerRequestItem[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
 
   // Notifications
   type Notification = { id: number; message: string; sender: string; is_read: number; created_at: string };
@@ -158,6 +190,22 @@ export default function CustomerDashboardPage() {
       setUnreadCount(data.unread_count || 0);
     } catch {
       /* ignore */
+    }
+  }
+
+  async function loadCustomerRequests(customerId: number) {
+    setRequestsLoading(true);
+    try {
+      const res = await customerFetch(
+        apiUrl(`/customers/${customerId}/requests`),
+        { cache: "no-store" },
+      );
+      const data = await res.json();
+      setCustomerRequests(data.requests || []);
+    } catch {
+      setCustomerRequests([]);
+    } finally {
+      setRequestsLoading(false);
     }
   }
 
@@ -220,6 +268,7 @@ export default function CustomerDashboardPage() {
     setProfilePhone(parsed.phone || "");
     loadSessions(parsed.id).finally(() => setLoading(false));
     loadNotifications(parsed.id);
+    loadCustomerRequests(parsed.id);
   }, []);
   async function saveProfile() {
     if (!customer) return;
@@ -837,6 +886,96 @@ ${msgHtml}
                   </div>
                 </div>
               )}
+            </div>
+
+            <div className="ui-card rounded-[32px] p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">
+                    {isEn ? "My requests" : "درخواست‌های من"}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {isEn ? "Track submitted consultation and inquiry requests." : "وضعیت درخواست‌های ثبت‌شده خود را پیگیری کنید."}
+                  </p>
+                </div>
+                <FileText size={22} className="shrink-0 text-blue-700" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-blue-50 p-4 text-center">
+                  <div className="text-2xl font-black text-blue-700">
+                    {customerRequests.length}
+                  </div>
+                  <div className="mt-1 text-xs font-bold text-blue-600">
+                    {isEn ? "Total" : "کل"}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-amber-50 p-4 text-center">
+                  <div className="text-2xl font-black text-amber-700">
+                    {customerRequests.filter((item) => item.status !== "closed").length}
+                  </div>
+                  <div className="mt-1 text-xs font-bold text-amber-600">
+                    {isEn ? "Open" : "باز"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 max-h-72 space-y-2 overflow-y-auto">
+                {requestsLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2].map((item) => (
+                      <div key={item} className="ui-skeleton h-20 w-full rounded-2xl" />
+                    ))}
+                  </div>
+                ) : customerRequests.length > 0 ? (
+                  customerRequests.slice(0, 8).map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-slate-100 bg-slate-50 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-black text-slate-900">
+                            {item.subject || (isEn ? "No subject" : "بدون موضوع")}
+                          </div>
+                          <div className="mt-1 text-xs font-bold text-slate-400">
+                            #{item.id} · {formatDate(item.created_at, locale)}
+                          </div>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${getRequestStatusClass(item.status)}`}>
+                          {getRequestStatusLabel(item.status, isEn)}
+                        </span>
+                      </div>
+                      {(item.assigned_to || item.follow_up_at) && (
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold text-slate-500">
+                          {item.assigned_to && (
+                            <span className="rounded-full bg-white px-2.5 py-1">
+                              {isEn ? "Owner" : "مسئول"}: {item.assigned_to}
+                            </span>
+                          )}
+                          {item.follow_up_at && (
+                            <span className="rounded-full bg-white px-2.5 py-1">
+                              {isEn ? "Follow-up" : "پیگیری"}: {formatDate(item.follow_up_at, locale)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">
+                    {isEn ? "No submitted requests yet." : "هنوز درخواستی ثبت نکرده‌اید."}
+                  </div>
+                )}
+              </div>
+
+              <Link
+                href="/customer-request"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
+              >
+                <PhoneCall size={15} />
+                {isEn ? "Submit a new request" : "ثبت درخواست جدید"}
+              </Link>
             </div>
           </aside>
 

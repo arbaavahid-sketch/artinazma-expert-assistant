@@ -129,6 +129,57 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
     ]
 
 
+def get_customer_requests_for_contact(
+    email: str = "",
+    phone: str = "",
+    limit: int = 20,
+) -> List[Dict[str, Any]]:
+    email = (email or "").strip().lower()
+    phone = (phone or "").strip()
+    if not email and not phone:
+        return []
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, full_name, company, phone, email, request_type,
+               subject, message, status, priority, assigned_to,
+               follow_up_at, created_at, updated_at
+        FROM customer_requests
+        WHERE (lower(email) = ? AND ? <> '')
+           OR (phone = ? AND ? <> '')
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (email, email, phone, phone, limit),
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": row["id"],
+            "full_name": row["full_name"],
+            "company": row["company"] or "",
+            "phone": row["phone"],
+            "email": row["email"] or "",
+            "request_type": row["request_type"] or "consultation",
+            "subject": row["subject"] or "",
+            "message": row["message"],
+            "status": normalize_request_status(row["status"]),
+            "priority": normalize_request_priority(row["priority"]),
+            "assigned_to": row["assigned_to"] or "",
+            "follow_up_at": row["follow_up_at"] or "",
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
+        for row in rows
+    ]
+
+
 def get_customer_request_by_id(request_id: int) -> Dict[str, Any] | None:
     conn = get_connection()
     cursor = conn.cursor()
