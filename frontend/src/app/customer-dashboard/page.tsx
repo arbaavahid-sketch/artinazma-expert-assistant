@@ -929,8 +929,9 @@ ${msgHtml}
                   </div>
                 ) : customerRequests.length > 0 ? (
                   customerRequests.slice(0, 8).map((item) => (
-                    <div
+                    <Link
                       key={item.id}
+                      href={`/customer-dashboard/requests/${item.id}`}
                       className="rounded-2xl border border-slate-100 bg-slate-50 p-3"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -960,7 +961,7 @@ ${msgHtml}
                           )}
                         </div>
                       )}
-                    </div>
+                    </Link>
                   ))
                 ) : (
                   <div className="rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">

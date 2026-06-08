@@ -86,6 +86,7 @@ from repositories.requests_repo import (
     save_customer_request,
     get_customer_requests,
     get_customer_requests_for_contact,
+    get_customer_request_for_contact_by_id,
     get_customer_request_by_id,
     update_customer_request_status,
     update_customer_request_crm_fields,
@@ -482,6 +483,7 @@ from repositories.requests_repo import (
     save_customer_request,
     get_customer_requests,
     get_customer_requests_for_contact,
+    get_customer_request_for_contact_by_id,
     update_customer_request_status,
     get_customer_request_stats,
 )

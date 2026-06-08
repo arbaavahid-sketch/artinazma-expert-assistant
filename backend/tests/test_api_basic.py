@@ -559,6 +559,17 @@ class TestCustomerRequest:
         assert history_data["success"] is True
         assert request_id in request_ids
 
+        detail_res = app_client.get(
+            f"/customers/{customer_id}/requests/{request_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert detail_res.status_code == 200
+        detail_data = detail_res.json()
+
+        assert detail_data["success"] is True
+        assert detail_data["request"]["id"] == request_id
+        assert detail_data["timeline"][0]["key"] == "created"
+
     def test_create_request_short_message(self, app_client):
         res = app_client.post("/customer-requests", json={
             "full_name": "تست",

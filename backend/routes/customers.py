@@ -26,6 +26,7 @@ from db_service import (
     save_customer_request,
     get_customer_requests,
     get_customer_requests_for_contact,
+    get_customer_request_for_contact_by_id,
     get_customer_request_by_id,
     update_customer_request_status,
     update_customer_request_crm_fields,
@@ -377,6 +378,78 @@ def customer_request_history(customer_id: int, current_user: dict = Depends(get_
         limit=20,
     )
     return {"success": True, "requests": requests, "total": len(requests)}
+
+
+def _customer_request_timeline(request_data: dict) -> list[dict]:
+    status = request_data.get("status", "new")
+    timeline = [
+        {
+            "key": "created",
+            "label": "درخواست ثبت شد",
+            "description": "درخواست شما در سامانه آرتین آزما ثبت شد.",
+            "at": request_data.get("created_at", ""),
+            "state": "done",
+        }
+    ]
+
+    if status != "new":
+        timeline.append({
+            "key": "status",
+            "label": REQUEST_STATUS_LABELS.get(status, status),
+            "description": "وضعیت درخواست توسط تیم آرتین آزما به‌روزرسانی شده است.",
+            "at": request_data.get("updated_at") or request_data.get("created_at", ""),
+            "state": "done",
+        })
+    else:
+        timeline.append({
+            "key": "status",
+            "label": "در انتظار بررسی",
+            "description": "تیم آرتین آزما درخواست شما را بررسی خواهد کرد.",
+            "at": "",
+            "state": "current",
+        })
+
+    if request_data.get("follow_up_at"):
+        timeline.append({
+            "key": "follow_up",
+            "label": "موعد پیگیری",
+            "description": "برای این درخواست زمان پیگیری داخلی ثبت شده است.",
+            "at": request_data.get("follow_up_at", ""),
+            "state": "planned",
+        })
+
+    if status == "closed":
+        timeline.append({
+            "key": "closed",
+            "label": "پرونده بسته شد",
+            "description": "پیگیری این درخواست پایان یافته است.",
+            "at": request_data.get("updated_at") or request_data.get("created_at", ""),
+            "state": "done",
+        })
+
+    return timeline
+
+
+@router.get("/customers/{customer_id}/requests/{request_id}", tags=["Customers"], summary="Get customer request detail")
+def customer_request_detail(customer_id: int, request_id: int, current_user: dict = Depends(get_current_customer)):
+    require_customer_match(current_user["customer_id"], customer_id)
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        return {"success": False, "message": "Customer not found."}
+
+    request_data = get_customer_request_for_contact_by_id(
+        request_id=request_id,
+        email=customer.get("email", ""),
+        phone=customer.get("phone", ""),
+    )
+    if not request_data:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    return {
+        "success": True,
+        "request": request_data,
+        "timeline": _customer_request_timeline(request_data),
+    }
 
 
 # -- Chat Sessions ------------------------------------------------------------

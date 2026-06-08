@@ -101,7 +101,8 @@
 
 - [x] 8.1 نمایش درخواست‌های ثبت‌شده و وضعیت پیگیری در داشبورد مشتری
   - Status: added authenticated customer request-history API and surfaced submitted requests, open count, status, assigned owner, and follow-up date in `/customer-dashboard`.
-- [ ] 8.2 صفحه جزئیات درخواست مشتری با timeline تغییر وضعیت و پیام‌های مرتبط
+- [x] 8.2 صفحه جزئیات درخواست مشتری با timeline تغییر وضعیت و پیام‌های مرتبط
+  - Status: added secure customer request detail API with derived timeline and a `/customer-dashboard/requests/[id]` detail page linked from the customer dashboard request cards.
 - [ ] 8.3 اعلان خودکار داخل اپ وقتی وضعیت درخواست تغییر می‌کند
 - [ ] 8.4 امکان ارسال توضیح/فایل تکمیلی از سمت مشتری برای درخواست باز
 - [ ] 8.5 خروجی/چاپ خلاصه درخواست برای مشتری و تیم فروش
