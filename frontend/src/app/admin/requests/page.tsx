@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { adminUrl } from "@/lib/api";
+import { adminUrl, apiUrl } from "@/lib/api";
 import {
   ArrowDownUp,
   Building2,
   CalendarDays,
   CheckCircle2,
   Clock3,
+  FileText,
   Inbox,
   Mail,
   Phone,
@@ -36,6 +37,15 @@ type CustomerRequest = {
   follow_up_at: string;
   created_at: string;
   updated_at: string | null;
+  updates?: CustomerRequestUpdate[];
+};
+
+type CustomerRequestUpdate = {
+  id: number;
+  message: string;
+  file_name: string;
+  file_url: string;
+  created_at: string;
 };
 
 const REQUEST_PRIORITIES = [
@@ -917,6 +927,41 @@ export default function AdminRequestsPage() {
                       <div className="whitespace-pre-wrap leading-8 text-slate-700">
                         {item.message || "-"}
                       </div>
+
+                      {!!item.updates?.length && (
+                        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                          <div className="mb-3 text-sm font-black text-blue-800">
+                            توضیحات تکمیلی مشتری ({item.updates.length})
+                          </div>
+
+                          <div className="max-h-64 space-y-2 overflow-y-auto">
+                            {item.updates.map((update) => (
+                              <div
+                                key={update.id}
+                                className="rounded-2xl bg-white p-3 text-sm leading-7 text-slate-700"
+                              >
+                                <div className="whitespace-pre-wrap">
+                                  {update.message}
+                                </div>
+                                {update.file_url && (
+                                  <a
+                                    href={apiUrl(update.file_url)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-2 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-50"
+                                  >
+                                    <FileText size={14} />
+                                    {update.file_name || "فایل پیوست"}
+                                  </a>
+                                )}
+                                <div className="mt-2 text-xs font-bold text-slate-400">
+                                  {formatDate(update.created_at)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {item.updated_at && (
                         <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs text-slate-500">

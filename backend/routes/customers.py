@@ -1,6 +1,9 @@
 import logging
+import re
+import uuid
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
 from typing import Optional
 
@@ -27,6 +30,8 @@ from db_service import (
     get_customer_requests,
     get_customer_requests_for_contact,
     get_customer_request_for_contact_by_id,
+    save_customer_request_update,
+    get_customer_request_updates,
     get_customer_request_by_id,
     update_customer_request_status,
     update_customer_request_crm_fields,
@@ -35,6 +40,7 @@ from db_service import (
     create_customer,
     authenticate_customer,
     get_customer_by_id,
+    get_customer_by_contact,
     update_customer_profile,
     change_customer_password,
     create_chat_session,
@@ -79,6 +85,21 @@ from security_middleware import login_tracker
 logger = logging.getLogger("artin_scheduler")
 
 router = APIRouter()
+
+REQUEST_UPDATE_UPLOAD_DIR = Path("uploads") / "customer_request_updates"
+REQUEST_UPDATE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_REQUEST_UPDATE_EXTENSIONS = {
+    ".pdf",
+    ".txt",
+    ".csv",
+    ".xlsx",
+    ".xls",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+}
+MAX_REQUEST_UPDATE_FILE_SIZE = 10 * 1024 * 1024
 
 
 REQUEST_STATUS_LABELS = {
@@ -184,12 +205,27 @@ def customer_request_status(request_id: int, request: CustomerRequestStatusUpdat
 
     updated_request = get_customer_request_by_id(request_id)
     if updated_request:
+        status_label = REQUEST_STATUS_LABELS.get(
+            updated_request.get("status", ""),
+            updated_request.get("status", ""),
+        )
         notify_request_status_changed(
             request_id=request_id,
             full_name=updated_request.get("full_name", ""),
             subject=updated_request.get("subject", ""),
-            status_label=REQUEST_STATUS_LABELS.get(updated_request.get("status", ""), updated_request.get("status", "")),
+            status_label=status_label,
         )
+        customer = get_customer_by_contact(
+            email=updated_request.get("email", ""),
+            phone=updated_request.get("phone", ""),
+        )
+        if customer:
+            subject = updated_request.get("subject") or f"#{request_id}"
+            save_customer_notification(
+                customer["id"],
+                f"وضعیت درخواست «{subject}» به «{status_label}» تغییر کرد.",
+                sender="system",
+            )
 
     return {"success": True, "message": "Status updated."}
 
@@ -430,6 +466,16 @@ def _customer_request_timeline(request_data: dict) -> list[dict]:
     return timeline
 
 
+def _safe_request_update_filename(file_name: str) -> str:
+    suffix = Path(file_name or "").suffix.lower()
+    if suffix not in ALLOWED_REQUEST_UPDATE_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Unsupported file type.")
+
+    base = Path(file_name).stem[:80] or "attachment"
+    base = re.sub(r"[^A-Za-z0-9._-]+", "-", base).strip("-") or "attachment"
+    return f"{uuid.uuid4().hex}_{base}{suffix}"
+
+
 @router.get("/customers/{customer_id}/requests/{request_id}", tags=["Customers"], summary="Get customer request detail")
 def customer_request_detail(customer_id: int, request_id: int, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], customer_id)
@@ -448,8 +494,64 @@ def customer_request_detail(customer_id: int, request_id: int, current_user: dic
     return {
         "success": True,
         "request": request_data,
+        "updates": get_customer_request_updates(request_id),
         "timeline": _customer_request_timeline(request_data),
     }
+
+
+@router.post("/customers/{customer_id}/requests/{request_id}/updates", tags=["Customers"], summary="Add customer request update")
+async def customer_request_update_create(
+    customer_id: int,
+    request_id: int,
+    message: str = Form(""),
+    file: UploadFile | None = File(None),
+    current_user: dict = Depends(get_current_customer),
+):
+    require_customer_match(current_user["customer_id"], customer_id)
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        return {"success": False, "message": "Customer not found."}
+
+    request_data = get_customer_request_for_contact_by_id(
+        request_id=request_id,
+        email=customer.get("email", ""),
+        phone=customer.get("phone", ""),
+    )
+    if not request_data:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if request_data.get("status") == "closed":
+        raise HTTPException(status_code=400, detail="Closed requests cannot be updated.")
+
+    clean_message = (message or "").strip()
+    if len(clean_message) < 3 and not file:
+        raise HTTPException(status_code=400, detail="Message or file is required.")
+
+    file_name = ""
+    file_url = ""
+    if file and file.filename:
+        safe_name = _safe_request_update_filename(file.filename)
+        content = await file.read()
+        if len(content) > MAX_REQUEST_UPDATE_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="File is too large.")
+        file_path = REQUEST_UPDATE_UPLOAD_DIR / safe_name
+        file_path.write_bytes(content)
+        file_name = file.filename
+        file_url = f"/uploads/customer_request_updates/{safe_name}"
+
+    update_id = save_customer_request_update(
+        request_id=request_id,
+        customer_id=customer_id,
+        message=clean_message or "فایل تکمیلی ارسال شد.",
+        file_name=file_name,
+        file_url=file_url,
+    )
+    save_customer_notification(
+        customer_id,
+        f"توضیح تکمیلی شما برای درخواست #{request_id} ثبت شد.",
+        sender="system",
+    )
+
+    return {"success": True, "update_id": update_id, "message": "Update submitted."}
 
 
 # -- Chat Sessions ------------------------------------------------------------

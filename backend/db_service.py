@@ -44,6 +44,7 @@ from repositories.customer_repo import (
     create_customer,
     authenticate_customer,
     get_customer_by_id,
+    get_customer_by_contact,
     get_all_customers,
     get_customer_sessions,
     set_customer_blocked,
@@ -87,6 +88,8 @@ from repositories.requests_repo import (
     get_customer_requests,
     get_customer_requests_for_contact,
     get_customer_request_for_contact_by_id,
+    save_customer_request_update,
+    get_customer_request_updates,
     get_customer_request_by_id,
     update_customer_request_status,
     update_customer_request_crm_fields,
@@ -285,6 +288,20 @@ def init_db():
         """)
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS customer_request_updates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id INTEGER NOT NULL,
+            customer_id INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            file_name TEXT DEFAULT '',
+            file_url TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (request_id) REFERENCES customer_requests(id),
+            FOREIGN KEY (customer_id) REFERENCES customers(id)
+        )
+        """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS password_reset_tokens (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             customer_id INTEGER NOT NULL,
@@ -317,6 +334,7 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_status ON customer_requests(status)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_priority ON customer_requests(priority)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_follow_up ON customer_requests(follow_up_at)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_request_updates_request ON customer_request_updates(request_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_customer ON customer_notifications(customer_id, is_read)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_memories_user ON user_memories(user_id)")
@@ -445,6 +463,7 @@ from repositories.customer_repo import (
     create_customer,
     authenticate_customer,
     get_customer_by_id,
+    get_customer_by_contact,
     get_all_customers,
     get_customer_sessions,
     set_customer_blocked,
@@ -484,6 +503,8 @@ from repositories.requests_repo import (
     get_customer_requests,
     get_customer_requests_for_contact,
     get_customer_request_for_contact_by_id,
+    save_customer_request_update,
+    get_customer_request_updates,
     update_customer_request_status,
     get_customer_request_stats,
 )

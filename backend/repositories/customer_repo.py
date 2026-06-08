@@ -116,6 +116,41 @@ def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
     }
 
 
+def get_customer_by_contact(email: str = "", phone: str = "") -> Dict[str, Any] | None:
+    email = (email or "").strip().lower()
+    phone = (phone or "").strip()
+    if not email and not phone:
+        return None
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, full_name, email, company, phone, created_at
+        FROM customers
+        WHERE (lower(email) = ? AND ? <> '')
+           OR (phone = ? AND ? <> '')
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (email, email, phone, phone),
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row["id"],
+        "full_name": row["full_name"],
+        "email": row["email"],
+        "company": row["company"] or "",
+        "phone": row["phone"] or "",
+        "created_at": row["created_at"],
+    }
+
+
 def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]:
     """لیست همه مشتریان به همراه آمار جلسات و پیام‌ها."""
     conn = get_connection()

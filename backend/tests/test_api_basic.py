@@ -570,6 +570,69 @@ class TestCustomerRequest:
         assert detail_data["request"]["id"] == request_id
         assert detail_data["timeline"][0]["key"] == "created"
 
+        update_res = app_client.post(
+            f"/customers/{customer_id}/requests/{request_id}/updates",
+            headers={"Authorization": f"Bearer {token}"},
+            data={"message": "Additional sample details are attached."},
+            files={"file": ("sample.txt", b"sample details", "text/plain")},
+        )
+        assert update_res.status_code == 200
+        assert update_res.json()["success"] is True
+
+        updated_detail_res = app_client.get(
+            f"/customers/{customer_id}/requests/{request_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        updated_detail = updated_detail_res.json()
+        assert len(updated_detail["updates"]) >= 1
+        assert updated_detail["updates"][-1]["file_name"] == "sample.txt"
+
+        admin_list_res = app_client.get("/customer-requests?limit=20", headers={"X-Admin-Key": "test-admin-key-12345"})
+        admin_request = next(item for item in admin_list_res.json()["requests"] if item["id"] == request_id)
+        assert admin_request["updates"][-1]["message"] == "Additional sample details are attached."
+
+    def test_status_update_creates_customer_notification(self, app_client, admin_headers):
+        import random
+
+        email = f"status-notify-{random.randint(10000, 99999)}@example.com"
+        register_res = app_client.post("/customers/register", json={
+            "full_name": "Status Notify Customer",
+            "email": email,
+            "phone": "09120000004",
+            "password": "StrongPass123",
+        })
+        assert register_res.status_code == 200
+        data = register_res.json()
+        customer_id = data["customer"]["id"]
+        token = data["access_token"]
+
+        request_res = app_client.post("/customer-requests", json={
+            "full_name": "Status Notify Customer",
+            "email": email,
+            "phone": "09120000004",
+            "message": "Please notify me when status changes.",
+            "subject": "Status notification",
+        })
+        request_id = request_res.json()["request_id"]
+
+        update_res = app_client.patch(
+            f"/customer-requests/{request_id}/status",
+            headers=admin_headers,
+            json={"status": "reviewing"},
+        )
+        assert update_res.status_code == 200
+        assert update_res.json()["success"] is True
+
+        notifications_res = app_client.get(
+            f"/customers/{customer_id}/notifications",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert notifications_res.status_code == 200
+        notifications = notifications_res.json()
+
+        assert notifications["unread_count"] >= 1
+        assert any("Status notification" in item["message"] for item in notifications["notifications"])
+
     def test_create_request_short_message(self, app_client):
         res = app_client.post("/customer-requests", json={
             "full_name": "تست",

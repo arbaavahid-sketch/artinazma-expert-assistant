@@ -124,6 +124,7 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
             "follow_up_at": row["follow_up_at"] or "",
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
+            "updates": get_customer_request_updates(row["id"]),
         }
         for row in rows
     ]
@@ -229,7 +230,56 @@ def get_customer_request_for_contact_by_id(
         "follow_up_at": row["follow_up_at"] or "",
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
+        "updates": get_customer_request_updates(row["id"]),
     }
+
+
+def save_customer_request_update(
+    request_id: int,
+    customer_id: int,
+    message: str,
+    file_name: str = "",
+    file_url: str = "",
+) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO customer_request_updates
+        (request_id, customer_id, message, file_name, file_url, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            request_id,
+            customer_id,
+            message.strip(),
+            file_name.strip(),
+            file_url.strip(),
+            datetime.now().isoformat(timespec="seconds"),
+        ),
+    )
+    update_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return update_id
+
+
+def get_customer_request_updates(request_id: int) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, request_id, customer_id, message, file_name, file_url, created_at
+        FROM customer_request_updates
+        WHERE request_id = ?
+        ORDER BY id ASC
+        """,
+        (request_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 
 def get_customer_request_by_id(request_id: int) -> Dict[str, Any] | None:

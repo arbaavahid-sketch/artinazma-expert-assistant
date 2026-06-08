@@ -11,10 +11,14 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  Download,
   FileText,
   Loader2,
   Mail,
+  Paperclip,
   Phone,
+  Printer,
+  Send,
   UserRound,
 } from "lucide-react";
 
@@ -49,6 +53,14 @@ type TimelineItem = {
   description: string;
   at: string;
   state: "done" | "current" | "planned";
+};
+
+type RequestUpdate = {
+  id: number;
+  message: string;
+  file_name: string;
+  file_url: string;
+  created_at: string;
 };
 
 function formatDate(value?: string, locale: "fa" | "en" = "fa") {
@@ -109,14 +121,35 @@ function localizeTimeline(item: TimelineItem, isEn: boolean) {
   return labels[item.key] ? { ...item, ...labels[item.key] } : item;
 }
 
+function safeFilePart(value: string) {
+  return value.replace(/[\\/:*?"<>|]+/g, "-").trim().slice(0, 80) || "request";
+}
+
 export default function CustomerRequestDetailPage() {
   const params = useParams<{ id: string }>();
   const { locale } = useI18n();
   const isEn = locale === "en";
   const [request, setRequest] = useState<CustomerRequestDetail | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [updates, setUpdates] = useState<RequestUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [customerId, setCustomerId] = useState<number | null>(null);
+  const [updateMessage, setUpdateMessage] = useState("");
+  const [updateFile, setUpdateFile] = useState<File | null>(null);
+  const [sendingUpdate, setSendingUpdate] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState("");
+
+  async function loadRequestDetail(nextCustomerId: number, requestId: number) {
+    const res = await customerFetch(apiUrl(`/customers/${nextCustomerId}/requests/${requestId}`), {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    setRequest(data.request || null);
+    setTimeline(data.timeline || []);
+    setUpdates(data.updates || []);
+  }
 
   useEffect(() => {
     const raw = localStorage.getItem("artin_customer");
@@ -126,6 +159,7 @@ export default function CustomerRequestDetailPage() {
     }
 
     const customer = JSON.parse(raw) as Customer;
+    setCustomerId(customer.id);
     const requestId = Number(params.id);
     if (!requestId) {
       setError(isEn ? "Invalid request id." : "شناسه درخواست معتبر نیست.");
@@ -133,27 +167,102 @@ export default function CustomerRequestDetailPage() {
       return;
     }
 
-    customerFetch(apiUrl(`/customers/${customer.id}/requests/${requestId}`), {
-      cache: "no-store",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setRequest(data.request || null);
-        setTimeline(data.timeline || []);
-      })
+    loadRequestDetail(customer.id, requestId)
       .catch(() => {
         setError(isEn ? "Request not found or access denied." : "درخواست پیدا نشد یا دسترسی مجاز نیست.");
       })
       .finally(() => setLoading(false));
   }, [isEn, params.id]);
 
+  async function submitUpdate() {
+    if (!customerId || !request) return;
+    if (!updateMessage.trim() && !updateFile) {
+      setUpdateStatus(isEn ? "Write a note or attach a file." : "یک توضیح بنویسید یا فایل ضمیمه کنید.");
+      return;
+    }
+
+    setSendingUpdate(true);
+    setUpdateStatus("");
+    try {
+      const formData = new FormData();
+      formData.append("message", updateMessage.trim());
+      if (updateFile) formData.append("file", updateFile);
+
+      const res = await customerFetch(
+        apiUrl(`/customers/${customerId}/requests/${request.id}/updates`),
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      setUpdateMessage("");
+      setUpdateFile(null);
+      setUpdateStatus(isEn ? "Your update was submitted." : "توضیح تکمیلی شما ثبت شد.");
+      await loadRequestDetail(customerId, request.id);
+    } catch {
+      setUpdateStatus(isEn ? "Could not submit update." : "ثبت توضیح تکمیلی انجام نشد.");
+    } finally {
+      setSendingUpdate(false);
+    }
+  }
+
+  function buildSummaryText() {
+    if (!request) return "";
+    const localizedTimeline = timeline.map((item) => localizeTimeline(item, isEn));
+    const lines = [
+      isEn ? "ArtinAzma Request Summary" : "خلاصه درخواست آرتین آزما",
+      "----------------------------------------",
+      `${isEn ? "Request ID" : "شناسه درخواست"}: #${request.id}`,
+      `${isEn ? "Subject" : "موضوع"}: ${request.subject || "-"}`,
+      `${isEn ? "Status" : "وضعیت"}: ${getStatusLabel(request.status, isEn)}`,
+      `${isEn ? "Priority" : "اولویت"}: ${getPriorityLabel(request.priority, isEn)}`,
+      `${isEn ? "Created at" : "تاریخ ثبت"}: ${formatDate(request.created_at, locale)}`,
+      `${isEn ? "Follow-up" : "موعد پیگیری"}: ${formatDate(request.follow_up_at, locale)}`,
+      "",
+      isEn ? "Customer" : "اطلاعات مشتری",
+      `${isEn ? "Name" : "نام"}: ${request.full_name || "-"}`,
+      `${isEn ? "Company" : "شرکت"}: ${request.company || "-"}`,
+      `${isEn ? "Phone" : "شماره تماس"}: ${request.phone || "-"}`,
+      `${isEn ? "Email" : "ایمیل"}: ${request.email || "-"}`,
+      "",
+      isEn ? "Request text" : "متن درخواست",
+      request.message || "-",
+      "",
+      isEn ? "Timeline" : "خط زمانی",
+      ...localizedTimeline.map((item) => {
+        const at = item.at ? ` - ${formatDate(item.at, locale)}` : "";
+        return `${item.label}${at}: ${item.description}`;
+      }),
+      "",
+      isEn ? "Additional information" : "توضیحات تکمیلی",
+      ...(updates.length
+        ? updates.map((item) => {
+            const file = item.file_name ? ` (${isEn ? "file" : "فایل"}: ${item.file_name})` : "";
+            return `${formatDate(item.created_at, locale)}${file}: ${item.message}`;
+          })
+        : [isEn ? "No additional information." : "توضیح تکمیلی ثبت نشده است."]),
+    ];
+
+    return lines.join("\n");
+  }
+
+  function downloadSummary() {
+    if (!request) return;
+    const blob = new Blob([buildSummaryText()], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `artinazma-request-${request.id}-${safeFilePart(request.subject || "summary")}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-5">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
           <Link
             href="/customer-dashboard"
             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
@@ -161,6 +270,25 @@ export default function CustomerRequestDetailPage() {
             <ArrowRight size={16} />
             {isEn ? "Back to dashboard" : "بازگشت به داشبورد"}
           </Link>
+
+          {request && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                <Printer size={16} />
+                {isEn ? "Print" : "چاپ"}
+              </button>
+              <button
+                onClick={downloadSummary}
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800"
+              >
+                <Download size={16} />
+                {isEn ? "Download summary" : "دانلود خلاصه"}
+              </button>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -240,6 +368,103 @@ export default function CustomerRequestDetailPage() {
                     );
                   })}
                 </div>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center gap-2">
+                  <Paperclip size={20} className="text-blue-700" />
+                  <h2 className="text-xl font-black text-slate-900">
+                    {isEn ? "Additional information" : "توضیحات تکمیلی"}
+                  </h2>
+                </div>
+
+                {updates.length > 0 ? (
+                  <div className="max-h-80 space-y-3 overflow-y-auto">
+                    {updates.map((item) => (
+                      <div key={item.id} className="rounded-2xl bg-slate-50 p-4">
+                        <div className="text-sm leading-7 text-slate-700">{item.message}</div>
+                        {item.file_url && (
+                          <a
+                            href={apiUrl(item.file_url)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                          >
+                            <Paperclip size={14} />
+                            {item.file_name || (isEn ? "Attachment" : "فایل پیوست")}
+                          </a>
+                        )}
+                        <div className="mt-2 text-xs font-bold text-slate-400">
+                          {formatDate(item.created_at, locale)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">
+                    {isEn ? "No additional information has been submitted yet." : "هنوز توضیح تکمیلی برای این درخواست ثبت نشده است."}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-5">
+                  <h2 className="text-xl font-black text-slate-900">
+                    {isEn ? "Send an update" : "ارسال توضیح تکمیلی"}
+                  </h2>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    {isEn
+                      ? "Add a note or attach a supporting file for the ArtinAzma team."
+                      : "برای تیم آرتین آزما توضیح، تصویر، فایل تست یا مدرک تکمیلی ارسال کنید."}
+                  </p>
+                </div>
+
+                {request.status === "closed" ? (
+                  <div className="rounded-2xl bg-slate-50 p-5 text-center text-sm font-bold text-slate-500">
+                    {isEn ? "This request is closed." : "این درخواست بسته شده است."}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <textarea
+                      value={updateMessage}
+                      onChange={(event) => setUpdateMessage(event.target.value)}
+                      rows={5}
+                      className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white"
+                      placeholder={isEn ? "Write additional details..." : "توضیحات تکمیلی را بنویسید..."}
+                    />
+
+                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-600 transition hover:bg-white">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Paperclip size={17} className="shrink-0 text-blue-700" />
+                        <span className="truncate">
+                          {updateFile?.name || (isEn ? "Attach file" : "انتخاب فایل")}
+                        </span>
+                      </span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(event) => setUpdateFile(event.target.files?.[0] || null)}
+                      />
+                    </label>
+
+                    <button
+                      onClick={submitUpdate}
+                      disabled={sendingUpdate}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+                    >
+                      {sendingUpdate ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
+                      {sendingUpdate ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Submit update" : "ثبت توضیح تکمیلی")}
+                    </button>
+
+                    {updateStatus && (
+                      <div className="rounded-2xl bg-blue-50 p-3 text-center text-sm font-bold text-blue-700">
+                        {updateStatus}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

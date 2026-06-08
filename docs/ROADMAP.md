@@ -103,9 +103,23 @@
   - Status: added authenticated customer request-history API and surfaced submitted requests, open count, status, assigned owner, and follow-up date in `/customer-dashboard`.
 - [x] 8.2 صفحه جزئیات درخواست مشتری با timeline تغییر وضعیت و پیام‌های مرتبط
   - Status: added secure customer request detail API with derived timeline and a `/customer-dashboard/requests/[id]` detail page linked from the customer dashboard request cards.
-- [ ] 8.3 اعلان خودکار داخل اپ وقتی وضعیت درخواست تغییر می‌کند
-- [ ] 8.4 امکان ارسال توضیح/فایل تکمیلی از سمت مشتری برای درخواست باز
-- [ ] 8.5 خروجی/چاپ خلاصه درخواست برای مشتری و تیم فروش
+- [x] 8.3 اعلان خودکار داخل اپ وقتی وضعیت درخواست تغییر می‌کند
+  - Status: admin status updates now create unread in-app customer notifications for the matching customer account based on request email/phone.
+- [x] 8.4 امکان ارسال توضیح/فایل تکمیلی از سمت مشتری برای درخواست باز
+  - Status: added request update storage, authenticated customer update upload endpoint, and a detail-page form for submitting notes and attachments on open requests.
+- [x] 8.5 خروجی/چاپ خلاصه درخواست برای مشتری و تیم فروش
+  - Status: customer request detail pages now support browser printing and downloading a text summary with request status, contact information, timeline, and submitted updates.
+
+## فاز 9: تکمیل گردش کار تیم فروش/پشتیبانی
+
+هدف: اطلاعاتی که مشتری در مسیر پیگیری ارسال می‌کند برای تیم داخلی قابل مشاهده، قابل اقدام و قابل گزارش باشد.
+
+- [x] 9.1 نمایش توضیحات و فایل‌های تکمیلی مشتری در صفحه درخواست‌های ادمین
+  - Status: admin request list now receives customer-submitted request updates and displays notes, attachment links, and submission times inside each request card.
+- [ ] 9.2 اعلان ادمین برای توضیح/فایل تکمیلی جدید مشتری
+- [ ] 9.3 ثبت پاسخ داخلی/عمومی ادمین روی درخواست و نمایش پاسخ عمومی به مشتری
+- [ ] 9.4 فیلتر درخواست‌های دارای update جدید/پاسخ‌داده‌نشده
+- [ ] 9.5 گزارش SLA پیگیری درخواست‌ها برای تیم فروش
 
 ## ترتیب اجرای پیشنهادی
 
