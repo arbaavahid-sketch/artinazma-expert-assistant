@@ -107,6 +107,11 @@ class CustomerRequestStatusUpdate(BaseModel):
     status: str
 
 
+class CustomerRequestCrmUpdate(BaseModel):
+    priority: str = "normal"
+    internal_note: str = ""
+
+
 class CustomerRegisterRequest(BaseModel):
     full_name: str
     email: str

@@ -5,6 +5,8 @@ from repositories.base import get_connection
 
 REQUEST_STATUS_FLOW = ("new", "reviewing", "pricing", "sent", "closed")
 VALID_REQUEST_STATUSES = set(REQUEST_STATUS_FLOW)
+REQUEST_PRIORITIES = ("low", "normal", "high", "urgent")
+VALID_REQUEST_PRIORITIES = set(REQUEST_PRIORITIES)
 LEGACY_REQUEST_STATUS_ALIASES = {
     "in_progress": "reviewing",
     "done": "sent",
@@ -15,6 +17,11 @@ def normalize_request_status(status: str | None) -> str:
     normalized = (status or "new").strip()
     normalized = LEGACY_REQUEST_STATUS_ALIASES.get(normalized, normalized)
     return normalized if normalized in VALID_REQUEST_STATUSES else "new"
+
+
+def normalize_request_priority(priority: str | None) -> str:
+    normalized = (priority or "normal").strip().lower()
+    return normalized if normalized in VALID_REQUEST_PRIORITIES else "normal"
 
 
 def save_customer_request(
@@ -64,7 +71,7 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
     cursor.execute(
         """
         SELECT id, full_name, company, phone, email, request_type,
-               subject, message, status, created_at, updated_at
+               subject, message, status, priority, internal_note, created_at, updated_at
         FROM customer_requests
         ORDER BY id DESC
         LIMIT ?
@@ -86,6 +93,8 @@ def get_customer_requests(limit: int = 100) -> List[Dict[str, Any]]:
             "subject": row["subject"] or "",
             "message": row["message"],
             "status": normalize_request_status(row["status"]),
+            "priority": normalize_request_priority(row["priority"]),
+            "internal_note": row["internal_note"] or "",
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         }
@@ -100,7 +109,7 @@ def get_customer_request_by_id(request_id: int) -> Dict[str, Any] | None:
     cursor.execute(
         """
         SELECT id, full_name, company, phone, email, request_type,
-               subject, message, status, created_at, updated_at
+               subject, message, status, priority, internal_note, created_at, updated_at
         FROM customer_requests
         WHERE id = ?
         """,
@@ -123,6 +132,8 @@ def get_customer_request_by_id(request_id: int) -> Dict[str, Any] | None:
         "subject": row["subject"] or "",
         "message": row["message"],
         "status": normalize_request_status(row["status"]),
+        "priority": normalize_request_priority(row["priority"]),
+        "internal_note": row["internal_note"] or "",
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -142,6 +153,36 @@ def update_customer_request_status(request_id: int, status: str) -> bool:
         WHERE id = ?
         """,
         (status, datetime.now().isoformat(timespec="seconds"), request_id),
+    )
+
+    updated = cursor.rowcount > 0
+
+    conn.commit()
+    conn.close()
+
+    return updated
+
+
+def update_customer_request_crm_fields(
+    request_id: int,
+    priority: str | None = None,
+    internal_note: str | None = None,
+) -> bool:
+    priority = normalize_request_priority(priority)
+    internal_note = (internal_note or "").strip()[:2000]
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE customer_requests
+        SET priority = ?,
+            internal_note = ?,
+            updated_at = ?
+        WHERE id = ?
+        """,
+        (priority, internal_note, datetime.now().isoformat(timespec="seconds"), request_id),
     )
 
     updated = cursor.rowcount > 0

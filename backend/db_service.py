@@ -87,6 +87,7 @@ from repositories.requests_repo import (
     get_customer_requests,
     get_customer_request_by_id,
     update_customer_request_status,
+    update_customer_request_crm_fields,
     get_customer_request_stats,
 )
 
@@ -229,10 +230,18 @@ def init_db():
             subject TEXT DEFAULT '',
             message TEXT NOT NULL,
             status TEXT DEFAULT 'new',
+            priority TEXT DEFAULT 'normal',
+            internal_note TEXT DEFAULT '',
             created_at TEXT NOT NULL,
             updated_at TEXT
         )
         """)
+
+    request_cols = [r["name"] for r in cursor.execute("PRAGMA table_info(customer_requests)").fetchall()]
+    if "priority" not in request_cols:
+        cursor.execute("ALTER TABLE customer_requests ADD COLUMN priority TEXT DEFAULT 'normal'")
+    if "internal_note" not in request_cols:
+        cursor.execute("ALTER TABLE customer_requests ADD COLUMN internal_note TEXT DEFAULT ''")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS app_settings (
@@ -298,6 +307,7 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_session ON chat_messages(session_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_email ON customer_requests(email)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_status ON customer_requests(status)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_priority ON customer_requests(priority)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_customer ON customer_notifications(customer_id, is_read)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_memories_user ON user_memories(user_id)")

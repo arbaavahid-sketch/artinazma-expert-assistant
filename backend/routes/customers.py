@@ -7,6 +7,7 @@ from typing import Optional
 from schemas.models import (
     CustomerRequestCreate,
     CustomerRequestStatusUpdate,
+    CustomerRequestCrmUpdate,
     CustomerRegisterRequest,
     CustomerLoginRequest,
     CustomerProfileUpdateRequest,
@@ -26,6 +27,7 @@ from db_service import (
     get_customer_requests,
     get_customer_request_by_id,
     update_customer_request_status,
+    update_customer_request_crm_fields,
     get_customer_request_stats,
     get_setting,
     create_customer,
@@ -188,6 +190,19 @@ def customer_request_status(request_id: int, request: CustomerRequestStatusUpdat
         )
 
     return {"success": True, "message": "Status updated."}
+
+
+@router.patch("/customer-requests/{request_id}/crm")
+def customer_request_crm(request_id: int, request: CustomerRequestCrmUpdate, _=Depends(require_admin)):
+    updated = update_customer_request_crm_fields(
+        request_id=request_id,
+        priority=request.priority,
+        internal_note=request.internal_note,
+    )
+    if not updated:
+        return {"success": False, "message": "Request not found."}
+
+    return {"success": True, "message": "CRM fields updated."}
 
 
 @router.get("/customer-requests/stats")

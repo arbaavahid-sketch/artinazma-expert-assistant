@@ -9,6 +9,8 @@ import {
   Inbox,
   Mail,
   Phone,
+  Save,
+  Flag,
   RefreshCw,
   Search,
   UserRound,
@@ -26,9 +28,40 @@ type CustomerRequest = {
   subject: string;
   message: string;
   status: string;
+  priority: string;
+  internal_note: string;
   created_at: string;
   updated_at: string | null;
 };
+
+const REQUEST_PRIORITIES = [
+  {
+    value: "low",
+    label: "کم",
+    badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
+    selectClass: "border-slate-200 bg-slate-50 text-slate-700",
+  },
+  {
+    value: "normal",
+    label: "عادی",
+    badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
+    selectClass: "border-blue-100 bg-blue-50 text-blue-700",
+  },
+  {
+    value: "high",
+    label: "بالا",
+    badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
+    selectClass: "border-amber-100 bg-amber-50 text-amber-700",
+  },
+  {
+    value: "urgent",
+    label: "فوری",
+    badgeClass: "bg-red-50 text-red-700 border-red-100",
+    selectClass: "border-red-100 bg-red-50 text-red-700",
+  },
+] as const;
+
+type RequestPriorityValue = (typeof REQUEST_PRIORITIES)[number]["value"];
 
 const REQUEST_WORKFLOW = [
   {
@@ -109,6 +142,17 @@ function getStatusClass(status: string) {
   return getStatusMeta(status).badgeClass;
 }
 
+function normalizePriority(priority?: string): RequestPriorityValue {
+  return REQUEST_PRIORITIES.some((item) => item.value === priority)
+    ? (priority as RequestPriorityValue)
+    : "normal";
+}
+
+function getPriorityMeta(priority?: string) {
+  const normalized = normalizePriority(priority);
+  return REQUEST_PRIORITIES.find((item) => item.value === normalized) || REQUEST_PRIORITIES[1];
+}
+
 function getTypeLabel(type: string) {
   if (type === "equipment") return "تجهیزات";
   if (type === "chemical") return "مواد شیمیایی / افزودنی‌ها";
@@ -138,6 +182,8 @@ export default function AdminRequestsPage() {
   const [message, setMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
+  const [crmDrafts, setCrmDrafts] = useState<Record<number, { priority: string; internal_note: string }>>({});
+  const [savingCrmId, setSavingCrmId] = useState<number | null>(null);
 
   const filteredRequests = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -154,6 +200,8 @@ export default function AdminRequestsPage() {
         item.request_type,
         item.subject,
         item.message,
+        item.internal_note,
+        getPriorityMeta(item.priority).label,
         getTypeLabel(item.request_type),
         getStatusLabel(item.status),
       ]
@@ -188,7 +236,19 @@ export default function AdminRequestsPage() {
       });
 
       const data = await res.json();
-      setRequests(data.requests || []);
+      const loadedRequests = data.requests || [];
+      setRequests(loadedRequests);
+      setCrmDrafts(
+        Object.fromEntries(
+          loadedRequests.map((item: CustomerRequest) => [
+            item.id,
+            {
+              priority: normalizePriority(item.priority),
+              internal_note: item.internal_note || "",
+            },
+          ]),
+        ),
+      );
     } catch {
       setRequests([]);
     } finally {
@@ -221,6 +281,46 @@ export default function AdminRequestsPage() {
       }
     } catch {
       setMessage("خطا در اتصال به سرور.");
+    }
+  }
+
+  function updateCrmDraft(requestId: number, patch: Partial<{ priority: string; internal_note: string }>) {
+    setCrmDrafts((prev) => ({
+      ...prev,
+      [requestId]: {
+        priority: prev[requestId]?.priority || "normal",
+        internal_note: prev[requestId]?.internal_note || "",
+        ...patch,
+      },
+    }));
+  }
+
+  async function saveCrmFields(requestId: number) {
+    const draft = crmDrafts[requestId] || { priority: "normal", internal_note: "" };
+    setMessage("");
+    setSavingCrmId(requestId);
+
+    try {
+      const res = await fetch(adminUrl(`/customer-requests/${requestId}/crm`), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(draft),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMessage("اطلاعات پیگیری داخلی ذخیره شد.");
+        await loadRequests();
+      } else {
+        setMessage(data.message || "خطا در ذخیره اطلاعات پیگیری.");
+      }
+    } catch {
+      setMessage("خطا در اتصال به سرور.");
+    } finally {
+      setSavingCrmId(null);
     }
   }
 
@@ -403,6 +503,13 @@ export default function AdminRequestsPage() {
                         <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
                           {getTypeLabel(item.request_type)}
                         </span>
+
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${getPriorityMeta(item.priority).badgeClass}`}
+                        >
+                          <Flag size={13} />
+                          {getPriorityMeta(item.priority).label}
+                        </span>
                       </div>
 
                       <h2 className="mt-3 text-xl font-black text-slate-900">
@@ -513,6 +620,48 @@ export default function AdminRequestsPage() {
                             </span>
                           </div>
                         </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-white p-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-black text-slate-900">
+                          <Flag size={16} className="text-purple-700" />
+                          پیگیری داخلی
+                        </div>
+
+                        <label className="mb-2 block text-xs font-bold text-slate-500">
+                          اولویت
+                        </label>
+                        <select
+                          value={crmDrafts[item.id]?.priority || normalizePriority(item.priority)}
+                          onChange={(event) => updateCrmDraft(item.id, { priority: event.target.value })}
+                          className={`mb-3 w-full rounded-2xl border px-3 py-2 text-sm font-bold outline-none transition focus:border-purple-400 ${getPriorityMeta(crmDrafts[item.id]?.priority || item.priority).selectClass}`}
+                        >
+                          {REQUEST_PRIORITIES.map((priority) => (
+                            <option key={priority.value} value={priority.value}>
+                              {priority.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <label className="mb-2 block text-xs font-bold text-slate-500">
+                          یادداشت داخلی
+                        </label>
+                        <textarea
+                          value={crmDrafts[item.id]?.internal_note ?? item.internal_note ?? ""}
+                          onChange={(event) => updateCrmDraft(item.id, { internal_note: event.target.value })}
+                          rows={4}
+                          className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm leading-7 text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
+                          placeholder="مثلا: با مشتری تماس گرفته شد، نیاز به پیش‌فاکتور GC دارد..."
+                        />
+
+                        <button
+                          onClick={() => saveCrmFields(item.id)}
+                          disabled={savingCrmId === item.id}
+                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-700 disabled:opacity-50"
+                        >
+                          <Save size={15} />
+                          {savingCrmId === item.id ? "در حال ذخیره..." : "ذخیره پیگیری"}
+                        </button>
                       </div>
                     </div>
 

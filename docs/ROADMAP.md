@@ -80,6 +80,17 @@
 - [x] 6.5 خروجی مدیریتی ماهانه از درخواست‌ها و کیفیت پاسخ‌ها
   - Status: added admin JSON preview and CSV export for monthly/weekly management reports with request status/type breakdown, answer feedback, response-time summary, negative-feedback follow-up list, open requests, top products/topics, and recommended management actions.
 
+## فاز 7: mini-CRM و پیگیری فروش
+
+هدف: درخواست‌های مشتری از یک لیست ساده به یک ابزار پیگیری فروش/پشتیبانی تبدیل شوند.
+
+- [x] 7.1 اولویت و یادداشت داخلی برای درخواست‌های مشتری
+  - Status: added request priority (`low`, `normal`, `high`, `urgent`) and internal admin note fields to SQLite/PostgreSQL schema, admin API, request repository, tests, and `/admin/requests` UI.
+- [ ] 7.2 مسئول پیگیری و تاریخ پیگیری بعدی برای هر درخواست
+- [ ] 7.3 فیلتر و مرتب‌سازی درخواست‌ها بر اساس اولویت، وضعیت و موعد پیگیری
+- [ ] 7.4 یادآوری درخواست‌های معطل‌مانده در داشبورد و اعلان ادمین
+- [ ] 7.5 خلاصه هوشمند مشتری و پیشنهاد اقدام بعدی در صفحه مشتری/درخواست
+
 ## ترتیب اجرای پیشنهادی
 
 1. شروع از فاز 1، مورد 1.1

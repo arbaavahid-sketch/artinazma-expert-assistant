@@ -389,6 +389,49 @@ class TestCustomerRequest:
             saved = next(item for item in requests if item["id"] == request_id)
             assert saved["status"] == status
 
+    def test_customer_request_crm_fields(self, app_client, admin_headers):
+        create_res = app_client.post("/customer-requests", json={
+            "full_name": "CRM Test",
+            "phone": "09120000000",
+            "message": "Please prioritize this customer request.",
+            "subject": "CRM fields",
+        })
+        assert create_res.status_code == 200
+        request_id = create_res.json()["request_id"]
+
+        update_res = app_client.patch(
+            f"/customer-requests/{request_id}/crm",
+            headers=admin_headers,
+            json={"priority": "urgent", "internal_note": "Call before noon."},
+        )
+        assert update_res.status_code == 200
+        assert update_res.json()["success"] is True
+
+        list_res = app_client.get("/customer-requests?limit=10", headers=admin_headers)
+        assert list_res.status_code == 200
+        saved = next(item for item in list_res.json()["requests"] if item["id"] == request_id)
+        assert saved["priority"] == "urgent"
+        assert saved["internal_note"] == "Call before noon."
+
+    def test_customer_request_invalid_priority_falls_back_to_normal(self, app_client, admin_headers):
+        create_res = app_client.post("/customer-requests", json={
+            "full_name": "Priority Test",
+            "phone": "09120000000",
+            "message": "Please normalize invalid priority.",
+            "subject": "Priority",
+        })
+        request_id = create_res.json()["request_id"]
+
+        app_client.patch(
+            f"/customer-requests/{request_id}/crm",
+            headers=admin_headers,
+            json={"priority": "impossible", "internal_note": "ok"},
+        )
+
+        list_res = app_client.get("/customer-requests?limit=10", headers=admin_headers)
+        saved = next(item for item in list_res.json()["requests"] if item["id"] == request_id)
+        assert saved["priority"] == "normal"
+
     def test_create_request_short_message(self, app_client):
         res = app_client.post("/customer-requests", json={
             "full_name": "تست",
