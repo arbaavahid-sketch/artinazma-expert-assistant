@@ -46,7 +46,7 @@
 هدف: deploy، auth، backup و monitor در محیط واقعی قابل اعتماد شوند.
 
 - [ ] 4.1 تست و اصلاح نهایی Docker Compose روی محیطی که Docker دارد
-  - وضعیت: اصلاح استاتیک انجام شد؛ backend image برای healthcheck به `curl` مجهز شد و برای frontend healthcheck اضافه شد. تست runtime با `docker compose config/build/up` هنوز به محیط دارای Docker نیاز دارد.
+  - وضعیت: اصلاح استاتیک انجام شد؛ backend image برای healthcheck به `curl` مجهز شد، frontend healthcheck اضافه شد، backend در Compose قبل از اجرا `alembic upgrade head` را اجرا می‌کند، و smoke script آماده است. تست runtime هنوز به محیط دارای Docker نیاز دارد.
 - [x] 4.2 rate limit برای admin login سمت Next.js
 - [x] 4.3 health check عمیق برای OpenAI، DB، Qdrant، Google Drive، email
 - [x] 4.4 بررسی secrets و جلوگیری از نشت service account در backup/public
@@ -66,7 +66,8 @@
   - Status: added mocked admin login + knowledge upload E2E flow and isolated E2E dev port/env to avoid stale local server conflicts.
 - [x] 5.4 CI برای backend tests، frontend lint/typecheck/test/build
   - Status: CI now includes secret/runtime-file scan, backend lint/tests, frontend typecheck/lint/unit tests/E2E Playwright smoke tests, production build, and gated Docker image build on main.
-- [ ] 5.5 smoke test برای Docker image build
+- [x] 5.5 smoke test برای Docker image build
+  - Status: added `scripts/docker_smoke.sh` and `scripts/docker_smoke.ps1` to validate compose config, build backend/frontend images, start postgres/redis/qdrant/backend/frontend, wait for health, check backend/frontend HTTP responses, and verify migrated DB schema. CI Docker job now runs the smoke script on main.
 
 ## فاز 6: قابلیت‌های کسب‌وکاری
 

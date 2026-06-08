@@ -133,7 +133,7 @@ jobs:
 
   # ── Docker build check ────────────────────────────────────────────────────────
   docker:
-    name: Docker images build
+    name: Docker compose smoke
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [security, backend, frontend]   # only build if checks pass
@@ -141,12 +141,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build backend image
-        run: docker build -t artinazma-backend ./backend
-
-      - name: Build frontend image
-        run: |
-          docker build \
-            --build-arg NEXT_PUBLIC_API_BASE_URL=https://artinazma.net/api \
-            --build-arg NEXT_PUBLIC_WS_BASE_URL=wss://artinazma.net/api \
-            -t artinazma-frontend ./frontend
+      - name: Docker compose config/build/up smoke test
+        run: bash scripts/docker_smoke.sh
+        env:
+          POSTGRES_PASSWORD: artinazma_ci_smoke_password
+          DOMAIN: localhost
+          CERTBOT_EMAIL: admin@example.com
