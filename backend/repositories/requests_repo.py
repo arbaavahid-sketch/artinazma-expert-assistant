@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 from repositories.base import get_connection
@@ -7,6 +7,12 @@ REQUEST_STATUS_FLOW = ("new", "reviewing", "pricing", "sent", "closed")
 VALID_REQUEST_STATUSES = set(REQUEST_STATUS_FLOW)
 REQUEST_PRIORITIES = ("low", "normal", "high", "urgent")
 VALID_REQUEST_PRIORITIES = set(REQUEST_PRIORITIES)
+PRIORITY_WEIGHT = {
+    "low": 1,
+    "normal": 2,
+    "high": 3,
+    "urgent": 4,
+}
 LEGACY_REQUEST_STATUS_ALIASES = {
     "in_progress": "reviewing",
     "done": "sent",
@@ -22,6 +28,24 @@ def normalize_request_status(status: str | None) -> str:
 def normalize_request_priority(priority: str | None) -> str:
     normalized = (priority or "normal").strip().lower()
     return normalized if normalized in VALID_REQUEST_PRIORITIES else "normal"
+
+
+def _parse_date(value: str | None):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value[:10]).date()
+    except ValueError:
+        return None
+
+
+def _parse_datetime(value: str | None):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00").split("+")[0])
+    except ValueError:
+        return None
 
 
 def save_customer_request(
@@ -237,12 +261,90 @@ def get_customer_request_stats() -> Dict[str, Any]:
 
     type_rows = cursor.fetchall()
 
+    cursor.execute("""
+        SELECT id, full_name, company, phone, email, request_type, subject,
+               status, priority, assigned_to, follow_up_at, created_at, updated_at
+        FROM customer_requests
+        ORDER BY created_at DESC
+        """)
+    reminder_rows = cursor.fetchall()
+
     conn.close()
 
     status_counts = {status: 0 for status in REQUEST_STATUS_FLOW}
     for row in status_rows:
         normalized_status = normalize_request_status(row["status"])
         status_counts[normalized_status] += row["count"]
+
+    today = datetime.now().date()
+    stale_before = datetime.now() - timedelta(days=3)
+    reminder_summary = {
+        "overdue_follow_ups": 0,
+        "due_today": 0,
+        "stale_open": 0,
+        "unassigned_open": 0,
+        "total_attention": 0,
+    }
+    reminders = []
+
+    for row in reminder_rows:
+        status = normalize_request_status(row["status"])
+        if status == "closed":
+            continue
+
+        priority = normalize_request_priority(row["priority"])
+        follow_up_date = _parse_date(row["follow_up_at"])
+        touched_at = _parse_datetime(row["updated_at"] or row["created_at"])
+        assigned_to = (row["assigned_to"] or "").strip()
+
+        if not assigned_to:
+            reminder_summary["unassigned_open"] += 1
+
+        reason = ""
+        if follow_up_date and follow_up_date < today:
+            reason = "overdue_follow_up"
+            reminder_summary["overdue_follow_ups"] += 1
+        elif follow_up_date and follow_up_date == today:
+            reason = "due_today"
+            reminder_summary["due_today"] += 1
+        elif not follow_up_date and touched_at and touched_at <= stale_before:
+            reason = "stale_open"
+            reminder_summary["stale_open"] += 1
+
+        if not reason:
+            continue
+
+        reminders.append({
+            "id": row["id"],
+            "full_name": row["full_name"],
+            "company": row["company"] or "",
+            "phone": row["phone"] or "",
+            "email": row["email"] or "",
+            "request_type": row["request_type"] or "consultation",
+            "subject": row["subject"] or "",
+            "status": status,
+            "priority": priority,
+            "assigned_to": assigned_to,
+            "follow_up_at": row["follow_up_at"] or "",
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"] or "",
+            "reason": reason,
+        })
+
+    reason_weight = {
+        "overdue_follow_up": 0,
+        "due_today": 1,
+        "stale_open": 2,
+    }
+    reminders.sort(
+        key=lambda item: (
+            reason_weight.get(item["reason"], 9),
+            _parse_date(item["follow_up_at"]) or today,
+            -PRIORITY_WEIGHT.get(item["priority"], 2),
+            item["created_at"],
+        )
+    )
+    reminder_summary["total_attention"] = len(reminders)
 
     return {
         "total_requests": total,
@@ -257,4 +359,6 @@ def get_customer_request_stats() -> Dict[str, Any]:
             }
             for row in type_rows
         ],
+        "reminder_summary": reminder_summary,
+        "reminders": reminders[:10],
     }

@@ -2,6 +2,8 @@
 تست‌های پایه API — سلامت سرویس و دسترسی‌های عمومی.
 """
 
+from datetime import datetime, timedelta
+
 import pytest
 
 
@@ -438,6 +440,91 @@ class TestCustomerRequest:
         list_res = app_client.get("/customer-requests?limit=10", headers=admin_headers)
         saved = next(item for item in list_res.json()["requests"] if item["id"] == request_id)
         assert saved["priority"] == "normal"
+
+    def test_customer_request_stats_include_follow_up_reminders(self, app_client, admin_headers):
+        yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
+        today = datetime.now().date().isoformat()
+
+        overdue_res = app_client.post("/customer-requests", json={
+            "full_name": "Overdue Customer",
+            "phone": "09120000000",
+            "message": "This request needs overdue follow-up.",
+            "subject": "Overdue follow up",
+        })
+        due_today_res = app_client.post("/customer-requests", json={
+            "full_name": "Today Customer",
+            "phone": "09120000001",
+            "message": "This request needs follow-up today.",
+            "subject": "Today follow up",
+        })
+        assert overdue_res.status_code == 200
+        assert due_today_res.status_code == 200
+
+        overdue_id = overdue_res.json()["request_id"]
+        due_today_id = due_today_res.json()["request_id"]
+
+        app_client.patch(
+            f"/customer-requests/{overdue_id}/crm",
+            headers=admin_headers,
+            json={"priority": "high", "assigned_to": "Sales", "follow_up_at": yesterday},
+        )
+        app_client.patch(
+            f"/customer-requests/{due_today_id}/crm",
+            headers=admin_headers,
+            json={"priority": "urgent", "assigned_to": "Support", "follow_up_at": today},
+        )
+
+        stats_res = app_client.get("/customer-requests/stats", headers=admin_headers)
+        assert stats_res.status_code == 200
+        data = stats_res.json()
+        reminder_summary = data["reminder_summary"]
+        reminder_ids = {item["id"] for item in data["reminders"]}
+
+        assert reminder_summary["overdue_follow_ups"] >= 1
+        assert reminder_summary["due_today"] >= 1
+        assert reminder_summary["total_attention"] >= 2
+        assert overdue_id in reminder_ids
+
+    def test_customer_summary_recommends_overdue_follow_up(self, app_client, admin_headers):
+        import random
+
+        yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
+        email = f"summary-customer-{random.randint(10000, 99999)}@example.com"
+        register_res = app_client.post("/customers/register", json={
+            "full_name": "Summary Customer",
+            "email": email,
+            "phone": "09120000002",
+            "password": "StrongPass123",
+        })
+        assert register_res.status_code == 200
+        assert register_res.json()["success"] is True
+        customer_id = register_res.json()["customer"]["id"]
+
+        request_res = app_client.post("/customer-requests", json={
+            "full_name": "Summary Customer",
+            "email": email,
+            "phone": "09120000002",
+            "message": "Please follow up on this urgent overdue request.",
+            "subject": "Summary overdue",
+        })
+        request_id = request_res.json()["request_id"]
+        app_client.patch(
+            f"/customer-requests/{request_id}/crm",
+            headers=admin_headers,
+            json={"priority": "urgent", "assigned_to": "Sales", "follow_up_at": yesterday},
+        )
+
+        summary_res = app_client.get(
+            f"/admin/customers/{customer_id}/summary",
+            headers=admin_headers,
+        )
+        assert summary_res.status_code == 200
+        data = summary_res.json()
+
+        assert data["summary"]["total_requests"] >= 1
+        assert data["summary"]["open_requests"] >= 1
+        assert data["summary"]["overdue_follow_ups"] >= 1
+        assert data["next_action"]["tone"] == "urgent"
 
     def test_create_request_short_message(self, app_client):
         res = app_client.post("/customer-requests", json={

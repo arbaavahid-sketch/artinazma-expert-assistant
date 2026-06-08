@@ -5,8 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { apiUrl, adminUrl } from "@/lib/api";
 import {
   Activity,
+  AlertTriangle,
   ArrowUpRight,
   BarChart3,
+  BellRing,
   Clock3,
   Database,
   Download,
@@ -63,6 +65,29 @@ type RequestStats = {
   total_requests: number;
   statuses: RequestStatus[];
   types: RequestType[];
+  reminder_summary?: {
+    overdue_follow_ups: number;
+    due_today: number;
+    stale_open: number;
+    unassigned_open: number;
+    total_attention: number;
+  };
+  reminders?: RequestReminder[];
+};
+
+type RequestReminder = {
+  id: number;
+  full_name: string;
+  company: string;
+  request_type: string;
+  subject: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+  follow_up_at: string;
+  created_at: string;
+  updated_at: string;
+  reason: string;
 };
 
 type DailyCount = { day: string; count: number };
@@ -200,6 +225,26 @@ function getStatusCount(stats: RequestStats | null, status: string) {
       ? total + item.count
       : total;
   }, 0) ?? 0;
+}
+
+function getReminderReasonLabel(reason: string) {
+  if (reason === "overdue_follow_up") return "موعد گذشته";
+  if (reason === "due_today") return "پیگیری امروز";
+  if (reason === "stale_open") return "معطل‌مانده";
+  return "نیازمند پیگیری";
+}
+
+function getReminderReasonClass(reason: string) {
+  if (reason === "overdue_follow_up") return "bg-red-50 text-red-700 border-red-100";
+  if (reason === "due_today") return "bg-amber-50 text-amber-700 border-amber-100";
+  return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function getPriorityLabel(priority: string) {
+  if (priority === "urgent") return "فوری";
+  if (priority === "high") return "بالا";
+  if (priority === "low") return "کم";
+  return "عادی";
 }
 
 export default function DashboardPage() {
@@ -385,7 +430,103 @@ export default function DashboardPage() {
             tone="red"
             href="/admin/requests"
           />
+
+          <DashboardCard
+            title="نیازمند پیگیری"
+            value={requestStats?.reminder_summary?.total_attention ?? 0}
+            icon={<BellRing size={24} />}
+            tone="red"
+            href="/admin/requests"
+          />
         </div>
+
+        {requestStats?.reminder_summary && (
+          <div className="mb-6 overflow-hidden rounded-[28px] border border-amber-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-amber-100 bg-amber-50/70 p-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-white text-amber-700">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">
+                    یادآوری پیگیری درخواست‌ها
+                  </h2>
+                  <p className="mt-1 text-sm font-bold leading-7 text-slate-600">
+                    درخواست‌هایی که موعدشان گذشته، امروز باید پیگیری شوند، یا چند روز بدون موعد مانده‌اند.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+                <div className="rounded-2xl bg-white px-4 py-3">
+                  <div className="text-2xl font-black text-red-700">
+                    {requestStats.reminder_summary.overdue_follow_ups}
+                  </div>
+                  <div className="text-xs font-bold text-slate-500">گذشته</div>
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3">
+                  <div className="text-2xl font-black text-amber-700">
+                    {requestStats.reminder_summary.due_today}
+                  </div>
+                  <div className="text-xs font-bold text-slate-500">امروز</div>
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3">
+                  <div className="text-2xl font-black text-slate-700">
+                    {requestStats.reminder_summary.stale_open}
+                  </div>
+                  <div className="text-xs font-bold text-slate-500">معطل</div>
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3">
+                  <div className="text-2xl font-black text-purple-700">
+                    {requestStats.reminder_summary.unassigned_open}
+                  </div>
+                  <div className="text-xs font-bold text-slate-500">بدون مسئول</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-h-80 space-y-2 overflow-y-auto p-4">
+              {requestStats.reminders?.length ? (
+                requestStats.reminders.map((item) => (
+                  <Link
+                    key={`${item.reason}-${item.id}`}
+                    href="/admin/requests"
+                    className="block rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:bg-white hover:shadow-sm"
+                  >
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-700">
+                            #{item.id}
+                          </span>
+                          <span className={`rounded-full border px-3 py-1 text-xs font-black ${getReminderReasonClass(item.reason)}`}>
+                            {getReminderReasonLabel(item.reason)}
+                          </span>
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
+                            {getPriorityLabel(item.priority)}
+                          </span>
+                        </div>
+                        <div className="mt-2 truncate text-sm font-black text-slate-900">
+                          {item.subject || item.full_name}
+                        </div>
+                        <div className="mt-1 truncate text-xs font-bold text-slate-500">
+                          {item.full_name} {item.company ? `• ${item.company}` : ""}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 text-xs font-bold leading-6 text-slate-500 lg:text-left">
+                        <div>مسئول: {item.assigned_to || "تعیین نشده"}</div>
+                        <div>موعد: {item.follow_up_at ? formatDate(item.follow_up_at) : "بدون موعد"}</div>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <EmptyState text="فعلاً درخواست نیازمند پیگیری فوری دیده نمی‌شود." />
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ─── Cache Stats Row ────────────────────────────────────── */}
         <div className="mb-6 grid gap-4 md:grid-cols-3">

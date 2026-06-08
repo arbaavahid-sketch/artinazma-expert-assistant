@@ -20,6 +20,8 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
+  Sparkles,
+  Target,
 } from "lucide-react";
 
 type Customer = {
@@ -45,6 +47,35 @@ type Session = {
   first_user_message?: string | null;
 };
 
+type CustomerSummary = {
+  summary: {
+    session_count: number;
+    message_count: number;
+    last_active: string | null;
+    total_requests: number;
+    open_requests: number;
+    urgent_requests: number;
+    overdue_follow_ups: number;
+    due_today: number;
+    unassigned_open: number;
+    latest_request: {
+      id: number;
+      subject: string;
+      request_type: string;
+      status: string;
+      priority: string;
+      assigned_to: string;
+      follow_up_at: string;
+      created_at: string;
+    } | null;
+  };
+  next_action: {
+    title: string;
+    reason: string;
+    tone: "urgent" | "warning" | "success" | "neutral";
+  };
+};
+
 function formatDate(value?: string) {
   if (!value) return "نامشخص";
   try {
@@ -54,6 +85,28 @@ function formatDate(value?: string) {
   } catch {
     return value;
   }
+}
+
+function getActionToneClass(tone?: string) {
+  if (tone === "urgent") return "border-red-100 bg-red-50 text-red-700";
+  if (tone === "warning") return "border-amber-100 bg-amber-50 text-amber-700";
+  if (tone === "success") return "border-emerald-100 bg-emerald-50 text-emerald-700";
+  return "border-blue-100 bg-blue-50 text-blue-700";
+}
+
+function getRequestStatusLabel(status: string) {
+  if (status === "reviewing") return "در حال بررسی";
+  if (status === "pricing") return "قیمت‌گذاری";
+  if (status === "sent") return "ارسال‌شده";
+  if (status === "closed") return "بسته‌شده";
+  return "جدید";
+}
+
+function getPriorityLabel(priority: string) {
+  if (priority === "urgent") return "فوری";
+  if (priority === "high") return "بالا";
+  if (priority === "low") return "کم";
+  return "عادی";
 }
 
 function AdminCustomersContent() {
@@ -75,6 +128,8 @@ function AdminCustomersContent() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
+  const [customerSummary, setCustomerSummary] = useState<CustomerSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const loadSessions = useCallback(async (customerId: number) => {
     setSessionsLoading(true);
@@ -86,6 +141,21 @@ function AdminCustomersContent() {
       setSessions([]);
     } finally {
       setSessionsLoading(false);
+    }
+  }, []);
+
+  const loadCustomerSummary = useCallback(async (customerId: number) => {
+    setSummaryLoading(true);
+    try {
+      const res = await fetch(adminUrl(`/admin/customers/${customerId}/summary`), {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      setCustomerSummary(data);
+    } catch {
+      setCustomerSummary(null);
+    } finally {
+      setSummaryLoading(false);
     }
   }, []);
 
@@ -147,11 +217,12 @@ function AdminCustomersContent() {
           setSelected(list[0]);
           setShowSessions(true);
           loadSessions(list[0].id);
+          loadCustomerSummary(list[0].id);
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [autoSessions, loadSessions]);
+  }, [autoSessions, loadCustomerSummary, loadSessions]);
 
   const filtered = search.trim()
     ? customers.filter(
@@ -276,7 +347,14 @@ function AdminCustomersContent() {
                 {filtered.map((c) => (
                   <button
                     key={c.id}
-                    onClick={() => { setSelected(c); setShowSessions(false); setSessions([]); loadSessions(c.id); }}
+                    onClick={() => {
+                      setSelected(c);
+                      setShowSessions(false);
+                      setSessions([]);
+                      setCustomerSummary(null);
+                      loadSessions(c.id);
+                      loadCustomerSummary(c.id);
+                    }}
                     className={`w-full rounded-2xl border p-4 text-right transition ${
                       selected?.id === c.id
                         ? "border-blue-200 bg-blue-50"
@@ -446,6 +524,96 @@ function AdminCustomersContent() {
                       پیام ارسالی
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50/40 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={17} className="text-blue-700" />
+                      <h3 className="text-sm font-black text-slate-900">
+                        خلاصه هوشمند مشتری
+                      </h3>
+                    </div>
+                    {summaryLoading && (
+                      <span className="text-xs font-bold text-slate-400">
+                        در حال تحلیل...
+                      </span>
+                    )}
+                  </div>
+
+                  {customerSummary ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded-2xl bg-white p-3 text-center">
+                          <div className="text-xl font-black text-slate-900">
+                            {customerSummary.summary.total_requests}
+                          </div>
+                          <div className="mt-1 text-[11px] font-bold text-slate-500">
+                            درخواست
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-white p-3 text-center">
+                          <div className="text-xl font-black text-amber-700">
+                            {customerSummary.summary.open_requests}
+                          </div>
+                          <div className="mt-1 text-[11px] font-bold text-slate-500">
+                            باز
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-white p-3 text-center">
+                          <div className="text-xl font-black text-red-700">
+                            {customerSummary.summary.overdue_follow_ups}
+                          </div>
+                          <div className="mt-1 text-[11px] font-bold text-slate-500">
+                            عقب‌افتاده
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`rounded-2xl border p-3 ${getActionToneClass(customerSummary.next_action.tone)}`}>
+                        <div className="flex items-start gap-2">
+                          <Target size={16} className="mt-0.5 shrink-0" />
+                          <div>
+                            <div className="text-sm font-black">
+                              {customerSummary.next_action.title}
+                            </div>
+                            <div className="mt-1 text-xs font-bold opacity-80">
+                              {customerSummary.next_action.reason}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {customerSummary.summary.latest_request && (
+                        <div className="rounded-2xl bg-white p-3">
+                          <div className="mb-2 text-xs font-black text-slate-500">
+                            آخرین درخواست مرتبط
+                          </div>
+                          <div className="truncate text-sm font-black text-slate-900">
+                            #{customerSummary.summary.latest_request.id}{" "}
+                            {customerSummary.summary.latest_request.subject || "بدون موضوع"}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold">
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                              {getRequestStatusLabel(customerSummary.summary.latest_request.status)}
+                            </span>
+                            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
+                              {getPriorityLabel(customerSummary.summary.latest_request.priority)}
+                            </span>
+                            {customerSummary.summary.latest_request.follow_up_at && (
+                              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">
+                                {formatDate(customerSummary.summary.latest_request.follow_up_at)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-white p-4 text-center text-xs font-bold text-slate-500">
+                      {summaryLoading ? "در حال آماده‌سازی خلاصه..." : "خلاصه‌ای برای این مشتری در دسترس نیست."}
+                    </div>
+                  )}
                 </div>
 
                 {/* Sessions list */}

@@ -90,8 +90,10 @@
   - Status: added `assigned_to` and `follow_up_at` fields to schema/migrations/repository/API/tests and surfaced them in `/admin/requests` CRM controls and request cards.
 - [x] 7.3 فیلتر و مرتب‌سازی درخواست‌ها بر اساس اولویت، وضعیت و موعد پیگیری
   - Status: added CRM filters for priority, follow-up due date, and assignment state plus sorting by nearest follow-up, highest priority, newest, or oldest in `/admin/requests`.
-- [ ] 7.4 یادآوری درخواست‌های معطل‌مانده در داشبورد و اعلان ادمین
-- [ ] 7.5 خلاصه هوشمند مشتری و پیشنهاد اقدام بعدی در صفحه مشتری/درخواست
+- [x] 7.4 یادآوری درخواست‌های معطل‌مانده در داشبورد و اعلان ادمین
+  - Status: request stats now include follow-up reminders for overdue, due-today, stale open, and unassigned requests; `/admin/dashboard` shows an admin reminder panel with counts and a scrollable action list.
+- [x] 7.5 خلاصه هوشمند مشتری و پیشنهاد اقدام بعدی در صفحه مشتری/درخواست
+  - Status: added admin customer summary API with rule-based next-action recommendations and surfaced it in `/admin/customers` with request counts, overdue/open indicators, latest related request, and recommended follow-up action.
 
 ## ترتیب اجرای پیشنهادی
 

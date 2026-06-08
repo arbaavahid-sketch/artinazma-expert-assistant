@@ -687,6 +687,150 @@ def admin_customer_sessions(customer_id: int, _=Depends(require_admin)):
     return {"sessions": sessions, "total": len(sessions)}
 
 
+@router.get("/admin/customers/{customer_id}/summary")
+def admin_customer_summary(customer_id: int, _=Depends(require_admin)):
+    """Rule-based customer summary and recommended next action for admin CRM."""
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    email = (customer.get("email") or "").strip().lower()
+    phone = (customer.get("phone") or "").strip()
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        session_stats = cursor.execute(
+            """
+            SELECT
+                COUNT(DISTINCT cs.id) AS session_count,
+                COUNT(cm.id) AS message_count,
+                MAX(cm.created_at) AS last_active
+            FROM chat_sessions cs
+            LEFT JOIN chat_messages cm ON cm.session_id = cs.id
+            WHERE cs.customer_id = ?
+            """,
+            (customer_id,),
+        ).fetchone()
+
+        request_rows = cursor.execute(
+            """
+            SELECT id, subject, request_type, status, priority, assigned_to,
+                   follow_up_at, created_at, updated_at
+            FROM customer_requests
+            WHERE (lower(email) = ? AND ? <> '')
+               OR (phone = ? AND ? <> '')
+            ORDER BY created_at DESC
+            LIMIT 20
+            """,
+            (email, email, phone, phone),
+        ).fetchall()
+
+    open_requests = [
+        row for row in request_rows
+        if normalize_request_status(row["status"]) != "closed"
+    ]
+    urgent_requests = [
+        row for row in open_requests
+        if (row["priority"] or "normal").strip().lower() in {"urgent", "high"}
+    ]
+
+    today = datetime.now().date()
+    overdue_requests = []
+    due_today_requests = []
+    for row in open_requests:
+        follow_up_at = (row["follow_up_at"] or "").strip()
+        if not follow_up_at:
+            continue
+        try:
+            follow_up_date = datetime.fromisoformat(follow_up_at[:10]).date()
+        except ValueError:
+            continue
+        if follow_up_date < today:
+            overdue_requests.append(row)
+        elif follow_up_date == today:
+            due_today_requests.append(row)
+
+    unassigned_open = [
+        row for row in open_requests
+        if not (row["assigned_to"] or "").strip()
+    ]
+
+    next_action = "مرور سابقه مشتری و ثبت اقدام بعدی."
+    next_action_reason = "اطلاعات کافی برای تصمیم‌گیری قطعی وجود ندارد."
+    action_tone = "neutral"
+
+    if overdue_requests:
+        next_action = "همین امروز با مشتری تماس بگیرید و نتیجه پیگیری را ثبت کنید."
+        next_action_reason = "حداقل یک درخواست باز موعد پیگیری گذشته دارد."
+        action_tone = "urgent"
+    elif due_today_requests:
+        next_action = "پیگیری امروز را انجام دهید و وضعیت درخواست را به‌روزرسانی کنید."
+        next_action_reason = "برای این مشتری موعد پیگیری امروز ثبت شده است."
+        action_tone = "warning"
+    elif urgent_requests:
+        next_action = "درخواست‌های اولویت‌دار را بررسی و مسئول پیگیری مشخص کنید."
+        next_action_reason = "درخواست باز با اولویت بالا یا فوری وجود دارد."
+        action_tone = "warning"
+    elif unassigned_open:
+        next_action = "برای درخواست‌های باز، مسئول پیگیری تعیین کنید."
+        next_action_reason = "درخواست باز بدون مسئول پیگیری دیده شد."
+        action_tone = "warning"
+    elif open_requests:
+        next_action = "آخرین درخواست باز را بررسی کنید و مرحله بعدی را ثبت کنید."
+        next_action_reason = "پرونده مشتری هنوز بسته نشده است."
+        action_tone = "neutral"
+    elif request_rows:
+        next_action = "پرونده بسته است؛ در صورت نیاز پیام پیگیری رضایت ارسال کنید."
+        next_action_reason = "همه درخواست‌های مرتبط بسته شده‌اند."
+        action_tone = "success"
+    elif (session_stats["message_count"] or 0) > 0:
+        next_action = "از مکالمات اخیر، نیاز مشتری را استخراج و در صورت لزوم درخواست فروش ثبت کنید."
+        next_action_reason = "مشتری گفتگو داشته اما درخواست رسمی مرتبط ثبت نشده است."
+        action_tone = "neutral"
+
+    latest_request = request_rows[0] if request_rows else None
+    latest_request_summary = None
+    if latest_request:
+        latest_request_summary = {
+            "id": latest_request["id"],
+            "subject": latest_request["subject"] or "",
+            "request_type": latest_request["request_type"] or "consultation",
+            "status": normalize_request_status(latest_request["status"]),
+            "priority": (latest_request["priority"] or "normal").strip().lower(),
+            "assigned_to": latest_request["assigned_to"] or "",
+            "follow_up_at": latest_request["follow_up_at"] or "",
+            "created_at": latest_request["created_at"],
+        }
+
+    return {
+        "customer": {
+            "id": customer["id"],
+            "full_name": customer["full_name"],
+            "email": customer["email"],
+            "company": customer.get("company", "") or "",
+            "phone": customer.get("phone", "") or "",
+            "created_at": customer["created_at"],
+        },
+        "summary": {
+            "session_count": session_stats["session_count"] or 0,
+            "message_count": session_stats["message_count"] or 0,
+            "last_active": session_stats["last_active"],
+            "total_requests": len(request_rows),
+            "open_requests": len(open_requests),
+            "urgent_requests": len(urgent_requests),
+            "overdue_follow_ups": len(overdue_requests),
+            "due_today": len(due_today_requests),
+            "unassigned_open": len(unassigned_open),
+            "latest_request": latest_request_summary,
+        },
+        "next_action": {
+            "title": next_action,
+            "reason": next_action_reason,
+            "tone": action_tone,
+        },
+    }
+
+
 @router.get("/admin/search")
 def admin_global_search(q: str = "", limit: int = 5, _=Depends(require_admin)):
     """جستجوی سراسری ادمین در سوالات، مشتریان و درخواست‌ها."""
