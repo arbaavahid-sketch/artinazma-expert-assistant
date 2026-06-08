@@ -31,7 +31,9 @@
   --color-danger-border: #fecaca;
   --color-danger-text: #b91c1c;
   --font-persian-fallback: "IRANSans", "Yekan", "Segoe UI", Tahoma, Arial, sans-serif;
-  --font-persian: "Vazirmatn", var(--font-persian-fallback);
+  /* --font-vazirmatn is injected by next/font (self-hosted at build time);
+     keep "Vazirmatn" for users who have it installed locally, then fall back. */
+  --font-persian: var(--font-vazirmatn), "Vazirmatn", var(--font-persian-fallback);
   --font-english: "Times New Roman", Times, serif;
   --font-size-display: clamp(1.85rem, 1.25rem + 2vw, 3rem);
   --font-size-h1: clamp(1.5rem, 1.3rem + 0.9vw, 2rem);
@@ -95,7 +97,7 @@ body {
 }
 
 button, input, textarea, select { font-family: inherit; }
-::selection { background: rgba(29, 78, 216, 0.16); color: #0f172a; }
+::selection { background: rgba(29, 78, 216, 0.16); color: var(--foreground); }
 .font-persian { font-family: var(--font-persian), var(--font-persian-fallback); }
 .font-english { font-family: var(--font-english); }
 
@@ -121,7 +123,7 @@ button, input, textarea, select { font-family: inherit; }
 }
 
 .brand-card:hover {
-  border-color: rgba(191, 219, 254, 0.5);
+  border-color: var(--color-info-border);
   box-shadow: var(--shadow-soft);
   transform: translateY(-2px);
 }
@@ -132,10 +134,10 @@ button, input, textarea, select { font-family: inherit; }
   align-items: center;
   gap: 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(191, 219, 254, 0.8);
-  background: rgba(239, 246, 255, 0.95);
+  border: 1px solid var(--color-info-border);
+  background: var(--color-info-bg);
   padding: 0.45rem 0.9rem;
-  color: #1d4ed8;
+  color: var(--color-info-text);
   font-size: 0.85rem;
   font-weight: 800;
 }
@@ -257,8 +259,8 @@ textarea::placeholder, input::placeholder { color: #94a3b8; }
 }
 
 [data-app-path="/assistant"] .ui-card {
-  border-color: rgba(226, 232, 240, 0.9);
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+  border-color: var(--border-soft);
+  box-shadow: var(--shadow-soft);
 }
 
 [data-app-path="/assistant"] .ai-message-card {
@@ -280,4 +282,16 @@ textarea::placeholder, input::placeholder { color: #94a3b8; }
   .ai-message-card { padding: 18px; border-radius: 22px; }
   .ai-markdown { font-size: 15px; line-height: 2; }
   [data-app-path="/assistant"] { padding-top: 0; }
+}
+
+/* ── Accessibility: respect reduced-motion preference ──────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

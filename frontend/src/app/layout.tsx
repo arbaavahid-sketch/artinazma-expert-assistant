@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
@@ -8,6 +9,13 @@ import InstallPrompt from "@/components/InstallPrompt";
 import NetworkStatus from "@/components/NetworkStatus";
 import ThemeProvider from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
+
+// Self-hosted at build time — no runtime dependency on Google Fonts.
+const vazirmatn = Vazirmatn({
+  subsets: ["arabic", "latin"],
+  variable: "--font-vazirmatn",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "آرتین آزما | دستیار هوشمند تخصصی",
@@ -26,9 +34,6 @@ export const metadata: Metadata = {
     "پتروشیمی",
     "آنالیز",
   ],
-  other: {
-    "theme-color": "#1d4ed8",
-  },
 };
 
 const jsonLd = {
@@ -46,8 +51,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
       <head>
+        {/* theme-color is declared first so the pre-paint script below can update
+            it before the browser chrome renders. */}
+        <meta name="theme-color" content="#1d4ed8" />
+        {/* Apply theme before first paint to avoid a flash of the wrong theme (FOUC).
+            Falls back to the OS preference when the user hasn't chosen one. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('artin_theme');var d=t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');var m=document.querySelector('meta[name=\"theme-color\"]');if(m){m.setAttribute('content','#0d1117');}}}catch(e){}})();",
+          }}
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -55,7 +71,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="آرتین" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/images/artinazma-logo.png" />
-        <meta name="theme-color" content="#1d4ed8" />
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}` }} />
         <script
           type="application/ld+json"
