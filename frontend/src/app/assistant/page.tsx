@@ -1501,7 +1501,13 @@ ${cleanAnswer}`,
               <StarterQuestions onSelect={(q) => sendMessage(q, q)} />
             </div>
           ) : (
-            <div className="mx-auto w-full max-w-5xl space-y-5 pb-4 md:space-y-7">
+            <div
+              className="mx-auto w-full max-w-5xl space-y-5 pb-4 md:space-y-7"
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions text"
+              aria-label={isEn ? "Conversation" : "گفتگو"}
+            >
               {messages.map((item, index) => (
                 <MessageBubble
                   key={index}

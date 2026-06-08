@@ -7,6 +7,7 @@ import { apiUrl } from "@/lib/api";
 import { ToastProvider } from "@/components/Toast";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useI18n } from "@/lib/i18n";
+import { useTheme } from "@/components/ThemeProvider";
 import AdminGlobalSearch from "@/components/AdminGlobalSearch";
 import ServerStatus from "@/components/ServerStatus";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -105,7 +106,9 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [isOnline, setIsOnline] = useState(true);
   const [showReconnected, setShowReconnected] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  // Theme is owned by ThemeProvider (single source of truth, key: artin_theme).
+  const { theme, toggleTheme } = useTheme();
+  const darkMode = theme === "dark";
 
   async function refreshCustomerSessions() {
     try {
@@ -243,29 +246,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     refreshCustomerSessions();
   }, [pathname, activeSessionId]);
 
-  // Dark mode init + toggle
-  useEffect(() => {
-    const saved = localStorage.getItem("artin_dark_mode");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const shouldBeDark = saved !== null ? saved === "true" : prefersDark;
-    setDarkMode(shouldBeDark);
-    if (shouldBeDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  function toggleDarkMode() {
-    const next = !darkMode;
-    setDarkMode(next);
-    localStorage.setItem("artin_dark_mode", String(next));
-    if (next) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }
+  // (Theme init/toggle now lives in ThemeProvider — see useTheme above.)
 
   // Online/offline detection
   useEffect(() => {
@@ -629,7 +610,8 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             {/* Dark mode toggle */}
             <div className={`mt-4 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
               <button
-                onClick={toggleDarkMode}
+                onClick={toggleTheme}
+                aria-label={darkMode ? (isRtl ? "حالت روشن" : "Light Mode") : (isRtl ? "حالت تاریک" : "Dark Mode")}
                 title={darkMode ? (isRtl ? "حالت روشن" : "Light Mode") : (isRtl ? "حالت تاریک" : "Dark Mode")}
                 className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-white dark:hover:bg-slate-800 ${
                   sidebarCollapsed ? "justify-center px-2" : "w-full"

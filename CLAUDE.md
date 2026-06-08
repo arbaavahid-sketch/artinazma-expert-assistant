@@ -70,7 +70,7 @@ The frontend reads `NEXT_PUBLIC_API_BASE_URL` (defaults to `http://127.0.0.1:800
    - **AI vector search** (`knowledge_service.py`) — OpenAI `text-embedding-3-small` embeddings stored in `storage/knowledge_vectors.json`; used when local score is insufficient
 3. **Site resource lookup** (`site_resource_service.py`, `artinazma_index_service.py`) — searches a crawled index of artinazma.net for relevant product pages
 4. **AI response** (`ai_service.py`) — calls OpenAI Responses API (`client.responses.create`) with optional `web_search_preview` tool for verified answers; the model identity is "آرتین", a specialized Persian/industrial domain expert persona
-5. **Persistence** (`db_service.py`) — SQLite at `storage/app.db` for questions, user memories, customer accounts, chat sessions, and customer requests
+5. **Persistence** (`repositories/`, re-exported via `db_service.py`) — relational store for questions, user memories, customer accounts, chat sessions, and customer requests. The connection adapter in `repositories/base.py` supports **both SQLite (dev default, `storage/app.db`) and PostgreSQL (prod, set `DATABASE_URL`)** behind a single sqlite3-compatible API; `db_service.py` is now a thin facade that re-exports the repository functions. Schema migrations are managed with Alembic (`backend/alembic/`). Vector search can use either the JSON store or **Qdrant** (`qdrant_service.py`) when `QDRANT_URL` is configured.
 
 Key routing logic in `main.py POST /chat`:
 - ASTM code detected → skip vector search, use GPT directly
@@ -81,10 +81,14 @@ Key routing logic in `main.py POST /chat`:
 
 ```
 backend/storage/
-  app.db                  # SQLite: questions, customers, memories, sessions
+  app.db                  # SQLite (dev): questions, customers, memories, sessions
+                          #   In prod, PostgreSQL is used instead (DATABASE_URL).
   knowledge_vectors.json  # Embedding vectors + chunked text for all knowledge files
+                          #   (Qdrant is used instead when QDRANT_URL is set.)
 backend/knowledge_files/  # Uploaded PDFs/TXTs that get embedded
 backend/uploads/          # Temporary user-uploaded files (Excel, CSV, PDF, images)
+backend/repositories/     # Data-access layer (SQLite/Postgres adapter + per-domain repos)
+backend/alembic/          # Database schema migrations
 ```
 
 ### Frontend structure

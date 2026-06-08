@@ -37,12 +37,15 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
-    // The pre-paint head script already set the class; sync React state to it,
-    // falling back to the OS preference when the user hasn't chosen one.
+    // The pre-paint head script already set the class; sync React state to it.
+    // Resolution order: explicit choice (artin_theme) → legacy key
+    // (artin_dark_mode, from the old ArtinShell toggle) → OS preference.
     const stored = localStorage.getItem("artin_theme") as Theme | null;
+    const legacy = localStorage.getItem("artin_dark_mode");
+    const systemDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
     const initial: Theme =
       stored ??
-      (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      (legacy !== null ? (legacy === "true" ? "dark" : "light") : systemDark ? "dark" : "light");
     setThemeState(initial);
     applyTheme(initial);
 
@@ -50,7 +53,8 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
     if (!mq) return;
     const onChange = (e: MediaQueryListEvent) => {
-      if (localStorage.getItem("artin_theme")) return; // explicit choice wins
+      // An explicit choice (new or legacy key) always wins over OS changes.
+      if (localStorage.getItem("artin_theme") || localStorage.getItem("artin_dark_mode")) return;
       const next: Theme = e.matches ? "dark" : "light";
       setThemeState(next);
       applyTheme(next);
