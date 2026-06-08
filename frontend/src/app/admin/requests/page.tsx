@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { adminUrl } from "@/lib/api";
 import {
+  ArrowDownUp,
   Building2,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   Inbox,
@@ -64,6 +66,38 @@ const REQUEST_PRIORITIES = [
 ] as const;
 
 type RequestPriorityValue = (typeof REQUEST_PRIORITIES)[number]["value"];
+
+const PRIORITY_WEIGHT: Record<RequestPriorityValue, number> = {
+  low: 1,
+  normal: 2,
+  high: 3,
+  urgent: 4,
+};
+
+const FOLLOW_UP_FILTERS = [
+  { value: "all", label: "همه موعدها" },
+  { value: "overdue", label: "عقب‌افتاده" },
+  { value: "today", label: "امروز" },
+  { value: "upcoming", label: "آینده" },
+  { value: "empty", label: "بدون موعد" },
+] as const;
+
+const ASSIGNMENT_FILTERS = [
+  { value: "all", label: "همه مسئول‌ها" },
+  { value: "assigned", label: "مسئول‌دار" },
+  { value: "unassigned", label: "بدون مسئول" },
+] as const;
+
+const REQUEST_SORT_OPTIONS = [
+  { value: "follow_up_asc", label: "نزدیک‌ترین پیگیری" },
+  { value: "priority_desc", label: "اولویت بالاتر" },
+  { value: "newest", label: "جدیدترین" },
+  { value: "oldest", label: "قدیمی‌ترین" },
+] as const;
+
+type FollowUpFilterValue = (typeof FOLLOW_UP_FILTERS)[number]["value"];
+type AssignmentFilterValue = (typeof ASSIGNMENT_FILTERS)[number]["value"];
+type RequestSortValue = (typeof REQUEST_SORT_OPTIONS)[number]["value"];
 
 const REQUEST_WORKFLOW = [
   {
@@ -178,11 +212,35 @@ function formatDate(value?: string | null) {
   }
 }
 
+function getDateDayKey(value?: string | null) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+
+  return date.toISOString().slice(0, 10);
+}
+
+function getTodayDayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getFollowUpSortValue(value?: string | null) {
+  if (!value) return Number.MAX_SAFE_INTEGER;
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? Number.MAX_SAFE_INTEGER - 1 : date.getTime();
+}
+
 export default function AdminRequestsPage() {
   const [requests, setRequests] = useState<CustomerRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | RequestPriorityValue>("all");
+  const [followUpFilter, setFollowUpFilter] = useState<FollowUpFilterValue>("all");
+  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilterValue>("all");
+  const [sortMode, setSortMode] = useState<RequestSortValue>("follow_up_asc");
   const [searchText, setSearchText] = useState("");
   const [crmDrafts, setCrmDrafts] = useState<Record<number, {
     priority: string;
@@ -194,10 +252,26 @@ export default function AdminRequestsPage() {
 
   const filteredRequests = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
+    const todayKey = getTodayDayKey();
 
     return requests.filter((item) => {
       const matchesStatus =
         statusFilter === "all" || normalizeStatus(item.status) === statusFilter;
+      const itemPriority = normalizePriority(item.priority);
+      const matchesPriority =
+        priorityFilter === "all" || itemPriority === priorityFilter;
+      const followUpKey = getDateDayKey(item.follow_up_at);
+      const matchesFollowUp =
+        followUpFilter === "all" ||
+        (followUpFilter === "empty" && !item.follow_up_at) ||
+        (followUpFilter === "today" && followUpKey === todayKey) ||
+        (followUpFilter === "overdue" && !!item.follow_up_at && followUpKey < todayKey) ||
+        (followUpFilter === "upcoming" && !!item.follow_up_at && followUpKey > todayKey);
+      const hasAssignee = !!item.assigned_to?.trim();
+      const matchesAssignment =
+        assignmentFilter === "all" ||
+        (assignmentFilter === "assigned" && hasAssignee) ||
+        (assignmentFilter === "unassigned" && !hasAssignee);
 
       const searchableText = [
         item.full_name,
@@ -220,9 +294,33 @@ export default function AdminRequestsPage() {
       const matchesSearch =
         !normalizedSearch || searchableText.includes(normalizedSearch);
 
-      return matchesStatus && matchesSearch;
+      return matchesStatus && matchesPriority && matchesFollowUp && matchesAssignment && matchesSearch;
+    }).sort((a, b) => {
+      if (sortMode === "priority_desc") {
+        return (
+          PRIORITY_WEIGHT[normalizePriority(b.priority)] -
+          PRIORITY_WEIGHT[normalizePriority(a.priority)]
+        );
+      }
+
+      if (sortMode === "oldest") {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+
+      if (sortMode === "newest") {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+
+      const followUpDiff =
+        getFollowUpSortValue(a.follow_up_at) - getFollowUpSortValue(b.follow_up_at);
+      if (followUpDiff !== 0) return followUpDiff;
+
+      return (
+        PRIORITY_WEIGHT[normalizePriority(b.priority)] -
+        PRIORITY_WEIGHT[normalizePriority(a.priority)]
+      );
     });
-  }, [requests, searchText, statusFilter]);
+  }, [requests, searchText, statusFilter, priorityFilter, followUpFilter, assignmentFilter, sortMode]);
 
   const statusCounts = useMemo(() => {
     const counts = Object.fromEntries(
@@ -486,6 +584,85 @@ export default function AdminRequestsPage() {
                 </span>
               </button>
             ))}
+          </div>
+
+          <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+                <Flag size={15} />
+                اولویت
+              </span>
+              <select
+                value={priorityFilter}
+                onChange={(event) => setPriorityFilter(event.target.value as "all" | RequestPriorityValue)}
+                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+              >
+                <option value="all">همه اولویت‌ها</option>
+                {REQUEST_PRIORITIES.map((priority) => (
+                  <option key={priority.value} value={priority.value}>
+                    {priority.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+                <CalendarDays size={15} />
+                موعد پیگیری
+              </span>
+              <select
+                value={followUpFilter}
+                onChange={(event) => setFollowUpFilter(event.target.value as FollowUpFilterValue)}
+                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+              >
+                {FOLLOW_UP_FILTERS.map((filter) => (
+                  <option key={filter.value} value={filter.value}>
+                    {filter.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+                <UserRound size={15} />
+                مسئول پیگیری
+              </span>
+              <select
+                value={assignmentFilter}
+                onChange={(event) => setAssignmentFilter(event.target.value as AssignmentFilterValue)}
+                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+              >
+                {ASSIGNMENT_FILTERS.map((filter) => (
+                  <option key={filter.value} value={filter.value}>
+                    {filter.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+                <ArrowDownUp size={15} />
+                مرتب‌سازی
+              </span>
+              <select
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value as RequestSortValue)}
+                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+              >
+                {REQUEST_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="mb-5 text-sm font-bold text-slate-500">
+            نمایش {filteredRequests.length} درخواست از {requests.length} درخواست
           </div>
 
           {message && (
