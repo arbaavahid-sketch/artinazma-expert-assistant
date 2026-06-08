@@ -93,6 +93,55 @@ class TestAdminAuth:
         assert isinstance(data["top_products"], list)
         assert isinstance(data["active_customers"], list)
 
+    def test_admin_management_report_structure(self, app_client, admin_headers, test_db):
+        from repositories.questions_repo import save_expert_question, save_question_feedback
+        from repositories.requests_repo import save_customer_request, update_customer_request_status
+
+        qid = save_expert_question(
+            question="GC detector monthly report test",
+            answer="Use FID for hydrocarbons.",
+            sources=[],
+            detected_domain="chromatography",
+            response_time_ms=1200,
+        )
+        save_question_feedback(qid, "down", "Needs more detail")
+        request_id = save_customer_request(
+            full_name="Monthly Customer",
+            company="Test Co",
+            phone="09120000000",
+            email="monthly@example.com",
+            request_type="equipment",
+            subject="GC quote",
+            message="Need GC detector quote.",
+        )
+        update_customer_request_status(request_id, "reviewing")
+
+        res = app_client.get("/admin/management-report?period=month", headers=admin_headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["period"] == "month"
+        assert "summary" in data
+        assert data["summary"]["total_questions"] >= 1
+        assert data["summary"]["negative_feedback"] >= 1
+        assert any(item["status"] == "reviewing" for item in data["request_statuses"])
+        assert data["open_requests"]
+        assert data["recommendations"]
+
+    def test_admin_management_report_csv_export(self, app_client, admin_headers):
+        res = app_client.get("/admin/report/export?period=month", headers=admin_headers)
+        assert res.status_code == 200
+        assert "text/csv" in res.headers["content-type"]
+        assert "artin-management-report-month" in res.headers["content-disposition"]
+        text = res.content.decode("utf-8-sig")
+        assert "ArtinAzma management report" in text
+        assert "Negative feedback" in text
+        assert "Open requests" in text
+        assert "Recommended management actions" in text
+
+    def test_admin_management_report_invalid_month(self, app_client, admin_headers):
+        res = app_client.get("/admin/management-report?period=month&month=bad", headers=admin_headers)
+        assert res.status_code == 400
+
 
 class TestAdminBackupSecurity:
     """Backup files must stay constrained to the managed backup directory."""

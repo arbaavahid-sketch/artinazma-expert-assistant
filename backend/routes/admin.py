@@ -18,6 +18,7 @@ from schemas.models import (
     CustomerNotifyRequest,
 )
 from utils.deps import require_admin
+from repositories.requests_repo import normalize_request_status
 
 from db_service import (
     get_connection,
@@ -303,57 +304,221 @@ def send_weekly_report_now(_=Depends(require_admin)):
     return {"success": success, "message": message}
 
 
-@router.get("/admin/report/export")
-def admin_export_report(period: str = "week", _=Depends(require_admin)):
-    """گزارش خلاصه هفتگی/ماهانه: سوالات، مشتریان، درخواست‌ها — خروجی CSV."""
-    import csv, io
+def _safe_pct(numerator: int, denominator: int) -> float | None:
+    if denominator <= 0:
+        return None
+    return round((numerator / denominator) * 100, 1)
 
+
+def _report_window(period: str, month: str | None = None) -> tuple[datetime, datetime, str, str]:
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     if period == "month":
-        cutoff = now - timedelta(days=30)
-        label = "ماهانه (۳۰ روز)"
-    else:
-        cutoff = now - timedelta(days=7)
-        label = "هفتگی (۷ روز)"
+        if month:
+            try:
+                start = datetime.strptime(month, "%Y-%m")
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="month must be in YYYY-MM format") from exc
+        else:
+            start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = start.replace(year=start.year + 1, month=1) if start.month == 12 else start.replace(month=start.month + 1)
+        return start, end, f"Monthly management report {start:%Y-%m}", f"{start:%Y%m}"
 
-    cutoff_str = cutoff.strftime("%Y-%m-%d")
+    start = now - timedelta(days=7)
+    end = now
+    return start, end, "Weekly management report", f"{now:%Y%m%d}"
+
+
+def _fetch_count(cursor, query: str, params: tuple) -> int:
+    row = cursor.execute(query, params).fetchone()
+    return int(row[0] if row else 0)
+
+
+def _management_report_data(period: str = "month", month: str | None = None) -> dict:
+    period = "month" if period == "month" else "week"
+    start, end, label, file_suffix = _report_window(period, month)
+    start_s = start.isoformat(timespec="seconds")
+    end_s = end.isoformat(timespec="seconds")
 
     conn = get_connection()
     c = conn.cursor()
-
-    c.execute("""
-        SELECT detected_domain, COUNT(*) as cnt
+    question_rows = c.execute(
+        """
+        SELECT id, question, detected_domain, expert_status, user_rating,
+               user_rating_comment, response_time_ms, created_at
         FROM expert_questions
-        WHERE created_at >= ?
-        GROUP BY detected_domain
-        ORDER BY cnt DESC
-    """, (cutoff_str,))
-    domain_rows = c.fetchall()
-
-    total_q = c.execute("SELECT COUNT(*) FROM expert_questions WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
-    total_cust = c.execute("SELECT COUNT(*) FROM customers WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
-    total_req = c.execute("SELECT COUNT(*) FROM customer_requests WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
-    pending_req = c.execute("SELECT COUNT(*) FROM customer_requests WHERE created_at >= ? AND status='new'", (cutoff_str,)).fetchone()[0]
-    total_msg = c.execute("SELECT COUNT(*) FROM chat_messages WHERE created_at >= ?", (cutoff_str,)).fetchone()[0]
+        WHERE created_at >= ? AND created_at < ?
+        ORDER BY id DESC
+        LIMIT 2000
+        """,
+        (start_s, end_s),
+    ).fetchall()
+    request_rows = c.execute(
+        """
+        SELECT id, full_name, company, email, request_type, subject, status, created_at, updated_at
+        FROM customer_requests
+        WHERE created_at >= ? AND created_at < ?
+        ORDER BY id DESC
+        LIMIT 2000
+        """,
+        (start_s, end_s),
+    ).fetchall()
+    new_customers = _fetch_count(
+        c,
+        "SELECT COUNT(*) FROM customers WHERE created_at >= ? AND created_at < ?",
+        (start_s, end_s),
+    )
+    chat_messages = _fetch_count(
+        c,
+        "SELECT COUNT(*) FROM chat_messages WHERE created_at >= ? AND created_at < ?",
+        (start_s, end_s),
+    )
     conn.close()
+
+    ratings = Counter((row["user_rating"] or "unrated") for row in question_rows)
+    up = ratings.get("up", 0)
+    down = ratings.get("down", 0)
+    rated = up + down
+    response_times = [int(row["response_time_ms"]) for row in question_rows if row["response_time_ms"]]
+    avg_response_ms = round(sum(response_times) / len(response_times)) if response_times else 0
+
+    request_statuses: Counter[str] = Counter()
+    for row in request_rows:
+        request_statuses[normalize_request_status(row["status"])] += 1
+
+    domains = Counter(row["detected_domain"] or "auto" for row in question_rows)
+    expert_statuses = Counter(row["expert_status"] or "pending" for row in question_rows)
+    request_types = Counter(row["request_type"] or "consultation" for row in request_rows)
+    product_texts = [row["question"] for row in question_rows] + [
+        f"{row['subject']} {row['request_type']}" for row in request_rows
+    ]
+
+    negative_feedback = [
+        {
+            "id": row["id"],
+            "domain": row["detected_domain"] or "",
+            "question": row["question"],
+            "comment": row["user_rating_comment"] or "",
+            "created_at": row["created_at"],
+        }
+        for row in question_rows
+        if row["user_rating"] == "down"
+    ][:10]
+    open_requests = [
+        {
+            "id": row["id"],
+            "customer": row["full_name"],
+            "company": row["company"] or "",
+            "subject": row["subject"] or "",
+            "type": row["request_type"] or "consultation",
+            "status": normalize_request_status(row["status"]),
+            "created_at": row["created_at"],
+        }
+        for row in request_rows
+        if normalize_request_status(row["status"]) in {"new", "reviewing", "pricing"}
+    ][:15]
+
+    recommendations: list[str] = []
+    if request_statuses.get("new", 0) or request_statuses.get("reviewing", 0):
+        recommendations.append("Follow up open customer requests before month close.")
+    if down:
+        recommendations.append("Review negative-feedback answers and add corrected knowledge snippets.")
+    if avg_response_ms > 8000:
+        recommendations.append("Investigate slow AI responses and cache frequent questions.")
+    if not recommendations:
+        recommendations.append("Keep monitoring response quality and request follow-up weekly.")
+
+    return {
+        "period": period,
+        "label": label,
+        "file_suffix": file_suffix,
+        "start": start_s,
+        "end": end_s,
+        "summary": {
+            "total_questions": len(question_rows),
+            "total_requests": len(request_rows),
+            "new_customers": new_customers,
+            "chat_messages": chat_messages,
+            "rated_answers": rated,
+            "positive_feedback": up,
+            "negative_feedback": down,
+            "satisfaction_pct": _safe_pct(up, rated),
+            "avg_response_ms": avg_response_ms,
+        },
+        "question_domains": [{"domain": key, "count": count} for key, count in domains.most_common(12)],
+        "expert_statuses": [{"status": key, "count": count} for key, count in expert_statuses.most_common()],
+        "request_statuses": [{"status": key, "count": count} for key, count in request_statuses.most_common()],
+        "request_types": [{"request_type": key, "count": count} for key, count in request_types.most_common(12)],
+        "top_products": _top_product_mentions(product_texts, limit=12),
+        "negative_feedback": negative_feedback,
+        "open_requests": open_requests,
+        "recommendations": recommendations,
+    }
+
+
+@router.get("/admin/management-report")
+def admin_management_report(period: str = "month", month: str | None = None, _=Depends(require_admin)):
+    """Monthly/weekly management report preview for requests and answer quality."""
+    return _management_report_data(period=period, month=month)
+
+
+@router.get("/admin/report/export")
+def admin_export_report(period: str = "week", month: str | None = None, _=Depends(require_admin)):
+    """CSV management report: requests, answer quality, feedback and follow-up items."""
+    import csv, io
+
+    report = _management_report_data(period=period, month=month)
+    summary = report["summary"]
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["گزارش آرتین آزما", label])
+    writer.writerow(["ArtinAzma management report", report["label"]])
+    writer.writerow(["Start", report["start"]])
+    writer.writerow(["End", report["end"]])
     writer.writerow([])
-    writer.writerow(["خلاصه کلی", ""])
-    writer.writerow(["تعداد سوالات جدید", total_q])
-    writer.writerow(["تعداد مشتریان جدید", total_cust])
-    writer.writerow(["تعداد درخواست‌های جدید", total_req])
-    writer.writerow(["درخواست‌های در انتظار", pending_req])
-    writer.writerow(["تعداد پیام‌های چت", total_msg])
+    writer.writerow(["Summary", "Value"])
+    writer.writerow(["Questions", summary["total_questions"]])
+    writer.writerow(["Customer requests", summary["total_requests"]])
+    writer.writerow(["New customers", summary["new_customers"]])
+    writer.writerow(["Chat messages", summary["chat_messages"]])
+    writer.writerow(["Rated answers", summary["rated_answers"]])
+    writer.writerow(["Positive feedback", summary["positive_feedback"]])
+    writer.writerow(["Negative feedback", summary["negative_feedback"]])
+    writer.writerow(["Satisfaction percent", summary["satisfaction_pct"] if summary["satisfaction_pct"] is not None else ""])
+    writer.writerow(["Average response time ms", summary["avg_response_ms"]])
+
+    sections = [
+        ("Question domains", ["Domain", "Count"], report["question_domains"], ("domain", "count")),
+        ("Expert review statuses", ["Status", "Count"], report["expert_statuses"], ("status", "count")),
+        ("Request statuses", ["Status", "Count"], report["request_statuses"], ("status", "count")),
+        ("Request types", ["Type", "Count"], report["request_types"], ("request_type", "count")),
+        ("Top products/topics", ["Product or topic", "Count"], report["top_products"], ("label", "count")),
+    ]
+    for title, headers, rows, keys in sections:
+        writer.writerow([])
+        writer.writerow([title])
+        writer.writerow(headers)
+        for row in rows:
+            writer.writerow([row.get(keys[0], ""), row.get(keys[1], "")])
+
     writer.writerow([])
-    writer.writerow(["سوالات بر اساس حوزه", "تعداد"])
-    for row in domain_rows:
-        writer.writerow([row["detected_domain"] or "نامشخص", row["cnt"]])
+    writer.writerow(["Open requests"])
+    writer.writerow(["ID", "Customer", "Company", "Subject", "Type", "Status", "Created at"])
+    for row in report["open_requests"]:
+        writer.writerow([row["id"], row["customer"], row["company"], row["subject"], row["type"], row["status"], row["created_at"]])
+
+    writer.writerow([])
+    writer.writerow(["Negative feedback"])
+    writer.writerow(["Question ID", "Domain", "Question", "Comment", "Created at"])
+    for row in report["negative_feedback"]:
+        writer.writerow([row["id"], row["domain"], row["question"], row["comment"], row["created_at"]])
+
+    writer.writerow([])
+    writer.writerow(["Recommended management actions"])
+    for item in report["recommendations"]:
+        writer.writerow([item])
 
     csv_bytes = output.getvalue().encode("utf-8-sig")
-    filename = f"artin-report-{period}-{now.strftime('%Y%m%d')}.csv"
+    filename = f"artin-management-report-{report['period']}-{report['file_suffix']}.csv"
     return Response(
         content=csv_bytes,
         media_type="text/csv; charset=utf-8",

@@ -279,6 +279,7 @@ export default function DashboardPage() {
 
   const knowledgeCategories = knowledgeStats?.categories || [];
   const knowledgeFiles = knowledgeStats?.files || [];
+  const currentMonthParam = useMemo(() => new Date().toISOString().slice(0, 7), []);
 
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
@@ -304,7 +305,7 @@ export default function DashboardPage() {
 
               <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2">
-                  <span className="text-xs font-bold text-purple-700">دانلود گزارش:</span>
+                  <span className="text-xs font-bold text-purple-700">خروجی مدیریتی:</span>
                   <a
                     href={adminUrl("/admin/report/export?period=week")}
                     download
@@ -313,11 +314,11 @@ export default function DashboardPage() {
                     <Download size={13} /> هفتگی
                   </a>
                   <a
-                    href={adminUrl("/admin/report/export?period=month")}
+                    href={adminUrl(`/admin/report/export?period=month&month=${currentMonthParam}`)}
                     download
                     className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm border border-purple-200 hover:bg-purple-100 transition"
                   >
-                    <Download size={13} /> ماهانه
+                    <Download size={13} /> ماه جاری
                   </a>
                 </div>
                 <button

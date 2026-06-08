@@ -76,7 +76,8 @@
 - [x] 6.2 اعلان ایمیل/تلگرام برای درخواست‌ها و پیام‌های مهم
 - [x] 6.3 فرم quote هوشمند بر اساس نوع دستگاه/مواد/خدمت
 - [x] 6.4 analytics سوالات پرتکرار، محصولات پرتکرار، مشتریان فعال
-- [ ] 6.5 خروجی مدیریتی ماهانه از درخواست‌ها و کیفیت پاسخ‌ها
+- [x] 6.5 خروجی مدیریتی ماهانه از درخواست‌ها و کیفیت پاسخ‌ها
+  - Status: added admin JSON preview and CSV export for monthly/weekly management reports with request status/type breakdown, answer feedback, response-time summary, negative-feedback follow-up list, open requests, top products/topics, and recommended management actions.
 
 ## ترتیب اجرای پیشنهادی
 
