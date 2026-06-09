@@ -61,7 +61,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var t=localStorage.getItem('artin_theme');var lg=localStorage.getItem('artin_dark_mode');var sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var d=t?t==='dark':(lg!==null?lg==='true':sys);if(d){document.documentElement.classList.add('dark');var m=document.querySelector('meta[name=\"theme-color\"]');if(m){m.setAttribute('content','#0d1117');}}}catch(e){}})();",
+              "(function(){try{var t=localStorage.getItem('artin_theme');var lg=localStorage.getItem('artin_dark_mode');var sys=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);var d;if(t==='dark')d=true;else if(t==='light')d=false;else if(t==='system')d=sys;else if(lg!==null)d=lg==='true';else d=sys;if(d){document.documentElement.classList.add('dark');var m=document.querySelector('meta[name=\"theme-color\"]');if(m){m.setAttribute('content','#0d1117');}}}catch(e){}})();",
           }}
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />

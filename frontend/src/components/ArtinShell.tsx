@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessagesSquare,
+  Monitor,
   Moon,
   PanelRightClose,
   PanelRightOpen,
@@ -107,8 +108,15 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const [isOnline, setIsOnline] = useState(true);
   const [showReconnected, setShowReconnected] = useState(false);
   // Theme is owned by ThemeProvider (single source of truth, key: artin_theme).
-  const { theme, toggleTheme } = useTheme();
-  const darkMode = theme === "dark";
+  // The sidebar control cycles light → dark → system.
+  const { pref, cycleTheme } = useTheme();
+  const themeName =
+    pref === "light"
+      ? (isRtl ? "حالت روشن" : "Light")
+      : pref === "dark"
+      ? (isRtl ? "حالت تاریک" : "Dark")
+      : (isRtl ? "تم سیستم" : "System");
+  const ThemeIcon = pref === "light" ? Sun : pref === "dark" ? Moon : Monitor;
 
   async function refreshCustomerSessions() {
     try {
@@ -611,23 +619,21 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 <ServerStatus />
               </div>
             )}
-            {/* Dark mode toggle */}
+            {/* Theme cycle: light → dark → system */}
             <div className={`mt-4 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
               <button
-                onClick={toggleTheme}
-                aria-label={darkMode ? (isRtl ? "حالت روشن" : "Light Mode") : (isRtl ? "حالت تاریک" : "Dark Mode")}
-                title={darkMode ? (isRtl ? "حالت روشن" : "Light Mode") : (isRtl ? "حالت تاریک" : "Dark Mode")}
+                onClick={cycleTheme}
+                aria-label={`${isRtl ? "تم" : "Theme"}: ${themeName}`}
+                title={`${isRtl ? "تم" : "Theme"}: ${themeName}`}
                 className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-white dark:hover:bg-slate-800 ${
                   sidebarCollapsed ? "justify-center px-2" : "w-full"
                 }`}
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm">
-                  {darkMode ? <Sun size={19} strokeWidth={1.9} /> : <Moon size={19} strokeWidth={1.9} />}
+                  <ThemeIcon size={19} strokeWidth={1.9} />
                 </span>
                 {!sidebarCollapsed && (
-                  <span className="text-slate-700 dark:text-slate-300">
-                    {darkMode ? (locale === "fa" ? "حالت روشن" : "Light Mode") : (locale === "fa" ? "حالت تاریک" : "Dark Mode")}
-                  </span>
+                  <span className="text-slate-700 dark:text-slate-300">{themeName}</span>
                 )}
               </button>
             </div>
