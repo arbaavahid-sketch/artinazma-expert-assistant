@@ -14,7 +14,6 @@ import {
   Download,
   ImagePlus,
   StopCircle,
-  X as XIcon,
   SlidersHorizontal,
   Volume2,
 } from "lucide-react";
@@ -45,6 +44,12 @@ import type {
 } from "@/lib/chat-types";
 
 import ToolMenu from "@/app/assistant/ToolMenu";
+import RateLimitBanner from "@/app/assistant/RateLimitBanner";
+import AssistantWelcome from "@/app/assistant/AssistantWelcome";
+import AssistantQuickActions from "@/app/assistant/AssistantQuickActions";
+import DropOverlay from "@/app/assistant/DropOverlay";
+import ScrollToBottomButton from "@/app/assistant/ScrollToBottomButton";
+import StagedImagePreview from "@/app/assistant/StagedImagePreview";
 
 type AnalysisResponse = Record<string, unknown> & {
   ai_analysis?: string;
@@ -1175,14 +1180,7 @@ ${cleanAnswer}`,
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {isDragOver && (
-        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3 rounded-[32px] border-2 border-dashed border-blue-400 bg-white/90 px-10 py-8 shadow-xl">
-            <ImagePlus size={40} className="text-blue-500" />
-            <span className="text-lg font-black text-blue-600">عکس را اینجا رها کنید</span>
-          </div>
-        </div>
-      )}
+      <DropOverlay show={isDragOver} isEn={isEn} />
       <input
         ref={uploadInputRef}
         type="file"
@@ -1304,7 +1302,7 @@ ${cleanAnswer}`,
               <div className="relative">
                 <button
                   onClick={() => setShowExportMenu((v) => !v)}
-                  title="خروجی گفتگو"
+                  title={isEn ? "Export chat" : "خروجی گفتگو"}
                   className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                 >
                   <Download size={13} />
@@ -1398,34 +1396,9 @@ ${cleanAnswer}`,
         <div className="mx-auto w-full max-w-6xl px-3 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6">
           {messages.length === 0 ? (
             <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
-              <h2 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-                {isEn ? "How can Artin help you today?" : "امروز چه کمکی از آرتین می‌خواهید؟"}
-              </h2>
+              <AssistantWelcome isEn={isEn} />
 
-              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-500">
-                {isEn
-                  ? "Ask a technical question, upload a test file or error photo, or submit a consultation request."
-                  : "سوال تخصصی بپرسید، فایل تست یا عکس خطا ارسال کنید، یا درخواست مشاوره ثبت کنید."}
-              </p>
-
-              {rateLimitCountdown > 0 && (
-                <div className="mb-3 w-full max-w-3xl overflow-hidden rounded-2xl border border-amber-200 bg-amber-50">
-                  <div className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-amber-700">
-                    <span className="text-lg">⏳</span>
-                    <span className="flex-1">{isEn ? "Rate limit — please wait" : "محدودیت ارسال — لطفاً صبر کنید"}</span>
-                    <span className="rounded-xl bg-amber-100 px-3 py-1 text-base font-black tabular-nums">
-                      {rateLimitCountdown}s
-                    </span>
-                  </div>
-                  {/* Countdown progress bar */}
-                  <div className="h-1.5 bg-amber-100">
-                    <div
-                      className="h-full bg-amber-400 transition-all duration-1000 ease-linear"
-                      style={{ width: `${(rateLimitCountdown / rateLimitTotal) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+              <RateLimitBanner countdown={rateLimitCountdown} total={rateLimitTotal} isEn={isEn} />
 
               <div className="relative mt-5 w-full max-w-3xl px-1 md:mt-8 md:px-0">
                 {showTools && (
@@ -1481,21 +1454,11 @@ ${cleanAnswer}`,
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 md:mt-5 md:flex-wrap md:justify-center md:gap-3">
-                <button
-                  onClick={() => handleToolClick("upload")}
-                  className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
-                >
-                  {isEn ? "Upload file or image" : "آپلود فایل یا عکس"}
-                </button>
-
-                <button
-                  onClick={() => handleToolClick("customer-request")}
-                  className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
-                >
-                  {isEn ? "Request consultation" : "درخواست مشاوره"}
-                </button>
-              </div>
+              <AssistantQuickActions
+                isEn={isEn}
+                onUpload={() => handleToolClick("upload")}
+                onRequest={() => handleToolClick("customer-request")}
+              />
 
               {/* سوال‌های پیشنهادی آماده */}
               <StarterQuestions onSelect={(q) => sendMessage(q, q)} />
@@ -1605,17 +1568,11 @@ ${cleanAnswer}`,
           )}
         </div>
       </div>
-      {showScrollBtn && messages.length > 0 && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center">
-          <button
-            onClick={scrollToBottom}
-            className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-lg transition hover:bg-slate-50 hover:shadow-xl"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-            رفتن به آخر
-          </button>
-        </div>
-      )}
+      <ScrollToBottomButton
+        show={showScrollBtn && messages.length > 0}
+        onClick={scrollToBottom}
+        isEn={isEn}
+      />
 
       {messages.length > 0 && (
         <footer className="shrink-0 border-t border-slate-100 bg-white pb-2 pt-3">
@@ -1629,25 +1586,12 @@ ${cleanAnswer}`,
 
               <div className={`rounded-2xl border bg-white shadow-sm transition-colors ${isDragOver ? "border-blue-400 bg-blue-50/20" : "border-slate-200"}`}>
                 {/* Staged image preview strip */}
-                {stagedImage && (
-                  <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-2">
-                    <img
-                      src={stagedImageUrl}
-                      alt="پیش‌نمایش عکس"
-                      className="h-12 w-12 rounded-xl border border-slate-200 object-cover shadow-sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate text-xs font-bold text-slate-700">{stagedImage.name}</div>
-                      <div className="text-[11px] text-slate-400">عکس آماده ارسال — پیام خود را بنویسید یا مستقیم ارسال کنید</div>
-                    </div>
-                    <button
-                      onClick={clearStagedImage}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                    >
-                      <XIcon size={14} />
-                    </button>
-                  </div>
-                )}
+                <StagedImagePreview
+                  image={stagedImage}
+                  imageUrl={stagedImageUrl}
+                  onClear={clearStagedImage}
+                  isEn={isEn}
+                />
                 <div className="flex items-end gap-2 px-3 py-2.5">
                   <button
                     onClick={() => setShowTools((prev) => !prev)}
@@ -1668,7 +1612,7 @@ ${cleanAnswer}`,
                       };
                       inp.click();
                     }}
-                    title="ارسال عکس (یا Ctrl+V برای Paste)"
+                    title={isEn ? "Send image (or Ctrl+V to paste)" : "ارسال عکس (یا Ctrl+V برای Paste)"}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blue-500 transition hover:bg-blue-50 hover:text-blue-700"
                   >
                     <ImagePlus size={18} />
@@ -1693,7 +1637,7 @@ ${cleanAnswer}`,
                   {isVoiceSupported && (
                     <button
                       onClick={toggleVoice}
-                      title={voiceState === "listening" ? "توقف ضبط" : "ورودی صوتی"}
+                      title={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : (isEn ? "Voice input" : "ورودی صوتی")}
                       className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition ${
                         voiceState === "listening"
                           ? "animate-pulse bg-red-100 text-red-500"
@@ -1716,7 +1660,7 @@ ${cleanAnswer}`,
                           ? "bg-blue-600 hover:bg-blue-700"
                           : "bg-slate-800 hover:bg-slate-700"
                     }`}
-                    title={loading ? "توقف پاسخ" : "ارسال"}
+                    title={loading ? (isEn ? "Stop response" : "توقف پاسخ") : (isEn ? "Send" : "ارسال")}
                   >
                     {loading ? (
                       <StopCircle size={18} />
