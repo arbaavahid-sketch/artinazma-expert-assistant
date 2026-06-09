@@ -6,18 +6,13 @@ import { debounce } from "@/lib/debounce";
 import { apiUrl, backendFetch, customerFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
-  Loader,
   Plus,
-  Mic,
-  MicOff,
   Download,
-  StopCircle,
   SlidersHorizontal,
   Volume2,
 } from "lucide-react";
 import { findRelatedDevices } from "@/lib/device-assets";
 import {
-  getTextFont,
   shouldShowRelatedDeviceCards,
   testTypes,
   imageTypes,
@@ -41,13 +36,13 @@ import type {
   ToolAction,
 } from "@/lib/chat-types";
 
-import ToolMenu from "@/app/assistant/ToolMenu";
 import RateLimitBanner from "@/app/assistant/RateLimitBanner";
 import AssistantWelcome from "@/app/assistant/AssistantWelcome";
 import AssistantQuickActions from "@/app/assistant/AssistantQuickActions";
 import DropOverlay from "@/app/assistant/DropOverlay";
 import ScrollToBottomButton from "@/app/assistant/ScrollToBottomButton";
 import ChatComposer from "@/app/assistant/ChatComposer";
+import HeroComposer from "@/app/assistant/HeroComposer";
 
 type AnalysisResponse = Record<string, unknown> & {
   ai_analysis?: string;
@@ -1398,59 +1393,22 @@ ${cleanAnswer}`,
 
               <RateLimitBanner countdown={rateLimitCountdown} total={rateLimitTotal} isEn={isEn} />
 
-              <div className="relative mt-5 w-full max-w-3xl px-1 md:mt-8 md:px-0">
-                {showTools && (
-                  <div className={`absolute top-full z-50 mt-2 ${isEn ? "left-0" : "right-0"}`}>
-                    <ToolMenu onSelect={handleToolClick} />
-                  </div>
-                )}
-
-                <div className="ui-card rounded-[32px] shadow-xl shadow-slate-200/70">
-                  <div className="flex items-center gap-3 px-4 py-3">
-                    <button
-                      onClick={() => setShowTools((prev) => !prev)}
-                      className="ui-btn ui-btn-ghost flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-2xl"
-                    >
-                      +
-                    </button>
-
-                    <textarea
-                      ref={chatInputRef}
-                      dir="auto"
-                      style={{ fontFamily: getTextFont(message || (isEn ? "English" : "فارسی")) }}
-                      className="max-h-32 min-h-[46px] flex-1 resize-none border-none bg-transparent px-2 py-3 text-[17px] leading-7 outline-none"
-                      placeholder={isEn ? "Ask Artin..." : "از آرتین بپرسید..."}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                    />
-
-                    {isVoiceSupported && (
-                      <button
-                        onClick={toggleVoice}
-                        title={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : t("assistant.voiceInput")}
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
-                          voiceState === "listening"
-                            ? "animate-pulse bg-red-100 text-red-500"
-                            : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                        }`}
-                      >
-                        {voiceState === "listening" ? <MicOff size={18} /> : voiceState === "processing" ? <Loader size={18} /> : <Mic size={18} />}
-                      </button>
-                    )}
-                    <button
-                      onClick={loading ? stopStreaming : () => sendMessage()}
-                      disabled={(!loading && !message.trim()) || rateLimitCountdown > 0}
-                      className={`ui-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-xl shadow-sm disabled:bg-slate-300 ${
-                        loading ? "bg-red-600 text-white hover:bg-red-700" : "ui-btn-primary"
-                      }`}
-                      title={loading ? (isEn ? "Stop response" : "توقف پاسخ") : t("common.send")}
-                    >
-                      {loading ? <StopCircle size={19} /> : "↑"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <HeroComposer
+                showTools={showTools}
+                onToggleTools={() => setShowTools((prev) => !prev)}
+                onToolSelect={handleToolClick}
+                chatInputRef={chatInputRef}
+                message={message}
+                onMessageChange={setMessage}
+                onKeyDown={handleKeyDown}
+                isVoiceSupported={isVoiceSupported}
+                onToggleVoice={toggleVoice}
+                voiceState={voiceState}
+                loading={loading}
+                onStop={stopStreaming}
+                onSend={() => sendMessage()}
+                rateLimitActive={rateLimitCountdown > 0}
+              />
 
               <AssistantQuickActions
                 isEn={isEn}
