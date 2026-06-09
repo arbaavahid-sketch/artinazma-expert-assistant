@@ -1,0 +1,12 @@
+# pip-audit allowlist — advisories to suppress in CI gating.
+#
+# Add ONE advisory id per line (PYSEC-…, GHSA-…, or CVE-…) ONLY after triage:
+# i.e. there is no fixed version available AND the risk has been accepted.
+# The first whitespace-separated token on each line is used as the id, so you
+# can append a dated note after it. Blank lines and lines starting with # are
+# ignored.
+#
+# Example:
+#   GHSA-xxxx-xxxx-xxxx   # accepted 2026-06-09: dev-only dep, not reachable in prod
+#
+# Keep this file as short as possible — every entry is a known, accepted risk.

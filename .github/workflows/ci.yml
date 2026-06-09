@@ -39,7 +39,9 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip   # PYSEC-2026-196: ship a patched pip
+          pip install -r requirements.txt
 
       - name: Install ruff (fast Python linter)
         run: pip install ruff
@@ -78,12 +80,18 @@ jobs:
           ADMIN_API_KEY: test-admin-key
           JWT_SECRET: test-jwt-secret
 
-      - name: Dependency vulnerability scan (pip-audit)
-        # Informational — does not fail the build yet. Review findings in the log.
-        continue-on-error: true
+      - name: Dependency vulnerability scan (pip-audit, gating)
+        # Fails the build on any advisory NOT allow-listed in
+        # backend/security-audit-ignore.txt (triaged + risk-accepted entries).
         run: |
           pip install pip-audit
-          pip-audit -r requirements.txt --desc
+          IGNORES=$(grep -vE '^\s*#|^\s*$' security-audit-ignore.txt 2>/dev/null \
+            | awk '{print $1}' | sed 's/^/--ignore-vuln /' | tr '\n' ' ')
+          echo "pip-audit ignores: ${IGNORES:-<none>}"
+          # Audit the already-installed environment (deps were installed above).
+          # This avoids pip-audit's slow isolated re-resolution of requirements.txt
+          # and sidesteps strict dry-run resolution conflicts on the pinned set.
+          pip-audit --desc $IGNORES
 
   # ── Frontend ──────────────────────────────────────────────────────────────────
   frontend:
@@ -108,10 +116,10 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Dependency vulnerability scan (npm audit)
-        # Informational — does not fail the build yet. Review findings in the log.
-        continue-on-error: true
-        run: npm audit --audit-level=high
+      - name: Dependency vulnerability scan (npm audit, gating)
+        # Fails the build on high/critical advisories NOT allow-listed in
+        # frontend/security-audit-ignore.txt (triaged + risk-accepted entries).
+        run: node scripts/check-npm-audit.mjs --level=high
 
       - name: TypeScript type-check
         run: npx tsc --noEmit

@@ -1,0 +1,14 @@
+# npm audit allowlist — advisories/packages to suppress in CI gating.
+#
+# Add ONE identifier per line ONLY after triage (no fix available AND risk
+# accepted). An identifier may be any of:
+#   * a GHSA id            e.g. GHSA-xxxx-xxxx-xxxx
+#   * a numeric advisory   e.g. 1102345        (npm audit "source" id)
+#   * a package name       e.g. some-package   (suppresses all its advisories)
+#
+# The first whitespace-separated token on each line is used as the id, so you
+# can append a dated note after it. Blank lines and lines starting with # are
+# ignored. Keep this file as short as possible — every entry is an accepted risk.
+#
+# Example:
+#   GHSA-xxxx-xxxx-xxxx   # accepted 2026-06-09: transitive, no fix, not exploitable here
