@@ -1,4 +1,4 @@
-.PHONY: help dev-backend dev-frontend dev lint type-check test build docker-build docker-up docker-down certs-dev certs-prod backup backup-list
+.PHONY: help dev-backend dev-frontend dev lint type-check test eval-intent eval-quality build docker-build docker-up docker-down certs-dev certs-prod backup backup-list
 
 # ─── Help ─────────────────────────────────────────────────────────────────────
 help:
@@ -13,6 +13,8 @@ help:
 	@echo "  Quality"
 	@echo "    make lint            Run ESLint on frontend"
 	@echo "    make type-check      Run TypeScript type-check on frontend"
+	@echo "    make eval-intent     Offline intent-routing eval (no backend needed)"
+	@echo "    make eval-quality    Answer-quality eval (needs running backend + OPENAI_API_KEY)"
 	@echo ""
 	@echo "  Build"
 	@echo "    make build           Build frontend for production"
@@ -53,6 +55,15 @@ type-check:
 test:
 	cd backend && python -m pytest tests/ -q --tb=short
 	cd frontend && npm test
+
+# Offline: checks only intent routing. No backend or API key required.
+eval-intent:
+	python scripts/run_chat_eval.py
+
+# Live: posts each case to a running backend and grades the real answers with an
+# LLM judge. Requires the backend up on :8000 and OPENAI_API_KEY configured.
+eval-quality:
+	python scripts/run_quality_eval.py
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 build:

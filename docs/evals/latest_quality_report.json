@@ -1,0 +1,130 @@
+{
+  "dataset": "D:\\artinazma-expert-assistant\\docs\\evals\\chat_eval_set.json",
+  "api_url": "http://127.0.0.1:8000",
+  "judge_model": "gpt-5.1",
+  "judged": true,
+  "total": 3,
+  "passed": 3,
+  "failed": 0,
+  "averages": {
+    "overall": 93.67,
+    "groundedness": 5.0,
+    "citation_quality": 5.0,
+    "relevance": 5.0,
+    "hallucination_rate": 0.0
+  },
+  "duration_seconds": 92.13,
+  "results": [
+    {
+      "id": "fa-standard-astm-d4294",
+      "language": "fa",
+      "domain": "petroleum",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 0,
+        "search_mode": "gpt_astm_direct+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 9056,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 95,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "EDXRF",
+        "گوگرد",
+        "نفت",
+        "کالیبراسیون",
+        "اثر ماتریس"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ دقیقاً ماهیت و کاربرد ASTM D4294 را توضیح داده، EDXRF، ماتریس‌های نمونه، محدودیت‌ها و نکات مهم اجرایی و کالیبراسیون را به‌خوبی پوشش می‌دهد و عدد LOD قطعی نساخته است. از نظر عملیاتی برای آزمایشگاه نفت و فراورده‌ها قابل استفاده و استاندارد‑محور است و فقط اندکی طولانی‌تر از حداقل نیاز است."
+    },
+    {
+      "id": "fa-standard-astm-d2622",
+      "language": "fa",
+      "domain": "petroleum",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 0,
+        "search_mode": "gpt_astm_direct+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 6794,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 92,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "WDXRF",
+        "EDXRF",
+        "ماتریس نمونه",
+        "انتخاب روش"
+      ],
+      "missing_concepts": [
+        "جدول مقایسه"
+      ],
+      "constraint_violations": [],
+      "rubric_failed": [
+        "comparison-table"
+      ],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ به‌صورت دقیق و فنی تفاوت D2622 و D4294 را در سطح اصول روش، دقت، ماتریس، کاربرد و انتخاب روش توضیح داده و هیچ عدد یا ادعای مشکوک و غیرمتعارف مطرح نکرده است؛ فقط به‌صورت متنی است و نه در قالب جدول، لذا آیتم «جدول مقایسه» محقق نشده است."
+    },
+    {
+      "id": "fa-equipment-sulfur-lpg",
+      "language": "fa",
+      "domain": "equipment",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 6288,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 94,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "نوع ترکیبات گوگردی",
+        "Total Sulfur",
+        "H2S",
+        "Mercaptan",
+        "ایمنی نمونه‌برداری"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ به‌صورت فنی و کاربردی، انواع روش‌ها و دتکتورهای مناسب برای اندازه‌گیری گوگرد در LPG (Total و گونه‌ای) را با مزایا/معایب و سناریوهای کاربردی توضیح داده و نکات ایمنی نمونه‌برداری را هم پوشش داده است. استانداردها و تکنیک‌های نام‌برده (UV Fluorescence، XRF، GC-SCD/FPD) با دانش متعارف این حوزه منطبق‌اند و ادعای عددی غیرمستند مطرح نشده است."
+    }
+  ]
+}

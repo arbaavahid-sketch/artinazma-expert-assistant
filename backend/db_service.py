@@ -29,6 +29,7 @@ from repositories.questions_repo import (
     get_all_questions,
     save_question_feedback,
     get_feedback_stats,
+    get_knowledge_gap_report,
     get_response_time_stats,
 )
 
@@ -450,6 +451,7 @@ from repositories.questions_repo import (
     get_all_questions,
     save_question_feedback,
     get_feedback_stats,
+    get_knowledge_gap_report,
     get_response_time_stats,
 )
 from repositories.memory_repo import (

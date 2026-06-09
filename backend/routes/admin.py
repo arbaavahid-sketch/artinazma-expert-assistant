@@ -26,6 +26,7 @@ from db_service import (
     set_setting,
     get_question_stats,
     get_question_analytics,
+    get_knowledge_gap_report,
     get_customer_request_stats,
     get_customer_requests,
     get_all_questions,
@@ -672,6 +673,19 @@ def business_analytics(days: int = 30, _=Depends(require_admin)):
         "request_statuses": [{"status": key, "count": count} for key, count in status_counts.most_common(8)],
         "active_customers": active_customers,
     }
+
+
+@router.get("/admin/knowledge-gaps")
+def admin_knowledge_gaps(
+    days: int = 30,
+    score_threshold: float = 14.0,
+    limit: int = 50,
+    _=Depends(require_admin),
+):
+    """Questions we likely answered badly (negative feedback / weak retrieval /
+    no grounding) plus the topics behind them, so the team knows what knowledge
+    to add. Closes the user-feedback -> knowledge-gap loop."""
+    return get_knowledge_gap_report(days=days, score_threshold=score_threshold, limit=limit)
 
 
 @router.get("/admin/customers")

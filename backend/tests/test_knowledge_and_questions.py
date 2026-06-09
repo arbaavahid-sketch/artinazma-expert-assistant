@@ -238,3 +238,63 @@ class TestCSRFToken:
         token2 = app_client.get("/csrf-token").json()["csrf_token"]
         # توکن‌ها باید یکتا باشند
         assert token1 != token2
+
+
+class TestKnowledgeGapReport:
+    """تست گزارش شکاف دانش (سوالاتی که بد جواب دادیم)."""
+
+    def _save_weak_question(self, best_score, source_count, web=False, rating=None):
+        from repositories.questions_repo import save_expert_question, save_question_feedback
+        qid = save_expert_question(
+            question="آیا استاندارد ASTM D7039 برای گوگرد در بنزین مناسب است؟",
+            answer="پاسخ نمونه.",
+            sources=[],
+            detected_domain="petroleum",
+            response_time_ms=400,
+            metadata={
+                "question_intent": "standard_explanation",
+                "best_score": best_score,
+                "source_count": source_count,
+                "web_search_used": web,
+            },
+        )
+        if rating:
+            save_question_feedback(qid, rating, "")
+        return qid
+
+    def test_weak_retrieval_flagged(self, test_db):
+        from repositories.questions_repo import get_knowledge_gap_report
+        self._save_weak_question(best_score=3.0, source_count=0, web=False)
+        report = get_knowledge_gap_report(days=30, score_threshold=14.0)
+        assert report["gap_count"] >= 1
+        assert report["breakdown"]["weak_retrieval"] >= 1
+        # موضوع گم‌شده باید در کلیدواژه‌ها ظاهر شود
+        terms = {k["term"] for k in report["top_gap_keywords"]}
+        assert any("astm" in t or "d7039" in t for t in terms) or report["top_gap_keywords"]
+
+    def test_strong_answer_not_flagged(self, test_db):
+        from repositories.questions_repo import get_knowledge_gap_report
+        before = get_knowledge_gap_report(days=30)["gap_count"]
+        # score بالا + منبع موجود => نباید به‌عنوان شکاف ثبت شود
+        self._save_weak_question(best_score=40.0, source_count=3, web=False)
+        after = get_knowledge_gap_report(days=30)["gap_count"]
+        assert after == before
+
+    def test_negative_feedback_flagged(self, test_db):
+        from repositories.questions_repo import get_knowledge_gap_report
+        # حتی با بازیابی خوب، رأی منفی کاربر باید شکاف محسوب شود
+        self._save_weak_question(best_score=40.0, source_count=3, web=False, rating="down")
+        report = get_knowledge_gap_report(days=30)
+        assert report["breakdown"]["negative_feedback"] >= 1
+
+    def test_endpoint_requires_admin(self, app_client):
+        res = app_client.get("/admin/knowledge-gaps")
+        assert res.status_code == 401
+
+    def test_endpoint_with_admin(self, app_client, admin_headers):
+        res = app_client.get("/admin/knowledge-gaps?days=30", headers=admin_headers)
+        assert res.status_code == 200
+        data = res.json()
+        for key in ("gap_count", "breakdown", "by_domain", "by_intent",
+                    "top_gap_keywords", "examples"):
+            assert key in data

@@ -1,0 +1,335 @@
+"use client";
+
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { adminUrl } from "@/lib/api";
+import {
+  AlertTriangle,
+  RefreshCw,
+  SearchX,
+  ThumbsDown,
+  FileQuestion,
+  Unplug,
+} from "lucide-react";
+
+type GapExample = {
+  id: number;
+  question: string;
+  domain: string;
+  intent: string;
+  user_rating: string | null;
+  comment: string | null;
+  best_score: number | null;
+  source_count: number | null;
+  web_search_used: boolean;
+  reasons: string[];
+  created_at: string;
+};
+
+type GapReport = {
+  window_days: number;
+  score_threshold: number;
+  questions_in_window: number;
+  gap_count: number;
+  gap_rate_pct: number | null;
+  breakdown: {
+    negative_feedback: number;
+    weak_retrieval: number;
+    no_grounding: number;
+  };
+  by_domain: { domain: string; count: number }[];
+  by_intent: { intent: string; count: number }[];
+  top_gap_keywords: { term: string; count: number }[];
+  examples: GapExample[];
+};
+
+const windows = [7, 30, 90] as const;
+
+const reasonMeta: Record<string, { label: string; cls: string }> = {
+  negative_feedback: { label: "رأی منفی", cls: "border-rose-200 bg-rose-50 text-rose-700" },
+  weak_retrieval: { label: "بازیابی ضعیف", cls: "border-amber-200 bg-amber-50 text-amber-700" },
+  no_grounding: { label: "بدون منبع", cls: "border-slate-200 bg-slate-100 text-slate-700" },
+};
+
+function formatDate(value: string) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+export default function AdminKnowledgeGapsPage() {
+  const [data, setData] = useState<GapReport | null>(null);
+  const [days, setDays] = useState<(typeof windows)[number]>(30);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async (selectedDays = days) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(adminUrl(`/admin/knowledge-gaps?days=${selectedDays}&limit=50`), {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setData(await res.json());
+    } catch {
+      setError("بارگیری گزارش شکاف دانش ممکن نشد.");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [days]);
+
+  function selectWindow(next: (typeof windows)[number]) {
+    setDays(next);
+    load(next);
+  }
+
+  useEffect(() => {
+    load(30);
+  }, [load]);
+
+  const maxKeyword = data?.top_gap_keywords?.[0]?.count ?? 1;
+
+  return (
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir="rtl">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
+          <div className="bg-gradient-to-l from-slate-50 via-white to-amber-50 p-8">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700">
+                  <SearchX size={17} />
+                  کیفیت پاسخ‌گویی
+                </div>
+                <h1 className="text-3xl font-black text-slate-950">شکاف دانش</h1>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                  سؤالاتی که احتمالاً بد جواب داده‌ایم — بر اساس رأی منفی کاربر، بازیابی ضعیف، یا
+                  نبودِ منبع — و موضوعاتی که برای پر کردن این شکاف باید به بانک دانش اضافه شوند.
+                </p>
+              </div>
+
+              <button
+                onClick={() => load(days)}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                به‌روزرسانی
+              </button>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {windows.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => selectWindow(item)}
+                  className={`rounded-xl px-4 py-2 text-xs font-black transition ${
+                    days === item
+                      ? "bg-slate-950 text-white"
+                      : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {item} روز اخیر
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="mb-6 grid gap-4 md:grid-cols-4">
+          <StatCard
+            title="کل شکاف‌ها"
+            value={data?.gap_count ?? 0}
+            sub={
+              data?.gap_rate_pct != null
+                ? `${data.gap_rate_pct}% از ${data.questions_in_window} سؤال`
+                : "—"
+            }
+            Icon={SearchX}
+            tone="slate"
+          />
+          <StatCard
+            title="رأی منفی"
+            value={data?.breakdown.negative_feedback ?? 0}
+            sub="thumbs-down کاربر"
+            Icon={ThumbsDown}
+            tone="rose"
+          />
+          <StatCard
+            title="بازیابی ضعیف"
+            value={data?.breakdown.weak_retrieval ?? 0}
+            sub={`score < ${data?.score_threshold ?? 14}`}
+            Icon={FileQuestion}
+            tone="amber"
+          />
+          <StatCard
+            title="بدون منبع"
+            value={data?.breakdown.no_grounding ?? 0}
+            sub="نه منبع داخلی، نه وب"
+            Icon={Unplug}
+            tone="slate"
+          />
+        </div>
+
+        <div className="mb-6 grid gap-6 lg:grid-cols-2">
+          <Panel title="موضوعات نیازمند دانش">
+            {!data?.top_gap_keywords?.length ? (
+              <Empty>کلیدواژه‌ای پیدا نشد.</Empty>
+            ) : (
+              <ul className="space-y-2">
+                {data.top_gap_keywords.map((k) => (
+                  <li key={k.term} className="flex items-center gap-3">
+                    <span className="w-28 shrink-0 truncate text-sm font-bold text-slate-700" title={k.term}>
+                      {k.term}
+                    </span>
+                    <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <span
+                        className="block h-full rounded-full bg-amber-400"
+                        style={{ width: `${Math.max(8, (k.count / maxKeyword) * 100)}%` }}
+                      />
+                    </span>
+                    <span className="w-6 shrink-0 text-left text-xs font-black text-slate-500">{k.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel title="تفکیک بر اساس حوزه و نوع پرسش">
+            {!data?.by_domain?.length && !data?.by_intent?.length ? (
+              <Empty>داده‌ای برای تفکیک نیست.</Empty>
+            ) : (
+              <div className="space-y-4">
+                <Breakdown label="حوزه" items={data?.by_domain.map((d) => ({ name: d.domain, count: d.count })) ?? []} />
+                <Breakdown label="نوع پرسش" items={data?.by_intent.map((d) => ({ name: d.intent, count: d.count })) ?? []} />
+              </div>
+            )}
+          </Panel>
+        </div>
+
+        <Panel title={`نمونه سؤال‌ها (${data?.examples.length ?? 0})`}>
+          {loading ? (
+            <div className="rounded-2xl bg-slate-50 p-10 text-center text-sm font-bold text-slate-500">
+              در حال بارگیری…
+            </div>
+          ) : !data?.examples.length ? (
+            <div className="rounded-2xl bg-emerald-50 p-10 text-center text-sm font-bold text-emerald-700">
+              شکاف دانشی در این بازه پیدا نشد. 🎉
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {data.examples.map((ex) => (
+                <article key={ex.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    {ex.reasons.map((r) => (
+                      <span
+                        key={r}
+                        className={`rounded-full border px-3 py-1 text-xs font-black ${
+                          reasonMeta[r]?.cls ?? "border-slate-200 bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        {reasonMeta[r]?.label ?? r}
+                      </span>
+                    ))}
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">{ex.domain}</span>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">{ex.intent}</span>
+                    <span className="text-xs font-bold text-slate-400">{formatDate(ex.created_at)}</span>
+                  </div>
+                  <p className="text-sm font-bold leading-7 text-slate-900">{ex.question}</p>
+                  {ex.comment && (
+                    <p className="mt-2 rounded-xl bg-white px-3 py-2 text-xs leading-6 text-slate-600">
+                      نظر کاربر: {ex.comment}
+                    </p>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-slate-400">
+                    <span>score: {ex.best_score ?? "—"}</span>
+                    <span>منابع: {ex.source_count ?? 0}</span>
+                    <span>وب: {ex.web_search_used ? "بله" : "خیر"}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </Panel>
+
+        <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
+          <AlertTriangle className="ml-2 inline-block" size={17} />
+          از این فهرست برای تصمیم‌گیری استفاده کنید: موضوعات پرتکرار را به‌عنوان فایل دانش جدید در
+          «بانک دانش» اضافه کنید تا نرخ شکاف کاهش یابد.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  sub,
+  Icon,
+  tone,
+}: {
+  title: string;
+  value: number;
+  sub: string;
+  Icon: typeof SearchX;
+  tone: "amber" | "rose" | "slate";
+}) {
+  const colors = {
+    amber: "border-amber-100 bg-amber-50 text-amber-800",
+    rose: "border-rose-100 bg-rose-50 text-rose-800",
+    slate: "border-slate-200 bg-white text-slate-800",
+  }[tone];
+  return (
+    <div className={`rounded-[24px] border p-5 shadow-sm ${colors}`}>
+      <div className="flex items-center gap-2 text-sm font-black opacity-80">
+        <Icon size={16} />
+        {title}
+      </div>
+      <div className="mt-2 text-3xl font-black">{value}</div>
+      <div className="mt-1 text-xs font-bold opacity-70">{sub}</div>
+    </div>
+  );
+}
+
+function Panel({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="mb-4 text-sm font-black text-slate-700">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Empty({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-8 text-center text-sm font-bold text-slate-400">{children}</div>
+  );
+}
+
+function Breakdown({ label, items }: { label: string; items: { name: string; count: number }[] }) {
+  if (!items.length) return null;
+  return (
+    <div>
+      <div className="mb-2 text-xs font-black text-slate-400">{label}</div>
+      <div className="flex flex-wrap gap-2">
+        {items.map((it) => (
+          <span
+            key={it.name}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700"
+          >
+            {it.name}
+            <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-black text-white">{it.count}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}

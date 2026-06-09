@@ -403,6 +403,144 @@ def get_feedback_stats() -> Dict[str, Any]:
         conn.close()
 
 
+# Persian + English stopwords reused for gap-topic keyword extraction.
+_GAP_STOPWORDS = {
+    "و", "در", "به", "از", "که", "این", "را", "با", "است", "یا",
+    "برای", "می", "هم", "آیا", "چه", "چطور", "چگونه", "کدام", "های",
+    "شود", "شده", "دارد", "کنم", "کنید", "بین", "روی", "یک", "هر",
+    "the", "a", "an", "of", "in", "is", "for", "how", "what", "and",
+    "to", "do", "does", "with", "on", "or", "be", "are", "can",
+}
+
+
+def _extract_gap_keywords(texts: List[str], top_n: int = 15) -> List[Dict[str, Any]]:
+    """Frequency-rank meaningful Persian/English terms across gap questions."""
+    freq: Dict[str, int] = {}
+    for text in texts:
+        for w in re.findall(r"[؀-ۿ]{3,}|[a-zA-Z]{4,}", text or ""):
+            wl = w.lower()
+            if wl not in _GAP_STOPWORDS:
+                freq[wl] = freq.get(wl, 0) + 1
+    ranked = sorted(freq.items(), key=lambda x: x[1], reverse=True)[:top_n]
+    return [{"term": w, "count": c} for w, c in ranked]
+
+
+def get_knowledge_gap_report(
+    days: int = 30,
+    score_threshold: float = 14.0,
+    limit: int = 50,
+) -> Dict[str, Any]:
+    """Surface questions the assistant likely answered from a knowledge gap.
+
+    A question is flagged as a knowledge gap when any of these hold:
+      * the user gave a thumbs-down (explicit dissatisfaction),
+      * retrieval was weak: best internal score below ``score_threshold``,
+      * no grounding at all: zero internal sources AND no web search.
+
+    Returns aggregate counts, gap breakdowns by domain/intent, the top keywords
+    across gap questions (topics where knowledge is missing), and a capped list
+    of example gap questions for review. Drives the "questions we answered
+    badly" loop so the team knows which knowledge files to add.
+    """
+    days = max(1, min(int(days), 365))
+    limit = max(1, min(int(limit), 500))
+    cutoff = (
+        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    ).strftime("%Y-%m-%d")
+
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT id, question, detected_domain, metadata_json,
+                   user_rating, user_rating_comment, created_at
+            FROM expert_questions
+            WHERE created_at >= ?
+            ORDER BY id DESC
+            LIMIT 2000
+            """,
+            (cutoff,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    total = len(rows)
+    gaps: List[Dict[str, Any]] = []
+    neg_feedback = weak_retrieval = no_source = 0
+
+    for row in rows:
+        try:
+            meta = json.loads(row["metadata_json"] or "{}")
+        except (json.JSONDecodeError, TypeError):
+            meta = {}
+
+        rating = (row["user_rating"] or "").strip().lower()
+        best_score = meta.get("best_score")
+        source_count = meta.get("source_count")
+        web_used = bool(meta.get("web_search_used"))
+
+        reasons: List[str] = []
+        if rating == "down":
+            reasons.append("negative_feedback")
+        if isinstance(best_score, (int, float)) and best_score < score_threshold:
+            reasons.append("weak_retrieval")
+        if (source_count == 0 or source_count is None) and not web_used:
+            reasons.append("no_grounding")
+
+        if not reasons:
+            continue
+
+        if "negative_feedback" in reasons:
+            neg_feedback += 1
+        if "weak_retrieval" in reasons:
+            weak_retrieval += 1
+        if "no_grounding" in reasons:
+            no_source += 1
+
+        gaps.append({
+            "id": row["id"],
+            "question": (row["question"] or "")[:300],
+            "domain": row["detected_domain"] or "unknown",
+            "intent": meta.get("question_intent") or "unknown",
+            "user_rating": rating or None,
+            "comment": (row["user_rating_comment"] or "") or None,
+            "best_score": best_score,
+            "source_count": source_count,
+            "web_search_used": web_used,
+            "reasons": reasons,
+            "created_at": row["created_at"],
+        })
+
+    by_domain: Dict[str, int] = {}
+    by_intent: Dict[str, int] = {}
+    for g in gaps:
+        by_domain[g["domain"]] = by_domain.get(g["domain"], 0) + 1
+        by_intent[g["intent"]] = by_intent.get(g["intent"], 0) + 1
+
+    return {
+        "window_days": days,
+        "score_threshold": score_threshold,
+        "questions_in_window": total,
+        "gap_count": len(gaps),
+        "gap_rate_pct": round(len(gaps) / total * 100, 1) if total else None,
+        "breakdown": {
+            "negative_feedback": neg_feedback,
+            "weak_retrieval": weak_retrieval,
+            "no_grounding": no_source,
+        },
+        "by_domain": sorted(
+            [{"domain": k, "count": v} for k, v in by_domain.items()],
+            key=lambda x: x["count"], reverse=True,
+        ),
+        "by_intent": sorted(
+            [{"intent": k, "count": v} for k, v in by_intent.items()],
+            key=lambda x: x["count"], reverse=True,
+        ),
+        "top_gap_keywords": _extract_gap_keywords([g["question"] for g in gaps]),
+        "examples": gaps[:limit],
+    }
+
+
 def get_response_time_stats(days: int = 30) -> dict:
     """آمار زمان پاسخ‌دهی AI."""
     conn = get_connection()
