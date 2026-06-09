@@ -269,7 +269,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
   return (
     <ToastProvider>
-    <main className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]" dir={isRtl ? "rtl" : "ltr"}>
+      {/* Skip to main content — visible only on keyboard focus */}
+      <a href="#main-content" className="skip-link">
+        {isRtl ? "پرش به محتوای اصلی" : "Skip to main content"}
+      </a>
       {/* Offline banner */}
       {!isOnline && (
         <div className="absolute inset-x-0 top-0 z-[100] flex items-center justify-center gap-3 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white shadow-lg">
@@ -660,17 +664,19 @@ export default function ArtinShell({ children }: ArtinShellProps) {
               sidebarCollapsed ? "w-[88px]" : "w-[300px]"
             }`}
           />
-          <section
+          <main
+            id="main-content"
+            tabIndex={-1}
             data-app-path={pathname}
-            className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
+            className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden focus:outline-none"
           >
             <SectionErrorBoundary>
               {children}
             </SectionErrorBoundary>
-          </section>
+          </main>
         </div>
       </div>
-    </main>
+    </div>
   </ToastProvider>
   );
 }

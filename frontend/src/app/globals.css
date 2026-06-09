@@ -290,6 +290,26 @@ textarea::placeholder, input::placeholder { color: #94a3b8; }
   [data-app-path="/assistant"] { padding-top: 0; }
 }
 
+/* ── Accessibility: skip-to-content link (visible only on keyboard focus) ──── */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  inset-inline-start: 1rem;
+  z-index: 200;
+  padding: 0.6rem 1rem;
+  border-radius: 0 0 12px 12px;
+  background: var(--brand-accent);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-card);
+  transition: top 0.18s ease;
+}
+.skip-link:focus {
+  top: 0;
+  outline: none;
+}
+
 /* ── Accessibility: visible keyboard focus ring ────────────────────────────── */
 /* :where() keeps specificity at 0 so component-specific :focus-visible styles win. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
