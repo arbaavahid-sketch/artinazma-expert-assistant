@@ -560,10 +560,14 @@ ${cleanAnswer}`,
                 { ...finalAssistantMsg, content: accumulatedText },
               ]);
             } else if (event.type === "done") {
+              const relatedDevices = shouldShowRelatedDeviceCards(finalMessage, domain)
+                ? findRelatedDevices(`${finalMessage}\n${accumulatedText}`, 2)
+                : [];
               finalAssistantMsg = {
                 ...finalAssistantMsg,
                 content: accumulatedText,
                 question_id: event.question_id as number,
+                relatedDevices,
               };
               setMessages([...previousMessages, userMessage, finalAssistantMsg]);
 
@@ -578,6 +582,7 @@ ${cleanAnswer}`,
                   question_id: finalAssistantMsg.question_id,
                   resource_links: finalAssistantMsg.resource_links || [],
                   resource_images: finalAssistantMsg.resource_images || [],
+                  relatedDevices,
                 },
               );
             } else if (event.type === "error") {
