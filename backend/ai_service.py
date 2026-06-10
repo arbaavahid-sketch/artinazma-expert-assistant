@@ -1,4 +1,5 @@
 from prompts import SYSTEM_PROMPT, IMAGE_ANALYSIS_PROMPT
+from comparison_table_service import ensure_comparison_table
 import logging
 import os
 import re
@@ -821,6 +822,9 @@ def ask_expert_assistant(
         temperature=kwargs["temperature"],
     ).strip()
 
+    # شبکه‌ی ایمنی: اگر سؤال مقایسه‌ای بود و مدل جدول نساخت، یک جدول قطعی درج کن.
+    _answer = ensure_comparison_table(message, _answer)
+
     if _use_cache and _answer:
         _cache_set(_ck, _answer)
 
@@ -873,6 +877,8 @@ def ask_expert_assistant_stream(
         model=kwargs["model"],
         temperature=kwargs["temperature"],
     )
+    # شبکه‌ی ایمنی: اگر سؤال مقایسه‌ای بود و مدل جدول نساخت، یک جدول قطعی درج کن.
+    text = ensure_comparison_table(message, text)
     chunk_size = 40
     for i in range(0, len(text), chunk_size):
         yield text[i:i + chunk_size]

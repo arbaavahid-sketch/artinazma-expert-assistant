@@ -2,6 +2,8 @@ import re
 from typing import List, Tuple
 
 KNOWN_METHODS = [
+    "WDXRF",
+    "EDXRF",
     "XRF",
     "ICP-OES",
     "ICP-MS",
@@ -14,6 +16,16 @@ KNOWN_METHODS = [
     "FTIR",
     "UV-Vis",
 ]
+
+# کدهای رایج ASTM برای اندازه‌گیری گوگرد و روش زیربنایی هرکدام.
+# این نگاشت باعث می‌شود سؤالی مثل «تفاوت ASTM D2622 و D4294» به‌عنوان
+# مقایسه‌ی روش (WDXRF در برابر EDXRF) شناخته شود.
+ASTM_SULFUR_METHODS = {
+    "D2622": "WDXRF",
+    "D4294": "EDXRF",
+    "D7039": "MWDXRF",
+    "D5453": "UV",
+}
 
 
 def _normalize(text: str) -> str:
@@ -46,6 +58,13 @@ def detect_comparison_options(message: str) -> List[str]:
         pattern = r"(?<![A-Z0-9])" + re.escape(method.upper()) + r"(?![A-Z0-9])"
         if re.search(pattern, upper_text) and method not in found:
             found.append(method)
+
+    # Map ASTM sulfur-method codes (D2622, D4294, …) to their technique so that
+    # «تفاوت ASTM D2622 و D4294» is recognised as a WDXRF↔EDXRF comparison.
+    for code, technique in ASTM_SULFUR_METHODS.items():
+        pattern = r"(?<![A-Z0-9])" + re.escape(code) + r"(?![A-Z0-9])"
+        if re.search(pattern, upper_text) and technique not in found:
+            found.append(technique)
 
     # If ICP is mentioned together with ICP-OES/ICP-MS, keep the specific techniques first.
     if "ICP-OES" in found or "ICP-MS" in found:
@@ -212,9 +231,50 @@ def _build_markdown_table(headers: List[str], rows: List[List[str]]) -> str:
     return "\n".join([header_line, separator] + body)
 
 
+def _wdxrf_edxrf_table() -> str:
+    return _build_markdown_table(
+        ["معیار", "WDXRF (ASTM D2622)", "EDXRF (ASTM D4294)"],
+        [
+            [
+                "اصول اندازه‌گیری",
+                "پراش بر اساس طول‌موج (Wavelength Dispersive)",
+                "پراش بر اساس انرژی (Energy Dispersive)",
+            ],
+            [
+                "حد تشخیص گوگرد",
+                "پایین‌تر؛ مناسب گوگرد بسیار کم و ULSD",
+                "بالاتر؛ مناسب غلظت‌های متوسط تا بالا",
+            ],
+            [
+                "اثر ماتریس نمونه",
+                "کمتر؛ تفکیک طیفی بهتر و تداخل کمتر",
+                "بیشتر؛ حساس به نسبت C/H و ناخالصی‌ها",
+            ],
+            [
+                "دقت و تکرارپذیری",
+                "بالاتر در غلظت‌های پایین",
+                "کافی برای کنترل روتین",
+            ],
+            [
+                "سرعت و سادگی",
+                "کندتر، گران‌تر، عمدتاً آزمایشگاهی",
+                "سریع، ساده و قابل‌استفاده‌ی میدانی",
+            ],
+            [
+                "انتخاب روش / بهترین کاربرد",
+                "گوگرد بسیار کم و الزامات دقت بالا",
+                "غربالگری سریع و پایش روتین فرآورده",
+            ],
+        ],
+    )
+
+
 def build_comparison_table(message: str) -> str:
     options = detect_comparison_options(message)
     normalized = _normalize(message)
+
+    if "WDXRF" in options and "EDXRF" in options:
+        return _wdxrf_edxrf_table()
 
     if "XRF" in options and any(option.startswith("ICP") for option in options):
         return _xrf_icp_table(options)
