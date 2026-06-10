@@ -61,9 +61,11 @@ export default function HeroComposer({
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={onToggleTools}
+            aria-label={isEn ? "Tools and attachments" : "ابزارها و پیوست‌ها"}
+            aria-haspopup="menu"
             className="ui-btn ui-btn-ghost flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-2xl"
           >
-            +
+            <span aria-hidden="true">+</span>
           </button>
 
           <textarea
@@ -81,13 +83,15 @@ export default function HeroComposer({
             <button
               onClick={onToggleVoice}
               title={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : t("assistant.voiceInput")}
+              aria-label={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : t("assistant.voiceInput")}
+              aria-pressed={voiceState === "listening"}
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
                 voiceState === "listening"
                   ? "animate-pulse bg-red-100 text-red-500"
                   : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
               }`}
             >
-              {voiceState === "listening" ? <MicOff size={18} /> : voiceState === "processing" ? <Loader size={18} /> : <Mic size={18} />}
+              {voiceState === "listening" ? <MicOff size={18} aria-hidden="true" /> : voiceState === "processing" ? <Loader size={18} aria-hidden="true" /> : <Mic size={18} aria-hidden="true" />}
             </button>
           )}
           <button
@@ -97,8 +101,9 @@ export default function HeroComposer({
               loading ? "bg-red-600 text-white hover:bg-red-700" : "ui-btn-primary"
             }`}
             title={loading ? (isEn ? "Stop response" : "توقف پاسخ") : t("common.send")}
+            aria-label={loading ? (isEn ? "Stop response" : "توقف پاسخ") : (isEn ? "Send message" : "ارسال پیام")}
           >
-            {loading ? <StopCircle size={19} /> : "↑"}
+            {loading ? <StopCircle size={19} aria-hidden="true" /> : <span aria-hidden="true">↑</span>}
           </button>
         </div>
       </div>
