@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { debounce } from "@/lib/debounce";
 import { apiUrl, backendFetch, customerFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import {
@@ -25,6 +24,7 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTTS } from "@/hooks/useTTS";
 import { useExportChat } from "@/hooks/useExportChat";
 import { useStagedImage } from "@/hooks/useStagedImage";
+import { useScrollToBottom } from "@/hooks/useScrollToBottom";
 import StarterQuestions from "@/components/StarterQuestions";
 import { useI18n } from "@/lib/i18n";
 import type {
@@ -165,11 +165,13 @@ function AssistantPageInner() {
   const lastPromptRef = useRef<{ actual: string; visible: string } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedMsgRef = useRef<string>("");
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const isAtBottomRef = useRef(true);
-  const debouncedScrollRef = useRef<(() => void) | null>(null);
-  const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const {
+    messagesEndRef,
+    scrollContainerRef,
+    showScrollBtn,
+    handleChatScroll,
+    scrollToBottom,
+  } = useScrollToBottom(messages);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -496,17 +498,6 @@ ${cleanAnswer}`,
     return () => clearTimeout(timer);
   }, [rateLimitCountdown]);
 
-  // Auto-scroll: only when user is already at the bottom
-  useEffect(() => {
-    if (isAtBottomRef.current) {
-      const el = scrollContainerRef.current;
-      if (el) {
-        // Use instant scroll during streaming to avoid jittery smooth animations
-        el.scrollTop = el.scrollHeight;
-      }
-    }
-  }, [messages]);
-
   // Global keyboard shortcuts
   useEffect(() => {
     function onGlobalKeyDown(e: KeyboardEvent) {
@@ -530,27 +521,6 @@ ${cleanAnswer}`,
     window.addEventListener("keydown", onGlobalKeyDown);
     return () => window.removeEventListener("keydown", onGlobalKeyDown);
   }, []);
-
-  useEffect(() => {
-    debouncedScrollRef.current = debounce(() => {
-      const el = scrollContainerRef.current;
-      if (!el) return;
-      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-      const atBottom = distanceFromBottom < 80;
-      isAtBottomRef.current = atBottom;
-      setShowScrollBtn(!atBottom);
-    }, 50);
-  }, []);
-
-  function handleChatScroll() {
-    debouncedScrollRef.current?.();
-  }
-
-  function scrollToBottom() {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    isAtBottomRef.current = true;
-    setShowScrollBtn(false);
-  }
 
   function typeAssistantMessage(
     previousMessages: ChatMessage[],
