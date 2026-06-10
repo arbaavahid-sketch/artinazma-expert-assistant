@@ -113,9 +113,10 @@ function ToastBubble({
       </span>
       <button
         onClick={() => onDismiss(item.id)}
+        aria-label="بستن اعلان"
         className="shrink-0 text-slate-300 hover:text-slate-500"
       >
-        <X size={14} />
+        <X size={14} aria-hidden="true" />
       </button>
     </div>
   );

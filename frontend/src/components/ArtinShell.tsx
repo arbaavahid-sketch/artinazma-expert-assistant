@@ -519,12 +519,13 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 <button
                   onClick={logoutCustomer}
                   title={isRtl ? "خروج از حساب مشتری" : "Logout"}
+                  aria-label={isRtl ? "خروج از حساب مشتری" : "Logout"}
                   className={`ui-btn ui-btn-danger group mb-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm ${
                     sidebarCollapsed ? "justify-center px-2" : ""
                   }`}
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-700">
-                    <LogOut size={19} strokeWidth={1.9} />
+                    <LogOut size={19} strokeWidth={1.9} aria-hidden="true" />
                   </span>
 
                   {!sidebarCollapsed && <span>{locale === "fa" ? "خروج از حساب مشتری" : "Logout"}</span>}

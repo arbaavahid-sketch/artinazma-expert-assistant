@@ -110,6 +110,32 @@ export default function CustomerRequestPage() {
     } catch {}
   }, []);
 
+  // Pre-fill from a chat device card: /customer-request?type=price-inquiry&item=...
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type");
+    const item = params.get("item");
+
+    if (type && requestTypes.some((t) => t.value === type)) {
+      setRequestType(type);
+    }
+
+    if (item) {
+      const fieldKey = (type && smartQuoteFields[type]?.[0]?.key) || "item";
+      setQuoteDetails((prev) => ({ ...prev, [fieldKey]: item }));
+      setSubject(isEn ? `Quote request: ${item}` : `استعلام قیمت: ${item}`);
+      setMessage((prev) =>
+        prev ||
+        (isEn
+          ? `I would like a price and availability quote for: ${item}`
+          : `لطفاً قیمت و موجودی این مورد را اعلام کنید: ${item}`),
+      );
+    }
+    // فقط یک‌بار هنگام بارگذاری صفحه اجرا می‌شود
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function submitRequest() {
     setResultMessage("");
     setResultType("");

@@ -43,9 +43,15 @@ export default function UploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
-      <div className="ui-card w-full max-w-xl rounded-[36px] p-6 shadow-2xl" dir={dir}>
+      <div
+        className="ui-card w-full max-w-xl rounded-[36px] p-6 shadow-2xl"
+        dir={dir}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upload-modal-title"
+      >
         <div className="mb-5">
-          <h2 className="text-2xl font-black text-slate-900">{title}</h2>
+          <h2 id="upload-modal-title" className="text-2xl font-black text-slate-900">{title}</h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
             {isEn ? "Selected file:" : "فایل انتخاب‌شده:"} <span className="font-bold">{fileName}</span>
           </p>

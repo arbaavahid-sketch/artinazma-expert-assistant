@@ -134,9 +134,10 @@ export default function AdminGlobalSearch() {
             {query && (
               <button
                 onClick={() => { setQuery(""); setResults(EMPTY); inputRef.current?.focus(); }}
+                aria-label="پاک کردن جستجو"
                 className="shrink-0 text-xs text-slate-400 hover:text-slate-600"
               >
-                ✕
+                <span aria-hidden="true">✕</span>
               </button>
             )}
           </div>

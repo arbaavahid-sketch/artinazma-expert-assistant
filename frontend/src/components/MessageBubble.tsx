@@ -17,6 +17,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
+import RelatedDeviceCards from "@/app/assistant/RelatedDeviceCards";
 import { useI18n } from "@/lib/i18n";
 import {
   cleanMarkdownText,
@@ -452,6 +453,7 @@ function MessageBubble({
               images={item.resource_images}
             />
           )}
+          {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {!isUser && !loading && (
             <div className="mt-2 flex flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 opacity-100 transition-opacity md:flex-wrap">
               <button

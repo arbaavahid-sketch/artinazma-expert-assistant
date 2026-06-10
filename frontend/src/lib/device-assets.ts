@@ -4,6 +4,12 @@ export type DeviceAsset = {
   subtitle: string;
   image: string;
   keywords: string[];
+  /**
+   * آدرس واقعی صفحه‌ی محصول روی artinazma.net. اگر تنظیم شود، دکمه‌ی
+   * «مشاهده محصول» روی کارت نمایش داده می‌شود. این مقادیر از ایندکس سایت
+   * (backend/artinazma_site_index.json) استخراج شده‌اند.
+   */
+  productUrl?: string;
 };
 
 export const deviceAssets: DeviceAsset[] = [
@@ -12,6 +18,7 @@ export const deviceAssets: DeviceAsset[] = [
     title: "RA-915M Mercury Analyzer",
     subtitle: "آنالایزر جیوه مناسب آب، خاک، گاز و نمونه‌های صنعتی",
     image: "/images/devices/ra-915m.jpg",
+    productUrl: "https://artinazma.net/product/ra-915m-mercury-measuring-device/",
     keywords: [
       "جیوه",
       "mercury",
@@ -28,6 +35,7 @@ export const deviceAssets: DeviceAsset[] = [
     title: "MGA-1000 Atomic Absorption Spectrometer",
     subtitle: "دستگاه جذب اتمی برای آنالیز فلزات و عناصر",
     image: "/images/devices/mga-1000.jpg",
+    productUrl: "https://artinazma.net/product/mga-1000-atomic-absorption-spectrometer/",
     keywords: [
       "mga",
       "mga-1000",
@@ -47,6 +55,7 @@ export const deviceAssets: DeviceAsset[] = [
     title: "GC / Chromatography Analyzer",
     subtitle: "سیستم کروماتوگرافی برای GC، FID، TCD و آنالیز ترکیبات",
     image: "/images/devices/gc-analyzer.jpg",
+    productUrl: "https://artinazma.net/product/gas-chromatograph/",
     keywords: [
       "gc",
       "hplc",
@@ -65,6 +74,7 @@ export const deviceAssets: DeviceAsset[] = [
     title: "Sulfur Analyzer",
     subtitle: "آنالایزر سولفور، گوگرد، H2S و مرکاپتان در سوخت و گاز",
     image: "/images/devices/sulfur-analyzer.jpg",
+    productUrl: "https://artinazma.net/product/sulfur-and-nitrogen-measuring-device-model-meta/",
     keywords: [
       "سولفور",
       "گوگرد",
@@ -82,6 +92,7 @@ export const deviceAssets: DeviceAsset[] = [
     title: "Catalyst Test Reactor",
     subtitle: "سیستم تست کاتالیست، راکتور آزمایشگاهی و ارزیابی عملکرد",
     image: "/images/devices/catalyst-reactor.jpg",
+    productUrl: "https://artinazma.net/process-catalysts/",
     keywords: [
       "کاتالیست",
       "catalyst",
