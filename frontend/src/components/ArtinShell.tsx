@@ -25,6 +25,7 @@ import {
   MessagesSquare,
   Monitor,
   Moon,
+  Package,
   PanelRightClose,
   PanelRightOpen,
   PhoneCall,
@@ -65,6 +66,7 @@ const navItemDefs: { href: string; labelKey: string; fallback: string; Icon: Luc
   { href: "/assistant", labelKey: "nav.assistant", fallback: "دستیار هوشمند", Icon: Home },
   { href: "/", labelKey: "nav.home", fallback: "آرتین", Icon: Sparkles },
   { href: "/analyze", labelKey: "nav.analyze", fallback: "تحلیل تست", Icon: FlaskConical },
+  { href: "/products", labelKey: "nav.products", fallback: "محصولات", Icon: Package },
   { href: "/customer-request", labelKey: "nav.customerRequest", fallback: "درخواست مشاوره", Icon: PhoneCall },
   { href: "/customer-dashboard", labelKey: "nav.dashboard", fallback: "حساب من", Icon: CircleUserRound },
 ];
