@@ -7,9 +7,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Search, Send } from "lucide-react";
+import { ExternalLink, Package, Search, Send } from "lucide-react";
 import { products } from "@/lib/products-catalog";
+import productImages from "@/lib/product-images.json";
 import { useI18n } from "@/lib/i18n";
+
+const imageMap = productImages as Record<string, string>;
 
 export default function ProductsPage() {
   const { locale, dir } = useI18n();
@@ -57,11 +60,29 @@ export default function ProductsPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((product) => {
               const quoteHref = `/customer-request?type=price-inquiry&item=${encodeURIComponent(product.title)}`;
+              const image = imageMap[product.slug];
               return (
                 <div
                   key={product.slug}
                   className="flex flex-col justify-between rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
                 >
+                  <div className="mb-3 flex h-32 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800">
+                    {image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={image}
+                        alt={product.title}
+                        loading="lazy"
+                        className="h-full w-full object-contain p-2"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <Package size={30} strokeWidth={1.5} className="text-slate-300" aria-hidden="true" />
+                    )}
+                  </div>
+
                   <div className="mb-3 text-sm font-black leading-6 text-slate-900 dark:text-slate-100">
                     {product.title}
                   </div>
