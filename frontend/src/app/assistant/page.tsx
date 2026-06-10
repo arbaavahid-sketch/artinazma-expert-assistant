@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { apiUrl, backendFetch, customerFetch, getCsrfToken } from "@/lib/api";
+import { apiUrl, backendFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
+import { getSavedCustomer } from "@/lib/customer";
 import {
   Plus,
   Download,
@@ -25,6 +26,7 @@ import { useTTS } from "@/hooks/useTTS";
 import { useExportChat } from "@/hooks/useExportChat";
 import { useStagedImage } from "@/hooks/useStagedImage";
 import { useScrollToBottom } from "@/hooks/useScrollToBottom";
+import { useCustomerChatSession } from "@/hooks/useCustomerChatSession";
 import StarterQuestions from "@/components/StarterQuestions";
 import { useI18n } from "@/lib/i18n";
 import type {
@@ -33,7 +35,6 @@ import type {
   Customer,
   ResourceLink,
   ResourceImage,
-  SavedChatMessage,
   ToolAction,
 } from "@/lib/chat-types";
 
@@ -172,6 +173,18 @@ function AssistantPageInner() {
     handleChatScroll,
     scrollToBottom,
   } = useScrollToBottom(messages);
+  const {
+    ensureCustomerSession,
+    saveCustomerChatMessage,
+    loadSavedChatSession,
+  } = useCustomerChatSession({
+    customer,
+    setCustomer,
+    activeSessionId,
+    setActiveSessionId,
+    setMessages,
+    setLoadingSavedSession,
+  });
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -257,14 +270,6 @@ ${cleanAnswer}`,
     sendMessage(prompts[action], visibleMessages[action]);
   }
 
-  function makeSessionTitle(text: string) {
-    const clean = text.replace(/\s+/g, " ").trim();
-
-    if (!clean) return "گفتگوی جدید";
-
-    return clean.length > 42 ? `${clean.slice(0, 42)}...` : clean;
-  }
-
   // Undo send — abort in-flight request and restore message
   // Edit & Retry: truncate history to before the edited message, re-send
   function handleEditMessage(msgIndex: number, newText: string) {
@@ -333,141 +338,6 @@ ${cleanAnswer}`,
       });
     } catch {
       // خطای بازخورد نباید چت را خراب کند
-    }
-  }
-
-  function getSavedCustomer(): Customer | null {
-    try {
-      const raw = localStorage.getItem("artin_customer");
-
-      if (!raw) return null;
-
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  }
-
-  async function createCustomerChatSession(title: string) {
-    const activeCustomer = customer || getSavedCustomer();
-
-    if (!activeCustomer) return null;
-
-    try {
-      const res = await customerFetch(apiUrl("/customers/chat-sessions"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customer_id: activeCustomer.id,
-          title: makeSessionTitle(title),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success || !data.session_id) return null;
-
-      const newSessionId = Number(data.session_id);
-
-      setCustomer(activeCustomer);
-      setActiveSessionId(newSessionId);
-
-      window.history.replaceState(
-        null,
-        "",
-        `/assistant?session_id=${newSessionId}`,
-      );
-
-      return newSessionId;
-    } catch {
-      return null;
-    }
-  }
-
-  async function ensureCustomerSession(titleSource: string) {
-    const activeCustomer = customer || getSavedCustomer();
-
-    if (!activeCustomer) return null;
-
-    if (!customer) {
-      setCustomer(activeCustomer);
-    }
-
-    if (activeSessionId) return activeSessionId;
-
-    return createCustomerChatSession(titleSource);
-  }
-
-  async function saveCustomerChatMessage(
-    sessionId: number | null,
-    role: "user" | "assistant",
-    content: string,
-    metadata: Record<string, unknown> = {},
-  ) {
-    const activeCustomer = customer || getSavedCustomer();
-
-    if (!activeCustomer || !sessionId || !content.trim()) return;
-
-    try {
-      await customerFetch(apiUrl("/customers/chat-messages"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customer_id: activeCustomer.id,
-          session_id: sessionId,
-          role,
-          content,
-          metadata,
-        }),
-      });
-    } catch {
-      // ذخیره گفتگو نباید باعث خراب شدن چت اصلی شود
-    }
-  }
-
-  async function loadSavedChatSession(customerId: number, sessionId: number) {
-    setLoadingSavedSession(true);
-
-    try {
-      const res = await customerFetch(
-        apiUrl(`/customers/${customerId}/chat-sessions/${sessionId}/messages`),
-      );
-
-      const data = await res.json();
-
-      const savedMessages: ChatMessage[] = (data.messages || []).map(
-        (item: SavedChatMessage) => ({
-          role: item.role === "user" ? "user" : "assistant",
-          content: item.content,
-          sources: item.metadata?.sources || [],
-          detected_domain: item.metadata?.detected_domain,
-          question_id: item.metadata?.question_id,
-          relatedDevices: item.metadata?.relatedDevices || [],
-          resource_links: item.metadata?.resource_links || [],
-          resource_images: item.metadata?.resource_images || [],
-          attachment: item.metadata?.attachment
-            ? {
-                ...item.metadata.attachment,
-                previewUrl:
-                  item.metadata.attachment.previewUrl ||
-                  (item.metadata.file_url
-                    ? apiUrl(item.metadata.file_url as string)
-                    : undefined),
-              }
-            : undefined,
-        }),
-      );
-
-      setMessages(savedMessages);
-      setActiveSessionId(sessionId);
-    } catch {
-      setMessages([]);
-    } finally {
-      setLoadingSavedSession(false);
     }
   }
 
