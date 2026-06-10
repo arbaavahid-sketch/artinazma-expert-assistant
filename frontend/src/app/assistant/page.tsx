@@ -24,6 +24,7 @@ const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: fal
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTTS } from "@/hooks/useTTS";
 import { useExportChat } from "@/hooks/useExportChat";
+import { useStagedImage } from "@/hooks/useStagedImage";
 import StarterQuestions from "@/components/StarterQuestions";
 import { useI18n } from "@/lib/i18n";
 import type {
@@ -128,9 +129,17 @@ function AssistantPageInner() {
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const [rateLimitTotal, setRateLimitTotal] = useState(60);
-  const [stagedImage, setStagedImage] = useState<File | null>(null);
-  const [stagedImageUrl, setStagedImageUrl] = useState<string>("");
-  const [isDragOver, setIsDragOver] = useState(false);
+  const {
+    stagedImage,
+    stagedImageUrl,
+    isDragOver,
+    stageImageFile,
+    clearStagedImage,
+    handlePaste,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useStagedImage();
   const { speakingIndex, ttsNote, setTtsNote, speakMessage } = useTTS();
   const [canUndo, setCanUndo] = useState(false);
   const { showExportMenu, setShowExportMenu, exportChat, exportChatWord, exportChatText } = useExportChat(messages);
@@ -167,47 +176,6 @@ function AssistantPageInner() {
   const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(
     (transcript) => setMessage((prev) => prev ? prev + " " + transcript : transcript)
   );
-
-  function stageImageFile(file: File) {
-    if (!file.type.startsWith("image/")) return;
-    setStagedImage(file);
-    const url = URL.createObjectURL(file);
-    setStagedImageUrl(url);
-  }
-
-  function clearStagedImage() {
-    setStagedImage(null);
-    if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
-    setStagedImageUrl("");
-  }
-
-  function handlePaste(e: React.ClipboardEvent) {
-    const items = Array.from(e.clipboardData?.items || []);
-    const imageItem = items.find((item) => item.type.startsWith("image/"));
-    if (imageItem) {
-      const file = imageItem.getAsFile();
-      if (file) {
-        e.preventDefault();
-        stageImageFile(file);
-      }
-    }
-  }
-
-  function handleDragOver(e: React.DragEvent) {
-    const hasImage = Array.from(e.dataTransfer.types).includes("Files");
-    if (hasImage) { e.preventDefault(); setIsDragOver(true); }
-  }
-
-  function handleDragLeave() { setIsDragOver(false); }
-
-  function handleDrop(e: React.DragEvent) {
-    setIsDragOver(false);
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      stageImageFile(file);
-    }
-  }
 
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
