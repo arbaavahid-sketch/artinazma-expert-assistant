@@ -8,7 +8,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Package, Search, Send } from "lucide-react";
-import { products } from "@/lib/products-catalog";
+import { products, PRODUCT_CATEGORIES, categorizeProduct } from "@/lib/products-catalog";
 import productImages from "@/lib/product-images.json";
 import { useI18n } from "@/lib/i18n";
 
@@ -18,12 +18,16 @@ export default function ProductsPage() {
   const { locale, dir } = useI18n();
   const isEn = locale === "en";
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("all");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) => p.title.toLowerCase().includes(q) || p.slug.includes(q));
-  }, [query]);
+    return products.filter((p) => {
+      const matchesQuery = !q || p.title.toLowerCase().includes(q) || p.slug.includes(q);
+      const matchesCategory = category === "all" || categorizeProduct(p.title) === category;
+      return matchesQuery && matchesCategory;
+    });
+  }, [query, category]);
 
   return (
     <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8" dir={dir}>
@@ -48,6 +52,22 @@ export default function ProductsPage() {
                 aria-label={isEn ? "Search products" : "جستجوی محصول"}
                 className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
               />
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[{ key: "all", fa: "همه", en: "All" }, ...PRODUCT_CATEGORIES].map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => setCategory(cat.key)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                    category === cat.key
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300"
+                  }`}
+                >
+                  {isEn ? cat.en : cat.fa}
+                </button>
+              ))}
             </div>
           </div>
         </div>

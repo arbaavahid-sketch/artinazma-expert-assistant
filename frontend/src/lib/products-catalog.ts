@@ -85,3 +85,37 @@ export const products: Product[] = [
   { title: "Water Purification Grade Activated Carbon", url: "https://artinazma.net/product/water-purification-grade-activated-carbon/", slug: "water-purification-grade-activated-carbon" },
   { title: "مانیتور جیوه RA 915AM", url: "https://artinazma.net/product/%d9%85%d8%a7%d9%86%db%8c%d8%aa%d9%88%d8%b1-%d8%ac%db%8c%d9%88%d9%87-ra-915am/", slug: "مانیتور-جیوه-ra-915am" },
 ];
+
+export type ProductCategory = {
+  key: string;
+  fa: string;
+  en: string;
+};
+
+export const PRODUCT_CATEGORIES: ProductCategory[] = [
+  { key: "analyzers", fa: "آنالایزر و اسپکترومتر", en: "Analyzers & Spectrometers" },
+  { key: "chromatography", fa: "کروماتوگرافی و تزریق نمونه", en: "Chromatography & Injection" },
+  { key: "catalysts", fa: "کاتالیست و جاذب", en: "Catalysts & Adsorbents" },
+  { key: "chemicals", fa: "مواد شیمیایی و افزودنی", en: "Chemicals & Additives" },
+  { key: "titrators", fa: "تیتراتور", en: "Titrators" },
+  { key: "sampleprep", fa: "آماده‌سازی نمونه و حمام", en: "Sample Prep & Baths" },
+  { key: "generators", fa: "ژنراتور گاز", en: "Gas Generators" },
+  { key: "other", fa: "سایر", en: "Other" },
+];
+
+/**
+ * دسته‌ی هر محصول را بر اساس کلیدواژه‌های عنوان حدس می‌زند (best-effort).
+ * ترتیب بررسی از خاص به عام است تا مثلاً «nitrogen generator» در دسته‌ی
+ * ژنراتور قرار گیرد نه آنالایزر.
+ */
+export function categorizeProduct(title: string): string {
+  const t = title.toLowerCase();
+  if (/catalyst|catalytic|adsorb|absorbent|demercaptan/.test(t)) return "catalysts";
+  if (/titrator/.test(t)) return "titrators";
+  if (/generator/.test(t)) return "generators";
+  if (/chromatograph|\bgc\b|capel|autosampl|headspace|sample injection|injection device|thermal desorb/.test(t)) return "chromatography";
+  if (/improver|antioxidant|octane|additive|booster|activated carbon|carbon|lubricity|cfpp/.test(t)) return "chemicals";
+  if (/\bbath\b|distillation|flash point|viscomet|cooling|refrigerat|cloud|pour point|freezing|stability/.test(t)) return "sampleprep";
+  if (/analyz|spectromet|spectrophotomet|mercury|sulfur|nitrogen|chlorine|colorimet|turbidimet|ph meter|density|fluoresc|ftir|nir|xrf|spectro|specroscan|monitor|cetane|ammonia|measuring|infralum|915|جیوه|مانیتور/.test(t)) return "analyzers";
+  return "other";
+}
