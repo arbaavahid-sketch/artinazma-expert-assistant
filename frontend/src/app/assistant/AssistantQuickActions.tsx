@@ -1,8 +1,10 @@
 /**
- * Row of quick-action buttons (upload a file, request a consultation) shown
- * under the composer on the empty assistant page. Presentational — receives its
- * handlers as props.
+ * Row of quick-action buttons (upload a file, request a consultation, browse
+ * products) shown under the composer on the empty assistant page. Presentational
+ * — receives its handlers as props.
  */
+import Link from "next/link";
+
 type AssistantQuickActionsProps = {
   isEn: boolean;
   onUpload: () => void;
@@ -25,6 +27,13 @@ export default function AssistantQuickActions({ isEn, onUpload, onRequest }: Ass
       >
         {isEn ? "Request consultation" : "درخواست مشاوره"}
       </button>
+
+      <Link
+        href="/products"
+        className="ui-btn ui-btn-ghost rounded-full px-4 py-2 text-sm shadow-sm"
+      >
+        {isEn ? "Browse products" : "مرور محصولات"}
+      </Link>
     </div>
   );
 }

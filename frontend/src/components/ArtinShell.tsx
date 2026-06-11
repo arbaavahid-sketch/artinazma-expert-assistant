@@ -642,6 +642,17 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 )}
               </button>
             </div>
+
+            {!sidebarCollapsed && (
+              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 px-4 text-[11px] text-slate-400">
+                <Link href="/privacy" className="transition hover:text-slate-600 dark:hover:text-slate-300">
+                  {isRtl ? "حریم خصوصی" : "Privacy"}
+                </Link>
+                <Link href="/terms" className="transition hover:text-slate-600 dark:hover:text-slate-300">
+                  {isRtl ? "شرایط استفاده" : "Terms"}
+                </Link>
+              </div>
+            )}
           </div>
         </aside>
 
