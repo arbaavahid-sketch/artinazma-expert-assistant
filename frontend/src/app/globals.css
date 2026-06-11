@@ -37,9 +37,7 @@
   --color-danger-border: #fecaca;
   --color-danger-text: #b91c1c;
   --font-persian-fallback: "IRANSans", "Yekan", "Segoe UI", Tahoma, Arial, sans-serif;
-  /* --font-vazirmatn is injected by next/font (self-hosted at build time);
-     keep "Vazirmatn" for users who have it installed locally, then fall back. */
-  --font-persian: var(--font-vazirmatn), "Vazirmatn", var(--font-persian-fallback);
+  --font-persian: var(--font-vazirmatn, "Vazirmatn"), var(--font-persian-fallback);
   --font-english: "Times New Roman", Times, serif;
   --font-size-display: clamp(1.85rem, 1.25rem + 2vw, 3rem);
   --font-size-h1: clamp(1.5rem, 1.3rem + 0.9vw, 2rem);

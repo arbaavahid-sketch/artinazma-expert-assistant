@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import "./assistant-polish.css";
 import ArtinShell from "@/components/ArtinShell";
@@ -9,13 +8,6 @@ import InstallPrompt from "@/components/InstallPrompt";
 import NetworkStatus from "@/components/NetworkStatus";
 import ThemeProvider from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
-
-// Self-hosted at build time — no runtime dependency on Google Fonts.
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic", "latin"],
-  variable: "--font-vazirmatn",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "آرتین آزما | دستیار هوشمند تخصصی",
@@ -51,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
+    <html lang="fa" dir="rtl">
       <head>
         {/* theme-color is declared first so the pre-paint script below can update
             it before the browser chrome renders. */}
