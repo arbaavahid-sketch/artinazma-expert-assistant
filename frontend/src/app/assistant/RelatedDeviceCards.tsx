@@ -12,7 +12,10 @@
 import Link from "next/link";
 import { ExternalLink, Send } from "lucide-react";
 import type { DeviceAsset } from "@/lib/device-assets";
+import productImages from "@/lib/product-images.json";
 import { useI18n } from "@/lib/i18n";
+
+const imageMap = productImages as Record<string, string>;
 
 export default function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[] }) {
   const { locale } = useI18n();
@@ -25,6 +28,7 @@ export default function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[
       {devices.map((device) => {
         const quoteHref =
           `/customer-request?type=price-inquiry&item=${encodeURIComponent(device.title)}`;
+        const imgSrc = (device.imageSlug && imageMap[device.imageSlug]) || device.image;
 
         return (
           <div
@@ -32,11 +36,12 @@ export default function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[
             className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
           >
             <div className="flex gap-4 p-4">
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
                 <img
-                  src={device.image}
+                  src={imgSrc}
                   alt={device.title}
-                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  className="h-full w-full object-contain p-1"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}

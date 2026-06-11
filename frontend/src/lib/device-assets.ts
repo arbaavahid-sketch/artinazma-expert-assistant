@@ -10,6 +10,11 @@ export type DeviceAsset = {
    * (backend/artinazma_site_index.json) استخراج شده‌اند.
    */
   productUrl?: string;
+  /**
+   * slug محصول روی سایت برای واکشی عکس از نقشه‌ی product-images.json.
+   * اگر عکس موجود باشد جایگزین فیلد image (که فایل محلی است) می‌شود.
+   */
+  imageSlug?: string;
 };
 
 export const deviceAssets: DeviceAsset[] = [
@@ -19,6 +24,7 @@ export const deviceAssets: DeviceAsset[] = [
     subtitle: "آنالایزر جیوه مناسب آب، خاک، گاز و نمونه‌های صنعتی",
     image: "/images/devices/ra-915m.jpg",
     productUrl: "https://artinazma.net/product/ra-915m-mercury-measuring-device/",
+    imageSlug: "ra-915m-mercury-measuring-device",
     keywords: [
       "جیوه",
       "mercury",
@@ -36,6 +42,7 @@ export const deviceAssets: DeviceAsset[] = [
     subtitle: "دستگاه جذب اتمی برای آنالیز فلزات و عناصر",
     image: "/images/devices/mga-1000.jpg",
     productUrl: "https://artinazma.net/product/mga-1000-atomic-absorption-spectrometer/",
+    imageSlug: "mga-1000-atomic-absorption-spectrometer",
     keywords: [
       "mga",
       "mga-1000",
@@ -56,6 +63,7 @@ export const deviceAssets: DeviceAsset[] = [
     subtitle: "سیستم کروماتوگرافی برای GC، FID، TCD و آنالیز ترکیبات",
     image: "/images/devices/gc-analyzer.jpg",
     productUrl: "https://artinazma.net/product/gas-chromatograph/",
+    imageSlug: "gas-chromatograph",
     keywords: [
       "gc",
       "hplc",
@@ -75,6 +83,7 @@ export const deviceAssets: DeviceAsset[] = [
     subtitle: "آنالایزر سولفور، گوگرد، H2S و مرکاپتان در سوخت و گاز",
     image: "/images/devices/sulfur-analyzer.jpg",
     productUrl: "https://artinazma.net/product/sulfur-and-nitrogen-measuring-device-model-meta/",
+    imageSlug: "sulfur-and-nitrogen-measuring-device-model-meta",
     keywords: [
       "سولفور",
       "گوگرد",
@@ -93,6 +102,7 @@ export const deviceAssets: DeviceAsset[] = [
     subtitle: "سیستم تست کاتالیست، راکتور آزمایشگاهی و ارزیابی عملکرد",
     image: "/images/devices/catalyst-reactor.jpg",
     productUrl: "https://artinazma.net/process-catalysts/",
+    imageSlug: "cr-35-reforming-catalyst",
     keywords: [
       "کاتالیست",
       "catalyst",
