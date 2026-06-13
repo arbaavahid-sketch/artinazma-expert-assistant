@@ -1,0 +1,24 @@
+# جلوگیری از ورود فایل‌های اضافی/حساس به ایمیج هنگام build روی لیارا.
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# اسرار — روی لیارا به‌صورت متغیر محیطی ست می‌شوند، نه فایل.
+.env
+.env.*
+
+# دیتابیس و لاگ محلی (در prod از PostgreSQL استفاده می‌شود).
+storage/app.db
+storage/app.db-shm
+storage/app.db-wal
+storage/app.log
+storage/backups/
+google-service-account.json
+
+# فایل‌های موقت آپلود کاربر و تست.
+uploads/
+tests/
+
+# توجه: storage/knowledge_vectors.json عمداً نگه داشته می‌شود (بانک دانش).

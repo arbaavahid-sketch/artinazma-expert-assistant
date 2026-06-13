@@ -73,10 +73,21 @@ def chunk_text(text: str, chunk_size: int = 1200, overlap: int = 200) -> List[st
     return chunks
 
 
-def create_embedding(text: str) -> List[float]:
-    response = client.embeddings.create(model=EMBEDDING_MODEL, input=text)
-
-    return response.data[0].embedding
+def create_embedding(text: str) -> Optional[List[float]]:
+    """
+    بردار embedding متن را می‌سازد. اگر سرویس embedding در دسترس نباشد
+    (مثلاً درگاهی که مدل embedding ندارد)، به‌جای خطا None برمی‌گرداند تا
+    جریان چت متوقف نشود و به جستجوی محلی برگردد.
+    """
+    try:
+        response = client.embeddings.create(model=EMBEDDING_MODEL, input=text)
+        return response.data[0].embedding
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Embedding unavailable (model=%s): %s — skipping vector search.",
+            EMBEDDING_MODEL, exc,
+        )
+        return None
 
 
 def load_vector_store() -> List[Dict[str, Any]]:
@@ -285,6 +296,8 @@ def add_file_to_knowledge_base(
     chunk_dicts = []
     for index, chunk in enumerate(chunks):
         embedding = create_embedding(chunk)
+        if embedding is None:
+            continue
         chunk_dicts.append(
             {
                 "title": effective_title,
@@ -332,6 +345,10 @@ def search_knowledge_base(
     import qdrant_service as _qs
 
     query_embedding = create_embedding(query)
+
+    # اگر embedding در دسترس نبود، جستجوی برداری را رد کن (جستجوی محلی پابرجاست).
+    if query_embedding is None:
+        return []
 
     if _qs.is_enabled():
         try:

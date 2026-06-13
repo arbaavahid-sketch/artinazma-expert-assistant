@@ -1,4 +1,4 @@
-annotated-doc==0.0.4
+# annotated-doc==0.0.4  # حذف شد: وابستگی واقعی برنامه نیست و در آینه‌ی pip ایران موجود نبود
 annotated-types==0.7.0
 anyio==4.13.0
 certifi==2026.4.22
@@ -14,7 +14,7 @@ et_xmlfile==2.0.0
 fastapi==0.136.1
 fastapi-cli==0.0.24
 fastapi-cloud-cli==0.17.1
-fastar==0.11.0
+# fastar==0.11.0  # حذف شد: وابستگی واقعی برنامه نیست و در آینه‌ی pip ایران موجود نبود
 google-api-core==2.30.3
 google-api-python-client==2.195.0
 google-auth==2.50.0
