@@ -62,13 +62,20 @@ async function proxy(
 
     const responseHeaders = new Headers();
     const responseContentType = res.headers.get("content-type");
-    const setCookie = res.headers.get("set-cookie");
 
     if (responseContentType) {
       responseHeaders.set("content-type", responseContentType);
     }
-    if (setCookie) {
-      responseHeaders.set("set-cookie", setCookie);
+
+    // The backend can set MULTIPLE cookies on a single response
+    // (e.g. artin_jwt + artin_csrf on login). res.headers.get("set-cookie")
+    // collapses them into one comma-joined string, which corrupts the cookies
+    // (Expires dates also contain commas) and the browser drops artin_jwt —
+    // causing every authenticated request to 401 and bounce back to /customer-login.
+    // getSetCookie() returns each Set-Cookie header separately; append them all.
+    const setCookies = res.headers.getSetCookie();
+    for (const cookie of setCookies) {
+      responseHeaders.append("set-cookie", cookie);
     }
 
     return new NextResponse(res.body, {
