@@ -1050,23 +1050,23 @@ ${cleanAnswer}`,
       )}
 
       <header className="shrink-0 border-b border-slate-100 bg-white">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
           <div className="flex items-center gap-2.5">
             <img
               src="/images/artin-avatar.png"
               alt={isEn ? "Artin" : "آرتین"}
-              className="h-8 w-8 shrink-0 rounded-full border border-slate-200 object-cover shadow-sm"
+              className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover shadow-sm sm:h-8 sm:w-8"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
             />
-            <span className="text-[15px] font-bold text-slate-800">{isEn ? "Artin" : "آرتین"}</span>
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
+            <span className="text-[14px] font-bold text-slate-800 sm:text-[15px]">{isEn ? "Artin" : "آرتین"}</span>
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 sm:text-[11px]">
               {isEn ? "Online" : "آنلاین"}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             {/* Domain + mode — visible on desktop, hidden on mobile */}
             <select
               value={domain}
@@ -1109,10 +1109,11 @@ ${cleanAnswer}`,
                 <button
                   onClick={() => setShowExportMenu((v) => !v)}
                   title={isEn ? "Export chat" : "خروجی گفتگو"}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
+                  aria-label={isEn ? "Download" : "دانلود"}
                 >
                   <Download size={13} />
-                  {isEn ? "Download" : "دانلود"}
+                  <span className="hidden sm:inline">{isEn ? "Download" : "دانلود"}</span>
                 </button>
                 {showExportMenu && (
                   <>
@@ -1146,10 +1147,11 @@ ${cleanAnswer}`,
             )}
             <button
               onClick={clearChat}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
+              aria-label={isEn ? "New chat" : "گفتگوی جدید"}
             >
               <Plus size={13} />
-              {isEn ? "New" : "جدید"}
+              <span className="hidden sm:inline">{isEn ? "New" : "جدید"}</span>
             </button>
           </div>
         </div>
@@ -1199,7 +1201,7 @@ ${cleanAnswer}`,
             {isEn ? "Loading saved conversation..." : "در حال بارگذاری گفتگوی ذخیره‌شده..."}
           </div>
         )}
-        <div className="mx-auto w-full max-w-6xl px-3 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6">
+        <div className="mx-auto w-full max-w-6xl px-2 pb-3 pt-3 sm:px-3 sm:pb-4 sm:pt-4 md:px-6 md:pb-6 md:pt-6">
           {messages.length === 0 ? (
             <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
               <AssistantWelcome isEn={isEn} />
@@ -1234,7 +1236,7 @@ ${cleanAnswer}`,
             </div>
           ) : (
             <div
-              className="mx-auto w-full max-w-5xl space-y-5 pb-4 md:space-y-7"
+              className="mx-auto w-full max-w-5xl space-y-3 pb-4 sm:space-y-5 md:space-y-7"
               role="log"
               aria-live="polite"
               aria-relevant="additions text"

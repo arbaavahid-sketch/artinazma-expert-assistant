@@ -270,23 +270,25 @@ function MessageBubble({
       dir="ltr"
     >
       <div
-        className={`flex max-w-[88%] gap-3 ${
-          isUser ? "flex-row-reverse" : "flex-row-reverse"
+        className={`flex min-w-0 gap-2 sm:gap-3 ${
+          isUser
+            ? "max-w-[92%] flex-row-reverse sm:max-w-[88%]"
+            : "w-full max-w-full flex-row-reverse sm:w-auto sm:max-w-[88%]"
         }`}
       >
         {!isUser && (
           <img
             src="/images/artin-avatar.png"
             alt={isEn ? "Artin" : "آرتین"}
-            className="mt-1 h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover p-1 shadow-sm"
+            className="mt-1 hidden h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover p-1 shadow-sm sm:block"
           />
         )}
 
         <div
-          className={`shadow-sm ${
+          className={`min-w-0 shadow-sm ${
             isUser
-              ? "max-w-[760px] rounded-[26px] bg-blue-700 px-5 py-4 text-white"
-              : "ai-message-card"
+              ? "max-w-[760px] rounded-[22px] bg-blue-700 px-4 py-3 text-white sm:rounded-[26px] sm:px-5 sm:py-4"
+              : "ai-message-card w-full"
           }`}
         >
           <div

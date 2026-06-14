@@ -283,8 +283,36 @@ textarea::placeholder, input::placeholder { color: #94a3b8; }
 }
 
 @media (max-width: 768px) {
-  .ai-message-card { padding: 18px; border-radius: 22px; }
-  .ai-markdown { font-size: 15px; line-height: 2; }
+  .ai-message-card {
+    padding: 14px 14px 12px;
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: none;
+  }
+  .ai-message-card::before {
+    margin-bottom: 8px;
+    padding: 2px 9px;
+    font-size: 10px;
+  }
+  .ai-message-card::after {
+    width: 2px;
+  }
+  .ai-markdown {
+    font-size: 14.5px;
+    line-height: 1.9;
+  }
+  .ai-md-title {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+  .ai-md-section {
+    margin: 14px 0 6px;
+    font-size: 16px;
+  }
+  .ai-md-paragraph {
+    margin-bottom: 8px;
+    line-height: 1.9;
+  }
   [data-app-path="/assistant"] { padding-top: 0; }
 }
 
