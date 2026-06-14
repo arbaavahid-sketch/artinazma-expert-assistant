@@ -7,14 +7,20 @@ import { useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  Check,
   Copy,
   ExternalLink,
+  FileText,
   ImageIcon,
+  ListChecks,
+  MessageSquarePlus,
   RotateCcw,
+  Table2,
   ThumbsUp,
   ThumbsDown,
   Volume2,
   VolumeX,
+  Wrench,
 } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
 import RelatedDeviceCards from "@/app/assistant/RelatedDeviceCards";
@@ -239,6 +245,25 @@ function MessageBubble({
     setTimeout(() => setCopied(false), 1800);
   }
 
+  const actionLabels = {
+    copy: copied ? (isEn ? "Copied" : "کپی شد") : (isEn ? "Copy" : "کپی"),
+    speak: isSpeaking
+      ? isEn
+        ? "Stop"
+        : "توقف"
+      : isEn
+      ? "Read aloud"
+      : "پخش صوتی",
+    shorter: isEn ? "Shorter" : "خلاصه‌تر",
+    technical: isEn ? "More technical" : "فنی‌تر",
+    table: isEn ? "Table" : "جدول",
+    sources: isEn ? "Sources and next steps" : "منابع و اقدام بعدی",
+    regenerate: isEn ? "Regenerate" : "تولید دوباره",
+    request: isEn ? "Request consultation" : "ثبت مشاوره",
+  };
+  const actionButtonClass =
+    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700";
+
   return (
     <div
       className={`group flex w-full ${isUser ? "justify-end" : "justify-start"}`}
@@ -456,50 +481,71 @@ function MessageBubble({
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {!isUser && !loading && (
             <div className="mt-2 flex flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 opacity-100 transition-opacity md:flex-wrap">
-              <button
-                onClick={() => handleCopy(displayContent)}
-                className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                <Copy size={13} />
-                {copied ? (isEn ? "Copied" : "کپی شد") : (isEn ? "Copy" : "کپی")}
-              </button>
-              <button
-                onClick={() => onSpeak(displayContent, index)}
-                className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] transition ${
-                  isSpeaking
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                }`}
-                title={isSpeaking ? (isEn ? "Stop" : "توقف") : (isEn ? "Read aloud" : "پخش صوتی")}
-              >
-                {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
-                {isSpeaking ? (isEn ? "Stop" : "توقف") : (isEn ? "Read" : "بخوان")}
-              </button>
+              <Tooltip label={actionLabels.copy} position="top">
+                <button
+                  onClick={() => handleCopy(displayContent)}
+                  className={actionButtonClass}
+                  aria-label={actionLabels.copy}
+                  title={actionLabels.copy}
+                >
+                  {copied ? <Check size={15} /> : <Copy size={15} />}
+                </button>
+              </Tooltip>
+              <Tooltip label={actionLabels.speak} position="top">
+                <button
+                  onClick={() => onSpeak(displayContent, index)}
+                  className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition ${
+                    isSpeaking
+                      ? "bg-indigo-50 text-indigo-600"
+                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  }`}
+                  aria-label={actionLabels.speak}
+                  title={actionLabels.speak}
+                >
+                  {isSpeaking ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                </button>
+              </Tooltip>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
-              <button
-                onClick={() => onQuickAction("shorter", item.content)}
-                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                {isEn ? "Shorter" : "خلاصه‌تر"}
-              </button>
-              <button
-                onClick={() => onQuickAction("technical", item.content)}
-                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                {isEn ? "More technical" : "فنی‌تر"}
-              </button>
-              <button
-                onClick={() => onQuickAction("table", item.content)}
-                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                {isEn ? "Table" : "جدول"}
-              </button>
-              <button
-                onClick={() => onQuickAction("sources", item.content)}
-                className="rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                {isEn ? "Next steps" : "منابع/اقدام"}
-              </button>
+              <Tooltip label={actionLabels.shorter} position="top">
+                <button
+                  onClick={() => onQuickAction("shorter", item.content)}
+                  className={actionButtonClass}
+                  aria-label={actionLabels.shorter}
+                  title={actionLabels.shorter}
+                >
+                  <FileText size={15} />
+                </button>
+              </Tooltip>
+              <Tooltip label={actionLabels.technical} position="top">
+                <button
+                  onClick={() => onQuickAction("technical", item.content)}
+                  className={actionButtonClass}
+                  aria-label={actionLabels.technical}
+                  title={actionLabels.technical}
+                >
+                  <Wrench size={15} />
+                </button>
+              </Tooltip>
+              <Tooltip label={actionLabels.table} position="top">
+                <button
+                  onClick={() => onQuickAction("table", item.content)}
+                  className={actionButtonClass}
+                  aria-label={actionLabels.table}
+                  title={actionLabels.table}
+                >
+                  <Table2 size={15} />
+                </button>
+              </Tooltip>
+              <Tooltip label={actionLabels.sources} position="top">
+                <button
+                  onClick={() => onQuickAction("sources", item.content)}
+                  className={actionButtonClass}
+                  aria-label={actionLabels.sources}
+                  title={actionLabels.sources}
+                >
+                  <ListChecks size={15} />
+                </button>
+              </Tooltip>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
               <Tooltip label={isEn ? "Helpful" : "مفید بود"} position="top">
                 <button
@@ -563,23 +609,30 @@ function MessageBubble({
               </div>
               <div className="mx-1 h-3.5 w-px bg-slate-200" />
               {canRegenerate && onRegenerate && (
-                <button
-                  onClick={onRegenerate}
-                  className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                >
-                  <RotateCcw size={13} />
-                  {isEn ? "Regenerate" : "تولید دوباره"}
-                </button>
+                <Tooltip label={actionLabels.regenerate} position="top">
+                  <button
+                    onClick={onRegenerate}
+                    className={actionButtonClass}
+                    aria-label={actionLabels.regenerate}
+                    title={actionLabels.regenerate}
+                  >
+                    <RotateCcw size={15} />
+                  </button>
+                </Tooltip>
               )}
               {canRegenerate && onRegenerate && (
                 <div className="mx-1 h-3.5 w-px bg-slate-200" />
               )}
-              <button
-                onClick={onRequest}
-                className="rounded-lg px-2.5 py-1.5 text-[12px] text-blue-600 transition hover:bg-blue-50"
-              >
-                {isEn ? "Request consultation" : "ثبت مشاوره"}
-              </button>
+              <Tooltip label={actionLabels.request} position="top">
+                <button
+                  onClick={onRequest}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-blue-600 transition hover:bg-blue-50"
+                  aria-label={actionLabels.request}
+                  title={actionLabels.request}
+                >
+                  <MessageSquarePlus size={15} />
+                </button>
+              </Tooltip>
             </div>
           )}
         </div>
