@@ -12,9 +12,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const SESSION_SECRET = process.env.CUSTOMER_SESSION_SECRET;
+function getSessionSecret(): string {
+  const secret = process.env.CUSTOMER_SESSION_SECRET;
+  if (secret) return secret;
 
-if (!SESSION_SECRET) {
+  if (process.env.NODE_ENV !== "production") {
+    return "artinazma-local-dev-customer-session-secret";
+  }
+
   throw new Error("CUSTOMER_SESSION_SECRET environment variable is not set");
 }
 
@@ -23,7 +28,7 @@ async function sign(payload: string): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
-    enc.encode(SESSION_SECRET),
+    enc.encode(getSessionSecret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],

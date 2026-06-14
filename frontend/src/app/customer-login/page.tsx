@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
+import {
+  clearSavedCustomer,
+  createCustomerSession,
+  saveCustomer,
+} from "@/lib/customer";
 import { useI18n } from "@/lib/i18n";
 import {
   ArrowLeft,
@@ -51,18 +56,19 @@ export default function CustomerLoginPage() {
         return;
       }
 
-      localStorage.setItem("artin_customer", JSON.stringify(data.customer));
-
-      await fetch("/api/customer-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: data.customer.id }),
-      });
+      saveCustomer(data.customer);
+      try {
+        await createCustomerSession(data.customer.id);
+      } catch (error) {
+        clearSavedCustomer();
+        throw error;
+      }
 
       const params = new URLSearchParams(window.location.search);
       const nextPath = params.get("next") || "/assistant";
 
-      router.push(nextPath);
+      router.replace(nextPath);
+      router.refresh();
     } catch {
       setMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {

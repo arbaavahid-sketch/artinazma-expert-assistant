@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
+import {
+  clearSavedCustomer,
+  CUSTOMER_AUTH_CHANGED_EVENT,
+  getSavedCustomer,
+} from "@/lib/customer";
 import { ToastProvider } from "@/components/Toast";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useI18n } from "@/lib/i18n";
@@ -124,15 +129,13 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
   async function refreshCustomerSessions() {
     try {
-      const raw = localStorage.getItem("artin_customer");
+      const savedCustomer = getSavedCustomer();
 
-      if (!raw) {
+      if (!savedCustomer) {
         setCustomer(null);
         setCustomerSessions([]);
         return;
       }
-
-      const savedCustomer = JSON.parse(raw) as Customer;
 
       setCustomer(savedCustomer);
 
@@ -205,7 +208,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   }
 
   async function logoutCustomer() {
-    localStorage.removeItem("artin_customer");
+    clearSavedCustomer();
 
     // Clear httpOnly session cookies via server-side API route
     await fetch("/api/customer-session", { method: "DELETE" }).catch(() => {});
@@ -257,6 +260,19 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   useEffect(() => {
     refreshCustomerSessions();
   }, [pathname, activeSessionId]);
+
+  useEffect(() => {
+    function handleCustomerAuthChanged() {
+      refreshCustomerSessions();
+    }
+
+    window.addEventListener(CUSTOMER_AUTH_CHANGED_EVENT, handleCustomerAuthChanged);
+    window.addEventListener("storage", handleCustomerAuthChanged);
+    return () => {
+      window.removeEventListener(CUSTOMER_AUTH_CHANGED_EVENT, handleCustomerAuthChanged);
+      window.removeEventListener("storage", handleCustomerAuthChanged);
+    };
+  }, []);
 
   // (Theme init/toggle now lives in ThemeProvider — see useTheme above.)
 

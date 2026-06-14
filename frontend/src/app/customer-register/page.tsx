@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
+import {
+  clearSavedCustomer,
+  createCustomerSession,
+  saveCustomer,
+} from "@/lib/customer";
 import { useI18n } from "@/lib/i18n";
 import {
   ArrowLeft,
@@ -64,15 +69,16 @@ export default function CustomerRegisterPage() {
         return;
       }
 
-      localStorage.setItem("artin_customer", JSON.stringify(data.customer));
+      saveCustomer(data.customer);
+      try {
+        await createCustomerSession(data.customer.id);
+      } catch (error) {
+        clearSavedCustomer();
+        throw error;
+      }
 
-      await fetch("/api/customer-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: data.customer.id }),
-      });
-
-      router.push("/assistant");
+      router.replace("/assistant");
+      router.refresh();
     } catch {
       setMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {
