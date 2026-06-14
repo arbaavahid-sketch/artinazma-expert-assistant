@@ -1,6 +1,14 @@
 "use client";
 
-import { Paperclip, ImagePlus, Mic, MicOff, Loader, StopCircle } from "lucide-react";
+import {
+  ArrowUp,
+  ImagePlus,
+  Loader,
+  Mic,
+  MicOff,
+  Paperclip,
+  StopCircle,
+} from "lucide-react";
 import type { RefObject, KeyboardEvent, ClipboardEvent } from "react";
 import type { ToolAction } from "@/lib/chat-types";
 import { getTextFont } from "@/lib/chat-helpers";
@@ -59,8 +67,8 @@ export default function ChatComposer({
   onSend,
 }: ChatComposerProps) {
   return (
-    <footer className="shrink-0 border-t border-slate-100 bg-white pb-2 pt-3">
-      <div className="mx-auto w-full max-w-3xl px-4">
+    <footer className="shrink-0 border-t border-slate-100 bg-white/95 pb-2 pt-3 backdrop-blur">
+      <div className="mx-auto w-full max-w-3xl px-3 sm:px-4">
         <div className="relative">
           {showTools && (
             <div className={`absolute bottom-full z-50 mb-2 ${isEn ? "left-0 right-auto" : "left-auto right-0"}`}>
@@ -68,7 +76,7 @@ export default function ChatComposer({
             </div>
           )}
 
-          <div className={`rounded-2xl border bg-white shadow-sm transition-colors ${isDragOver ? "border-blue-400 bg-blue-50/20" : "border-slate-200"}`}>
+          <div className={`chat-composer-box ${isDragOver ? "chat-composer-box-active" : ""}`}>
             {/* Staged image preview strip */}
             <StagedImagePreview
               image={stagedImage}
@@ -76,13 +84,13 @@ export default function ChatComposer({
               onClear={onClearStagedImage}
               isEn={isEn}
             />
-            <div className="flex items-end gap-2 px-3 py-2.5">
+            <div className="flex items-end gap-1.5 p-2 sm:gap-2 sm:p-2.5">
               <button
                 onClick={onToggleTools}
                 aria-label={isEn ? "Tools and attachments" : "ابزارها و پیوست‌ها"}
                 aria-haspopup="menu"
                 aria-expanded={showTools}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                className="chat-composer-icon-button chat-composer-icon-button-muted"
               >
                 <Paperclip size={18} aria-hidden="true" />
               </button>
@@ -101,7 +109,7 @@ export default function ChatComposer({
                 }}
                 title={isEn ? "Send image (or Ctrl+V to paste)" : "ارسال عکس (یا Ctrl+V برای Paste)"}
                 aria-label={isEn ? "Attach an image" : "پیوست عکس"}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blue-500 transition hover:bg-blue-50 hover:text-blue-700"
+                className="chat-composer-icon-button text-blue-500 hover:bg-blue-50 hover:text-blue-700"
               >
                 <ImagePlus size={18} aria-hidden="true" />
               </button>
@@ -109,8 +117,8 @@ export default function ChatComposer({
               <textarea
                 ref={chatInputRef}
                 dir="auto"
-                style={{ fontFamily: getTextFont(message || "فارسی") }}
-                className="max-h-40 min-h-[44px] flex-1 resize-none border-none bg-transparent px-1 py-2 text-[15px] leading-7 text-slate-800 placeholder-slate-400 outline-none"
+                style={{ fontFamily: getTextFont(message || (isEn ? "English" : "فارسی")) }}
+                className="chat-composer-textarea max-h-40 min-h-[44px]"
                 placeholder={
                   stagedImage
                     ? (isEn ? "Write an optional note for the image..." : "توضیحی برای عکس بنویسید (اختیاری)...")
@@ -128,12 +136,12 @@ export default function ChatComposer({
                   title={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : (isEn ? "Voice input" : "ورودی صوتی")}
                   aria-label={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : (isEn ? "Voice input" : "ورودی صوتی")}
                   aria-pressed={voiceState === "listening"}
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition ${
+                  className={`chat-composer-icon-button ${
                     voiceState === "listening"
-                      ? "animate-pulse bg-red-100 text-red-500"
+                      ? "animate-pulse bg-red-50 text-red-500 ring-1 ring-red-100"
                       : voiceState === "processing"
-                      ? "animate-spin text-emerald-500"
-                      : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      ? "text-emerald-500"
+                      : "chat-composer-icon-button-muted"
                   }`}
                 >
                   {voiceState === "listening" ? <MicOff size={18} aria-hidden="true" /> : voiceState === "processing" ? <Loader size={18} aria-hidden="true" /> : <Mic size={18} aria-hidden="true" />}
@@ -143,12 +151,10 @@ export default function ChatComposer({
               <button
                 onClick={loading ? onStop : onSend}
                 disabled={!loading && !message.trim() && !stagedImage}
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition disabled:bg-slate-200 disabled:text-slate-400 ${
+                className={`chat-composer-icon-button text-white shadow-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 ${
                   loading
                     ? "bg-red-600 hover:bg-red-700"
-                    : stagedImage
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "bg-slate-800 hover:bg-slate-700"
+                    : "chat-composer-send-button"
                 }`}
                 title={loading ? (isEn ? "Stop response" : "توقف پاسخ") : (isEn ? "Send" : "ارسال")}
                 aria-label={loading ? (isEn ? "Stop response" : "توقف پاسخ") : (isEn ? "Send message" : "ارسال پیام")}
@@ -156,7 +162,7 @@ export default function ChatComposer({
                 {loading ? (
                   <StopCircle size={18} aria-hidden="true" />
                 ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                  <ArrowUp size={18} aria-hidden="true" />
                 )}
               </button>
             </div>
