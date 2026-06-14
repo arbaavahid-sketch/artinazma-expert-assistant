@@ -6,6 +6,11 @@ import type { ChatMessage } from "@/lib/chat-types";
 const msgs = (n: number): ChatMessage[] =>
   Array.from({ length: n }, (_, i) => ({ role: "user", content: `m${i}` })) as ChatMessage[];
 
+const assistantMsg = (content: string): ChatMessage[] => [
+  { role: "user", content: "question" },
+  { role: "assistant", content },
+];
+
 describe("useScrollToBottom", () => {
   it("exposes refs, a button flag and the scroll helpers", () => {
     const { result } = renderHook(() => useScrollToBottom(msgs(0)));
@@ -34,6 +39,30 @@ describe("useScrollToBottom", () => {
     result.current.scrollContainerRef.current = el;
     rerender({ m: msgs(2) });
     expect(el.scrollTop).toBe(500);
+  });
+
+  it("does not auto-scroll while an assistant answer is streaming", () => {
+    const { result, rerender } = renderHook(({ m }) => useScrollToBottom(m), {
+      initialProps: { m: assistantMsg("") },
+    });
+    const el = { scrollTop: 400, scrollHeight: 500, clientHeight: 100 } as HTMLDivElement;
+    result.current.scrollContainerRef.current = el;
+
+    rerender({ m: assistantMsg("first streamed chunk") });
+
+    expect(el.scrollTop).toBe(400);
+  });
+
+  it("keeps the bottom button hidden for an empty assistant placeholder", () => {
+    const { result, rerender } = renderHook(({ m }) => useScrollToBottom(m), {
+      initialProps: { m: assistantMsg("previous") },
+    });
+    const el = { scrollTop: 0, scrollHeight: 700, clientHeight: 100 } as HTMLDivElement;
+    result.current.scrollContainerRef.current = el;
+
+    rerender({ m: assistantMsg("") });
+
+    expect(result.current.showScrollBtn).toBe(false);
   });
 
   it("handleChatScroll is safe to call before the container is attached", () => {

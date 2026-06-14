@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Artin</string>
+    <string name="title_activity_main">Artin</string>
+    <string name="package_name">net.artinazma.expertassistant</string>
+    <string name="custom_url_scheme">net.artinazma.expertassistant</string>
+</resources>
