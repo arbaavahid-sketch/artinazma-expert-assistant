@@ -84,8 +84,8 @@ Current production validator result:
 - [ ] Upload a knowledge file from admin.
 - [ ] Submit a customer quote/contact request.
 - [ ] Verify Telegram and email notifications.
-- [ ] Test customer registration/login and multiple chat sessions.
-- [ ] Review admin pages: questions, requests, customers, settings, and knowledge.
+- [x] Test customer registration/login and multiple chat sessions.
+- [x] Review admin pages: questions, requests, customers, settings, and knowledge.
 - [ ] Test important RTL/mobile views.
 
 ## Phase 6 - Final Content And Legal Review
@@ -121,4 +121,8 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Questions analytics: passing.
 - Customer request flow: passing; latest smoke request was created and visible to admin API.
 - Technical chat smoke: passing with `answer_mode=ai`, local search context, and sources.
-- Needs manual confirmation: admin pages in the already logged-in browser session and a real customer login/session flow.
+- Customer API flow: passing; registration, login, chat session creation, message save/read, chat-history search, and analytics were verified with a fresh smoke customer.
+- Customer frontend flow: passing on `http://localhost:3000`; login reaches `/customer-dashboard` and creates the signed customer session cookie.
+- Repeatable local customer smoke: `cd frontend && node scripts/local-customer-smoke.mjs`.
+- Admin frontend pages: passing on `http://localhost:3000`; login and 10 protected `/admin/*` pages return 200 with the admin session cookie.
+- Admin data endpoints: passing through `/api/admin-proxy`; 17 read-only dashboard, questions, requests, customers, settings, knowledge, backup-list, and error-log endpoints return 200.
