@@ -1,8 +1,4 @@
 "use client";
-/**
- * صفحه‌ی حریم خصوصی. متن نمونه و عمومی است و باید پیش از انتشار رسمی توسط
- * مشاور حقوقی بازبینی شود.
- */
 
 import { useI18n } from "@/lib/i18n";
 
@@ -79,11 +75,6 @@ export default function PrivacyPage() {
             ))}
           </div>
 
-          <p className="mt-8 rounded-2xl bg-amber-50 p-4 text-xs leading-7 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-            {isEn
-              ? "Note: This is a general template and should be reviewed by a legal advisor before official publication."
-              : "توجه: این متن نمونه و عمومی است و پیش از انتشار رسمی باید توسط مشاور حقوقی بازبینی شود."}
-          </p>
         </div>
       </div>
     </section>

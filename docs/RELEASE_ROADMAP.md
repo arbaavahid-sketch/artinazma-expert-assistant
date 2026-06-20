@@ -134,3 +134,11 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Repeatable local customer request smoke: `cd frontend && node scripts/local-customer-request-smoke.mjs`.
 - Real Artin chat smoke: passing with `answer_mode=ai`, `question_id=628`, 4561 answer characters, `search_mode=local_fast+openai_web`, and 8 internal sources.
 - Repeatable local Artin chat smoke: `cd frontend && node scripts/local-artin-chat-smoke.mjs`.
+
+## Content And Legal Review Status
+
+- Release content audit: passing for blocking checks; repeat with `cd frontend && node scripts/audit-release-content.mjs`.
+- Product catalog audit: 73 products, 72 image mappings, 0 broken image files, 0 extra image mappings.
+- Product image warning: `Lintel PN 10` has no dedicated image mapping and intentionally falls back to an "Image pending" state.
+- Product/business review warning: `TMP` remains in the catalog from the source site index and should be confirmed as a real public product before launch.
+- Legal pages: `/privacy` and `/terms` are present, bilingual, and currently accepted as general public text for local finalization.

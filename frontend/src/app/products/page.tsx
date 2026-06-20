@@ -98,7 +98,12 @@ export default function ProductsPage() {
                         }}
                       />
                     ) : (
-                      <Package size={30} strokeWidth={1.5} className="text-slate-300" aria-hidden="true" />
+                      <div className="flex flex-col items-center gap-2 text-slate-400">
+                        <Package size={30} strokeWidth={1.5} aria-hidden="true" />
+                        <span className="text-[11px] font-bold">
+                          {isEn ? "Image pending" : "تصویر در حال تکمیل"}
+                        </span>
+                      </div>
                     )}
                   </div>
 
