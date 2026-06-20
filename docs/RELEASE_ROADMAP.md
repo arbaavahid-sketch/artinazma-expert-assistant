@@ -80,7 +80,7 @@ Current production validator result:
 
 ## Phase 5 - Product Smoke Test
 
-- [ ] Send a real chat request to Artin and verify the answer.
+- [x] Send a real chat request to Artin and verify the answer.
 - [x] Upload a knowledge file from admin.
 - [x] Submit a customer quote/contact request.
 - [ ] Verify Telegram and email notifications.
@@ -132,3 +132,5 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Repeatable local knowledge upload smoke: `cd frontend && node scripts/local-knowledge-upload-smoke.mjs`.
 - Customer request smoke: passing; request creation, admin visibility, CRM/status update, customer history/detail, customer follow-up update, and notifications were verified.
 - Repeatable local customer request smoke: `cd frontend && node scripts/local-customer-request-smoke.mjs`.
+- Real Artin chat smoke: passing with `answer_mode=ai`, `question_id=628`, 4561 answer characters, `search_mode=local_fast+openai_web`, and 8 internal sources.
+- Repeatable local Artin chat smoke: `cd frontend && node scripts/local-artin-chat-smoke.mjs`.
