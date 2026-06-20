@@ -81,7 +81,7 @@ Current production validator result:
 ## Phase 5 - Product Smoke Test
 
 - [ ] Send a real chat request to Artin and verify the answer.
-- [ ] Upload a knowledge file from admin.
+- [x] Upload a knowledge file from admin.
 - [ ] Submit a customer quote/contact request.
 - [ ] Verify Telegram and email notifications.
 - [x] Test customer registration/login and multiple chat sessions.
@@ -128,3 +128,5 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Admin data endpoints: passing through `/api/admin-proxy`; 17 read-only dashboard, questions, requests, customers, settings, knowledge, backup-list, and error-log endpoints return 200.
 - RTL/mobile smoke: passing across 63 public, customer-authenticated, and admin-authenticated route/viewport combinations; no horizontal overflow or console/page errors detected.
 - Repeatable local RTL/mobile smoke: `cd frontend && node scripts/local-mobile-rtl-smoke.mjs`.
+- Admin knowledge upload smoke: passing; upload, chunk preview, search visibility, audit-log entry, and cleanup were verified through `/api/admin-proxy`.
+- Repeatable local knowledge upload smoke: `cd frontend && node scripts/local-knowledge-upload-smoke.mjs`.
