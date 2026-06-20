@@ -86,7 +86,7 @@ Current production validator result:
 - [ ] Verify Telegram and email notifications.
 - [x] Test customer registration/login and multiple chat sessions.
 - [x] Review admin pages: questions, requests, customers, settings, and knowledge.
-- [ ] Test important RTL/mobile views.
+- [x] Test important RTL/mobile views.
 
 ## Phase 6 - Final Content And Legal Review
 
@@ -126,3 +126,5 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Repeatable local customer smoke: `cd frontend && node scripts/local-customer-smoke.mjs`.
 - Admin frontend pages: passing on `http://localhost:3000`; login and 10 protected `/admin/*` pages return 200 with the admin session cookie.
 - Admin data endpoints: passing through `/api/admin-proxy`; 17 read-only dashboard, questions, requests, customers, settings, knowledge, backup-list, and error-log endpoints return 200.
+- RTL/mobile smoke: passing across 63 public, customer-authenticated, and admin-authenticated route/viewport combinations; no horizontal overflow or console/page errors detected.
+- Repeatable local RTL/mobile smoke: `cd frontend && node scripts/local-mobile-rtl-smoke.mjs`.
