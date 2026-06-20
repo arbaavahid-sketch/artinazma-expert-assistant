@@ -22,7 +22,7 @@ const extraImageMappings = Object.keys(imageMap).filter(
   (slug) => !products.some((product) => product.slug === slug),
 );
 const suspiciousProducts = products.filter((product) =>
-  /\btmp\b|test|sample|placeholder/i.test(
+  /\btmp\b|placeholder|dummy|lorem|test-product/i.test(
     `${product.title} ${product.slug} ${product.url}`,
   ),
 );

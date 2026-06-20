@@ -83,16 +83,17 @@ Current production validator result:
 - [x] Send a real chat request to Artin and verify the answer.
 - [x] Upload a knowledge file from admin.
 - [x] Submit a customer quote/contact request.
-- [ ] Verify Telegram and email notifications.
+- [x] Verify email notifications.
+- [ ] Verify Telegram notifications after `TELEGRAM_CHAT_ID` is configured.
 - [x] Test customer registration/login and multiple chat sessions.
 - [x] Review admin pages: questions, requests, customers, settings, and knowledge.
 - [x] Test important RTL/mobile views.
 
 ## Phase 6 - Final Content And Legal Review
 
-- [ ] Review company contact details, links, and footer content.
+- [x] Review company contact details, links, and footer content.
 - [ ] Review `/privacy` and `/terms` with legal/business stakeholders.
-- [ ] Review product images for duplicate or incorrect matches.
+- [x] Review product images for duplicate or incorrect matches.
 - [x] Run the full AI quality eval set.
 - [x] Save a release baseline for answer quality.
 
@@ -134,14 +135,17 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Repeatable local customer request smoke: `cd frontend && node scripts/local-customer-request-smoke.mjs`.
 - Real Artin chat smoke: passing with `answer_mode=ai`, `question_id=628`, 4561 answer characters, `search_mode=local_fast+openai_web`, and 8 internal sources.
 - Repeatable local Artin chat smoke: `cd frontend && node scripts/local-artin-chat-smoke.mjs`.
+- Email notification smoke: passing; `/admin/send-weekly-report` successfully sent the configured weekly report email.
+- Telegram notification smoke: blocked by configuration; bot token is present but `TELEGRAM_CHAT_ID` is missing, so `/admin/telegram-test` correctly reports Telegram as disabled.
 
 ## Content And Legal Review Status
 
 - Release content audit: passing for blocking checks; repeat with `cd frontend && node scripts/audit-release-content.mjs`.
-- Product catalog audit: 73 products, 72 image mappings, 0 broken image files, 0 extra image mappings.
+- Product catalog audit: 72 public products, 71 image mappings, 0 broken image files, 0 extra image mappings, 0 suspicious public products.
 - Product image warning: `Lintel PN 10` has no dedicated image mapping and intentionally falls back to an "Image pending" state.
-- Product/business review warning: `TMP` remains in the catalog from the source site index and should be confirmed as a real public product before launch.
+- Product/business review decision: `TMP` was removed from the public catalog until the business confirms it should be published.
 - Legal pages: `/privacy` and `/terms` are present, bilingual, and currently accepted as general public text for local finalization.
+- Contact/footer review: direct request page, AI company-profile source, privacy/terms contact copy, and sidebar footer links are aligned for local finalization.
 
 ## AI Quality Baseline
 

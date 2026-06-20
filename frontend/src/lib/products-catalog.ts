@@ -77,7 +77,6 @@ export const products: Product[] = [
   { title: "Sulfur and Chlorine Measuring Device Model CLSW", url: "https://artinazma.net/product/sulfur-and-chlorine-measuring-device-model-clsw/", slug: "sulfur-and-chlorine-measuring-device-model-clsw" },
   { title: "Sulfur and Nitrogen Measuring Device Model META", url: "https://artinazma.net/product/sulfur-and-nitrogen-measuring-device-model-meta/", slug: "sulfur-and-nitrogen-measuring-device-model-meta" },
   { title: "Thermal Desorber", url: "https://artinazma.net/product/thermal-desorber/", slug: "thermal-desorber" },
-  { title: "TMP", url: "https://artinazma.net/product/tmp/", slug: "tmp" },
   { title: "TU5200 Laser Turbidimeter Epa Version", url: "https://artinazma.net/product/tu5200-laser-turbidimeter-epa-version/", slug: "tu5200-laser-turbidimeter-epa-version" },
   { title: "Vip 2MP", url: "https://artinazma.net/product/vip-2mp/", slug: "vip-2mp" },
   { title: "VIS T 09 3", url: "https://artinazma.net/product/vis-t-09-3/", slug: "vis-t-09-3" },
