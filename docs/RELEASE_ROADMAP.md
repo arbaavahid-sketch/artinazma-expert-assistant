@@ -93,8 +93,8 @@ Current production validator result:
 - [ ] Review company contact details, links, and footer content.
 - [ ] Review `/privacy` and `/terms` with legal/business stakeholders.
 - [ ] Review product images for duplicate or incorrect matches.
-- [ ] Run the full AI quality eval set.
-- [ ] Save a release baseline for answer quality.
+- [x] Run the full AI quality eval set.
+- [x] Save a release baseline for answer quality.
 
 ## Phase 7 - Go Live
 
@@ -142,3 +142,17 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Product image warning: `Lintel PN 10` has no dedicated image mapping and intentionally falls back to an "Image pending" state.
 - Product/business review warning: `TMP` remains in the catalog from the source site index and should be confirmed as a real public product before launch.
 - Legal pages: `/privacy` and `/terms` are present, bilingual, and currently accepted as general public text for local finalization.
+
+## AI Quality Baseline
+
+- Full answer-quality eval: passing; repeat with `.\backend\venv\Scripts\python.exe scripts\run_quality_eval.py --api-url http://127.0.0.1:8000 --timeout 300 --save-raw docs\evals\latest_quality_raw.json`.
+- Latest baseline: 16/16 passed, average overall score 94.56/100, hallucination rate 0.0.
+- Report files:
+  - `docs/evals/latest_quality_report.md`
+  - `docs/evals/latest_quality_report.json`
+  - `docs/evals/latest_quality_raw.json`
+- Fixes included in the baseline:
+  - commercial requests no longer enable OpenAI web search by default;
+  - follow-up transform eval cases now send chat history;
+  - company contact details are returned as a grounded company-profile source when the user asks about ArtinAzma;
+  - product/device answers are instructed not to invent numeric test conditions without source support.

@@ -1,0 +1,123 @@
+[
+  {
+    "id": "fa-product-specific-jftot",
+    "chat_data": {
+      "question_id": 680,
+      "memory_id": 161,
+      "detected_domain": "equipment",
+      "answer": "من آرتین هستم، دستیار تخصصی و مشاور فنی آرتین آزما مهر.\n\nدستگاه JFTOT یکی از تست‌های کلیدی کیفیت سوخت جت است و در استانداردهای هوانوردی الزام دارد. در عمل، هر واحد تولید و تأمین Jet A/Jet A-1 باید این تست را پاس کند.\n\nتیترهای اصلی:\n- JFTOT برای چه تستی است؟\n- اصل کار و خروجی دستگاه\n- کاربرد در سوخت جت و تصمیم‌گیری عملی\n- محدودیت‌ها و نکات اجرایی\n\n----------------------------\nJFTOT برای چه تستی است؟\n----------------------------\n\nJFTOT مخفف Jet Fuel Thermal Oxidation Tester است.\n\nکاربرد اصلی:\n- اندازه‌گیری «پایداری حرارتی» (Thermal Stability) سوخت جت.\n- ارزیابی تمایل سوخت به تشکیل رسوب و لاک (deposit & lacquer) در دمای بالا و در تماس با فلز (شرایط شبیه سیستم سوخت‌رسانی موتور توربینی).\n\nاستانداردهای مرتبط (بسته به نسخه و منطقه):\n- ASTM D3241 – Standard Test Method for Thermal Oxidation Stability of Aviation Turbine Fuels.\n- این تست در مشخصات سوخت جت مثل ASTM D1655، DEF STAN 91-091 و استانداردهای ICAO/ایرلاین‌ها الزام می‌شود.\n\n----------------------------\nاصل کار و منطق فنی دستگاه\n----------------------------\n\nخلاصه منطق:\nسوخت جت را با دبی مشخص از روی یک لوله فلزی (heater tube) که تا دمای بالا گرم شده عبور می‌دهند. اگر سوخت از نظر پایداری حرارتی ضعیف باشد، روی سطح لوله رسوب و تغییر رنگ ایجاد می‌شود و همچنین فیلتر پایین‌دست کثیف می‌شود. شدت این اثرها معیاری از کیفیت سوخت است.\n\nاجزای اصلی و روند کار:\n- مخزن سوخت نمونه\n- پمپ با دبی کنترل‌شده\n- هیتر و لوله فلزی (heater tube) با دمای کنترل‌شده\n- فیلتر پایین‌دست\n- سیستم کنترل دما، فشار و زمان\n- سیستم ارزیابی رنگ/رسوب لوله (بصورت بصری یا با دستگاه خوانش خودکار، بسته به مدل)\n\nمراحل کلی آزمون (بر اساس منطق ASTM D3241، بدون عددسازی):\n1. تنظیم دما و شرایط آزمون طبق استاندارد (دمای مشخص، فشار مشخص، زمان عبور مشخص).\n2. عبور سوخت از روی لوله گرم‌شده با دبی ثابت.\n3. در پایان، لوله هیتر خارج شده و:\n   - تغییر رنگ و رسوب روی لوله با یک مقیاس استاندارد (rating scale) ارزیابی می‌شود.\n   - افت فشار روی فیلتر (ΔP) بررسی می‌شود (نشانه گرفتگی فیلتر توسط رسوبات).\n4. نتیجه به صورت:\n   - Tube Rating (مثلاً عددی یا طبقه‌بندی Pass/Fail)\n   - Filter Pressure Drop\n   گزارش می‌شود.\n\nتوجه مهم:\n- مقادیر دقیق دما، فشار، زمان، دبی و حدود پذیرش باید از آخرین نسخه ASTM D3241 و مشخصات سوخت (مثلاً ASTM D1655 یا DEF STAN) گرفته شود؛ این اعداد را نباید حدسی انتخاب کرد.\n\n----------------------------\nکاربرد JFTOT در سوخت جت\n----------------------------\n\nنقش عملی در صنعت هوانوردی و پالایشگاه:\n- تضمین عدم تشکیل رسوب در سیستم سوخت‌رسانی هواپیما:\n  - لوله‌ها، مبدل‌های حرارتی، نازل‌ها و اجزای موتور توربینی.\n- کنترل کیفیت در پالایشگاه:\n  - تأیید کیفیت برش سوخت جت قبل از ارسال به مخازن صادراتی یا خطوط هوایی.\n  - پایش اثر تغییرات فرآیندی (هیدروتریتینگ، برش‌های مخلوط، افزودنی‌ها) بر پایداری حرارتی.\n- کنترل کیفیت در انبارها و ترمینال‌ها:\n  - بررسی تأثیر ذخیره‌سازی طولانی، آلودگی با سوخت‌های دیگر یا آب، و افزودنی‌ها بر پایداری.\n- ارزیابی افزودنی‌ها:\n  - بررسی اینکه یک افزودنی (مثلاً آنتی‌اکسیدانت، متال دی‌اکتیواتور، پاک‌کننده) پایداری حرارتی را بهتر یا بدتر می‌کند.\n\nاز دید تصمیم‌گیری:\n- اگر JFTOT پاس نشود:\n  - سوخت برای استفاده در هواپیما قابل قبول نیست.\n  - معمولاً باید:\n    - منبع آلودگی یا مشکل فرآیندی شناسایی شود (برش نامناسب، آلودگی فلزی، اکسیداسیون، آلودگی با سوخت‌های دیگر).\n    - سوخت re-blend یا re-treat شود (مثلاً مخلوط با سوخت بهتر، عبور از فیلتر/adsorber، اصلاح فرآیند هیدروتریتینگ).\n- اگر JFTOT در مرز حد مجاز باشد:\n  - معمولاً اپراتورهای هوانوردی و QC ترجیح می‌دهند حاشیه ایمنی داشته باشند و از سوخت با نتایج بهتر استفاده کنند.\n\n----------------------------\nمزایا و اهمیت JFTOT\n----------------------------\n\nمزایا:\n- شبیه‌سازی نسبتاً خوب شرایط واقعی سیستم سوخت‌رسانی موتور توربینی (دمای بالا + فلز + جریان).\n- روش استاندارد و پذیرفته‌شده جهانی؛ نتایج بین آزمایشگاه‌ها قابل مقایسه است (با رعایت QC).\n- زمان آزمون نسبتاً کوتاه و مناسب برای QC روتین.\n\nاهمیت برای ایمنی:\n- رسوب در سیستم سوخت‌رسانی می‌تواند:\n  - نازل‌ها را مسدود کند.\n  - انتقال حرارت در مبدل‌ها را مختل کند.\n  - منجر به عملکرد نامنظم موتور یا حتی خاموشی در شرایط بحرانی شود.\n- به همین دلیل، JFTOT یک تست «ایمنی-محور» است، نه فقط یک پارامتر کیفی معمولی.\n\n----------------------------\nمحدودیت‌ها و نکات اجرایی\n----------------------------\n\nمحدودیت‌ها:\n- شبیه‌سازی کامل شرایط واقعی موتور نیست:\n  - پروفیل دمایی، نوع آلیاژها، زمان ماند و شرایط واقعی پرواز پیچیده‌تر است.\n- به‌تنهایی برای پیش‌بینی تمام مشکلات سوخت کافی نیست:\n  - باید همراه با سایر تست‌ها مثل:\n    - نقطه یخ‌زدگی (Freeze Point)\n    - نقطه دود (Smoke Point)\n    - گوگرد، آلودگی ذرات، هدایت الکتریکی، محتوی آب و غیره\n  تفسیر شود.\n- حساس به شرایط آزمون:\n  - کوچک‌ترین انحراف در دما، دبی، تمیزی سیستم یا وضعیت لوله می‌تواند نتیجه را تغییر دهد.\n\nنکات اجرایی و QC:\n- استفاده از لوله‌های هیتر و فیلتر مطابق استاندارد و با traceability.\n- کالیبراسیون منظم:\n  - دما، فشار، دبی، تایمر.\n- تمیزی سیستم:\n  - هرگونه آلودگی قبلی در خطوط و اتصالات می‌تواند رسوب اضافی ایجاد کند و نتیجه را بدتر نشان دهد.\n- آموزش اپراتور:\n  - در مدل‌های قدیمی که ارزیابی لوله بصری است، مهارت اپراتور در خواندن رنگ/رسوب بسیار مهم است.\n  - در مدل‌های جدیدتر با reader خودکار، باید دستگاه reader هم کالیبره و چک شود.\n- استفاده از نمونه‌های کنترل (reference fuel) برای اطمینان از صحت عملکرد دستگاه.\n\n----------------------------\nایمنی کار با JFTOT\n----------------------------\n\n- کار با سوخت جت:\n  - حلال هیدروکربنی قابل اشتعال؛ تهویه مناسب، عدم وجود منبع جرقه، استفاده از PPE (دستکش، عینک، لباس کار).\n- دمای بالا:\n  - لوله هیتر و بخش‌هایی از سیستم بسیار داغ هستند؛ خطر سوختگی.\n  - باید اجازه داده شود دستگاه قبل از باز کردن قطعات، خنک شود.\n- فشار:\n  - سیستم تحت فشار کار می‌کند؛ اتصالات باید سالم و تست نشتی انجام شود.\n- دفع پسماند:\n  - سوخت مصرف‌شده و فیلترها باید طبق دستورالعمل HSE و مقررات زیست‌محیطی دفع شوند.\n\n----------------------------\nخلاصه خیلی کوتاه\n----------------------------\n\n- JFTOT تست «پایداری حرارتی سوخت جت» است (ASTM D3241).\n- سوخت را از روی یک لوله فلزی داغ عبور می‌دهد و میزان رسوب/تغییر رنگ لوله و گرفتگی فیلتر را می‌سنجد.\n- در مشخصات سوخت جت، پاس کردن JFTOT الزام ایمنی است؛ برای جلوگیری از تشکیل رسوب در سیستم سوخت‌رسانی موتور هواپیما.\n- نتایج آن برای تصمیم‌گیری در پالایشگاه، ترمینال و ایرلاین جهت پذیرش/رد سوخت و اصلاح فرآیند یا blending استفاده می‌شود.\n- اجرای درست آزمون نیازمند کنترل دقیق دما، دبی، تمیزی سیستم، کالیبراسیون و رعایت نکات ایمنی است.\n\nاگر خواستی، می‌توانم در ادامه:\n- ساختار یک گزارش استاندارد JFTOT را برای سوخت جت توضیح بدهم،\n- یا بگویم در صورت Fail شدن JFTOT در یک بچ سوخت جت، چه سناریوهای اصلاحی (re-blend، re-treat، جداسازی مخزن و…) معمولاً در پالایشگاه‌ها اجرا می‌شود.",
+      "sources": [
+        {
+          "citation_id": "S1",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 60,
+          "score": 25.4729,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": "زیر ساخت های مناسب سرمایه گذاری در حوزه های بالا دسی، میان دسی و پایین دسی نفت، گاز و پتروشیمی مانند مجتمع بندری پارس، فرودگاه بین المللی خلیج فارس، تاسیسات آب، برق، مخابرات، شبکه راه های ارتباطی و وجود اماکن طبیی گردشگری است. میدان گازی پارس جنوبی از اکتشافات"
+        },
+        {
+          "citation_id": "S2",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 63,
+          "score": 16.0971,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": "ip c .ir 86 کاربردهای اصلی محصولات نمودار تولید گواهینامه های استاندارد دریافتی کود شیمیایی جهت مصارف کشاورزی، ماده اولیه ملامین و ...اوره: ماده اولیه جهت مصارف صنعتی و تولید کود شیمیاییآمونیاک: * شامل خوراک و سوخت است. ISO 9001 ISO 14001 OHSAS 18001 ISO 29001"
+        },
+        {
+          "citation_id": "S3",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 64,
+          "score": 16.0491,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": ": ۱۶ هکتار مساحت : 80 سال تأسیس نوری (برزویه) 113 شرکت ملی صنایع پتروشیمی www.nip c .ir مالکیت 15/3 %5/5 %9/5 سرمایه گذاری نفت و گاز پتروشیمی تامین سرمایه گذاری صندوق بازنشستگی كشوری سایر سهامداران صنایع پتروشیمی خلیج فارس 69 /7 مجتمع های پتروشیمی محصول پارازا"
+        },
+        {
+          "citation_id": "S4",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 61,
+          "score": 15.2108,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": "طقه عسلویه با استفاده از گاز تولیدی این مخزن به عنوان خوراک به بهره برداری رسید که مشخصات آن ها در صفحات بعدی ارایه می شود. 107 شرکت ملی صنایع پتروشیمی www.nip c .ir مزیت ها و ویژگی های سرمایه گذاری وجود منابع غی گاز و استحصال ارزش افزوده قابل توجه دسترسی به ب"
+        },
+        {
+          "citation_id": "S5",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 35,
+          "score": 14.7533,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": "بازنشستگی كشور سرمایه گذاری نفت و گاز پتروشیمی تامین 17 /3 %15 /4 %16 /9 %50 /4 مجتمع های پتروشیمی * شامل خوراک و سوخت است. سال بهره برداریصاحب لیسانسخوراک مصرفیظرفیت اسمیمحصولات متانول منواکسیدکربن اسید استیک 100 1385 1385 1383 140 شرکت خیم تکنولوژی متانول من"
+        },
+        {
+          "citation_id": "S6",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 14,
+          "score": 14.5692,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": "ه اقتصادی پتروشیمی (ماهشهر) 23 شرکت ملی صنایع پتروشیمی www.nip c .ir مجتمع های پتروشیمی 70 مساحت 0 ســال تأســیس شــرکت ژاپــی منعقــد شــد.) در راســتای ایجاد مدیریت ســاختار مدیریت پتروشــیمی بندرامــام : غــر متمرکــز و بــه منظــور نیل بــه بهــره وری بیشـ"
+        },
+        {
+          "citation_id": "S7",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 86,
+          "score": 14.2234,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": "فرآیند تولید فسفات، کریت DMEتولید اسید سولفوریک، دی متوکسی اتان خوراک واحد متانول متان: خوراک واحدهای الفین اتان: خوراک واحدهای الفینبوتان: خوراک واحدهای الفین پروپان: مواد اولیه برای تولید سوخت و خوراک واحدهای الفین پنتان: کاربردهای اصلی محصولات 163 شرکت ملی "
+        },
+        {
+          "citation_id": "S8",
+          "title": "مجتمع های پتروشیمی",
+          "file_name": "مجتمع_های_پتروشیمی.PDF",
+          "category": "general",
+          "chunk_index": 57,
+          "score": 14.1761,
+          "score_reason": "BM25 keyword relevance, direct keyword matches",
+          "excerpt": "ـور دخمــه در بنــدر طاهــری (ســیراف)، چشــمه آب گــرم میانلــو و بقعــه ســید غریــب در کنــگان، بقعــه ســید حــبی بــا... در روســتای قلعــه کهنــه دهســتان ریــز، مرکبــات و نخلســتان هــای زیبــای جــم و ریــز و چشــم اندازهــای ســواحل دیــدنی بنــادر ک"
+        }
+      ],
+      "resource_links": [],
+      "resource_images": [],
+      "search_mode": "local_fast+openai_web",
+      "web_search_used": true,
+      "question_intent": "product_or_device",
+      "question_intent_label": "محصول، دستگاه یا مدل مشخص / حوزه انتخابی: equipment",
+      "best_score": 25.4729,
+      "source_count": 8,
+      "response_mode": "auto",
+      "answer_mode": "ai"
+    }
+  },
+  {
+    "id": "en-equipment-mercury",
+    "chat_data": {
+      "question_id": 681,
+      "memory_id": 162,
+      "detected_domain": "mercury-analysis",
+      "answer": "For mercury in natural gas streams, you first need to decide between:\n\n- online/continuous analyzers (for process control, custody transfer, protection of catalysts/adsorbents), or  \n- offline/lab analyzers (for periodic compliance or troubleshooting).\n\nBelow is a decision‑oriented overview.\n\nBasic requirement in natural gas:\n- Matrix: high‑pressure natural gas, often with H2S, CO2, heavy hydrocarbons.\n- Range: typically low µg/Nm³ down to ng/Nm³ (sub‑ppb to low‑ppb v/v).\n- Needs: high sensitivity, resistance to contamination, safe operation in hazardous area (ATEX/IECEx).\n\n1) Online mercury analyzers (process / pipeline)\n\nThese are usually the right choice if your question is about “streams” in operation.\n\nMain technologies:\n- Atomic fluorescence spectroscopy (AFS) with gold amalgamation pre‑concentration  \n- Atomic absorption spectroscopy (AAS) with gold amalgamation  \n- Cold vapor atomic fluorescence (CVAFS) adapted for gas streams\n\nTypical configuration:\n- Sample conditioning: pressure reduction, filtration, temperature control, sometimes moisture removal.\n- Pre‑concentration: mercury captured on a gold trap, then thermally desorbed.\n- Detection: AFS or AAS, giving continuous or semi‑continuous readings.\n\nPros:\n- Very low detection limits (sub‑ng/m³ possible).\n- Continuous or near‑continuous monitoring (e.g. every few minutes).\n- Directly usable for:\n  - Monitoring mercury guard beds (breakthrough detection)\n  - Protecting aluminum heat exchangers in LNG plants\n  - Pipeline quality control and custody transfer\n\nCons / points to check:\n- Requires careful sample conditioning to avoid:\n  - condensation of heavy hydrocarbons\n  - adsorption losses in lines\n- Needs regular calibration and trap replacement/regeneration.\n- Must be suitable for hazardous area (Ex‑rated) or installed in safe shelter with appropriate sample take‑off.\n\nWhen this is suitable:\n- LNG plants, gas processing plants, NGL recovery, petrochemical feed gas.\n- You need real‑time or near real‑time data.\n- You are designing or operating mercury removal units (MRU).\n\n2) Offline / laboratory mercury analyzers for gas\n\nIf you only need periodic measurements (e.g. monthly, quarterly), you can:\n\na) Collect gas on sorbent tubes (e.g. gold‑coated or other specific sorbents), then analyze in lab with:\n- CVAFS (cold vapor atomic fluorescence spectroscopy)\n- CVAAS (cold vapor atomic absorption spectroscopy)\n\nb) Use a direct mercury analyzer (thermal decomposition + amalgamation + AAS/AFS) for solid/liquid sorbent media.\n\nPros:\n- Very low detection limits and high accuracy.\n- One central lab can support multiple sites.\n- Easier maintenance and calibration in controlled environment.\n\nCons:\n- Not real‑time; results delayed by sampling, transport, and lab analysis.\n- Sampling quality is critical (flow, time, sorbent capacity, no leaks).\n\nWhen this is suitable:\n- Regulatory reporting and certification.\n- Baseline studies, design data for MRU.\n- Occasional troubleshooting rather than continuous control.\n\n3) Key selection criteria\n\nTo choose a “suitable” analyzer, you should clarify:\n\n- Purpose:\n  - Continuous process control / protection → online analyzer.\n  - Periodic compliance / design data → offline + sorbent tubes + lab analyzer.\n\n- Required detection limit:\n  - Typical pipeline specs: low µg/Nm³ or below.\n  - Check that the analyzer’s LOD is at least 5–10× lower than your spec limit.\n\n- Process conditions:\n  - Pressure and temperature of gas.\n  - Presence of H2S, high CO2, heavy hydrocarbons, water.\n  - Hazardous area classification (Zone 1/2, Class I Div 1/2).\n\n- Integration:\n  - Need for DCS/PLC connection (4–20 mA, Modbus, etc.).\n  - Sampling point location and distance to analyzer shelter.\n\n4) Typical technical configuration for an online mercury analyzer in natural gas\n\n- Sample take‑off:\n  - Isokinetic or representative probe, with appropriate materials (e.g. stainless steel with inert coating if needed).\n  - Heated or insulated lines if condensation risk exists.\n\n- Sample conditioning:\n  - Pressure regulator (designed for sour gas if H2S present).\n  - Particulate filter.\n  - Sometimes membrane or chiller to control moisture/hydrocarbons (without losing Hg).\n\n- Analyzer:\n  - Gold amalgamation trap.\n  - Thermal desorption.\n  - AFS or AAS detection.\n  - Auto‑calibration with Hg vapor standard or permeation tube.\n\n- Safety:\n  - Explosion‑proof housing or installation in safe area with appropriate sample system.\n  - Venting of exhaust gas to safe location.\n\n5) Common pitfalls and how to avoid them\n\n- Loss of mercury in sampling system:\n  - Use short, inert, temperature‑controlled lines.\n  - Avoid dead volumes and cold spots.\n\n- Condensation of heavy hydrocarbons:\n  - Keep sample above hydrocarbon dew point until pressure reduction and conditioning.\n\n- Calibration issues:\n  - Use certified Hg vapor standards or permeation devices.\n  - Regular zero/span checks; document drift.\n\n- Mis‑match between spec and analyzer range:\n  - Ensure linearity and accuracy in the range of interest (e.g. 0–10 µg/Nm³ vs 0–1000 µg/Nm³).\n\n6) What information I need from you to recommend a specific type/model\n\nIf you want a concrete recommendation (technology + class of instrument), please provide:\n\n- Application:\n  - LNG plant / gas processing / transmission pipeline / petrochemical feed / other.\n- Measurement type:\n  - Online continuous at line?  \n  - Periodic lab measurement from sorbent tubes?\n- Expected concentration range:\n  - Typical and maximum Hg levels (if known).\n- Gas composition:\n  - Approximate CH4, CO2, H2S, C2+ content, presence of liquids/condensate.\n- Operating conditions:\n  - Pressure, temperature at sampling point.\n  - Hazardous area classification.\n- Requirements:\n  - Response time, accuracy, reporting standard (e.g. µg/Nm³, ng/m³, ppb v/v).\n  - Need for integration with DCS/SCADA.\n\nWith these details, I can narrow it down to:\n- “Online AFS + gold amalgamation analyzer with specified range and Ex rating” vs  \n- “Sorbent tube sampling + lab CVAFS / direct mercury analyzer” and outline a concrete configuration for your case.",
+      "sources": [],
+      "resource_links": [],
+      "resource_images": [],
+      "search_mode": "no_exact_model_context+ignored_weak_internal_context+openai_web",
+      "web_search_used": true,
+      "question_intent": "equipment_recommendation",
+      "question_intent_label": "پیشنهاد دستگاه یا روش / حوزه انتخابی: mercury-analysis",
+      "best_score": 0.0,
+      "source_count": 0,
+      "response_mode": "auto",
+      "answer_mode": "ai"
+    }
+  }
+]

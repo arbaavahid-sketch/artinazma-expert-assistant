@@ -3,17 +3,17 @@
   "api_url": "http://127.0.0.1:8000",
   "judge_model": "gpt-5.1",
   "judged": true,
-  "total": 3,
-  "passed": 3,
+  "total": 16,
+  "passed": 16,
   "failed": 0,
   "averages": {
-    "overall": 93.67,
-    "groundedness": 5.0,
+    "overall": 94.56,
+    "groundedness": 4.75,
     "citation_quality": 5.0,
-    "relevance": 5.0,
+    "relevance": 4.88,
     "hallucination_rate": 0.0
   },
-  "duration_seconds": 92.13,
+  "duration_seconds": 369.93,
   "results": [
     {
       "id": "fa-standard-astm-d4294",
@@ -26,7 +26,7 @@
         "source_count": 0,
         "search_mode": "gpt_astm_direct+openai_web",
         "answer_mode": "ai",
-        "answer_length": 9056,
+        "answer_length": 8472,
         "empty_answer": false
       },
       "judged": true,
@@ -49,7 +49,7 @@
       "rubric_failed": [],
       "hallucination": false,
       "hallucination_note": "",
-      "rationale": "پاسخ دقیقاً ماهیت و کاربرد ASTM D4294 را توضیح داده، EDXRF، ماتریس‌های نمونه، محدودیت‌ها و نکات مهم اجرایی و کالیبراسیون را به‌خوبی پوشش می‌دهد و عدد LOD قطعی نساخته است. از نظر عملیاتی برای آزمایشگاه نفت و فراورده‌ها قابل استفاده و استاندارد‑محور است و فقط اندکی طولانی‌تر از حداقل نیاز است."
+      "rationale": "پاسخ کاملاً مشخص می‌کند ASTM D4294 برای اندازه‌گیری گوگرد کل با EDXRF در نفت و فرآورده‌ها است و نکات اجرایی مهم را با جزئیات آزمایشگاهی کاربردی پوشش می‌دهد، بدون ارائه اعداد LOD ساختگی یا خلط با استانداردهای دیگر. تنها ایراد جزئی، طول نسبتاً زیاد متن نسبت به سؤال اولیه است، اما از نظر فنی بسیار قوی و درست است."
     },
     {
       "id": "fa-standard-astm-d2622",
@@ -62,33 +62,30 @@
         "source_count": 0,
         "search_mode": "gpt_astm_direct+openai_web",
         "answer_mode": "ai",
-        "answer_length": 6794,
+        "answer_length": 7020,
         "empty_answer": false
       },
       "judged": true,
       "passed": true,
-      "overall": 92,
+      "overall": 95,
       "scores": {
         "groundedness": 5,
         "citation_quality": 5,
         "relevance": 5
       },
       "covered_concepts": [
+        "جدول مقایسه",
         "WDXRF",
         "EDXRF",
         "ماتریس نمونه",
         "انتخاب روش"
       ],
-      "missing_concepts": [
-        "جدول مقایسه"
-      ],
+      "missing_concepts": [],
       "constraint_violations": [],
-      "rubric_failed": [
-        "comparison-table"
-      ],
+      "rubric_failed": [],
       "hallucination": false,
       "hallucination_note": "",
-      "rationale": "پاسخ به‌صورت دقیق و فنی تفاوت D2622 و D4294 را در سطح اصول روش، دقت، ماتریس، کاربرد و انتخاب روش توضیح داده و هیچ عدد یا ادعای مشکوک و غیرمتعارف مطرح نکرده است؛ فقط به‌صورت متنی است و نه در قالب جدول، لذا آیتم «جدول مقایسه» محقق نشده است."
+      "rationale": "پاسخ تفاوت D2622 و D4294 را از نظر اصل روش، کاربرد، مزایا/محدودیت و انتخاب عملیاتی دقیق و صنعتی توضیح داده و هر دو روش را متوازن دیده است. هیچ عدد یا مشخصه ساختگی ارائه نشده و نکات مربوط به ماتریس، LOD و سناریوی انتخاب به‌خوبی پوشش داده شده‌اند."
     },
     {
       "id": "fa-equipment-sulfur-lpg",
@@ -101,12 +98,12 @@
         "source_count": 8,
         "search_mode": "local_fast+openai_web",
         "answer_mode": "ai",
-        "answer_length": 6288,
+        "answer_length": 7210,
         "empty_answer": false
       },
       "judged": true,
       "passed": true,
-      "overall": 94,
+      "overall": 97,
       "scores": {
         "groundedness": 5,
         "citation_quality": 5,
@@ -124,7 +121,470 @@
       "rubric_failed": [],
       "hallucination": false,
       "hallucination_note": "",
-      "rationale": "پاسخ به‌صورت فنی و کاربردی، انواع روش‌ها و دتکتورهای مناسب برای اندازه‌گیری گوگرد در LPG (Total و گونه‌ای) را با مزایا/معایب و سناریوهای کاربردی توضیح داده و نکات ایمنی نمونه‌برداری را هم پوشش داده است. استانداردها و تکنیک‌های نام‌برده (UV Fluorescence، XRF، GC-SCD/FPD) با دانش متعارف این حوزه منطبق‌اند و ادعای عددی غیرمستند مطرح نشده است."
+      "rationale": "پاسخ هم از نظر فنی دقیق و متعادل است، هم روش‌ها و استانداردهای رایج را درست معرفی کرده و بین سناریوهای مختلف انتخاب روش را توضیح داده است. همۀ مفاهیم مدنظر rubric را پوشش داده و هیچ ادعای عددی بدون منبع یا خلاف واقع مطرح نکرده است."
+    },
+    {
+      "id": "fa-troubleshooting-gc-baseline",
+      "language": "fa",
+      "domain": "chromatography",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 7382,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 96,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "چک‌لیست",
+        "leak",
+        "ستون",
+        "گاز حامل",
+        "آلودگی",
+        "روش مرحله‌ای"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ به‌صورت مرحله‌ای و بسیار کاربردی علت‌های رایج drift و tailing را با اولویت‌بندی مطرح کرده و راه‌حل‌های عملی و ایمن پیشنهاد می‌دهد، بدون اتکا به اعداد یا استانداردهای ساختگی. می‌توانست کمی فشرده‌تر باشد، اما از نظر فنی و ایمنی بسیار خوب است."
+    },
+    {
+      "id": "fa-lab-analysis-rsd",
+      "language": "fa",
+      "domain": "analysis",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 3042,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 92,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "میانگین",
+        "RSD",
+        "تکرارپذیری",
+        "QC",
+        "بررسی outlier"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "محاسبات میانگین، SD و CV درست است و تفسیر تکرارپذیری، بحث outlier و وابستگی قبولی/رد به SOP و QC به‌درستی مطرح شده و حکم قطعی صادر نشده است. پاسخ مشخص، کاربردی و منطبق با رویه‌های متداول آزمایش ICP است."
+    },
+    {
+      "id": "fa-product-specific-jftot",
+      "language": "fa",
+      "domain": "equipment",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 6040,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 95,
+      "scores": {
+        "groundedness": 4,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "thermal oxidation stability",
+        "سوخت جت",
+        "رسوب",
+        "استاندارد مرتبط"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "Answer دقیقا ماهیت تست JFTOT، نقش آن در ارزیابی پایداری حرارتی سوخت جت، ارتباط با استاندارد ASTM D3241 و کاربردهای عملی در پالایشگاه و فرودگاه را توضیح داده و از ارائه اعداد ساختگی خودداری کرده است. محتوا کاملا مرتبط، فنی و کاربردی است."
+    },
+    {
+      "id": "fa-catalyst-hds",
+      "language": "fa",
+      "domain": "catalyst",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 6481,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 96,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "گوگردزدایی",
+        "خوراک",
+        "فلزات",
+        "شرایط عملیاتی",
+        "طول عمر"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ نقش کاتالیست HDS را به‌طور دقیق، مکانیزم، نوع‌ها، کاربردها و تمام معیارهای کلیدی انتخاب (خوراک، شرایط عملیاتی، فلزات، طول عمر، اقتصاد) را فنی و کاربردی پوشش داده است و ادعای عددی بی‌پشتوانه یا تضمین عملکرد ندارد. تنها ایراد جزئی، طول نسبتاً زیاد متن نسبت به سؤال است، اما از نظر فنی بسیار کامل و بدون خطای محسوس است."
+    },
+    {
+      "id": "fa-commercial-quote",
+      "language": "fa",
+      "domain": "sales",
+      "deterministic": {
+        "web_expected": false,
+        "web_actual": false,
+        "web_ok": true,
+        "source_count": 9,
+        "search_mode": "local_fast+artinazma_site",
+        "answer_mode": "ai",
+        "answer_length": 1290,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 95,
+      "scores": {
+        "groundedness": 4,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "استعلام",
+        "مشخصات لازم",
+        "مدل",
+        "کاربرد",
+        "اطلاعات تماس"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ بدون ارائه قیمت یا موجودی حدسی، مشتری را به استعلام رسمی هدایت کرده، جزئیات فنی لازم را می‌پرسد و اطلاعات تماس صحیح از منبع ارائه می‌کند. از استاندارد ASTM D4294 به‌درستی به‌عنوان نمونه مرتبط نام برده شده و خطای محتوایی یا تجاری قابل‌توجهی وجود ندارد."
+    },
+    {
+      "id": "fa-method-xrf-vs-icp",
+      "language": "fa",
+      "domain": "analysis",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 8010,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 95,
+      "scores": {
+        "groundedness": 4,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "جدول مقایسه",
+        "آماده‌سازی نمونه",
+        "LOD",
+        "اثر ماتریس",
+        "انتخاب وابسته به هدف"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "Answer is detailed, technically accurate, compares XRF vs ICP specifically for heavy metals in petroleum matrices, includes decision guidance and a comparison table, and avoids fabricated numeric limits or absolute recommendations."
+    },
+    {
+      "id": "fa-followup-transform-table",
+      "language": "fa",
+      "domain": "auto",
+      "deterministic": {
+        "web_expected": false,
+        "web_actual": false,
+        "web_ok": true,
+        "source_count": 0,
+        "search_mode": "followup_transform",
+        "answer_mode": "ai",
+        "answer_length": 570,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 95,
+      "scores": {
+        "groundedness": 4,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "جدول Markdown",
+        "فقط بازنویسی محتوای قبلی"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ کاملاً همان محتوای قبلی را فقط به صورت جدول مارک‌داون ارائه کرده است و نکته جدیدی اضافه نکرده است. ساختار جدول و تمایز بین ASTM D2622 و ASTM D4294 از نظر نوع XRF و کاربرد، با دانش رایج سازگار است."
+    },
+    {
+      "id": "en-standard-astm-d5453",
+      "language": "en",
+      "domain": "petroleum",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 0,
+        "search_mode": "gpt_astm_direct+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 10732,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 95,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "UV fluorescence",
+        "sulfur",
+        "calibration",
+        "sample matrix",
+        "QC"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "Answer correctly explains ASTM D5453 UV-fluorescence sulfur determination with solid method detail, strong focus on calibration, QC, matrices, and practical lab pitfalls, without confusing it with XRF methods or fabricating precise performance numbers. It is thorough and highly usable for a petroleum lab; only minor potential improvement would be more explicit mention of exact scope boundaries from the latest standard text, but this is not critical."
+    },
+    {
+      "id": "en-troubleshooting-hplc-pressure",
+      "language": "en",
+      "domain": "chromatography",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 5,
+        "search_mode": "ai_vector+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 7532,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 96,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "filter",
+        "column",
+        "mobile phase",
+        "blockage",
+        "stepwise checks"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "Answer is domain-correct, highly practical, and organized as clear stepwise diagnostics focusing on column, filters, mobile phase, and blockages, with appropriate safety precautions and no fabricated specifics."
+    },
+    {
+      "id": "en-equipment-mercury",
+      "language": "en",
+      "domain": "mercury-analysis",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 0,
+        "search_mode": "no_exact_model_context+ignored_weak_internal_context+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 7101,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 90,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 4
+      },
+      "covered_concepts": [
+        "sample conditioning",
+        "speciation",
+        "natural gas",
+        "detection limit",
+        "sampling"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "Answer is technically solid, application-focused, and covers key concepts like sample conditioning, detection limits, and sampling. It avoids specific brands/prices and provides a structured decision-oriented overview, though it could be more concise and directly state the most typical analyzer class earlier."
+    },
+    {
+      "id": "en-product-model-unknown",
+      "language": "en",
+      "domain": "equipment",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 0,
+        "search_mode": "no_exact_model_context+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 4047,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 90,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 4
+      },
+      "covered_concepts": [
+        "cannot verify if not found",
+        "request manufacturer/model details",
+        "avoid fabrication"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "The assistant clearly states it cannot find the model, avoids fabricating specs, and asks for manufacturer/model and application details while offering a practical checklist of what to look for in a sulfur analyzer. It is slightly more verbose and general than necessary for a very focused question but remains technically sound and grounded."
+    },
+    {
+      "id": "fa-artinazma-contact",
+      "language": "fa",
+      "domain": "sales",
+      "deterministic": {
+        "web_expected": false,
+        "web_actual": false,
+        "web_ok": true,
+        "source_count": 9,
+        "search_mode": "local_fast",
+        "answer_mode": "ai",
+        "answer_length": 2104,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 95,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "نام ماده",
+        "گرید",
+        "مقدار",
+        "کاربرد",
+        "اطلاعات تماس"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ دقیقاً به نوع اطلاعات موردنیاز برای ارسال درخواست خرید می‌پردازد، ساختارمند و کاربردی است و کانال‌های تماس آرتین آزما را مطابق منبع ذکر می‌کند. قیمت یا موجودی حدسی مطرح نشده و تمام مفاهیم مورد انتظار به‌طور شفاف پوشش داده شده‌اند."
+    },
+    {
+      "id": "fa-general-sample-prep",
+      "language": "fa",
+      "domain": "analysis",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 7346,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 96,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "رقیق‌سازی",
+        "هضم",
+        "آلودگی",
+        "ماتریس",
+        "بلانک"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "پاسخ به‌صورت ساختارمند تمام ریسک‌های مهم آماده‌سازی نمونه روغن برای آنالیز فلزات را با جزئیات عملی، کنترل‌ها و نکات QC پوشش می‌دهد، بدون تحمیل یک روش واحد یا شرایط قطعی. مفاهیم کلیدی مانند رقیق‌سازی، هضم، آلودگی، اثر ماتریس و استفاده از بلانک و CRM به‌خوبی و صحیح توضیح داده شده‌اند."
     }
   ]
 }

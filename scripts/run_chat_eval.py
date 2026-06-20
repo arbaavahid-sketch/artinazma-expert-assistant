@@ -47,6 +47,8 @@ def post_chat(api_url: str, case: dict[str, Any], timeout: int) -> dict[str, Any
         "user_id": "eval_runner",
         "response_mode": "auto",
     }
+    if "history" in case:
+        payload["history"] = case["history"]
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(
         url,

@@ -45,6 +45,7 @@ logger = logging.getLogger("artin_scheduler")
 router = APIRouter()
 
 _response_cache = make_response_cache(maxsize=200, ttl=3600)
+_COMMERCIAL_INTENTS = {"commercial_request"}
 
 
 def _build_chat_pipeline(body: ChatRequest) -> dict:
@@ -155,6 +156,8 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         allow_web_search = True
     if specific_model_question or has_astm_code or not related_docs:
         allow_web_search = True
+    if question_intent in _COMMERCIAL_INTENTS:
+        allow_web_search = False
     if is_transform_followup:
         allow_web_search = False
         related_docs = []
@@ -200,6 +203,21 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         "قانون پاسخ تأییدشده: برای سؤال‌های تخصصی و فنی، از منبع معتبر استفاده کن.\n"
         "پاسخ فارسی باشد."
     )
+    if question_intent in _COMMERCIAL_INTENTS:
+        style_instructions += (
+            "\nقواعد درخواست تجاری:\n"
+            "- قیمت، موجودی، زمان تحویل یا پیش‌فاکتور را حدس نزن.\n"
+            "- برای استعلام دقیق، حتماً مدل، برند/سازنده، کاربرد، نوع نمونه یا ماده، محدوده کاری، تعداد/مقدار و اطلاعات تماس را بخواه.\n"
+            "- اگر منبع یا کانتکست معتبر تماس در همین درخواست وجود ندارد، ایمیل، شماره تلفن یا آدرس دقیق را در متن جواب ننویس؛ کاربر را به فرم درخواست یا اطلاعات تماس رسمی سایت ارجاع بده.\n"
+            "- پاسخ کوتاه، حرفه‌ای و قابل ارسال به مشتری باشد."
+        )
+    if question_intent == "product_or_device":
+        style_instructions += (
+            "\nقواعد محصول، دستگاه یا آزمون مشخص:\n"
+            "- شرایط عددی آزمون مثل دما، زمان، دبی، فشار، حد پذیرش، LOD/LOQ یا rating را فقط وقتی بنویس که در منبع/کانتکست برگشتی آمده باشد.\n"
+            "- اگر عدد دقیق لازم است ولی در منبع موجود نیست، به‌جای عددسازی بگو باید آخرین نسخه استاندارد یا دیتاشیت رسمی بررسی شود.\n"
+            "- کاربرد، اصل روش، خروجی‌های آزمون و محدودیت‌ها را توضیح بده، اما مشخصات عددی بی‌منبع نساز."
+        )
     if is_transform_followup:
         style_instructions = (
             "قانون بسیار مهم برای درخواست‌های بازنویسی:\n"
@@ -225,6 +243,23 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
                 "score": float(doc.get("score", 0) or 0),
                 "score_reason": doc.get("score_reason", ""),
                 "excerpt": content[:260],
+            }
+        )
+    if allow_company_reference:
+        sources.append(
+            {
+                "citation_id": f"S{len(sources) + 1}",
+                "title": "ArtinAzma company profile",
+                "file_name": "system_company_profile",
+                "category": "company_contact",
+                "chunk_index": 0,
+                "score": 1.0,
+                "score_reason": "Company identity and contact information from the configured system profile.",
+                "excerpt": (
+                    "آرتین آزما مهر تامین‌کننده تجهیزات آزمایشگاهی و آنالیتیکال، مواد "
+                    "شیمیایی و مواد فرایندی است. ایمیل رسمی: info@artinazma.net. "
+                    "تلفن: 02191008898. واتساپ پشتیبانی: 09906060910."
+                ),
             }
         )
 

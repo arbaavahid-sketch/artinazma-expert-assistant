@@ -116,6 +116,16 @@
       "language": "fa",
       "domain": "auto",
       "message": "همین جواب قبلی را به جدول تبدیل کن",
+      "history": [
+        {
+          "role": "user",
+          "content": "تفاوت ASTM D2622 و D4294 برای گوگرد در نفت چیست؟"
+        },
+        {
+          "role": "assistant",
+          "content": "ASTM D2622 یک روش WDXRF برای اندازه‌گیری گوگرد در فرآورده‌های نفتی است و معمولاً دقت و تفکیک طیفی بالاتری دارد. ASTM D4294 یک روش EDXRF سریع‌تر و ساده‌تر است که برای کنترل روتین مناسب است. انتخاب بین این دو به ماتریس نمونه، محدوده غلظت گوگرد، نیاز دقت، زمان پاسخ‌دهی و امکانات آزمایشگاه وابسته است."
+        }
+      ],
       "expected_intent": "technical_general",
       "expected_search_behavior": "followup_transform",
       "should_use_web": false,

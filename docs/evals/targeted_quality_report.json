@@ -1,0 +1,91 @@
+{
+  "dataset": "D:\\artinazma-expert-assistant\\docs\\evals\\chat_eval_set.json",
+  "api_url": "http://127.0.0.1:8000",
+  "judge_model": "gpt-5.1",
+  "judged": true,
+  "total": 2,
+  "passed": 2,
+  "failed": 0,
+  "averages": {
+    "overall": 92.0,
+    "groundedness": 5.0,
+    "citation_quality": 5.0,
+    "relevance": 4.5,
+    "hallucination_rate": 0.0
+  },
+  "duration_seconds": 44.84,
+  "results": [
+    {
+      "id": "fa-product-specific-jftot",
+      "language": "fa",
+      "domain": "equipment",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 8,
+        "search_mode": "local_fast+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 6372,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 96,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 5
+      },
+      "covered_concepts": [
+        "thermal oxidation stability",
+        "سوخت جت",
+        "رسوب",
+        "استاندارد مرتبط"
+      ],
+      "missing_concepts": [],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "The answer accurately and in detail explains what JFTOT is, how it works, and its role in jet fuel quality control, including relevant standards, without fabricating numerical specs. It is highly relevant, technically sound, and focused on the device and its application."
+    },
+    {
+      "id": "en-equipment-mercury",
+      "language": "en",
+      "domain": "mercury-analysis",
+      "deterministic": {
+        "web_expected": true,
+        "web_actual": true,
+        "web_ok": true,
+        "source_count": 0,
+        "search_mode": "no_exact_model_context+ignored_weak_internal_context+openai_web",
+        "answer_mode": "ai",
+        "answer_length": 6089,
+        "empty_answer": false
+      },
+      "judged": true,
+      "passed": true,
+      "overall": 88,
+      "scores": {
+        "groundedness": 5,
+        "citation_quality": 5,
+        "relevance": 4
+      },
+      "covered_concepts": [
+        "sample conditioning",
+        "natural gas",
+        "detection limit",
+        "sampling"
+      ],
+      "missing_concepts": [
+        "speciation"
+      ],
+      "constraint_violations": [],
+      "rubric_failed": [],
+      "hallucination": false,
+      "hallucination_note": "",
+      "rationale": "The answer is technically sound, describes appropriate online and offline mercury analyzer technologies for natural gas, and highlights sampling and conditioning issues with realistic detection-limit discussion. It does not address speciation and could be more concise and more directly focused on naming suitable analyzer types, but it stays within constraints and avoids fabricated specifics."
+    }
+  ]
+}

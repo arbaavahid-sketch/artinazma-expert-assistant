@@ -83,6 +83,8 @@ def post_chat(api_url: str, case: dict[str, Any], timeout: int) -> dict[str, Any
         "user_id": "quality_eval_runner",
         "response_mode": "auto",
     }
+    if "history" in case:
+        payload["history"] = case["history"]
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(
         url,
@@ -292,6 +294,12 @@ def _avg(values: list[float]) -> float | None:
 # ── Runner ────────────────────────────────────────────────────────────────────
 def run(args: argparse.Namespace) -> dict[str, Any]:
     cases = load_cases(Path(args.dataset))
+    if args.case_id:
+        wanted = set(args.case_id)
+        cases = [case for case in cases if case["id"] in wanted]
+        missing = sorted(wanted - {case["id"] for case in cases})
+        if missing:
+            raise ValueError(f"Unknown case id(s): {', '.join(missing)}")
     if args.limit:
         cases = cases[: args.limit]
 
@@ -445,6 +453,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--api-url", default="http://127.0.0.1:8000")
     p.add_argument("--timeout", type=int, default=120)
     p.add_argument("--limit", type=int, default=0, help="Only run first N cases")
+    p.add_argument(
+        "--case-id",
+        action="append",
+        default=[],
+        help="Run only the specified case id; may be passed multiple times",
+    )
     p.add_argument("--no-judge", action="store_true", help="Deterministic checks only")
     p.add_argument("--save-raw", default="", help="Cache backend answers to this JSON")
     p.add_argument("--replay", default="", help="Re-judge answers from a saved raw JSON")
