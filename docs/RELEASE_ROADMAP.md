@@ -117,4 +117,8 @@ Phase 1 is complete. Local env validation is ready; production values should be 
 - Qdrant: connected when backend is run with normal network access.
 - OpenAI chat: passing when backend is run with normal network access; sandboxed runs fall back locally because outbound sockets are blocked.
 - Public UI routes: home, customer login, admin login, assistant redirect, and offline page are reachable.
-- Needs manual confirmation: admin login with the current local password and a real customer login/session flow.
+- Knowledge stats: passing with Qdrant backend.
+- Questions analytics: passing.
+- Customer request flow: passing; latest smoke request was created and visible to admin API.
+- Technical chat smoke: passing with `answer_mode=ai`, local search context, and sources.
+- Needs manual confirmation: admin pages in the already logged-in browser session and a real customer login/session flow.
