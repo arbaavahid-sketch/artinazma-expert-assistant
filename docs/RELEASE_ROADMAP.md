@@ -17,6 +17,14 @@ This roadmap tracks the remaining work needed to move ArtinAzma Expert Assistant
 
 ## Phase 2 - Production Environment
 
+- [x] Add a safe env validator:
+  - local: `python scripts/check_release_env.py --mode local`
+  - production: `python scripts/check_release_env.py --mode production`
+- [x] Make local env explicit enough for final local QA:
+  - `CSRF_SECRET`
+  - `FRONTEND_ORIGINS`
+  - `ENVIRONMENT=development`
+  - `COOKIE_SECURE=false`
 - [ ] Set real production backend secrets:
   - `OPENAI_API_KEY`
   - `ADMIN_API_KEY`
@@ -41,6 +49,18 @@ This roadmap tracks the remaining work needed to move ArtinAzma Expert Assistant
   - SMTP
   - Qdrant
   - Push notifications
+
+Current local validator result:
+
+- Local check passes with 0 failures.
+- Root `.env` is still missing, but that is only a warning for local standalone dev and only needed for local Docker compose.
+
+Current production validator result:
+
+- Blocking: root `.env` is missing, so `POSTGRES_PASSWORD`, `DOMAIN`, `CERTBOT_EMAIL`, and `GRAFANA_PASSWORD` are not verified.
+- Blocking: `backend/.env` intentionally still uses local values for `FRONTEND_ORIGINS`, `ENVIRONMENT`, and `COOKIE_SECURE`.
+- Ready: backend OpenAI/admin/JWT keys are set, Qdrant is set, and frontend admin/customer session/API/WS values are set.
+- Optional warnings: Sentry, Telegram, backend push keys, and frontend VAPID public key are not set.
 
 ## Phase 3 - Docker Deployment Smoke
 
@@ -87,4 +107,14 @@ This roadmap tracks the remaining work needed to move ArtinAzma Expert Assistant
 
 ## Current Starting Point
 
-Phase 1 is complete. Continue with Phase 2: prepare and verify production environment variables.
+Phase 1 is complete. Local env validation is ready; production values should be filled only when moving from local final QA to deployment.
+
+## Local Smoke Status
+
+- Backend local server: starts on `http://127.0.0.1:8000`.
+- Frontend local server: starts on `http://127.0.0.1:3000`.
+- Backend health through direct API and frontend proxy: passing.
+- Qdrant: connected when backend is run with normal network access.
+- OpenAI chat: passing when backend is run with normal network access; sandboxed runs fall back locally because outbound sockets are blocked.
+- Public UI routes: home, customer login, admin login, assistant redirect, and offline page are reachable.
+- Needs manual confirmation: admin login with the current local password and a real customer login/session flow.
