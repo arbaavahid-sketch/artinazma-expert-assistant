@@ -2,7 +2,6 @@
 تست‌های knowledge base، سوالات و feedback.
 """
 
-import pytest
 import io
 
 

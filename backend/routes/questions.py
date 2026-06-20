@@ -1,8 +1,7 @@
 import logging
 from typing import Optional
 
-from repositories.admin_audit_repo import log_admin_action
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
 from schemas.models import QuestionReviewRequest, FeedbackRequest
@@ -161,7 +160,8 @@ def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
 @router.get("/admin/questions/export-csv")
 def export_questions_csv(_=Depends(require_admin)):
     """خروجی CSV از همه سوالات برای دانلود Excel."""
-    import csv, io
+    import csv
+    import io
     questions = get_all_questions(limit=5000)
     output = io.StringIO()
     writer = csv.writer(output)

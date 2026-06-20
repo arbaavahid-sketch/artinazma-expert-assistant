@@ -15,7 +15,7 @@ The table is created lazily on first write so no migration is required.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from repositories.base import get_connection
 

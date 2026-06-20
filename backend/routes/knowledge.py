@@ -18,7 +18,6 @@ from knowledge_service import (
     search_knowledge_base,
     get_knowledge_stats,
     delete_knowledge_file,
-    add_text_to_knowledge_base,
     reindex_knowledge_file,
 )
 from local_search_service import local_search_knowledge_base
@@ -346,7 +345,8 @@ def delete_backup(file_name: str, _=Depends(require_admin)):
 @router.get("/admin/knowledge/export-csv")
 def export_knowledge_csv(_=Depends(require_admin)):
     """خروجی CSV از فایل‌های بانک دانش برای دانلود Excel."""
-    import csv, io
+    import csv
+    import io
     stats = get_knowledge_stats()
     file_details = stats.get("file_details") or []
     output = io.StringIO()

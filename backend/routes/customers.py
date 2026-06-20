@@ -3,9 +3,8 @@ import re
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
-from typing import Optional
 
 from schemas.models import (
     CustomerRequestCreate,
@@ -18,7 +17,6 @@ from schemas.models import (
     CustomerSessionCreateRequest,
     CustomerSessionUpdateRequest,
     CustomerChatMessageCreateRequest,
-    CustomerNotifyRequest,
     PushSubscribeRequest,
     PushUnsubscribeRequest,
     MemorySearchRequest,
@@ -51,10 +49,7 @@ from db_service import (
     update_chat_session_title,
     delete_chat_session,
     delete_all_customer_chat_sessions,
-    get_all_customers,
-    get_customer_sessions,
     get_connection,
-    set_customer_blocked,
     save_customer_notification,
     get_customer_notifications,
     mark_notifications_read,
@@ -65,7 +60,6 @@ from db_service import (
     get_user_memory_stats,
 )
 from telegram_service import (
-    notify_important_customer_message,
     notify_new_customer,
     notify_new_request,
     notify_request_status_changed,
@@ -79,7 +73,6 @@ from auth_service import (
     clear_jwt_cookie,
 )
 from ws_ticket_service import create_ticket
-from push_service import send_push_to_customer, is_push_configured
 from security_middleware import login_tracker
 
 logger = logging.getLogger("artin_scheduler")

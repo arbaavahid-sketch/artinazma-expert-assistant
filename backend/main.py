@@ -2,7 +2,6 @@ import os
 import threading
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 from datetime import datetime as _dt, timezone
 
 from logging_config import setup_logging

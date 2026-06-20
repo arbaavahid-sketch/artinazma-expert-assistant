@@ -2,7 +2,6 @@
 تست‌های واحد (unit) برای repository layer — بدون HTTP، مستقیم با دیتابیس.
 """
 
-import pytest
 import random
 import os
 import sys

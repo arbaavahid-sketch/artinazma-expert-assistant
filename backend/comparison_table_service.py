@@ -1,5 +1,5 @@
 import re
-from typing import List, Tuple
+from typing import List
 
 KNOWN_METHODS = [
     "WDXRF",
@@ -271,7 +271,6 @@ def _wdxrf_edxrf_table() -> str:
 
 def build_comparison_table(message: str) -> str:
     options = detect_comparison_options(message)
-    normalized = _normalize(message)
 
     if "WDXRF" in options and "EDXRF" in options:
         return _wdxrf_edxrf_table()

@@ -2,7 +2,6 @@ import os
 import logging
 
 from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException
-from typing import Optional
 
 from utils.deps import limiter
 from utils.chat_utils import make_safe_filename, _MAX_UPLOAD_BYTES, _ALLOWED_FILE_EXTS, _ALLOWED_IMAGE_EXTS

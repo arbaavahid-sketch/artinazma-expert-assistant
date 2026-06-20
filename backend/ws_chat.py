@@ -12,14 +12,13 @@ from starlette.websockets import WebSocketState
 from ai_service import ask_expert_assistant_stream
 from intent_service import detect_question_intent
 from knowledge_service import search_knowledge_base
-from local_search_service import local_search_knowledge_base, build_local_answer
+from local_search_service import local_search_knowledge_base
 from site_resource_service import find_artinazma_resources
 from db_service import (
     save_expert_question,
     save_user_memory,
     detect_domain,
     save_chat_message,
-    get_chat_messages,
     get_customer_cross_session_context,
 )
 from auth_service import verify_access_token

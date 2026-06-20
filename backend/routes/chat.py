@@ -3,11 +3,11 @@ import json as _json_local
 import logging
 import time as _time
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 from schemas.models import ChatRequest, SuggestQuestionsRequest
-from utils.deps import limiter, require_admin
+from utils.deps import limiter
 from utils.chat_utils import (
     make_response_cache,
     _ASTM_KNOWN_STANDARDS,
@@ -299,7 +299,9 @@ def chat(body: ChatRequest, request: Request):
         )
         answer_mode = "ai"
     except Exception as e:
-        import traceback; traceback.print_exc()
+        import traceback
+
+        traceback.print_exc()
         logger.warning("AI answer failed, using local answer: %s %s", type(e).__name__, e)
         answer = build_local_answer(body.message, p["related_docs"])
         answer_mode = "local"

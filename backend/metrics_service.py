@@ -11,7 +11,7 @@ artin_cache_misses_total            Counter  — response-cache misses
 artin_knowledge_chunks_total        Gauge    — number of knowledge chunks in store
 """
 
-from prometheus_client import Counter, Histogram, Gauge, REGISTRY
+from prometheus_client import Counter, Histogram, Gauge
 import logging
 
 logger = logging.getLogger(__name__)

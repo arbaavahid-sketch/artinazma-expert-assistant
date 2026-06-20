@@ -105,7 +105,7 @@ function formatAnalysisUploadError(error: unknown, kind: "file" | "image", isEn:
 function AssistantPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t, locale, dir } = useI18n();
+  const { locale, dir } = useI18n();
   const isEn = locale === "en";
   const sessionIdParam = searchParams.get("session_id");
   const [message, setMessage] = useState("");
@@ -359,7 +359,7 @@ ${cleanAnswer}`,
         loadSavedChatSession(savedCustomer.id, sessionId);
       }
     }
-  }, [router, sessionIdParam]);
+  }, [loadSavedChatSession, router, sessionIdParam]);
 
   // Rate limit countdown timer
   useEffect(() => {

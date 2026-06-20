@@ -31,8 +31,8 @@ SECRET_CONTENT_RE = re.compile(
     r"-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----|"
     r'"type"\s*:\s*"service_account"|'
     r'"private_key"\s*:|'
-    r"OPENAI_API_KEY\s*=\s*sk-[A-Za-z0-9_-]+|"
-    r"ADMIN_API_KEY\s*=\s*(?!process\.env\b|os\.environ\b|change-me|test-|your-|example)[^\s#]+"
+    r"OPENAI_API_KEY\s*=\s*sk-(?!your-|test-|docker-smoke-placeholder\b)[A-Za-z0-9_-]+|"
+    r"ADMIN_API_KEY\s*=\s*(?!process\.env\b|os\.environ\b|change-me|test-|your-|example|docker-smoke-|<)[^\s#]+"
     r")",
     re.IGNORECASE,
 )

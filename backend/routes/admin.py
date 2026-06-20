@@ -8,7 +8,7 @@ from datetime import datetime as _dt
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from repositories.admin_audit_repo import log_admin_action, get_admin_audit_log, clear_admin_audit_log
+from repositories.admin_audit_repo import get_admin_audit_log, clear_admin_audit_log
 from fastapi.responses import Response
 
 from schemas.models import (
@@ -465,7 +465,8 @@ def admin_management_report(period: str = "month", month: str | None = None, _=D
 @router.get("/admin/report/export")
 def admin_export_report(period: str = "week", month: str | None = None, _=Depends(require_admin)):
     """CSV management report: requests, answer quality, feedback and follow-up items."""
-    import csv, io
+    import csv
+    import io
 
     report = _management_report_data(period=period, month=month)
     summary = report["summary"]

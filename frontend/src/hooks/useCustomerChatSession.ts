@@ -8,6 +8,7 @@
  * دقیقاً مطابق نسخه‌ی قبلی است و فقط بدنه‌ی توابع جابه‌جا شده است.
  */
 
+import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
 import { getSavedCustomer, makeSessionTitle } from "@/lib/customer";
@@ -111,7 +112,7 @@ export function useCustomerChatSession({
     }
   }
 
-  async function loadSavedChatSession(customerId: number, sessionId: number) {
+  const loadSavedChatSession = useCallback(async (customerId: number, sessionId: number) => {
     setLoadingSavedSession(true);
 
     try {
@@ -151,7 +152,7 @@ export function useCustomerChatSession({
     } finally {
       setLoadingSavedSession(false);
     }
-  }
+  }, [setActiveSessionId, setLoadingSavedSession, setMessages]);
 
   return {
     createCustomerChatSession,

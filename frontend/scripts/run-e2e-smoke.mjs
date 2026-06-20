@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 const port = process.env.PLAYWRIGHT_PORT || "3002";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${port}`;
 const isWindows = process.platform === "win32";
+const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_SERVER === "1";
 
 function spawnCommand(commandLine, options) {
   if (isWindows) {
@@ -59,7 +60,7 @@ function killProcessTree(child) {
   child.kill("SIGTERM");
 }
 
-const serverAlreadyRunning = await isServerUp(baseURL);
+const serverAlreadyRunning = reuseExistingServer && await isServerUp(baseURL);
 const server = serverAlreadyRunning
   ? null
   : spawnCommand(

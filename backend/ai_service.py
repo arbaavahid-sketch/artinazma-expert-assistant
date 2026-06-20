@@ -213,7 +213,7 @@ def _chat_via_requests(messages: list, model: str, temperature: float) -> str:
             last_err = e
             logger.warning(f"[OPENAI] attempt {attempt+1} failed: {e} — retrying…")
             time.sleep(1.5 * (attempt + 1))
-        except Exception as e:
+        except Exception:
             raise
 
     raise last_err

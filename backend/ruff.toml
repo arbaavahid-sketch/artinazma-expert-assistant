@@ -1,0 +1,5 @@
+[lint.per-file-ignores]
+"ai_service.py" = ["E402"]
+"db_service.py" = ["E402", "F401", "F811"]
+"main.py" = ["E402"]
+"migrate_to_qdrant.py" = ["E402"]

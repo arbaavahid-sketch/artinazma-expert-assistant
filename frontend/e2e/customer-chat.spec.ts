@@ -111,10 +111,12 @@ test("customer can log in and receive a chat answer", async ({ page }) => {
   const composer = page.getByPlaceholder(/Ask Artin|از آرتین بپرسید/i).first();
   await composer.fill("What causes GC baseline noise?");
   await expect(composer).toHaveValue("What causes GC baseline noise?");
+  const sendButton = page.getByRole("button", { name: /Send message|ارسال پیام/i }).first();
+  await expect(sendButton).toBeEnabled();
   const chatResponse = page.waitForResponse((response) => (
     response.url().includes("/chat/stream") && response.request().method() === "POST"
   ));
-  await page.getByRole("button", { name: /ارسال|↑/ }).last().click();
+  await sendButton.click();
   const response = await chatResponse;
   expect(response.status()).toBe(200);
 

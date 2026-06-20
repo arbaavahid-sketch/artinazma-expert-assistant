@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from "react";
 
 type Theme = "light" | "dark";
 type ThemePref = "light" | "dark" | "system";
@@ -60,14 +60,14 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   const prefRef = useRef<ThemePref>("system");
 
   // Apply a preference: resolve it, sync state + DOM, and optionally persist.
-  const applyPref = (p: ThemePref, persist: boolean) => {
+  const applyPref = useCallback((p: ThemePref, persist: boolean) => {
     const resolved = resolvePref(p);
     prefRef.current = p;
     setPrefState(p);
     setThemeState(resolved);
     applyTheme(resolved);
     if (persist) localStorage.setItem("artin_theme", p);
-  };
+  }, []);
 
   useEffect(() => {
     // Resolution order: explicit choice (artin_theme) → legacy key
@@ -95,8 +95,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
     };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [applyPref]);
 
   const setPref = (p: ThemePref) => applyPref(p, true);
   const cycleTheme = () =>

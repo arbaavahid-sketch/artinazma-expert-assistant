@@ -88,7 +88,6 @@ export default function ProductsPage() {
                 >
                   <div className="mb-3 flex h-32 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800">
                     {image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={image}
                         alt={product.title}

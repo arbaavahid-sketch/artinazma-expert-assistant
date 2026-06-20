@@ -4,11 +4,11 @@ import re
 import time
 from typing import Dict, List, Optional
 from urllib.parse import urljoin, urlparse
-from artinazma_index_service import search_artinazma_index, rebuild_artinazma_index
+from artinazma_index_service import search_artinazma_index
 import requests
 from bs4 import BeautifulSoup
 
-from artinazma_index_service import search_artinazma_index, load_index
+from artinazma_index_service import load_index
 
 logger = logging.getLogger("site_resource_service")
 
