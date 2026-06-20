@@ -6,14 +6,14 @@
 # Environment variables (all have defaults for docker-compose):
 #   DATABASE_URL   - PostgreSQL connection string
 #   QDRANT_URL     - Qdrant base URL (default: http://qdrant:6333)
-#   QDRANT_COLLECTION - Qdrant collection name (default: knowledge)
+#   QDRANT_COLLECTION - Qdrant collection name (default: artinazma_knowledge)
 #   BACKUP_DIR     - Where to store backups (default: /backups)
 #   KEEP_DAYS      - Days of backups to retain (default: 7)
 
 set -e
 
 QDRANT_URL="${QDRANT_URL:-http://qdrant:6333}"
-QDRANT_COLLECTION="${QDRANT_COLLECTION:-knowledge}"
+QDRANT_COLLECTION="${QDRANT_COLLECTION:-artinazma_knowledge}"
 BACKUP_DIR="${BACKUP_DIR:-/backups}"
 KEEP_DAYS="${KEEP_DAYS:-7}"
 TIMESTAMP="$(date -u +%Y%m%d_%H%M%S)"

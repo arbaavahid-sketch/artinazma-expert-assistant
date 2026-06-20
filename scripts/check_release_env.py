@@ -46,6 +46,10 @@ RULES = [
     EnvRule("root", "DOMAIN", forbid_values=("localhost", "127.0.0.1", "yourdomain.com"), pattern=r"^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"),
     EnvRule("root", "CERTBOT_EMAIL", pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$"),
     EnvRule("root", "GRAFANA_PASSWORD", min_length=16),
+    EnvRule("root", "ADMIN_API_KEY", min_length=32),
+    EnvRule("root", "ADMIN_PASSWORD", min_length=16),
+    EnvRule("root", "ADMIN_SESSION_TOKEN", min_length=32),
+    EnvRule("root", "CUSTOMER_SESSION_SECRET", min_length=32),
     # backend env
     EnvRule("backend", "OPENAI_API_KEY", min_length=20, pattern=r"^(sk-|sk-proj-)"),
     EnvRule("backend", "ADMIN_API_KEY", min_length=32),
@@ -77,6 +81,10 @@ LOCAL_RULES = [
     EnvRule("root", "DOMAIN", required=False, note="only required for local Docker compose"),
     EnvRule("root", "CERTBOT_EMAIL", required=False, note="only required for local Docker compose"),
     EnvRule("root", "GRAFANA_PASSWORD", required=False, min_length=8, note="only required for local Docker compose"),
+    EnvRule("root", "ADMIN_API_KEY", required=False, min_length=8, note="only required for local Docker compose"),
+    EnvRule("root", "ADMIN_PASSWORD", required=False, min_length=8, note="only required for local Docker compose"),
+    EnvRule("root", "ADMIN_SESSION_TOKEN", required=False, min_length=16, note="only required for local Docker compose"),
+    EnvRule("root", "CUSTOMER_SESSION_SECRET", required=False, min_length=16, note="only required for local Docker compose"),
     # backend local env
     EnvRule("backend", "OPENAI_API_KEY", required=False, min_length=1, note="required only for real AI calls; tests can use offline mode"),
     EnvRule("backend", "ADMIN_API_KEY", min_length=8),
@@ -180,6 +188,16 @@ def main() -> int:
             failures.append(f"{rule.file_key}.{message}")
         elif status == "warn":
             warnings.append(f"{rule.file_key}.{message}")
+
+    if args.mode == "production":
+        root_admin = envs["root"].get("ADMIN_API_KEY", "")
+        backend_admin = envs["backend"].get("ADMIN_API_KEY", "")
+        if root_admin and backend_admin:
+            if root_admin == backend_admin:
+                print("[OK] root.ADMIN_API_KEY matches backend.ADMIN_API_KEY")
+            else:
+                print("[FAIL] root.ADMIN_API_KEY must match backend.ADMIN_API_KEY")
+                failures.append("root.ADMIN_API_KEY must match backend.ADMIN_API_KEY")
 
     print()
     print(f"Summary: {len(failures)} failure(s), {len(warnings)} warning(s)")

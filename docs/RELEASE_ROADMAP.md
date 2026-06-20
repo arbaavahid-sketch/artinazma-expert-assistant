@@ -71,6 +71,21 @@ Current production validator result:
 - [ ] Verify `/api/*`, WebSocket, and SSE routes through nginx.
 - [ ] Issue or test TLS certificates with certbot.
 
+Current Docker/deployment prep status:
+
+- Docker CLI is not installed on this local Windows machine, so `docker compose config` must be run on the VPS or a Docker-enabled host.
+- Docker compose frontend runtime env has been prepared for Next.js server routes:
+  - `BACKEND_INTERNAL_URL`
+  - `ADMIN_API_KEY`
+  - `ADMIN_PASSWORD`
+  - `ADMIN_SESSION_TOKEN`
+  - `CUSTOMER_SESSION_SECRET`
+  - `NEXT_PUBLIC_WS_BASE_URL`
+  - optional `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+- Root `.env.example` now documents the compose-level frontend/admin/customer secrets.
+- Production env validator now checks root compose secrets and verifies root `ADMIN_API_KEY` matches `backend/.env`.
+- Backup Qdrant collection is aligned to the app default: `artinazma_knowledge`.
+
 ## Phase 4 - Backup And Restore
 
 - [ ] Run a manual backup.
