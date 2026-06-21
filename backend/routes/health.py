@@ -171,7 +171,15 @@ def admin_deep_health(check_external: bool = False, _=Depends(require_admin)):
     import qdrant_service as _qs
     if _qs.is_enabled():
         try:
-            checks["qdrant"] = _service_check(True, "connected", enabled=True, **_qs.collection_stats())
+            qdrant_stats = _qs.collection_stats()
+            qdrant_backend_status = qdrant_stats.pop("status", "")
+            checks["qdrant"] = _service_check(
+                True,
+                "connected",
+                enabled=True,
+                qdrant_status=qdrant_backend_status,
+                **qdrant_stats,
+            )
         except Exception as exc:
             checks["qdrant"] = _service_check(False, "failed", enabled=True, error=str(exc))
     else:
