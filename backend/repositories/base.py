@@ -158,6 +158,7 @@ class _DBConnection:
         self._backend = backend
         self._last_rowcount: int = 0
         self._pool = pool  # psycopg2 pool to return connection to on close
+        self._closed = False
 
     def cursor(self) -> _DBCursor:
         return _DBCursor(self._raw.cursor(), self._backend, self)
@@ -174,15 +175,33 @@ class _DBConnection:
         self._raw.rollback()
 
     def close(self):
+        """Close once and always return PostgreSQL connections to the pool."""
+        if self._closed:
+            return
+
+        self._closed = True
+        raw = self._raw
+        self._raw = None
+
+        if raw is None:
+            return
+
         if self._pool is not None:
             try:
-                self._raw.rollback()
+                raw.rollback()
             except Exception:
                 pass
-            # Return connection to the pool instead of closing it
-            self._pool.putconn(self._raw)
+
+            self._pool.putconn(raw)
         else:
-            self._raw.close()
+            raw.close()
+
+    def __del__(self):
+        """Safety net for callers that fail before explicitly closing."""
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def __enter__(self):
         return self

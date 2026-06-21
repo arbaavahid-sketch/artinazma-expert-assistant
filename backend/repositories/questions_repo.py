@@ -131,90 +131,130 @@ def get_question_stats() -> Dict[str, Any]:
 
 
 def get_question_analytics(days: int = 7) -> Dict[str, Any]:
-    """Return daily counts, top keywords, feedback and hourly activity for the admin dashboard."""
+    """Return backend-agnostic analytics for the admin dashboard."""
+
+    days = max(1, min(int(days), 3650))
+    cutoff = (
+        datetime.now(timezone.utc).replace(tzinfo=None)
+        - timedelta(days=days)
+    ).isoformat(timespec="seconds")
+
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        recent_rows = conn.execute(
+            """
+            SELECT question, created_at
+            FROM expert_questions
+            WHERE created_at >= ?
+            ORDER BY id DESC
+            """,
+            (cutoff,),
+        ).fetchall()
 
-    # Daily counts for the last N days
-    cursor.execute(
-        """
-        SELECT DATE(created_at) AS day, COUNT(*) AS count
-        FROM expert_questions
-        WHERE created_at >= DATE('now', ?)
-        GROUP BY day
-        ORDER BY day ASC
-        """,
-        (f"-{days} days",),
-    )
-    daily_rows = cursor.fetchall()
+        # Only the most recent 200 questions are needed for keyword analysis.
+        question_rows = recent_rows[:200]
 
-    # Keyword frequency from recent questions
-    cursor.execute(
-        """
-        SELECT question FROM expert_questions
-        WHERE created_at >= DATE('now', ?)
-        ORDER BY id DESC
-        LIMIT 200
-        """,
-        (f"-{days} days",),
-    )
-    question_rows = cursor.fetchall()
+        feedback_rows = conn.execute(
+            """
+            SELECT expert_status, COUNT(*) AS count
+            FROM expert_questions
+            WHERE expert_status IS NOT NULL
+            GROUP BY expert_status
+            """
+        ).fetchall()
+
+        created_rows = conn.execute(
+            """
+            SELECT created_at
+            FROM expert_questions
+            WHERE created_at IS NOT NULL
+            """
+        ).fetchall()
+    finally:
+        conn.close()
 
     stopwords = {
         "و", "در", "به", "از", "که", "این", "را", "با", "است", "یا",
         "برای", "می", "هم", "آیا", "چه", "چطور", "چگونه", "کدام",
         "the", "a", "an", "of", "in", "is", "for", "how", "what",
     }
+
     word_freq: Dict[str, int] = {}
     for row in question_rows:
-        words = re.findall(r"[؀-ۿ]{3,}|[a-zA-Z]{4,}", row["question"] or "")
-        for w in words:
-            w_lower = w.lower()
-            if w_lower not in stopwords:
-                word_freq[w_lower] = word_freq.get(w_lower, 0) + 1
-    top_keywords = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:12]
+        words = re.findall(
+            r"[؀-ۿ]{3,}|[a-zA-Z]{4,}",
+            row["question"] or "",
+        )
+        for word in words:
+            word_lower = word.lower()
+            if word_lower not in stopwords:
+                word_freq[word_lower] = word_freq.get(word_lower, 0) + 1
 
-    # Feedback stats
-    cursor.execute(
-        """
-        SELECT expert_status, COUNT(*) AS count
-        FROM expert_questions
-        WHERE expert_status IS NOT NULL
-        GROUP BY expert_status
-        """
-    )
-    feedback_rows = cursor.fetchall()
+    top_keywords = sorted(
+        word_freq.items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )[:12]
 
-    # Hourly activity heatmap
-    cursor.execute(
-        """
-        SELECT CAST(strftime('%H', created_at) AS INTEGER) AS hour, COUNT(*) AS count
-        FROM expert_questions
-        GROUP BY hour
-        ORDER BY hour
-        """
-    )
-    hour_rows = cursor.fetchall()
+    day_map: Dict[str, int] = {}
 
-    conn.close()
+    for row in recent_rows:
+        value = row["created_at"]
 
-    # Fill missing days with 0
-    day_map: Dict[str, int] = {row["day"]: row["count"] for row in daily_rows}
+        try:
+            if isinstance(value, datetime):
+                created_at = value
+            else:
+                created_at = datetime.fromisoformat(
+                    str(value).replace("Z", "+00:00")
+                )
+
+            day_key = created_at.date().isoformat()
+            day_map[day_key] = day_map.get(day_key, 0) + 1
+        except (TypeError, ValueError):
+            continue
+
     filled_days = []
-    for i in range(days - 1, -1, -1):
-        d = (date.today() - timedelta(days=i)).isoformat()
-        filled_days.append({"day": d, "count": day_map.get(d, 0)})
+    for offset in range(days - 1, -1, -1):
+        day_key = (date.today() - timedelta(days=offset)).isoformat()
+        filled_days.append({
+            "day": day_key,
+            "count": day_map.get(day_key, 0),
+        })
+
+    hourly_counts = {hour: 0 for hour in range(24)}
+
+    for row in created_rows:
+        value = row["created_at"]
+
+        try:
+            if isinstance(value, datetime):
+                hour = value.hour
+            else:
+                hour = datetime.fromisoformat(
+                    str(value).replace("Z", "+00:00")
+                ).hour
+
+            hourly_counts[hour] += 1
+        except (TypeError, ValueError):
+            continue
 
     return {
         "daily": filled_days,
-        "top_keywords": [{"word": w, "count": c} for w, c in top_keywords],
+        "top_keywords": [
+            {"word": word, "count": count}
+            for word, count in top_keywords
+        ],
         "feedback": [
-            {"status": row["expert_status"], "count": row["count"]}
+            {
+                "status": row["expert_status"],
+                "count": row["count"],
+            }
             for row in feedback_rows
         ],
         "hourly": [
-            {"hour": row["hour"], "count": row["count"]}
-            for row in hour_rows
+            {"hour": hour, "count": hourly_counts[hour]}
+            for hour in range(24)
         ],
     }
 
