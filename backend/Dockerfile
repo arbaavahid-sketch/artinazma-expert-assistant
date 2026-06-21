@@ -1,7 +1,7 @@
 # ایمیج پایه از آینه‌ی ایرانی آروان (چون Docker Hub در ایران فیلتر است و
 # build لیارا با موقعیت ایران انجام می‌شود). در صورت استقرار خارج از ایران،
 # می‌توان دوباره به python:3.12-slim برگرداند.
-FROM docker-mirror.liara.ir/python:3.12-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -13,10 +13,7 @@ WORKDIR /app
 # از آینه‌ی pip ایرانی استفاده می‌کنیم چون build روی موقعیت ایران به PyPI خارجی
 # دسترسی ندارد. اگر این آینه در دسترس نبود، می‌توان آن را با آینه‌ی دیگری عوض کرد.
 COPY requirements.txt .
-RUN pip install --no-cache-dir \
-    -i https://package-mirror.liara.ir/repository/pypi/simple \
-    --trusted-host package-mirror.liara.ir \
-    -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .

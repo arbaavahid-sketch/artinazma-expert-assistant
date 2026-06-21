@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
 import {
@@ -21,7 +20,6 @@ import {
 } from "lucide-react";
 
 export default function CustomerLoginPage() {
-  const router = useRouter();
   const { locale, dir } = useI18n();
   const isEn = locale === "en";
   const iconSide = isEn ? "left-4" : "right-4";
@@ -65,10 +63,17 @@ export default function CustomerLoginPage() {
       }
 
       const params = new URLSearchParams(window.location.search);
-      const nextPath = params.get("next") || "/assistant";
+      const requestedPath = params.get("next");
+      const nextPath =
+        requestedPath &&
+        requestedPath.startsWith("/") &&
+        !requestedPath.startsWith("//")
+          ? requestedPath
+          : "/assistant";
 
-      router.replace(nextPath);
-      router.refresh();
+      // Full navigation ensures the newly created auth cookies are
+      // available to the Next.js route protection immediately.
+      window.location.assign(nextPath);
     } catch {
       setMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {

@@ -4,7 +4,7 @@ from alembic import op
 
 
 revision = "0005_customer_request_updates"
-down_revision = "0004_customer_request_followup_fields"
+down_revision = "0004_request_followup"
 branch_labels = None
 depends_on = None
 
