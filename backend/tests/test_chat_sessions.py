@@ -8,7 +8,7 @@ import random
 
 def _make_customer_via_repo(email: str | None = None) -> dict:
     """ایجاد مشتری مستقیماً از طریق repository — بدون HTTP و rate limit."""
-    from repositories.customer_repo import create_customer
+    from repositories.customer_repo import create_customer, set_customer_approval_status
     from auth_service import create_access_token
 
     email = email or f"sess_{random.randint(10000, 99999)}@example.com"
@@ -18,6 +18,7 @@ def _make_customer_via_repo(email: str | None = None) -> dict:
         password="session123456",
         company="شرکت تست",
     )
+    set_customer_approval_status(customer["customer_id"], "approved")
     token = create_access_token(customer_id=customer["customer_id"], email=email)
     return {
         "token": token,

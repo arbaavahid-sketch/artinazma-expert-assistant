@@ -35,6 +35,7 @@ type Customer = {
   message_count: number;
   last_active?: string | null;
   is_blocked?: boolean;
+  approval_status?: "pending" | "approved" | "rejected";
   last_message_preview?: string | null;
 };
 
@@ -121,6 +122,7 @@ function AdminCustomersContent() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [blockingId, setBlockingId] = useState<number | null>(null);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
   const [notifyModal, setNotifyModal] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyStatus, setNotifyStatus] = useState<{ text: string; ok: boolean } | null>(null);
@@ -204,6 +206,28 @@ function AdminCustomersContent() {
       }
     } catch {}
     setBlockingId(null);
+  }
+
+  async function setApproval(customer: Customer, status: "approved" | "rejected") {
+    setApprovingId(customer.id);
+    const action = status === "approved" ? "approve" : "reject";
+    try {
+      const res = await fetch(adminUrl(`/admin/customers/${customer.id}/${action}`), {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.id === customer.id ? { ...c, approval_status: status } : c,
+          ),
+        );
+        if (selected?.id === customer.id) {
+          setSelected({ ...selected, approval_status: status });
+        }
+      }
+    } catch {}
+    setApprovingId(null);
   }
 
   useEffect(() => {
@@ -372,6 +396,16 @@ function AdminCustomersContent() {
                               بلاک
                             </span>
                           )}
+                          {(c.approval_status || "approved") === "pending" && (
+                            <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                              در انتظار تأیید
+                            </span>
+                          )}
+                          {c.approval_status === "rejected" && (
+                            <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-black text-slate-600">
+                              رد شده
+                            </span>
+                          )}
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                           <Mail size={12} />
@@ -487,6 +521,25 @@ function AdminCustomersContent() {
                       </div>
                       <div className="mt-1 text-sm font-bold text-slate-900">
                         {formatDate(selected.created_at)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                    <ShieldCheck
+                      className="mt-0.5 shrink-0 text-blue-700"
+                      size={16}
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-500">
+                        وضعیت دسترسی
+                      </div>
+                      <div className="mt-1 text-sm font-bold text-slate-900">
+                        {(selected.approval_status || "approved") === "pending"
+                          ? "در انتظار تأیید ادمین"
+                          : selected.approval_status === "rejected"
+                            ? "رد شده"
+                            : "تأیید شده"}
                       </div>
                     </div>
                   </div>
@@ -700,10 +753,32 @@ function AdminCustomersContent() {
                     اعلان داخل اپ
                   </button>
 
+                  {(selected.approval_status || "approved") !== "approved" && (
+                    <button
+                      onClick={() => setApproval(selected, "approved")}
+                      disabled={approvingId === selected.id}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                    >
+                      <ShieldCheck size={15} />
+                      {approvingId === selected.id ? "..." : "تأیید ورود"}
+                    </button>
+                  )}
+
+                  {selected.approval_status !== "rejected" && (
+                    <button
+                      onClick={() => setApproval(selected, "rejected")}
+                      disabled={approvingId === selected.id}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                    >
+                      <ShieldOff size={15} />
+                      {approvingId === selected.id ? "..." : "رد دسترسی"}
+                    </button>
+                  )}
+
                   <button
                     onClick={() => toggleBlock(selected)}
                     disabled={blockingId === selected.id}
-                    className={`col-span-2 inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition disabled:opacity-50 ${
+                    className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition disabled:opacity-50 ${
                       selected.is_blocked
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
                         : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"

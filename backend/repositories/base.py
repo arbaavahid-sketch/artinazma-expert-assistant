@@ -168,6 +168,10 @@ class _DBConnection:
 
     def close(self):
         if self._pool is not None:
+            try:
+                self._raw.rollback()
+            except Exception:
+                pass
             # Return connection to the pool instead of closing it
             self._pool.putconn(self._raw)
         else:

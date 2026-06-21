@@ -33,6 +33,7 @@ from db_service import (
     get_all_customers,
     get_customer_sessions,
     set_customer_blocked,
+    set_customer_approval_status,
     save_customer_notification,
     get_customer_by_id,
 )
@@ -894,6 +895,20 @@ def admin_block_customer(customer_id: int, request: Request, _=Depends(require_a
 def admin_unblock_customer(customer_id: int, request: Request, _=Depends(require_admin)):
     """فعال‌سازی مجدد حساب مشتری."""
     ok = set_customer_blocked(customer_id, False)
+    return {"success": ok}
+
+
+@router.post("/admin/customers/{customer_id}/approve")
+def admin_approve_customer(customer_id: int, request: Request, _=Depends(require_admin)):
+    """تأیید حساب مشتری برای امکان ورود."""
+    ok = set_customer_approval_status(customer_id, "approved")
+    return {"success": ok}
+
+
+@router.post("/admin/customers/{customer_id}/reject")
+def admin_reject_customer(customer_id: int, request: Request, _=Depends(require_admin)):
+    """رد کردن حساب مشتری و جلوگیری از ورود."""
+    ok = set_customer_approval_status(customer_id, "rejected")
     return {"success": ok}
 
 

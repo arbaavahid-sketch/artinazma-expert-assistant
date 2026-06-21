@@ -27,8 +27,8 @@ def create_customer(
         cursor.execute(
             """
             INSERT INTO customers
-            (full_name, email, password_hash, company, phone, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (full_name, email, password_hash, company, phone, created_at, approval_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 full_name,
@@ -37,6 +37,7 @@ def create_customer(
                 company,
                 phone,
                 datetime.now().isoformat(timespec="seconds"),
+                "pending",
             ),
         )
 
@@ -58,7 +59,7 @@ def authenticate_customer(email: str, password: str) -> Dict[str, Any] | None:
 
     cursor.execute(
         """
-        SELECT id, full_name, email, password_hash, company, phone, created_at, is_blocked
+        SELECT id, full_name, email, password_hash, company, phone, created_at, is_blocked, approval_status
         FROM customers
         WHERE email = ?
         """,
@@ -77,6 +78,10 @@ def authenticate_customer(email: str, password: str) -> Dict[str, Any] | None:
     if row["is_blocked"]:
         return {"blocked": True}
 
+    approval_status = row["approval_status"] or "approved"
+    if approval_status != "approved":
+        return {"approval_status": approval_status}
+
     return {
         "id": row["id"],
         "full_name": row["full_name"],
@@ -84,6 +89,7 @@ def authenticate_customer(email: str, password: str) -> Dict[str, Any] | None:
         "company": row["company"] or "",
         "phone": row["phone"] or "",
         "created_at": row["created_at"],
+        "approval_status": approval_status,
     }
 
 
@@ -93,7 +99,7 @@ def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
 
     cursor.execute(
         """
-        SELECT id, full_name, email, company, phone, created_at
+        SELECT id, full_name, email, company, phone, created_at, is_blocked, approval_status
         FROM customers
         WHERE id = ?
         """,
@@ -113,6 +119,8 @@ def get_customer_by_id(customer_id: int) -> Dict[str, Any] | None:
         "company": row["company"] or "",
         "phone": row["phone"] or "",
         "created_at": row["created_at"],
+        "is_blocked": bool(row["is_blocked"]) if "is_blocked" in row.keys() else False,
+        "approval_status": row["approval_status"] or "approved",
     }
 
 
@@ -126,7 +134,7 @@ def get_customer_by_contact(email: str = "", phone: str = "") -> Dict[str, Any] 
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT id, full_name, email, company, phone, created_at
+        SELECT id, full_name, email, company, phone, created_at, is_blocked, approval_status
         FROM customers
         WHERE (lower(email) = ? AND ? <> '')
            OR (phone = ? AND ? <> '')
@@ -148,6 +156,8 @@ def get_customer_by_contact(email: str = "", phone: str = "") -> Dict[str, Any] 
         "company": row["company"] or "",
         "phone": row["phone"] or "",
         "created_at": row["created_at"],
+        "is_blocked": bool(row["is_blocked"]) if "is_blocked" in row.keys() else False,
+        "approval_status": row["approval_status"] or "approved",
     }
 
 
@@ -165,6 +175,7 @@ def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]
             c.phone,
             c.created_at,
             c.is_blocked,
+            c.approval_status,
             COUNT(DISTINCT cs.id) AS session_count,
             COUNT(cm.id) AS message_count,
             MAX(cm.created_at) AS last_active,
@@ -202,6 +213,7 @@ def get_all_customers(limit: int = 200, offset: int = 0) -> List[Dict[str, Any]]
                 "message_count": r["message_count"],
                 "last_active": r["last_active"] or None,
                 "is_blocked": bool(r["is_blocked"]) if "is_blocked" in r.keys() else False,
+                "approval_status": r["approval_status"] or "approved",
                 "last_message_preview": (r["last_message"][:100] + "…" if r["last_message"] and len(r["last_message"]) > 100 else r["last_message"]) if r["last_message"] else None,
             }
             for r in rows
@@ -258,6 +270,23 @@ def set_customer_blocked(customer_id: int, blocked: bool) -> bool:
         cur = conn.execute(
             "UPDATE customers SET is_blocked = ? WHERE id = ?",
             (1 if blocked else 0, customer_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def set_customer_approval_status(customer_id: int, status: str) -> bool:
+    """Set whether a customer can log in: pending, approved, or rejected."""
+    if status not in {"pending", "approved", "rejected"}:
+        return False
+
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE customers SET approval_status = ? WHERE id = ?",
+            (status, customer_id),
         )
         conn.commit()
         return cur.rowcount > 0

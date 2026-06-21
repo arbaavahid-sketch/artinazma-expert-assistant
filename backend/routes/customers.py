@@ -289,16 +289,12 @@ def customer_register(body: CustomerRegisterRequest, request: Request):
         email=body.email,
         company=body.company or "",
     )
-    token = create_access_token(customer_id=result["customer_id"], email=body.email)
-
     response = JSONResponse({
         "success": True,
-        "message": "Registration successful.",
+        "message": "Registration submitted. Your account will be available after admin approval.",
         "customer": customer,
-        "access_token": token,
-        "token_type": "bearer",
+        "requires_approval": True,
     })
-    set_jwt_cookie(response, token)
     return response
 
 
@@ -323,6 +319,14 @@ def customer_login(body: CustomerLoginRequest, request: Request):
 
     if customer.get("blocked"):
         return {"success": False, "message": "Account is blocked. Please contact support."}
+
+    approval_status = customer.get("approval_status", "approved")
+    if approval_status != "approved":
+        return {
+            "success": False,
+            "message": "Your account is waiting for admin approval.",
+            "approval_status": approval_status,
+        }
 
     login_tracker.record_success(ip)
     token = create_access_token(customer_id=customer["id"], email=customer["email"])

@@ -245,15 +245,18 @@ class TestCustomerAuth:
         assert res.status_code == 200
         data = res.json()
         assert data["success"] is True
-        assert "access_token" in data
-        assert data["token_type"] == "bearer"
+        assert data["requires_approval"] is True
+        assert "access_token" not in data
         assert data["customer"]["email"] == email
 
     def test_login_customer(self, app_client, test_db):
-        from repositories.customer_repo import create_customer
-        create_customer(full_name="تست لاگین", email="login@example.com", password="login123456")
+        import random
+        from repositories.customer_repo import create_customer, set_customer_approval_status
+        email = f"login_{random.randint(10000, 99999)}@example.com"
+        created = create_customer(full_name="تست لاگین", email=email, password="login123456")
+        set_customer_approval_status(created["customer_id"], "approved")
         res = app_client.post("/customers/login", json={
-            "email": "login@example.com",
+            "email": email,
             "password": "login123456",
         })
         assert res.status_code == 200
@@ -279,11 +282,12 @@ class TestCustomerAuth:
     def test_profile_with_valid_token(self, app_client, test_db):
         """دسترسی به پروفایل با توکن معتبر."""
         import random
-        from repositories.customer_repo import create_customer
+        from repositories.customer_repo import create_customer, set_customer_approval_status
         from auth_service import create_access_token
 
         email = f"profile_{random.randint(10000,99999)}@example.com"
         cust = create_customer(full_name="پروفایل تست", email=email, password="profile123")
+        set_customer_approval_status(cust["customer_id"], "approved")
         token = create_access_token(customer_id=cust["customer_id"], email=email)
 
         res = app_client.get(
@@ -296,7 +300,7 @@ class TestCustomerAuth:
     def test_profile_access_other_customer(self, app_client, test_db):
         """مشتری A نباید بتواند به پروفایل مشتری B دسترسی داشته باشد."""
         import random
-        from repositories.customer_repo import create_customer
+        from repositories.customer_repo import create_customer, set_customer_approval_status
         from auth_service import create_access_token
 
         suffix = random.randint(10000, 99999)
@@ -312,6 +316,8 @@ class TestCustomerAuth:
             email=email_b,
             password="pass123456",
         )
+        set_customer_approval_status(cust_a["customer_id"], "approved")
+        set_customer_approval_status(cust_b["customer_id"], "approved")
         token_a = create_access_token(customer_id=cust_a["customer_id"], email=email_a)
 
         # A tries to access B's profile
@@ -536,7 +542,16 @@ class TestCustomerRequest:
         assert register_res.status_code == 200
         data = register_res.json()
         customer_id = data["customer"]["id"]
-        token = data["access_token"]
+        approve_res = app_client.post(
+            f"/admin/customers/{customer_id}/approve",
+            headers={"X-Admin-Key": "test-admin-key-12345"},
+        )
+        assert approve_res.status_code == 200
+        login_res = app_client.post("/customers/login", json={
+            "email": email,
+            "password": "StrongPass123",
+        })
+        token = login_res.json()["access_token"]
 
         request_res = app_client.post("/customer-requests", json={
             "full_name": "Request History Customer",
@@ -603,7 +618,16 @@ class TestCustomerRequest:
         assert register_res.status_code == 200
         data = register_res.json()
         customer_id = data["customer"]["id"]
-        token = data["access_token"]
+        approve_res = app_client.post(
+            f"/admin/customers/{customer_id}/approve",
+            headers=admin_headers,
+        )
+        assert approve_res.status_code == 200
+        login_res = app_client.post("/customers/login", json={
+            "email": email,
+            "password": "StrongPass123",
+        })
+        token = login_res.json()["access_token"]
 
         request_res = app_client.post("/customer-requests", json={
             "full_name": "Status Notify Customer",

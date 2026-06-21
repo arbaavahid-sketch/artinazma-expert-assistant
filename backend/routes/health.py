@@ -32,14 +32,17 @@ def health_check():
     status = {"ok": True, "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), "checks": {}}
 
     # DB check
+    conn = None
     try:
         conn = get_connection()
         conn.execute("SELECT 1").fetchone()
-        conn.close()
         status["checks"]["database"] = {"ok": True}
     except Exception as e:
         status["checks"]["database"] = {"ok": False, "error": str(e)}
         status["ok"] = False
+    finally:
+        if conn is not None:
+            conn.close()
 
     # OpenAI key check
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
@@ -136,13 +139,16 @@ def admin_deep_health(check_external: bool = False, _=Depends(require_admin)):
     started = time.monotonic()
     checks = {}
 
+    conn = None
     try:
         conn = get_connection()
         conn.execute("SELECT 1").fetchone()
-        conn.close()
         checks["database"] = _service_check(True, "connected")
     except Exception as exc:
         checks["database"] = _service_check(False, "failed", error=str(exc))
+    finally:
+        if conn is not None:
+            conn.close()
 
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     openai_configured = bool(openai_key and not openai_key.startswith("x-") and openai_key != "test_offline_mode")

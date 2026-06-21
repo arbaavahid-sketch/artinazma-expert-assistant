@@ -140,10 +140,11 @@ class TestCustomerRepo:
         assert result.get("success") is False
 
     def test_authenticate_customer(self, test_db):
-        from repositories.customer_repo import create_customer, authenticate_customer
+        from repositories.customer_repo import create_customer, authenticate_customer, set_customer_approval_status
         email = self._unique_email("auth")
         pw = "securepass456"
-        create_customer(full_name="احراز هویت تست", email=email, password=pw)
+        created = create_customer(full_name="احراز هویت تست", email=email, password=pw)
+        set_customer_approval_status(created["customer_id"], "approved")
         customer = authenticate_customer(email, pw)
         assert customer is not None
         assert customer["email"] == email

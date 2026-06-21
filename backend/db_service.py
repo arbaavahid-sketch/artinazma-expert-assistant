@@ -49,6 +49,7 @@ from repositories.customer_repo import (
     get_all_customers,
     get_customer_sessions,
     set_customer_blocked,
+    set_customer_approval_status,
     update_customer_profile,
     change_customer_password,
     create_password_reset_token,
@@ -194,6 +195,7 @@ def init_db():
             company TEXT DEFAULT '',
             phone TEXT DEFAULT '',
             created_at TEXT NOT NULL,
+            approval_status TEXT DEFAULT 'approved',
             is_blocked INTEGER DEFAULT 0
         )
         """)
@@ -201,6 +203,8 @@ def init_db():
     cust_cols = [r["name"] for r in cursor.execute("PRAGMA table_info(customers)").fetchall()]
     if "is_blocked" not in cust_cols:
         cursor.execute("ALTER TABLE customers ADD COLUMN is_blocked INTEGER DEFAULT 0")
+    if "approval_status" not in cust_cols:
+        cursor.execute("ALTER TABLE customers ADD COLUMN approval_status TEXT DEFAULT 'approved'")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -469,6 +473,7 @@ from repositories.customer_repo import (
     get_all_customers,
     get_customer_sessions,
     set_customer_blocked,
+    set_customer_approval_status,
     update_customer_profile,
     change_customer_password,
     create_password_reset_token,

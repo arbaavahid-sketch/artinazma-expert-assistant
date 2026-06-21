@@ -115,6 +115,19 @@ async def get_current_customer(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    try:
+        from db_service import get_customer_by_id
+        customer = get_customer_by_id(int(payload["sub"]))
+    except Exception:
+        customer = None
+
+    if not customer:
+        raise HTTPException(status_code=401, detail="Customer account was not found.")
+    if customer.get("is_blocked"):
+        raise HTTPException(status_code=403, detail="Customer account is blocked.")
+    if customer.get("approval_status", "approved") != "approved":
+        raise HTTPException(status_code=403, detail="Customer account is waiting for admin approval.")
+
     return {
         "customer_id": int(payload["sub"]),
         "email": payload.get("email", ""),
@@ -131,6 +144,18 @@ async def get_optional_customer(
 
     payload = verify_access_token(token)
     if not payload:
+        return None
+
+    try:
+        from db_service import get_customer_by_id
+        customer = get_customer_by_id(int(payload["sub"]))
+    except Exception:
+        customer = None
+    if (
+        not customer
+        or customer.get("is_blocked")
+        or customer.get("approval_status", "approved") != "approved"
+    ):
         return None
 
     return {

@@ -1,15 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
-import {
-  clearSavedCustomer,
-  createCustomerSession,
-  saveCustomer,
-} from "@/lib/customer";
 import { useI18n } from "@/lib/i18n";
 import {
   ArrowLeft,
@@ -25,7 +19,6 @@ import {
 } from "lucide-react";
 
 export default function CustomerRegisterPage() {
-  const router = useRouter();
   const { locale, dir } = useI18n();
   const isEn = locale === "en";
   const iconSide = isEn ? "left-4" : "right-4";
@@ -69,16 +62,13 @@ export default function CustomerRegisterPage() {
         return;
       }
 
-      saveCustomer(data.customer);
-      try {
-        await createCustomerSession(data.customer.id);
-      } catch (error) {
-        clearSavedCustomer();
-        throw error;
-      }
-
-      router.replace("/assistant");
-      router.refresh();
+      setMessage(
+        data.message ||
+          (isEn
+            ? "Registration submitted. You can log in after admin approval."
+            : "ثبت‌نام شما ثبت شد. پس از تأیید ادمین امکان ورود خواهید داشت."),
+      );
+      setPassword("");
     } catch {
       setMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {
@@ -154,7 +144,7 @@ export default function CustomerRegisterPage() {
             )}
 
             <button onClick={register} disabled={loading} className="ui-btn ui-btn-primary mt-6 inline-flex w-full gap-2 rounded-2xl px-5 py-4">
-              {loading ? (isEn ? "Registering..." : "در حال ثبت‌نام...") : (isEn ? "Register and log in" : "ثبت‌نام و ورود")}
+              {loading ? (isEn ? "Registering..." : "در حال ثبت‌نام...") : (isEn ? "Submit for approval" : "ثبت‌نام و ارسال برای تأیید")}
               <ArrowLeft size={18} />
             </button>
 
