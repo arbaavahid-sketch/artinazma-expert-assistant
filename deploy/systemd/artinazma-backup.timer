@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily ArtinAzma Backup
+
+[Timer]
+OnCalendar=*-*-* 00:30:00 UTC
+Persistent=true
+Unit=artinazma-backup.service
+
+[Install]
+WantedBy=timers.target

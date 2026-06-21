@@ -208,7 +208,10 @@ services:
   # Runs pg_dump + Qdrant snapshot, keeps 7 days of history.
   # Backups are stored in the backup_data volume (docker managed).
   backup:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: backup/Dockerfile
+    image: artinazma-backup:latest
     container_name: artin_backup
     profiles:
       - backup

@@ -1,0 +1,13 @@
+[Unit]
+Description=ArtinAzma PostgreSQL and Qdrant Backup
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/artinazma
+ExecStart=/opt/artinazma/scripts/artinazma-backup-runner.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
