@@ -900,9 +900,45 @@ def admin_unblock_customer(customer_id: int, request: Request, _=Depends(require
 
 @router.post("/admin/customers/{customer_id}/approve")
 def admin_approve_customer(customer_id: int, request: Request, _=Depends(require_admin)):
-    """تأیید حساب مشتری برای امکان ورود."""
+    """تأیید حساب مشتری و ارسال ایمیل اطلاع‌رسانی."""
+
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    previous_status = customer.get("approval_status", "approved")
     ok = set_customer_approval_status(customer_id, "approved")
-    return {"success": ok}
+
+    email_sent = False
+    email_message = ""
+
+    # از ارسال تکراری ایمیل برای حسابی که قبلاً تأیید شده جلوگیری می‌شود.
+    if ok and previous_status != "approved":
+        from email_service import (
+            get_email_settings,
+            send_customer_approval_email,
+        )
+
+        settings = get_email_settings(get_setting)
+        email_sent, email_message = send_customer_approval_email(
+            settings=settings,
+            to_addr=customer.get("email", ""),
+            full_name=customer.get("full_name", ""),
+        )
+
+        if not email_sent:
+            logger.warning(
+                "Customer %s approved but approval email failed: %s",
+                customer_id,
+                email_message,
+            )
+
+    return {
+        "success": ok,
+        "email_sent": email_sent,
+        "email_message": email_message,
+        "already_approved": previous_status == "approved",
+    }
 
 
 @router.post("/admin/customers/{customer_id}/reject")

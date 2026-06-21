@@ -96,7 +96,9 @@ class _DBCursor:
 
         is_insert = stripped.startswith("INSERT")
         if is_insert and "RETURNING" not in stripped:
-            pg_sql = pg_sql.rstrip().rstrip(";") + " RETURNING id"
+            # PostgreSQL has no generic lastrowid. Return the inserted row and
+            # extract its id only when that table actually has an id column.
+            pg_sql = pg_sql.rstrip().rstrip(";") + " RETURNING *"
 
         try:
             self._raw.execute(pg_sql, params if params else None)
@@ -113,7 +115,12 @@ class _DBCursor:
 
         if is_insert:
             row = self._raw.fetchone()
-            self.lastrowid = row[0] if row else None
+            self.lastrowid = None
+
+            if row and self._raw.description:
+                columns = [item[0] for item in self._raw.description]
+                if "id" in columns:
+                    self.lastrowid = row[columns.index("id")]
         self.rowcount = self._raw.rowcount
         self._conn_ref._last_rowcount = self.rowcount
 

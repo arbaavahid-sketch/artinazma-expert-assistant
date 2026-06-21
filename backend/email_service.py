@@ -308,3 +308,110 @@ def send_new_customer_request_admin_alert(
     except Exception as e:
         logger.warning("New request admin alert failed: %s", e)
         return False, str(e)
+
+
+
+def send_customer_approval_email(
+    settings: dict,
+    to_addr: str,
+    full_name: str,
+) -> tuple[bool, str]:
+    """Send an account-approved email to a customer."""
+
+    import os
+    from html import escape
+
+    smtp_host = settings.get("smtp_host", "").strip()
+    smtp_port = int(settings.get("smtp_port", 587))
+    smtp_user = settings.get("smtp_user", "").strip()
+    smtp_pass = settings.get("smtp_pass", "").strip()
+    from_addr = settings.get("from_addr", smtp_user).strip() or smtp_user
+
+    if not smtp_host:
+        return False, "SMTP is not configured."
+    if not to_addr or not to_addr.strip():
+        return False, "Customer email address is missing."
+
+    safe_name = escape((full_name or "کاربر گرامی").strip())
+    app_url = os.getenv(
+        "PUBLIC_APP_URL",
+        "https://assistant.artinazma.net",
+    ).rstrip("/")
+    login_url = f"{app_url}/customer-login"
+
+    html = f"""<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f7f7f8;font-family:Tahoma,Arial,sans-serif;direction:rtl">
+  <div style="max-width:560px;margin:32px auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08)">
+    <div style="background:linear-gradient(135deg,#1d4ed8,#4f46e5);padding:30px 34px">
+      <div style="color:#ffffff;font-size:21px;font-weight:bold">
+        تأیید حساب کاربری آرتین آزما
+      </div>
+      <div style="color:#dbeafe;font-size:13px;margin-top:7px">
+        دستیار هوشمند تخصصی آرتین آزما مهر
+      </div>
+    </div>
+
+    <div style="padding:30px 34px;color:#374151">
+      <p style="font-size:15px;margin:0 0 18px">
+        {safe_name} عزیز،
+      </p>
+
+      <p style="font-size:14px;line-height:2;margin:0 0 22px">
+        حساب کاربری شما با موفقیت توسط مدیر سامانه تأیید شد.
+        اکنون می‌توانید وارد دستیار هوشمند آرتین آزما شوید و از امکانات سامانه استفاده کنید.
+      </p>
+
+      <div style="text-align:center;margin:26px 0">
+        <a href="{login_url}"
+           style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;border-radius:12px;padding:13px 28px;font-size:14px;font-weight:bold">
+          ورود به حساب کاربری
+        </a>
+      </div>
+
+      <p style="font-size:12px;line-height:1.8;color:#9ca3af;margin:20px 0 0">
+        اگر دکمه بالا باز نشد، این نشانی را در مرورگر وارد کنید:<br/>
+        <span dir="ltr">{login_url}</span>
+      </p>
+    </div>
+
+    <div style="background:#f1f5f9;border-top:1px solid #e2e8f0;padding:15px 30px;text-align:center">
+      <div style="font-size:12px;color:#64748b">
+        این ایمیل به‌صورت خودکار توسط سامانه آرتین آزما ارسال شده است.
+      </div>
+    </div>
+  </div>
+</body>
+</html>"""
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "حساب کاربری شما در آرتین آزما تأیید شد"
+    msg["From"] = from_addr
+    msg["To"] = to_addr.strip()
+    msg.attach(MIMEText(html, "html", "utf-8"))
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=15)
+            server.ehlo()
+            server.starttls()
+
+        if smtp_user and smtp_pass:
+            server.login(smtp_user, smtp_pass)
+
+        server.sendmail(from_addr, [to_addr.strip()], msg.as_string())
+        server.quit()
+
+        logger.info("Customer approval email sent to %s", to_addr)
+        return True, "Approval email sent."
+
+    except Exception as exc:
+        logger.warning(
+            "Customer approval email failed for %s: %s",
+            to_addr,
+            exc,
+        )
+        return False, str(exc)
