@@ -4,6 +4,7 @@ import Link from "next/link";
 import LiveStats from "@/components/LiveStats";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import {
   ArrowLeft,
@@ -22,12 +23,21 @@ import {
   Sparkles,
   Wrench,
   ChevronLeft,
+  ChevronDown,
   Zap,
   BookOpen,
   Users,
 } from "lucide-react";
 
-const brands = ["CHROMATEC", "SPECTRON", "LUMEX", "TERMEX", "NXA", "HACH", "METTLER TOLEDO"];
+const brands = [
+  { name: "CHROMATEC", href: "https://artinazma.net/chromatec-agency-in-iran/" },
+  { name: "SPECTRON", href: "https://artinazma.net/spectron-agency-in-iran/" },
+  { name: "LUMEX", href: "https://artinazma.net/lumex-agency-in-iran/" },
+  { name: "TERMEX", href: "https://artinazma.net/termex-agency-in-iran/" },
+  { name: "NXA", href: "https://artinazma.net/nxa-agency-in-iran/" },
+  { name: "HACH", href: "https://artinazma.net/hach-agency-in-iran/" },
+  { name: "METTLER TOLEDO", href: "https://artinazma.net/mettler-toledo-agency-in-iran/" },
+];
 
 export default function Home() {
   const { locale, dir } = useI18n();
@@ -190,13 +200,21 @@ export default function Home() {
             {isEn ? "Specialized ArtinAzma Mehr brands" : "برندهای تخصصی آرتین آزما مهر"}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {brands.map((b) => (
-              <span key={b} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-slate-600 shadow-sm">{b}</span>
+            {brands.map((brand) => (
+              <a
+                key={brand.name}
+                href={brand.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              >
+                {brand.name}
+              </a>
             ))}
           </div>
         </div>
 
-        <SectionPanel kicker={isEn ? "How to use" : "نحوه استفاده"} title={isEn ? "In 3 simple steps" : "در ۳ مرحله ساده"} icon={<Zap size={15} />}>
+        <SectionPanel kicker={isEn ? "How to use" : "نحوه استفاده"} icon={<Zap size={15} />}>
           <div className="grid gap-4 md:grid-cols-3">
             {howItWorks.map((step, i) => {
               const Icon = step.icon;
@@ -214,8 +232,7 @@ export default function Home() {
           </div>
         </SectionPanel>
 
-        <div>
-          <h2 className="mb-4 text-xl font-black text-slate-950">{isEn ? "Artin capabilities" : "قابلیت‌های آرتین"}</h2>
+        <SectionPanel kicker={isEn ? "Capabilities" : "قابلیت‌ها"} icon={<MessageSquareText size={15} />}>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {capabilities.map((item) => {
               const Icon = item.icon;
@@ -230,9 +247,9 @@ export default function Home() {
               );
             })}
           </div>
-        </div>
+        </SectionPanel>
 
-        <SectionPanel kicker={isEn ? "Use paths" : "مسیرهای استفاده"} title={isEn ? "Who is it for?" : "برای چه کسانی مناسب است؟"} icon={<Users size={15} />}>
+        <SectionPanel kicker={isEn ? "Use paths" : "مسیرهای استفاده"} icon={<Users size={15} />}>
           <div className="grid gap-4 lg:grid-cols-3">
             {userPaths.map((item) => {
               const Icon = item.icon;
@@ -287,14 +304,27 @@ function Badge({ text, icon }: { text: string; icon: ReactNode }) {
   return <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-white p-2.5 text-sm font-extrabold text-slate-700 shadow-sm">{icon}{text}</div>;
 }
 
-function SectionPanel({ kicker, title, icon, children }: { kicker: string; title: string; icon: ReactNode; children: ReactNode }) {
+function SectionPanel({ kicker, icon, children }: { kicker: string; icon: ReactNode; children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="brand-panel overflow-hidden rounded-[30px] p-6 md:p-8">
-      <div className="mb-6">
-        <div className="brand-kicker mb-3 w-fit">{icon}{kicker}</div>
-        <h2 className="text-2xl font-black text-slate-950">{title}</h2>
-      </div>
-      {children}
+    <div className="brand-panel overflow-hidden rounded-[30px]">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-4 p-5 text-start transition hover:bg-white/55 md:p-6"
+        aria-expanded={isOpen}
+      >
+        <span className="brand-kicker w-fit">{icon}{kicker}</span>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm">
+          <ChevronDown size={20} className={`transition ${isOpen ? "rotate-180" : ""}`} />
+        </span>
+      </button>
+      {isOpen && (
+        <div className="border-t border-slate-100 p-5 pt-5 md:p-6">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
