@@ -1302,7 +1302,7 @@ export default function KnowledgePage() {
 
                           <div className="mt-4 grid gap-3 text-xs sm:grid-cols-3">
                             <div>
-                              <div className="mb-1 font-bold text-slate-400">Ø¯Ø³ØªÙ‡â€ŒØ¨Ù†Ø¯ÛŒ</div>
+                              <div className="mb-1 font-bold text-slate-400">دسته‌بندی</div>
                               <div className="flex flex-wrap gap-2">
                                 {categories.map((category) => (
                                   <span
@@ -1341,19 +1341,19 @@ export default function KnowledgePage() {
                               className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
                             >
                               <Eye size={15} />
-                              Ù¾ÛŒØ´â€ŒÙ†Ù…Ø§ÛŒØ´
+                              پیش‌نمایش
                             </button>
                             <button
                               onClick={() => reindexKnowledgeFile(item.file_name)}
                               disabled={!item.source_exists || reindexingFile === item.file_name}
                               className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
-                              title={!item.source_exists ? "ÙØ§ÛŒÙ„ Ù…Ù†Ø¨Ø¹ Ø¯Ø± knowledge_files Ù…ÙˆØ¬ÙˆØ¯ Ù†ÛŒØ³Øª" : "Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ chunk Ùˆ embedding"}
+                              title={!item.source_exists ? "فایل منبع در knowledge_files موجود نیست" : "بازسازی chunk و embedding"}
                             >
                               <RefreshCw
                                 size={15}
                                 className={reindexingFile === item.file_name ? "animate-spin" : ""}
                               />
-                              {reindexingFile === item.file_name ? "Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ..." : "Ø¨Ø§Ø²Ø³Ø§Ø²ÛŒ"}
+                              {reindexingFile === item.file_name ? "در حال بازسازی..." : "بازسازی"}
                             </button>
                             <button
                               onClick={() => deleteKnowledgeFile(item.file_name)}
@@ -1362,8 +1362,8 @@ export default function KnowledgePage() {
                             >
                               <Trash2 size={15} />
                               {deletingFile === item.file_name
-                                ? "Ø¯Ø± Ø­Ø§Ù„ Ø­Ø°Ù..."
-                                : "Ø­Ø°Ù"}
+                                ? "در حال حذف..."
+                                : "حذف"}
                             </button>
                           </div>
                         </div>
