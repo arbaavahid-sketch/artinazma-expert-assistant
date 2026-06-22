@@ -38,7 +38,7 @@ from db_service import (
     get_customer_by_id,
 )
 from knowledge_service import get_knowledge_stats
-from google_drive_service import sync_google_drive_folder
+from gdrive_sync_manager import get_gdrive_sync_status, start_gdrive_sync
 from push_service import send_push_to_customer, is_push_configured
 from ai_service import get_response_cache_stats as _get_ai_cache_stats
 
@@ -181,16 +181,22 @@ def admin_dashboard_stats(_=Depends(require_admin)):
 
 @router.get("/admin/gdrive-schedule")
 def get_gdrive_schedule(_=Depends(require_admin)):
-    """وضعیت تنظیمات زمان‌بندی همزمان‌سازی Google Drive."""
+    """Google Drive synchronization schedule and runtime status."""
     interval = float(get_setting("gdrive_sync_interval_hours", "0"))
     last_sync = get_setting("gdrive_last_sync", "")
     last_result = get_setting("gdrive_last_sync_result", "")
+
     return {
         "interval_hours": interval,
         "enabled": interval > 0,
         "last_sync": last_sync,
         "last_sync_result": last_result,
-        "folder_id_configured": bool(os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()),
+        "folder_id_configured": bool(
+            os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
+        ),
+        "sync_status": get_gdrive_sync_status(),
+        "sync_started_at": get_setting("gdrive_sync_started_at", ""),
+        "sync_finished_at": get_setting("gdrive_sync_finished_at", ""),
     }
 
 
@@ -208,17 +214,16 @@ def set_gdrive_schedule(body: GDriveSyncScheduleRequest, _=Depends(require_admin
 
 @router.post("/admin/gdrive-sync-now")
 def run_gdrive_sync_now(_=Depends(require_admin)):
-    """اجرای فوری همزمان‌سازی Google Drive."""
-    folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
-    if not folder_id:
-        raise HTTPException(status_code=400, detail="GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است.")
-    try:
-        result = sync_google_drive_folder(root_folder_id=folder_id, max_files=200, force_resync=False)
-        set_setting("gdrive_last_sync", _dt.now(timezone.utc).replace(tzinfo=None).isoformat())
-        set_setting("gdrive_last_sync_result", str(result.get("synced_files", 0)) + " فایل")
-        return {"success": True, "result": result}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+    """Start an immediate Google Drive sync without blocking the request."""
+    started, message = start_gdrive_sync(trigger="manual")
+
+    return {
+        "success": started,
+        "already_running": not started
+        and get_gdrive_sync_status() == "running",
+        "message": message,
+        "sync_status": get_gdrive_sync_status(),
+    }
 
 
 @router.get("/admin/email-settings")

@@ -2,6 +2,11 @@ import os
 import json
 import time
 import logging
+import shutil
+import tempfile
+import threading
+import fcntl
+from contextlib import contextmanager
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -28,6 +33,26 @@ STORAGE_DIR.mkdir(exist_ok=True)
 # we keep a single cached copy and only reload when the file changes.
 _vector_cache: Optional[List[Dict[str, Any]]] = None
 _vector_cache_mtime: float = 0.0
+
+# Prevent concurrent read-modify-write operations inside one process.
+_vector_store_lock = threading.RLock()
+
+
+@contextmanager
+def _vector_store_write_lock():
+    """Serialize vector-store writers across threads and processes."""
+    lock_path = VECTOR_STORE_PATH.with_name(
+        f".{VECTOR_STORE_PATH.name}.lock"
+    )
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with _vector_store_lock:
+        with lock_path.open("a+", encoding="utf-8") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def read_text_from_file(file_path: str) -> str:
@@ -90,67 +115,169 @@ def create_embedding(text: str) -> Optional[List[float]]:
 
 
 def load_vector_store() -> List[Dict[str, Any]]:
-    """Load the vector store with in-memory caching.
-
-    The JSON file is only re-read when its mtime changes, which avoids
-    parsing ~394 MB of JSON on every single API call.
-    """
+    """Load the vector store with safe in-memory caching."""
     global _vector_cache, _vector_cache_mtime
 
-    if not VECTOR_STORE_PATH.exists():
-        _vector_cache = []
-        _vector_cache_mtime = 0.0
-        return []
+    with _vector_store_lock:
+        if not VECTOR_STORE_PATH.exists():
+            _vector_cache = []
+            _vector_cache_mtime = 0.0
+            return []
 
-    try:
-        current_mtime = VECTOR_STORE_PATH.stat().st_mtime
-    except OSError:
-        current_mtime = 0.0
+        try:
+            current_mtime = VECTOR_STORE_PATH.stat().st_mtime
+        except OSError:
+            current_mtime = 0.0
 
-    if _vector_cache is not None and current_mtime == _vector_cache_mtime:
+        if (
+            _vector_cache is not None
+            and current_mtime == _vector_cache_mtime
+        ):
+            return _vector_cache
+
+        logger.info(
+            "Reloading knowledge vectors from disk (%.1f MB)...",
+            VECTOR_STORE_PATH.stat().st_size / 1_048_576,
+        )
+        started_at = time.time()
+
+        try:
+            with VECTOR_STORE_PATH.open(
+                "r",
+                encoding="utf-8",
+            ) as file:
+                loaded = json.load(file)
+        except json.JSONDecodeError:
+            backup_path = VECTOR_STORE_PATH.with_suffix(
+                ".json.bak"
+            )
+
+            logger.exception(
+                "Main knowledge vector JSON is corrupted."
+            )
+
+            if not backup_path.exists():
+                raise
+
+            logger.warning(
+                "Recovering knowledge vectors from %s",
+                backup_path,
+            )
+
+            with backup_path.open(
+                "r",
+                encoding="utf-8",
+            ) as file:
+                loaded = json.load(file)
+
+            _save_vector_store_unlocked(
+                loaded,
+                create_backup=False,
+            )
+
+            current_mtime = VECTOR_STORE_PATH.stat().st_mtime
+
+        if not isinstance(loaded, list):
+            raise ValueError(
+                "Knowledge vector store must contain a JSON array."
+            )
+
+        _vector_cache = loaded
+        _vector_cache_mtime = current_mtime
+
+        logger.info(
+            "Knowledge vectors loaded in %.2fs (%d chunks)",
+            time.time() - started_at,
+            len(_vector_cache),
+        )
+
         return _vector_cache
-
-    logger.info("Reloading knowledge vectors from disk (%.1f MB)...",
-                VECTOR_STORE_PATH.stat().st_size / 1_048_576)
-    start = time.time()
-
-    with open(VECTOR_STORE_PATH, "r", encoding="utf-8") as f:
-        _vector_cache = json.load(f)
-
-    _vector_cache_mtime = current_mtime
-    logger.info("Knowledge vectors loaded in %.2fs (%d chunks)",
-                time.time() - start, len(_vector_cache))
-
-    return _vector_cache
 
 
 def invalidate_vector_cache() -> None:
-    """Force a reload on next access (call after writes)."""
+    """Force a reload on the next access."""
     global _vector_cache, _vector_cache_mtime
-    _vector_cache = None
-    _vector_cache_mtime = 0.0
+
+    with _vector_store_lock:
+        _vector_cache = None
+        _vector_cache_mtime = 0.0
+
+
+def _save_vector_store_unlocked(
+    data: List[Dict[str, Any]],
+    *,
+    create_backup: bool = True,
+) -> None:
+    """Atomically save data. Caller must hold the write lock."""
+    STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+    backup_path = VECTOR_STORE_PATH.with_suffix(
+        ".json.bak"
+    )
+
+    if create_backup and VECTOR_STORE_PATH.exists():
+        try:
+            shutil.copy2(
+                VECTOR_STORE_PATH,
+                backup_path,
+            )
+        except Exception:
+            logger.exception(
+                "Could not create vector-store backup."
+            )
+
+    fd, temp_name = tempfile.mkstemp(
+        prefix=f".{VECTOR_STORE_PATH.name}.",
+        suffix=".tmp",
+        dir=str(VECTOR_STORE_PATH.parent),
+    )
+
+    temp_path = Path(temp_name)
+
+    try:
+        with os.fdopen(
+            fd,
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(
+                data,
+                file,
+                ensure_ascii=False,
+                indent=2,
+            )
+            file.flush()
+            os.fsync(file.fileno())
+
+        os.replace(
+            temp_path,
+            VECTOR_STORE_PATH,
+        )
+
+        try:
+            directory_fd = os.open(
+                str(VECTOR_STORE_PATH.parent),
+                os.O_DIRECTORY,
+            )
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        except OSError:
+            pass
+    finally:
+        if temp_path.exists():
+            temp_path.unlink(missing_ok=True)
+
+    invalidate_vector_cache()
 
 
 def save_vector_store(data: List[Dict[str, Any]]) -> None:
-    temp_path = VECTOR_STORE_PATH.with_suffix(".json.tmp")
-    backup_path = VECTOR_STORE_PATH.with_suffix(".json.bak")
-
-    if VECTOR_STORE_PATH.exists():
-        try:
-            backup_path.write_text(
-                VECTOR_STORE_PATH.read_text(encoding="utf-8", errors="ignore"),
-                encoding="utf-8",
-            )
-        except Exception:
-            pass
-
-    with open(temp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-    os.replace(temp_path, VECTOR_STORE_PATH)
-
-    # Invalidate the in-memory cache so the next read picks up changes
-    invalidate_vector_cache()
+    """Safely and atomically replace the local vector store."""
+    with _vector_store_write_lock():
+        _save_vector_store_unlocked(
+            list(data),
+        )
 
 
 def knowledge_file_exists(file_name: str) -> bool:
@@ -162,34 +289,44 @@ def knowledge_file_exists(file_name: str) -> bool:
 def delete_knowledge_file(file_name: str) -> Dict[str, Any]:
     import qdrant_service as _qs
 
-    store = load_vector_store()
-    before_count = len(store)
-    new_store = [item for item in store if item.get("file_name") != file_name]
-    removed_chunks = before_count - len(new_store)
+    with _vector_store_write_lock():
+        store = load_vector_store()
+        new_store = [
+            item
+            for item in store
+            if item.get("file_name") != file_name
+        ]
+        removed_chunks = len(store) - len(new_store)
 
-    if removed_chunks == 0 and not (_qs.is_enabled() and _qs.file_exists(file_name)):
-        return {
-            "success": False,
-            "message": "فایلی با این نام در بانک دانش پیدا نشد.",
-            "file_name": file_name,
-            "removed_chunks": 0,
-        }
+        exists_in_qdrant = (
+            _qs.is_enabled()
+            and _qs.file_exists(file_name)
+        )
 
-    if removed_chunks > 0:
-        save_vector_store(new_store)
+        if removed_chunks == 0 and not exists_in_qdrant:
+            return {
+                "success": False,
+                "message": (
+                    "فایلی با این نام در بانک دانش پیدا نشد."
+                ),
+                "file_name": file_name,
+                "removed_chunks": 0,
+            }
 
-    if _qs.is_enabled():
-        try:
+        if _qs.is_enabled():
             _qs.delete_by_file(file_name)
-        except Exception as e:
-            logger.warning("Qdrant delete failed for '%s': %s", file_name, e)
 
-    return {
-        "success": True,
-        "message": "فایل با موفقیت از بانک دانش حذف شد.",
-        "file_name": file_name,
-        "removed_chunks": removed_chunks,
-    }
+        if removed_chunks > 0:
+            _save_vector_store_unlocked(new_store)
+
+        return {
+            "success": True,
+            "message": (
+                "فایل با موفقیت از بانک دانش حذف شد."
+            ),
+            "file_name": file_name,
+            "removed_chunks": removed_chunks,
+        }
 
 
 def reindex_knowledge_file(file_name: str) -> Dict[str, Any]:
@@ -231,19 +368,23 @@ def reindex_knowledge_file(file_name: str) -> Dict[str, Any]:
     return result
 
 
-def replace_knowledge_file_if_exists(file_name: str) -> int:
-    store = load_vector_store()
+def replace_knowledge_file_if_exists(
+    file_name: str,
+) -> int:
+    with _vector_store_write_lock():
+        store = load_vector_store()
+        new_store = [
+            item
+            for item in store
+            if item.get("file_name") != file_name
+        ]
 
-    before_count = len(store)
+        removed_chunks = len(store) - len(new_store)
 
-    new_store = [item for item in store if item.get("file_name") != file_name]
+        if removed_chunks > 0:
+            _save_vector_store_unlocked(new_store)
 
-    removed_chunks = before_count - len(new_store)
-
-    if removed_chunks > 0:
-        save_vector_store(new_store)
-
-    return removed_chunks
+        return removed_chunks
 
 
 def cosine_similarity(a: List[float], b: List[float]) -> float:
@@ -268,71 +409,114 @@ def add_file_to_knowledge_base(
 
     file_name = Path(file_path).name
 
-    if knowledge_file_exists(file_name):
-        if not replace_existing:
-            return {
-                "success": False,
-                "duplicate": True,
-                "message": "این فایل قبلاً در بانک دانش ثبت شده است. اگر می‌خواهید نسخه قبلی حذف و فایل جدید جایگزین شود، گزینه جایگزینی فایل تکراری را فعال کنید.",
-                "file_name": file_name,
-            }
-
-        removed_chunks = replace_knowledge_file_if_exists(file_name)
-    else:
-        removed_chunks = 0
+    # Fast duplicate check before performing expensive embeddings.
+    if (
+        not replace_existing
+        and knowledge_file_exists(file_name)
+    ):
+        return {
+            "success": False,
+            "duplicate": True,
+            "message": (
+                "این فایل قبلاً در بانک دانش ثبت شده است. "
+                "اگر می‌خواهید نسخه قبلی حذف و فایل جدید "
+                "جایگزین شود، گزینه جایگزینی فایل تکراری "
+                "را فعال کنید."
+            ),
+            "file_name": file_name,
+        }
 
     text = read_text_from_file(file_path)
 
     if not text.strip():
         return {
             "success": False,
-            "message": "متنی از فایل استخراج نشد. فعلاً PDF متنی، TXT و MD پشتیبانی می‌شوند.",
+            "message": (
+                "متنی از فایل استخراج نشد. فعلاً PDF متنی، "
+                "TXT و MD پشتیبانی می‌شوند."
+            ),
         }
 
     chunks = chunk_text(text)
     effective_title = title or file_name
-
     chunk_dicts = []
+
     for index, chunk in enumerate(chunks):
         embedding = create_embedding(chunk)
+
         if embedding is None:
             continue
-        chunk_dicts.append(
-            {
-                "title": effective_title,
-                "category": category,
+
+        chunk_dicts.append({
+            "title": effective_title,
+            "category": category,
+            "file_name": file_name,
+            "chunk_index": index,
+            "content": chunk,
+            "embedding": embedding,
+        })
+
+    if not chunk_dicts:
+        return {
+            "success": False,
+            "message": (
+                "هیچ بردار قابل‌استفاده‌ای برای فایل ساخته نشد."
+            ),
+            "file_name": file_name,
+        }
+
+    with _vector_store_write_lock():
+        # Reload while holding the transaction lock, because another
+        # upload may have completed while embeddings were generated.
+        store = load_vector_store()
+
+        existing_chunks = [
+            item
+            for item in store
+            if item.get("file_name") == file_name
+        ]
+
+        if existing_chunks and not replace_existing:
+            return {
+                "success": False,
+                "duplicate": True,
+                "message": (
+                    "این فایل قبلاً در بانک دانش ثبت شده است."
+                ),
                 "file_name": file_name,
-                "chunk_index": index,
-                "content": chunk,
-                "embedding": embedding,
             }
-        )
 
-    added_chunks = len(chunk_dicts)
+        new_store = [
+            item
+            for item in store
+            if item.get("file_name") != file_name
+        ]
 
-    if _qs.is_enabled():
-        # Qdrant path — delete old chunks first, then upsert new ones
-        if removed_chunks == 0:
-            _qs.delete_by_file(file_name)  # ensure clean state on replace
-        _qs.upsert_chunks(chunk_dicts)
-        # Also persist to JSON store as a local backup
-        store = load_vector_store()
-        store.extend(chunk_dicts)
-        save_vector_store(store)
-    else:
-        # JSON-only path
-        store = load_vector_store()
-        store.extend(chunk_dicts)
-        save_vector_store(store)
+        removed_chunks = len(store) - len(new_store)
+
+        if _qs.is_enabled():
+            # Always remove previous Qdrant chunks first. This also
+            # removes stale chunks when the new file is shorter.
+            _qs.delete_by_file(file_name)
+            _qs.upsert_chunks(chunk_dicts)
+
+        new_store.extend(chunk_dicts)
+        _save_vector_store_unlocked(new_store)
 
     return {
         "success": True,
-        "message": "فایل با موفقیت به بانک دانش اضافه شد.",
+        "message": (
+            "فایل با موفقیت به بانک دانش اضافه شد."
+        ),
         "file_name": file_name,
-        "chunks_added": added_chunks,
+        "chunks_added": len(chunk_dicts),
         "replaced": replace_existing,
         "removed_old_chunks": removed_chunks,
-        "backend": "qdrant" if _qs.is_enabled() else "json",
+        "backend": (
+            "qdrant"
+            if _qs.is_enabled()
+            else "json"
+        ),
     }
 
 

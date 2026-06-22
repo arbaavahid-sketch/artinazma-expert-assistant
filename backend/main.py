@@ -16,7 +16,7 @@ from slowapi import _rate_limit_exceeded_handler
 from db_service import init_db, get_setting, set_setting
 from ws_chat import router as ws_router
 from security_middleware import CSRFMiddleware, SmartRateLimitMiddleware
-from google_drive_service import sync_google_drive_folder
+from gdrive_sync_manager import start_gdrive_sync
 
 from utils.deps import limiter
 from routes.chat import router as chat_router, _response_cache
@@ -57,20 +57,13 @@ logger = logging.getLogger("artin_scheduler")
 
 
 def _run_gdrive_sync():
-    """اجرای همزمان‌سازی Google Drive در پس‌زمینه."""
-    folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
-    if not folder_id:
-        logger.info("GOOGLE_DRIVE_ROOT_FOLDER_ID not set — skipping scheduled sync")
-        return
-    try:
-        logger.info("Starting scheduled Google Drive sync...")
-        result = sync_google_drive_folder(root_folder_id=folder_id, max_files=200, force_resync=False)
-        set_setting("gdrive_last_sync", _dt.now(timezone.utc).replace(tzinfo=None).isoformat())
-        set_setting("gdrive_last_sync_result", str(result.get("synced_files", 0)) + " فایل")
-        logger.info("Scheduled Google Drive sync complete: %s", result)
-    except Exception as exc:
-        logger.error("Scheduled Google Drive sync failed: %s", exc)
-        set_setting("gdrive_last_sync_result", f"خطا: {exc}")
+    """Start scheduled Google Drive synchronization in the background."""
+    started, message = start_gdrive_sync(trigger="scheduled")
+
+    if started:
+        logger.info(message)
+    else:
+        logger.info("Scheduled Google Drive sync not started: %s", message)
 
 
 def _schedule_gdrive(interval_hours: float):

@@ -96,6 +96,9 @@ type GDriveSchedule = {
   last_sync: string;
   last_sync_result: string;
   folder_id_configured: boolean;
+  sync_status?: string;
+  sync_started_at?: string;
+  sync_finished_at?: string;
 };
 
 type DeepHealthCheck = {
@@ -223,14 +226,24 @@ export default function AdminSettingsPage() {
   async function runGdriveSyncNow() {
     setSyncingNow(true);
     setGdriveMessage("");
+
     try {
-      const res = await fetch(adminUrl("/admin/gdrive-sync-now"), { method: "POST" });
+      const res = await fetch(
+        adminUrl("/admin/gdrive-sync-now"),
+        { method: "POST" },
+      );
       const data = await res.json();
-      if (data.success) {
-        setGdriveMessage("همزمان‌سازی با موفقیت انجام شد.");
+
+      if (res.ok && data.success) {
+        setGdriveMessage(
+          data.message || "همگام‌سازی در پس‌زمینه آغاز شد.",
+        );
       } else {
-        setGdriveMessage(data.detail || "خطا در همزمان‌سازی.");
+        setGdriveMessage(
+          data.message || data.detail || "خطا در همگام‌سازی.",
+        );
       }
+
       await loadGdriveSchedule();
     } catch {
       setGdriveMessage("خطا در اتصال به سرور.");
@@ -238,6 +251,7 @@ export default function AdminSettingsPage() {
       setSyncingNow(false);
     }
   }
+
 
   async function loadEmailSettings() {
     try {
@@ -349,6 +363,16 @@ export default function AdminSettingsPage() {
     loadQdrantStatus();
     loadTgSettings();
   }, []);
+
+  useEffect(() => {
+    if (gdriveSchedule?.sync_status !== "running") return;
+
+    const timer = window.setInterval(() => {
+      void loadGdriveSchedule();
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [gdriveSchedule?.sync_status]);
 
   return (
     <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
@@ -672,11 +696,11 @@ export default function AdminSettingsPage() {
 
               <button
                 onClick={runGdriveSyncNow}
-                disabled={syncingNow || !gdriveSchedule?.folder_id_configured}
+                disabled={syncingNow || gdriveSchedule?.sync_status === "running" || !gdriveSchedule?.folder_id_configured}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
               >
                 <Play size={16} />
-                {syncingNow ? "در حال همزمان‌سازی..." : "همزمان‌سازی فوری"}
+                {syncingNow || gdriveSchedule?.sync_status === "running" ? "در حال همزمان‌سازی..." : "همزمان‌سازی فوری"}
               </button>
 
               {gdriveMessage && (
