@@ -1,8 +1,23 @@
 apply plugin: 'com.android.application'
 
+// Load signing config from keystore.properties (kept out of git).
+// Create app/keystore.properties with:
+//   storeFile=artin-release.jks
+//   storePassword=...
+//   keyAlias=artin
+//   keyPassword=...
+def keystorePropertiesFile = rootProject.file("app/keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "net.artinazma.expertassistant"
     compileSdk = rootProject.ext.compileSdkVersion
+    // Force Build Tools 36.1.0 (matches compileSdk 36) since the AGP default
+    // (35.0.0) isn't installed and downloading it from Iran is blocked.
+    buildToolsVersion = "36.1.0"
     defaultConfig {
         applicationId "net.artinazma.expertassistant"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -16,10 +31,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystoreProperties['storeFile']) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Only sign if keystore.properties exists; otherwise leave unsigned
+            // so debug-only contributors can still build.
+            if (keystoreProperties['storeFile']) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

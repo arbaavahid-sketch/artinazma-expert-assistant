@@ -8,7 +8,7 @@ Google Play, Cafe Bazaar, and later the Apple App Store.
 The native shell loads the hosted web app:
 
 ```text
-https://app.artinazma.net
+https://assistant.artinazma.net
 ```
 
 Change this in `capacitor.config.ts` if the final domain is different, or set:
@@ -108,5 +108,5 @@ Use Xcode and TestFlight for iPhone testing and App Store submission.
 - App display name: `Artin`
 - The native Android shell has microphone and Android notification permissions.
 - Native splash and launcher icons are generated from `public/icons`.
-- The app currently uses a hosted web app model. Do not publish until
-  `https://app.artinazma.net` is live and tested.
+- The app uses a hosted web app model — the native shell loads
+  `https://assistant.artinazma.net` which is live in production.

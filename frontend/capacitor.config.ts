@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Artin",
   webDir: "capacitor-web",
   server: {
-    url: process.env.CAPACITOR_SERVER_URL || "https://artin-frontend.liara.run",
+    url: process.env.CAPACITOR_SERVER_URL || "https://assistant.artinazma.net",
     cleartext: false,
   },
   plugins: {

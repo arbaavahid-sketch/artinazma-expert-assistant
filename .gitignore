@@ -107,6 +107,16 @@ Thumbs.db
 *.pfx
 
 # --------------------
+# Android signing (NEVER commit — losing the keystore means you can never
+# update the published app again)
+# --------------------
+*.jks
+*.keystore
+frontend/android/app/keystore.properties
+frontend/android/app/*.jks
+frontend/android/app/google-services.json
+
+# --------------------
 # Temp / Debug files (already tracked — use git rm --cached to untrack)
 # --------------------
 node_modules/
