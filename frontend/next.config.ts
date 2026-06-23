@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
+      // media-src is required to play TTS audio blobs (Audio element + blob: URLs)
+      "media-src 'self' blob:",
       "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 wss: ws://127.0.0.1:8000 ws://localhost:8000",
       "frame-ancestors 'none'",
       "object-src 'none'",

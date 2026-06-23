@@ -26,6 +26,7 @@ from routes.health import router as health_router
 from routes.questions import router as questions_router
 from routes.customers import router as customers_router
 from routes.admin import router as admin_router, set_response_cache, set_schedule_gdrive
+from routes.tts import router as tts_router
 
 import time as _time
 
@@ -208,3 +209,4 @@ app.include_router(analysis_router)
 app.include_router(questions_router)
 app.include_router(customers_router)
 app.include_router(admin_router)
+app.include_router(tts_router)

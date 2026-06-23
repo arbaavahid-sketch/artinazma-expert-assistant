@@ -1,144 +1,190 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { apiUrl, backendFetch } from "@/lib/api";
+
+/**
+ * TTS via the backend `/tts` endpoint (OpenAI gpt-4o-mini-tts).
+ *
+ * A single voice reads Persian + English mixed text naturally, which fixes
+ * the old bug where the browser's speechSynthesis grouped utterances by
+ * voice and read all English first, then all Persian.
+ *
+ * Long messages are split into ~600-char chunks at sentence boundaries.
+ * Chunks are requested in parallel but played strictly in order, so the
+ * first chunk starts playing as soon as it arrives (instead of waiting
+ * 60+ seconds for the whole message to be synthesized).
+ */
+const CHUNK_TARGET = 600;
+const CHUNK_MAX = 900;
+
+function splitIntoChunks(text: string): string[] {
+  const clean = text.trim();
+  if (clean.length <= CHUNK_TARGET) return [clean];
+
+  // Split on sentence-ending punctuation (Persian + Latin), keeping the delimiter.
+  const sentences = clean
+    .split(/(?<=[.!?؟。…\n])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const chunks: string[] = [];
+  let current = "";
+  for (const s of sentences) {
+    if (!current) {
+      current = s;
+    } else if ((current + " " + s).length <= CHUNK_TARGET) {
+      current += " " + s;
+    } else {
+      chunks.push(current);
+      current = s;
+    }
+    // Hard cap: very long single "sentence" — break by length
+    while (current.length > CHUNK_MAX) {
+      chunks.push(current.slice(0, CHUNK_MAX));
+      current = current.slice(CHUNK_MAX);
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
 
 export function useTTS() {
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const [ttsNote, setTtsNote] = useState<string>("");
-  const _ttsKeepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  function _clearTtsKeepAlive() {
-    if (_ttsKeepAliveRef.current) {
-      clearInterval(_ttsKeepAliveRef.current);
-      _ttsKeepAliveRef.current = null;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlsRef = useRef<string[]>([]);
+  const abortRef = useRef<AbortController | null>(null);
+  const cancelledRef = useRef<boolean>(false);
+
+  function _cleanup(abort: boolean = true) {
+    cancelledRef.current = true;
+    if (audioRef.current) {
+      // Detach handlers BEFORE clearing src — otherwise setting src=""
+      // triggers onerror and surfaces a fake "playback failed" message.
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+    for (const url of objectUrlsRef.current) {
+      URL.revokeObjectURL(url);
+    }
+    objectUrlsRef.current = [];
+    if (abortRef.current) {
+      // Only abort if requested — and always pass a reason so Next.js 16's
+      // dev overlay doesn't surface "signal is aborted without reason".
+      if (abort && !abortRef.current.signal.aborted) {
+        abortRef.current.abort(new DOMException("TTS cancelled", "AbortError"));
+      }
+      abortRef.current = null;
     }
   }
 
-  function speakMessage(text: string, index: number) {
-    if (!("speechSynthesis" in window)) {
-      setTtsNote("مرورگر شما از قابلیت خواندن متن پشتیبانی نمی‌کند.");
-      setTimeout(() => setTtsNote(""), 5000);
-      return;
-    }
+  useEffect(() => {
+    return () => {
+      _cleanup();
+    };
+  }, []);
 
-    // Toggle off if already speaking this message
+  async function _fetchChunk(
+    text: string,
+    signal: AbortSignal,
+  ): Promise<string> {
+    const res = await backendFetch(apiUrl("/tts"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal,
+    });
+    if (!res.ok) {
+      let detail = "";
+      try {
+        const j = await res.json();
+        detail = j?.detail ?? "";
+      } catch {
+        // ignore
+      }
+      throw new Error(detail || `HTTP ${res.status}`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    objectUrlsRef.current.push(url);
+    return url;
+  }
+
+  function _playUrl(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (cancelledRef.current) {
+        reject(new DOMException("cancelled", "AbortError"));
+        return;
+      }
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => resolve();
+      audio.onerror = () =>
+        reject(new Error("پخش صدا با خطا مواجه شد."));
+      audio.play().catch(reject);
+    });
+  }
+
+  async function speakMessage(text: string, index: number) {
+    // Toggle off if the same message is already playing
     if (speakingIndex === index) {
-      window.speechSynthesis.cancel();
-      _clearTtsKeepAlive();
+      _cleanup();
       setSpeakingIndex(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    _clearTtsKeepAlive();
+    _cleanup();
+    cancelledRef.current = false;
+    setSpeakingIndex(index);
+    setTtsNote("");
 
-    // Strip markdown for cleaner TTS
-    const clean = text
-      .replace(/#{1,6}\s/g, "")
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .replace(/\*(.*?)\*/g, "$1")
-      .replace(/`{1,3}[^`]*`{1,3}/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/[-*_]{3,}/g, "")
-      .replace(/\|/g, " ")
-      .replace(/\n+/g, ". ")
-      .trim()
-      .slice(0, 4000);
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    // Split text into Persian/Arabic vs Latin segments for bilingual TTS
-    // Only switch voice for long English phrases (>15 chars with spaces).
-    // Short terms like GC, XRF, HPLC stay in the Persian segment.
-    const segments: { text: string; isLatin: boolean }[] = [];
-    const segmentRegex = /([A-Za-z][A-Za-z0-9\s.,;:!?\'\"/()\-/%@#+*=<>{}\[\]~^&$_\\|]*)|([^A-Za-z]+)/g;
-    let match: RegExpExecArray | null;
-    while ((match = segmentRegex.exec(clean)) !== null) {
-      const segText = match[0].trim();
-      if (!segText) continue;
-      const isLatin = Boolean(match[1]) && segText.length > 15 && segText.includes(" ");
-      if (segments.length > 0 && segments[segments.length - 1].isLatin === isLatin) {
-        segments[segments.length - 1].text += " " + segText;
-      } else {
-        segments.push({ text: segText, isLatin });
+    const chunks = splitIntoChunks(text);
+
+    // Kick off all chunk fetches in parallel — they'll generate concurrently
+    // on OpenAI's side, but we await them strictly in order for playback.
+    // Wrap each result in a Settled-style object so that an abort on one
+    // chunk never produces an unhandled rejection on the others (which
+    // Next.js dev overlay surfaces as a runtime error).
+    type Settled = { ok: true; url: string } | { ok: false; err: unknown };
+    const pending: Promise<Settled>[] = chunks.map((c) =>
+      _fetchChunk(c, controller.signal).then(
+        (url) => ({ ok: true as const, url }),
+        (err) => ({ ok: false as const, err }),
+      ),
+    );
+
+    const _isAbort = (e: unknown): boolean =>
+      (e instanceof DOMException &&
+        (e.name === "AbortError" || e.message === "cancelled")) ||
+      (e instanceof Error && e.name === "AbortError");
+
+    try {
+      for (let i = 0; i < pending.length; i++) {
+        if (cancelledRef.current) return;
+        const result = await pending[i];
+        if (cancelledRef.current) return;
+        if (!result.ok) {
+          if (_isAbort(result.err)) return; // silently — user toggled off
+          throw result.err;
+        }
+        await _playUrl(result.url);
       }
-    }
-    if (segments.length === 0) {
-      segments.push({ text: clean, isLatin: false });
-    }
-
-    const doSpeak = (voices: SpeechSynthesisVoice[]) => {
-      const faVoice =
-        voices.find((v) => v.lang.startsWith("fa")) ||
-        voices.find((v) => v.lang.startsWith("ar")) ||
-        null;
-      const enVoice =
-        voices.find((v) => v.lang.startsWith("en") && v.lang.includes("US")) ||
-        voices.find((v) => v.lang.startsWith("en")) ||
-        null;
-      const fallbackVoice = voices.find((v) => v.default) || voices[0] || null;
-
-      const utterances: SpeechSynthesisUtterance[] = segments.map((seg) => {
-        const utter = new SpeechSynthesisUtterance(seg.text);
-        if (seg.isLatin) {
-          const voice = enVoice || fallbackVoice;
-          if (voice) utter.voice = voice;
-          utter.lang = voice?.lang ?? "en-US";
-          utter.rate = 0.9;
-        } else {
-          const voice = faVoice || fallbackVoice;
-          if (voice) utter.voice = voice;
-          utter.lang = voice?.lang ?? "fa-IR";
-          utter.rate = 0.85;
-        }
-        utter.pitch = 1;
-        return utter;
-      });
-
-      if (utterances.length === 0) return;
-
-      utterances[0].onstart = () => setTtsNote("");
-
-      const lastUtter = utterances[utterances.length - 1];
-      lastUtter.onend = () => {
-        _clearTtsKeepAlive();
-        setSpeakingIndex(null);
-      };
-      lastUtter.onerror = (e) => {
-        _clearTtsKeepAlive();
-        setSpeakingIndex(null);
-        if (e.error !== "interrupted") {
-          setTtsNote(
-            "صدای فارسی روی سیستم شما نصب نیست. برای نصب: Settings → Time & Language → Speech → Add voices → Persian"
-          );
-          setTimeout(() => setTtsNote(""), 12000);
-        }
-      };
-
-      setSpeakingIndex(index);
-      for (const u of utterances) {
-        window.speechSynthesis.speak(u);
-      }
-
-      _ttsKeepAliveRef.current = setInterval(() => {
-        if (!window.speechSynthesis.speaking) {
-          _clearTtsKeepAlive();
-          setSpeakingIndex(null);
-          return;
-        }
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }, 10000);
-    };
-
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      doSpeak(voices);
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        doSpeak(window.speechSynthesis.getVoices());
-      };
-      setTimeout(() => {
-        const v = window.speechSynthesis.getVoices();
-        if (v.length > 0) doSpeak(v);
-      }, 600);
+      // Normal end — no abort needed, all fetches already completed.
+      _cleanup(false);
+      setSpeakingIndex(null);
+    } catch (err: unknown) {
+      if (_isAbort(err)) return;
+      _cleanup();
+      setSpeakingIndex(null);
+      const msg = err instanceof Error ? err.message : "خطا در تولید صدا.";
+      setTtsNote(`خطا در سرویس صدا: ${msg}`);
+      setTimeout(() => setTtsNote(""), 8000);
     }
   }
 

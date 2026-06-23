@@ -3,12 +3,21 @@ import json
 import time
 import logging
 import shutil
+import sys
 import tempfile
 import threading
-import fcntl
 from contextlib import contextmanager
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+
+# fcntl is Unix-only. On Windows we fall back to msvcrt for advisory file
+# locking so the backend can still run cross-platform.
+if sys.platform == "win32":
+    import msvcrt  # type: ignore[import-not-found]
+    fcntl = None  # type: ignore[assignment]
+else:
+    import fcntl  # type: ignore[import-not-found]
+    msvcrt = None  # type: ignore[assignment]
 
 import numpy as np
 from dotenv import load_dotenv
@@ -48,11 +57,32 @@ def _vector_store_write_lock():
 
     with _vector_store_lock:
         with lock_path.open("a+", encoding="utf-8") as lock_file:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            try:
-                yield
-            finally:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            if sys.platform == "win32":
+                # msvcrt.locking locks bytes starting at the current file
+                # offset. Seek to 0 and lock a single byte as a coarse advisory.
+                try:
+                    lock_file.seek(0)
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+                    acquired = True
+                except OSError:
+                    # Fall back to the in-process lock only if the OS lock
+                    # can't be acquired (e.g., file is on a network share).
+                    acquired = False
+                try:
+                    yield
+                finally:
+                    if acquired:
+                        try:
+                            lock_file.seek(0)
+                            msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+                        except OSError:
+                            pass
+            else:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def read_text_from_file(file_path: str) -> str:
