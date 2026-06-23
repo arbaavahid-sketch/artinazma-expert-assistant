@@ -46,7 +46,7 @@ def _strip_markdown(text: str) -> str:
 
 
 @router.post("/tts", tags=["Chat"], summary="Text-to-speech (OpenAI)")
-@limiter.limit("30/minute")
+@limiter.limit("200/minute")
 def tts(request: Request, body: TTSRequest):
     """تبدیل متن به گفتار با مدل gpt-4o-mini-tts.
 
