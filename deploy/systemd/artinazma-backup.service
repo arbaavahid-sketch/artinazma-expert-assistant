@@ -8,6 +8,7 @@ Wants=network-online.target
 Type=oneshot
 WorkingDirectory=/opt/artinazma
 ExecStart=/opt/artinazma/scripts/artinazma-backup-runner.sh
+ExecStartPost=/opt/artinazma/scripts/offsite-sync.sh
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
