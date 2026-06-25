@@ -16,6 +16,7 @@ from db_service import (
     get_all_questions,
     save_question_feedback,
     get_feedback_stats,
+    log_knowledge_action,
 )
 from knowledge_service import add_text_to_knowledge_base
 
@@ -154,6 +155,21 @@ def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
         category="expert-faq",
         file_name=f"expert_faq_question_{question_id}.txt",
     )
+    if result.get("success"):
+        log_knowledge_action(
+            action="expert_faq_add",
+            file_name=result.get("file_name", f"expert_faq_question_{question_id}.txt"),
+            title=result.get("title", f"FAQ تاییدشده #{question_id}"),
+            category=result.get("category", "expert-faq"),
+            detail=(
+                f"{result.get('chunks_added', 0)} chunk از پاسخ تاییدشده سوال #{question_id} اضافه شد"
+                + (
+                    f"؛ {result.get('removed_old_chunks', 0)} chunk قبلی جایگزین شد"
+                    if result.get("removed_old_chunks", 0)
+                    else ""
+                )
+            ),
+        )
     return result
 
 

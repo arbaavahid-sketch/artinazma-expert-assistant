@@ -772,6 +772,8 @@ def add_text_to_knowledge_base(
     category: str = "expert-faq",
     file_name: str = "expert_faq.txt",
 ) -> Dict[str, Any]:
+    import qdrant_service as _qs
+
     if not content.strip():
         return {
             "success": False,
@@ -779,28 +781,45 @@ def add_text_to_knowledge_base(
         }
 
     chunks = chunk_text(content)
-
-    store = load_vector_store()
-
-    added_chunks = 0
+    chunk_dicts = []
 
     for index, chunk in enumerate(chunks):
         embedding = create_embedding(chunk)
 
-        store.append(
-            {
-                "title": title,
-                "category": category,
-                "file_name": file_name,
-                "chunk_index": index,
-                "content": chunk,
-                "embedding": embedding,
-            }
-        )
+        if embedding is None:
+            continue
 
-        added_chunks += 1
+        chunk_dicts.append({
+            "title": title,
+            "category": category,
+            "file_name": file_name,
+            "chunk_index": index,
+            "content": chunk,
+            "embedding": embedding,
+        })
 
-    save_vector_store(store)
+    if not chunk_dicts:
+        return {
+            "success": False,
+            "message": "هیچ بردار قابل‌استفاده‌ای برای متن ساخته نشد.",
+            "file_name": file_name,
+        }
+
+    with _vector_store_write_lock():
+        store = load_vector_store()
+        new_store = [
+            item
+            for item in store
+            if item.get("file_name") != file_name
+        ]
+        removed_chunks = len(store) - len(new_store)
+
+        if _qs.is_enabled():
+            _qs.delete_by_file(file_name)
+            _qs.upsert_chunks(chunk_dicts)
+
+        new_store.extend(chunk_dicts)
+        _save_vector_store_unlocked(new_store)
 
     return {
         "success": True,
@@ -808,5 +827,8 @@ def add_text_to_knowledge_base(
         "title": title,
         "file_name": file_name,
         "category": category,
-        "chunks_added": added_chunks,
+        "chunks_added": len(chunk_dicts),
+        "replaced": removed_chunks > 0,
+        "removed_old_chunks": removed_chunks,
+        "backend": "qdrant" if _qs.is_enabled() else "json",
     }
