@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useToast } from "@/components/Toast";
 import Link from "next/link";
 import { adminUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   Clock3,
   FileQuestion,
@@ -46,36 +48,36 @@ type QuestionMetadata = {
 };
 
 const statusOptions = [
-  { value: "all", label: "همه وضعیت‌ها" },
-  { value: "pending", label: "در انتظار بررسی" },
-  { value: "approved", label: "تایید شده" },
-  { value: "needs_edit", label: "نیازمند اصلاح" },
-  { value: "rejected", label: "رد شده" },
+  { value: "all", label: "همه وضعیت‌ها", labelEn: "All statuses" },
+  { value: "pending", label: "در انتظار بررسی", labelEn: "Pending review" },
+  { value: "approved", label: "تایید شده", labelEn: "Approved" },
+  { value: "needs_edit", label: "نیازمند اصلاح", labelEn: "Needs edit" },
+  { value: "rejected", label: "رد شده", labelEn: "Rejected" },
 ];
 
 const domainOptions = [
-  { value: "all", label: "همه حوزه‌ها" },
-  { value: "catalyst", label: "کاتالیست" },
-  { value: "equipment", label: "تجهیزات" },
-  { value: "chromatography", label: "کروماتوگرافی" },
-  { value: "mercury-analysis", label: "آنالیز جیوه" },
-  { value: "sulfur-analysis", label: "آنالیز سولفور" },
-  { value: "troubleshooting", label: "عیب‌یابی" },
-  { value: "analysis", label: "آنالیز و تست" },
+  { value: "all", label: "همه حوزه‌ها", labelEn: "All domains" },
+  { value: "catalyst", label: "کاتالیست", labelEn: "Catalyst" },
+  { value: "equipment", label: "تجهیزات", labelEn: "Equipment" },
+  { value: "chromatography", label: "کروماتوگرافی", labelEn: "Chromatography" },
+  { value: "mercury-analysis", label: "آنالیز جیوه", labelEn: "Mercury analysis" },
+  { value: "sulfur-analysis", label: "آنالیز سولفور", labelEn: "Sulfur analysis" },
+  { value: "troubleshooting", label: "عیب‌یابی", labelEn: "Troubleshooting" },
+  { value: "analysis", label: "آنالیز و تست", labelEn: "Analysis and testing" },
 ];
 
 const ratingOptions = [
-  { value: "all", label: "همه امتیازها" },
-  { value: "up", label: "👍 پسندیده شده" },
-  { value: "down", label: "👎 نپسندیده شده" },
-  { value: "unrated", label: "بدون امتیاز" },
+  { value: "all", label: "همه امتیازها", labelEn: "All ratings" },
+  { value: "up", label: "پسندیده شده", labelEn: "Liked" },
+  { value: "down", label: "نپسندیده شده", labelEn: "Disliked" },
+  { value: "unrated", label: "بدون امتیاز", labelEn: "Unrated" },
 ];
 
-function getStatusLabel(status: string) {
-  if (status === "approved") return "تایید شده";
-  if (status === "needs_edit") return "نیازمند اصلاح";
-  if (status === "rejected") return "رد شده";
-  return "در انتظار بررسی";
+function getStatusLabel(status: string, locale: "fa" | "en" = "fa") {
+  if (status === "approved") return locale === "en" ? "Approved" : "تایید شده";
+  if (status === "needs_edit") return locale === "en" ? "Needs edit" : "نیازمند اصلاح";
+  if (status === "rejected") return locale === "en" ? "Rejected" : "رد شده";
+  return locale === "en" ? "Pending review" : "در انتظار بررسی";
 }
 
 function getStatusClass(status: string) {
@@ -87,16 +89,16 @@ function getStatusClass(status: string) {
   return "bg-slate-100 text-slate-700 border-slate-200";
 }
 
-function getDomainLabel(domain: string) {
+function getDomainLabel(domain: string, locale: "fa" | "en" = "fa") {
   const found = domainOptions.find((d) => d.value === domain);
-  if (found && found.value !== "all") return found.label;
-  return domain || "تشخیص خودکار";
+  if (found && found.value !== "all") return locale === "en" ? found.labelEn : found.label;
+  return domain || (locale === "en" ? "Auto detected" : "تشخیص خودکار");
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return "نامشخص";
+function formatDate(value?: string | null, locale: "fa" | "en" = "fa") {
+  if (!value) return locale === "en" ? "Unknown" : "نامشخص";
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(value));
@@ -116,6 +118,8 @@ function formatMs(value?: number) {
 }
 
 export default function QuestionsPage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const { toast } = useToast();
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -223,10 +227,15 @@ export default function QuestionsPage() {
           q.id === id ? { ...q, expert_status: status } : q,
         ),
       );
-      const label = status === "approved" ? "تایید شد" : status === "needs_edit" ? "نیازمند اصلاح ثبت شد" : "رد شد";
-      toast(`سوال #${id} — ${label}`, status === "approved" ? "success" : status === "rejected" ? "error" : "warning");
+      const label =
+        status === "approved"
+          ? (isEn ? "approved" : "تایید شد")
+          : status === "needs_edit"
+            ? (isEn ? "marked as needs edit" : "نیازمند اصلاح ثبت شد")
+            : (isEn ? "rejected" : "رد شد");
+      toast(isEn ? `Question #${id} ${label}` : `سوال #${id} — ${label}`, status === "approved" ? "success" : status === "rejected" ? "error" : "warning");
     } catch {
-      toast("خطا در ثبت وضعیت — دوباره تلاش کنید", "error");
+      toast(isEn ? "Could not save status. Please try again." : "خطا در ثبت وضعیت — دوباره تلاش کنید", "error");
     } finally {
       setReviewingId(null);
     }
@@ -284,8 +293,12 @@ export default function QuestionsPage() {
     setBulkProcessing(false);
     setSelectedIds(new Set());
     const label =
-      status === "approved" ? "تایید شد" : status === "needs_edit" ? "نیازمند اصلاح ثبت شد" : "رد شد";
-    toast(`${successCount} سوال — ${label}`, status === "approved" ? "success" : status === "rejected" ? "error" : "warning");
+      status === "approved"
+        ? (isEn ? "approved" : "تایید شد")
+        : status === "needs_edit"
+          ? (isEn ? "marked as needs edit" : "نیازمند اصلاح ثبت شد")
+          : (isEn ? "rejected" : "رد شد");
+    toast(isEn ? `${successCount} questions ${label}` : `${successCount} سوال — ${label}`, status === "approved" ? "success" : status === "rejected" ? "error" : "warning");
   }
 
   // Reset to page 1 whenever filter/search changes
@@ -315,23 +328,27 @@ export default function QuestionsPage() {
   ).length;
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
                   <FileQuestion size={17} />
-                  پایش کیفیت پاسخ‌های آرتین
+                  {isEn ? "Artin Answer Quality" : "پایش کیفیت پاسخ‌های آرتین"}
                 </div>
                 <h1 className="text-3xl font-black text-slate-900">
-                  سوالات کاربران
+                  {isEn ? "User Questions" : "سوالات کاربران"}
                 </h1>
                 <p className="mt-4 max-w-3xl leading-8 text-slate-600">
-                  سوالات ثبت‌شده کاربران، حوزه تشخیص داده‌شده، وضعیت بررسی
-                  کارشناسی و امتیاز کاربران در این بخش نمایش داده می‌شود.
+                  {isEn
+                    ? "Review registered user questions, detected domains, expert review status, and user ratings."
+                    : "سوالات ثبت‌شده کاربران، حوزه تشخیص داده‌شده، وضعیت بررسی کارشناسی و امتیاز کاربران در این بخش نمایش داده می‌شود."}
                 </p>
               </div>
 
@@ -342,7 +359,7 @@ export default function QuestionsPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
                 >
                   <Download size={18} />
-                  دانلود CSV
+                  {isEn ? "Download CSV" : "دانلود CSV"}
                 </button>
 
                 <button
@@ -354,7 +371,7 @@ export default function QuestionsPage() {
                     size={18}
                     className={loading ? "animate-spin" : ""}
                   />
-                  بروزرسانی
+                  {isEn ? "Refresh" : "بروزرسانی"}
                 </button>
               </div>
             </div>
@@ -364,7 +381,7 @@ export default function QuestionsPage() {
         {/* Stats */}
         <div className="mb-6 grid gap-4 md:grid-cols-5">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">کل سوالات</div>
+            <div className="text-sm font-bold text-slate-500">{isEn ? "Total questions" : "کل سوالات"}</div>
             <div className="mt-2 text-3xl font-black text-slate-900">
               {questions.length}
             </div>
@@ -372,7 +389,7 @@ export default function QuestionsPage() {
 
           <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
             <div className="text-sm font-bold text-slate-600">
-              در انتظار بررسی
+              {isEn ? "Pending review" : "در انتظار بررسی"}
             </div>
             <div className="mt-2 text-3xl font-black text-slate-700">
               {pendingCount}
@@ -380,7 +397,7 @@ export default function QuestionsPage() {
           </div>
 
           <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
-            <div className="text-sm font-bold text-emerald-700">تایید شده</div>
+            <div className="text-sm font-bold text-emerald-700">{isEn ? "Approved" : "تایید شده"}</div>
             <div className="mt-2 text-3xl font-black text-emerald-700">
               {approvedCount}
             </div>
@@ -388,7 +405,7 @@ export default function QuestionsPage() {
 
           <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
             <div className="text-sm font-bold text-amber-700">
-              نیازمند اصلاح
+              {isEn ? "Needs edit" : "نیازمند اصلاح"}
             </div>
             <div className="mt-2 text-3xl font-black text-amber-700">
               {needsEditCount}
@@ -396,7 +413,7 @@ export default function QuestionsPage() {
           </div>
 
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">امتیاز کاربران</div>
+            <div className="text-sm font-bold text-slate-500">{isEn ? "User ratings" : "امتیاز کاربران"}</div>
             <div className="mt-2 flex items-center gap-3">
               <span className="flex items-center gap-1 text-lg font-black text-emerald-600">
                 <ThumbsUp size={16} />
@@ -425,7 +442,7 @@ export default function QuestionsPage() {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
-                  placeholder="جستجو در متن سوال، حوزه، شناسه یا وضعیت..."
+                  placeholder={isEn ? "Search question text, domain, ID, or status..." : "جستجو در متن سوال، حوزه، شناسه یا وضعیت..."}
                 />
               </div>
 
@@ -438,7 +455,7 @@ export default function QuestionsPage() {
                 }`}
               >
                 <Filter size={17} />
-                فیلترها
+                {isEn ? "Filters" : "فیلترها"}
                 {activeFilterCount > 0 && (
                   <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[11px] font-black text-white">
                     {activeFilterCount}
@@ -452,7 +469,7 @@ export default function QuestionsPage() {
                   className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
                 >
                   <X size={16} />
-                  پاک‌کردن
+                  {isEn ? "Clear" : "پاک‌کردن"}
                 </button>
               )}
             </div>
@@ -463,7 +480,7 @@ export default function QuestionsPage() {
                 {/* Status */}
                 <div>
                   <label className="mb-1 block text-xs font-bold text-slate-500">
-                    وضعیت بررسی
+                    {isEn ? "Review status" : "وضعیت بررسی"}
                   </label>
                   <select
                     value={statusFilter}
@@ -472,7 +489,7 @@ export default function QuestionsPage() {
                   >
                     {statusOptions.map((item) => (
                       <option key={item.value} value={item.value}>
-                        {item.label}
+                        {isEn ? item.labelEn : item.label}
                       </option>
                     ))}
                   </select>
@@ -481,7 +498,7 @@ export default function QuestionsPage() {
                 {/* Domain */}
                 <div>
                   <label className="mb-1 block text-xs font-bold text-slate-500">
-                    حوزه تخصصی
+                    {isEn ? "Domain" : "حوزه تخصصی"}
                   </label>
                   <select
                     value={domainFilter}
@@ -490,7 +507,7 @@ export default function QuestionsPage() {
                   >
                     {domainOptions.map((item) => (
                       <option key={item.value} value={item.value}>
-                        {item.label}
+                        {isEn ? item.labelEn : item.label}
                       </option>
                     ))}
                   </select>
@@ -499,7 +516,7 @@ export default function QuestionsPage() {
                 {/* Rating */}
                 <div>
                   <label className="mb-1 block text-xs font-bold text-slate-500">
-                    امتیاز کاربر
+                    {isEn ? "User rating" : "امتیاز کاربر"}
                   </label>
                   <select
                     value={ratingFilter}
@@ -508,7 +525,7 @@ export default function QuestionsPage() {
                   >
                     {ratingOptions.map((item) => (
                       <option key={item.value} value={item.value}>
-                        {item.label}
+                        {isEn ? item.labelEn : item.label}
                       </option>
                     ))}
                   </select>
@@ -517,7 +534,7 @@ export default function QuestionsPage() {
                 {/* Date range */}
                 <div>
                   <label className="mb-1 block text-xs font-bold text-slate-500">
-                    بازه تاریخ
+                    {isEn ? "Date range" : "بازه تاریخ"}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -525,14 +542,14 @@ export default function QuestionsPage() {
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
                       className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
-                      title="از تاریخ"
+                      title={isEn ? "From date" : "از تاریخ"}
                     />
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
                       className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
-                      title="تا تاریخ"
+                      title={isEn ? "To date" : "تا تاریخ"}
                     />
                   </div>
                 </div>
@@ -548,21 +565,21 @@ export default function QuestionsPage() {
             <button
               onClick={toggleSelectAll}
               className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-purple-700 transition"
-              title={pagedQuestions.every((q) => selectedIds.has(q.id)) ? "لغو انتخاب همه" : "انتخاب همه صفحه"}
+              title={pagedQuestions.every((q) => selectedIds.has(q.id)) ? (isEn ? "Deselect all" : "لغو انتخاب همه") : (isEn ? "Select this page" : "انتخاب همه صفحه")}
             >
               {pagedQuestions.length > 0 && pagedQuestions.every((q) => selectedIds.has(q.id)) ? (
                 <CheckSquare2 size={18} className="text-purple-600" />
               ) : (
                 <Square size={18} />
               )}
-              {filteredQuestions.length} سوال
+              {isEn ? `${filteredQuestions.length} questions` : `${filteredQuestions.length} سوال`}
             </button>
 
             {/* Bulk action toolbar */}
             {selectedIds.size > 0 && (
               <div className="flex items-center gap-2 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2">
                 <span className="text-xs font-black text-purple-700">
-                  {selectedIds.size} انتخاب شده
+                  {isEn ? `${selectedIds.size} selected` : `${selectedIds.size} انتخاب شده`}
                 </span>
                 <span className="text-purple-200">|</span>
                 {bulkProcessing ? (
@@ -574,26 +591,26 @@ export default function QuestionsPage() {
                       className="flex items-center gap-1 rounded-xl bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200"
                     >
                       <CheckCircle2 size={13} />
-                      تایید
+                      {isEn ? "Approve" : "تایید"}
                     </button>
                     <button
                       onClick={() => bulkReview("needs_edit")}
                       className="flex items-center gap-1 rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-200"
                     >
                       <AlertCircle size={13} />
-                      اصلاح
+                      {isEn ? "Edit" : "اصلاح"}
                     </button>
                     <button
                       onClick={() => bulkReview("rejected")}
                       className="flex items-center gap-1 rounded-xl bg-red-100 px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-200"
                     >
                       <XCircle size={13} />
-                      رد
+                      {isEn ? "Reject" : "رد"}
                     </button>
                     <button
                       onClick={() => setSelectedIds(new Set())}
                       className="text-slate-400 hover:text-slate-600"
-                      title="لغو انتخاب"
+                      title={isEn ? "Clear selection" : "لغو انتخاب"}
                     >
                       <X size={15} />
                     </button>
@@ -605,7 +622,7 @@ export default function QuestionsPage() {
 
           {loading ? (
             <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
-              در حال دریافت سوالات...
+              {isEn ? "Loading questions..." : "در حال دریافت سوالات..."}
             </div>
           ) : filteredQuestions.length > 0 ? (
             <div className="space-y-3">
@@ -642,23 +659,23 @@ export default function QuestionsPage() {
                             item.expert_status,
                           )}`}
                         >
-                          {getStatusLabel(item.expert_status)}
+                          {getStatusLabel(item.expert_status, locale)}
                         </span>
 
                         <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
-                          {getDomainLabel(item.detected_domain)}
+                          {getDomainLabel(item.detected_domain, locale)}
                         </span>
 
                         {item.user_rating === "up" && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
                             <ThumbsUp size={12} />
-                            پسندیده شده
+                            {isEn ? "Liked" : "پسندیده شده"}
                           </span>
                         )}
                         {item.user_rating === "down" && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
                             <ThumbsDown size={12} />
-                            نپسندیده شده
+                            {isEn ? "Disliked" : "نپسندیده شده"}
                           </span>
                         )}
                       </div>
@@ -695,13 +712,13 @@ export default function QuestionsPage() {
                       <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
                         <span className="inline-flex items-center gap-1">
                           <Clock3 size={14} />
-                          {formatDate(item.created_at)}
+                          {formatDate(item.created_at, locale)}
                         </span>
 
                         {item.updated_at && (
                           <span className="inline-flex items-center gap-1">
                             <ShieldCheck size={14} />
-                            بروزرسانی: {formatDate(item.updated_at)}
+                            {isEn ? "Updated" : "بروزرسانی"}: {formatDate(item.updated_at, locale)}
                           </span>
                         )}
                       </div>
@@ -714,7 +731,7 @@ export default function QuestionsPage() {
                         <div className="flex gap-1.5" onClick={(e) => e.preventDefault()}>
                           <button
                             onClick={(e) => quickReview(e, item.id, "approved")}
-                            title="تایید"
+                            title={isEn ? "Approve" : "تایید"}
                             className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                               item.expert_status === "approved"
                                 ? "bg-emerald-100 text-emerald-700"
@@ -722,11 +739,11 @@ export default function QuestionsPage() {
                             }`}
                           >
                             <CheckCircle2 size={13} />
-                            تایید
+                            {isEn ? "Approve" : "تایید"}
                           </button>
                           <button
                             onClick={(e) => quickReview(e, item.id, "needs_edit")}
-                            title="نیازمند اصلاح"
+                            title={isEn ? "Needs edit" : "نیازمند اصلاح"}
                             className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                               item.expert_status === "needs_edit"
                                 ? "bg-amber-100 text-amber-700"
@@ -734,11 +751,11 @@ export default function QuestionsPage() {
                             }`}
                           >
                             <AlertCircle size={13} />
-                            اصلاح
+                            {isEn ? "Edit" : "اصلاح"}
                           </button>
                           <button
                             onClick={(e) => quickReview(e, item.id, "rejected")}
-                            title="رد"
+                            title={isEn ? "Reject" : "رد"}
                             className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                               item.expert_status === "rejected"
                                 ? "bg-red-100 text-red-600"
@@ -746,11 +763,13 @@ export default function QuestionsPage() {
                             }`}
                           >
                             <XCircle size={13} />
-                            رد
+                            {isEn ? "Reject" : "رد"}
                           </button>
                         </div>
                       )}
-                      <span className="text-xs text-purple-600 group-hover:underline">مشاهده جزئیات ←</span>
+                      <span className="text-xs text-purple-600 group-hover:underline">
+                        {isEn ? "View details ->" : "مشاهده جزئیات ←"}
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -758,7 +777,7 @@ export default function QuestionsPage() {
             </div>
           ) : (
             <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
-              سوالی با این فیلتر یا جستجو پیدا نشد.
+              {isEn ? "No questions matched this filter or search." : "سوالی با این فیلتر یا جستجو پیدا نشد."}
             </div>
           )}
 
@@ -815,7 +834,7 @@ export default function QuestionsPage() {
               </button>
 
               <span className="mr-2 text-sm text-slate-500">
-                صفحه {currentPage} از {totalPages}
+                {isEn ? `Page ${currentPage} of ${totalPages}` : `صفحه ${currentPage} از ${totalPages}`}
               </span>
             </div>
           )}

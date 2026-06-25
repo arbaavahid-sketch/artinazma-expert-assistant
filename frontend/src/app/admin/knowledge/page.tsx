@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { apiUrl, adminUrl } from "@/lib/api";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useI18n } from "@/lib/i18n";
 import { categoryOptions, getCategoryLabel } from "./knowledge-constants";
 import {
   AlertCircle,
@@ -102,17 +104,18 @@ type DriveSyncSummary = {
   has_errors?: boolean;
 };
 
-function formatDateTime(value?: string) {
+function formatDateTime(value?: string, locale = "fa") {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString("fa-IR");
+  return date.toLocaleString(locale === "en" ? "en-US" : "fa-IR");
 }
 
-function getEmbeddingLabel(status?: KnowledgeFileDetail["embedding_status"]) {
-  if (status === "partial") return "ناقص";
-  if (status === "missing") return "ندارد";
-  return "آماده";
+function getEmbeddingLabel(status?: KnowledgeFileDetail["embedding_status"], locale = "fa") {
+  const isEn = locale === "en";
+  if (status === "partial") return isEn ? "Partial" : "ناقص";
+  if (status === "missing") return isEn ? "Missing" : "ندارد";
+  return isEn ? "Ready" : "آماده";
 }
 
 function getEmbeddingBadgeClass(status?: KnowledgeFileDetail["embedding_status"]) {
@@ -144,10 +147,11 @@ function normalizeSearchScore(score: number) {
   return value > 1 ? value : value * 100;
 }
 
-function getDriveStatusLabel(status?: string, success?: boolean) {
-  if (status === "unchanged") return "بدون تغییر";
-  if (status === "added" || success) return "اضافه شد";
-  return "رد شد";
+function getDriveStatusLabel(status?: string, success?: boolean, locale = "fa") {
+  const isEn = locale === "en";
+  if (status === "unchanged") return isEn ? "Unchanged" : "بدون تغییر";
+  if (status === "added" || success) return isEn ? "Added" : "اضافه شد";
+  return isEn ? "Skipped" : "رد شد";
 }
 
 function buildDriveSyncSummary(results: DriveSyncResult[]): DriveSyncSummary {
@@ -175,6 +179,8 @@ function buildDriveSyncSummary(results: DriveSyncResult[]): DriveSyncSummary {
 }
 
 export default function KnowledgePage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const [knowledgeFile, setKnowledgeFile] = useState<File | null>(null);
   const [knowledgeTitle, setKnowledgeTitle] = useState("");
   const [knowledgeCategory, setKnowledgeCategory] = useState("general");
@@ -237,14 +243,14 @@ export default function KnowledgePage() {
       const data = await res.json();
       if (data.success) {
         setPreviewChunks((prev) => prev.map((c) => c.index === chunk.index ? { ...c, content: editingContent } : c));
-        setChunkSaveMsg("ذخیره شد ✓");
+        setChunkSaveMsg(isEn ? "Saved ✓" : "ذخیره شد ✓");
         setEditingChunkIndex(null);
         setTimeout(() => setChunkSaveMsg(""), 3000);
       } else {
-        setChunkSaveMsg("خطا در ذخیره");
+        setChunkSaveMsg(isEn ? "Save failed" : "خطا در ذخیره");
       }
     } catch {
-      setChunkSaveMsg("خطا در اتصال");
+      setChunkSaveMsg(isEn ? "Connection error" : "خطا در اتصال");
     } finally {
       setSavingChunk(false);
     }
@@ -281,7 +287,12 @@ export default function KnowledgePage() {
   }
 
   async function clearAuditLog() {
-    if (!await confirm({ message: "آیا مطمئنید که می‌خواهید همه لاگ‌ها را پاک کنید؟", variant: "warning", confirmLabel: "پاک کردن", title: "پاک کردن لاگ‌ها" })) return;
+    if (!await confirm({
+      message: isEn ? "Are you sure you want to clear all logs?" : "آیا مطمئنید که می‌خواهید همه لاگ‌ها را پاک کنید؟",
+      variant: "warning",
+      confirmLabel: isEn ? "Clear" : "پاک کردن",
+      title: isEn ? "Clear logs" : "پاک کردن لاگ‌ها",
+    })) return;
     await fetch(adminUrl("/knowledge/audit-log"), { method: "DELETE" });
     setAuditLog([]);
   }
@@ -357,7 +368,9 @@ export default function KnowledgePage() {
       if (data.success) {
         setKnowledgeResultType("success");
         setKnowledgeResult(
-          `فایل با موفقیت اضافه شد.\nنام فایل: ${data.file_name}\nتعداد بخش‌های اضافه‌شده: ${data.chunks_added}`,
+          isEn
+            ? `File added successfully.\nFile name: ${data.file_name}\nAdded chunks: ${data.chunks_added}`
+            : `فایل با موفقیت اضافه شد.\nنام فایل: ${data.file_name}\nتعداد بخش‌های اضافه‌شده: ${data.chunks_added}`,
         );
 
         setKnowledgeFile(null);
@@ -368,11 +381,11 @@ export default function KnowledgePage() {
         await loadKnowledgeStats();
       } else {
         setKnowledgeResultType("error");
-        setKnowledgeResult(data.message || "خطا در افزودن فایل به بانک دانش.");
+        setKnowledgeResult(data.message || (isEn ? "Failed to add the file to the knowledge base." : "خطا در افزودن فایل به بانک دانش."));
       }
     } catch {
       setKnowledgeResultType("error");
-      setKnowledgeResult("خطا در آپلود فایل دانش.");
+      setKnowledgeResult(isEn ? "Knowledge file upload failed." : "خطا در آپلود فایل دانش.");
     } finally {
       setLoading(false);
     }
@@ -406,10 +419,10 @@ export default function KnowledgePage() {
       setTestResults(results);
 
       if (results.length === 0) {
-        setTestMessage("نتیجه‌ای از بانک دانش پیدا نشد.");
+        setTestMessage(isEn ? "No results were found in the knowledge base." : "نتیجه‌ای از بانک دانش پیدا نشد.");
       }
     } catch {
-      setTestMessage("خطا در جست‌وجوی بانک دانش.");
+      setTestMessage(isEn ? "Knowledge base search failed." : "خطا در جست‌وجوی بانک دانش.");
     } finally {
       setTestingSearch(false);
     }
@@ -436,12 +449,14 @@ export default function KnowledgePage() {
       const data = await res.json();
 
       if (!data.success) {
-        setDriveSyncMessage(data.message || "خطا در همگام‌سازی Google Drive.");
+        setDriveSyncMessage(data.message || (isEn ? "Google Drive sync failed." : "خطا در همگام‌سازی Google Drive."));
         return;
       }
 
       setDriveSyncMessage(
-        `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`,
+        isEn
+          ? `Sync completed. Processed files: ${data.processed_files}, added files: ${data.added_files}, unchanged: ${data.unchanged_files || 0}, skipped files: ${data.skipped_files}, added text chunks: ${data.chunks_added}`
+          : `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`,
       );
 
       const results = data.results || [];
@@ -450,13 +465,20 @@ export default function KnowledgePage() {
 
       await loadKnowledgeStats();
     } catch {
-      setDriveSyncMessage("خطا در اتصال به سرور برای همگام‌سازی Google Drive.");
+      setDriveSyncMessage(isEn ? "Failed to connect to the server for Google Drive sync." : "خطا در اتصال به سرور برای همگام‌سازی Google Drive.");
     } finally {
       setSyncingDrive(false);
     }
   }
   async function deleteKnowledgeFile(fileName: string) {
-    if (!await confirm({ message: `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`, variant: "danger", confirmLabel: "حذف", title: "حذف فایل دانش" })) return;
+    if (!await confirm({
+      message: isEn
+        ? `Are you sure you want to delete "${fileName}" from the knowledge base?`
+        : `آیا مطمئن هستید که می‌خواهید فایل "${fileName}" از بانک دانش حذف شود؟`,
+      variant: "danger",
+      confirmLabel: isEn ? "Delete" : "حذف",
+      title: isEn ? "Delete knowledge file" : "حذف فایل دانش",
+    })) return;
 
     setDeletingFile(fileName);
     setKnowledgeResult("");
@@ -475,24 +497,33 @@ export default function KnowledgePage() {
       if (data.success) {
         setKnowledgeResultType("success");
         setKnowledgeResult(
-          `فایل از بانک دانش حذف شد.\nنام فایل: ${data.file_name}\nتعداد chunk حذف‌شده: ${data.removed_chunks}`,
+          isEn
+            ? `File removed from the knowledge base.\nFile name: ${data.file_name}\nRemoved chunks: ${data.removed_chunks}`
+            : `فایل از بانک دانش حذف شد.\nنام فایل: ${data.file_name}\nتعداد chunk حذف‌شده: ${data.removed_chunks}`,
         );
 
         await loadKnowledgeStats();
       } else {
         setKnowledgeResultType("error");
-        setKnowledgeResult(data.message || "خطا در حذف فایل از بانک دانش.");
+        setKnowledgeResult(data.message || (isEn ? "Failed to delete the file from the knowledge base." : "خطا در حذف فایل از بانک دانش."));
       }
     } catch {
       setKnowledgeResultType("error");
-      setKnowledgeResult("خطا در اتصال به سرور برای حذف فایل.");
+      setKnowledgeResult(isEn ? "Failed to connect to the server for file deletion." : "خطا در اتصال به سرور برای حذف فایل.");
     } finally {
       setDeletingFile("");
     }
   }
 
   async function reindexKnowledgeFile(fileName: string) {
-    if (!await confirm({ message: `فایل "${fileName}" دوباره از روی فایل منبع خوانده و embedding می‌شود. ادامه می‌دهید؟`, variant: "warning", confirmLabel: "بازسازی", title: "بازسازی فایل دانش" })) return;
+    if (!await confirm({
+      message: isEn
+        ? `"${fileName}" will be read from the source file and embedded again. Continue?`
+        : `فایل "${fileName}" دوباره از روی فایل منبع خوانده و embedding می‌شود. ادامه می‌دهید؟`,
+      variant: "warning",
+      confirmLabel: isEn ? "Rebuild" : "بازسازی",
+      title: isEn ? "Rebuild knowledge file" : "بازسازی فایل دانش",
+    })) return;
 
     setReindexingFile(fileName);
     setKnowledgeResult("");
@@ -508,16 +539,18 @@ export default function KnowledgePage() {
       if (data.success) {
         setKnowledgeResultType("success");
         setKnowledgeResult(
-          `فایل دانش بازسازی شد.\nنام فایل: ${data.file_name}\nchunk جدید: ${data.chunks_added}\nchunk قبلی حذف‌شده: ${data.removed_old_chunks || 0}`,
+          isEn
+            ? `Knowledge file rebuilt.\nFile name: ${data.file_name}\nNew chunks: ${data.chunks_added}\nRemoved old chunks: ${data.removed_old_chunks || 0}`
+            : `فایل دانش بازسازی شد.\nنام فایل: ${data.file_name}\nchunk جدید: ${data.chunks_added}\nchunk قبلی حذف‌شده: ${data.removed_old_chunks || 0}`,
         );
         await loadKnowledgeStats();
       } else {
         setKnowledgeResultType("error");
-        setKnowledgeResult(data.message || "بازسازی فایل دانش انجام نشد.");
+        setKnowledgeResult(data.message || (isEn ? "Knowledge file rebuild did not complete." : "بازسازی فایل دانش انجام نشد."));
       }
     } catch {
       setKnowledgeResultType("error");
-      setKnowledgeResult("خطا در اتصال به سرور برای بازسازی فایل دانش.");
+      setKnowledgeResult(isEn ? "Failed to connect to the server for rebuilding the knowledge file." : "خطا در اتصال به سرور برای بازسازی فایل دانش.");
     } finally {
       setReindexingFile("");
     }
@@ -585,25 +618,28 @@ export default function KnowledgePage() {
   }, [testResults]);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-3 py-6 sm:px-6 sm:py-8">
+    <section className="min-h-full bg-[#f7f7f8] px-3 py-6 sm:px-6 sm:py-8" dir={dir}>
       <div className="mx-auto max-w-7xl min-w-0">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
                   <Database size={17} />
-                  مدیریت بانک دانش آرتین
+                  {isEn ? "Artin Knowledge Management" : "مدیریت بانک دانش آرتین"}
                 </div>
 
                 <h1 className="text-3xl font-black text-slate-900">
-                  بانک دانش اختصاصی آرتین آزما
+                  {isEn ? "ArtinAzma Private Knowledge Base" : "بانک دانش اختصاصی آرتین آزما"}
                 </h1>
 
                 <p className="mt-4 max-w-4xl leading-8 text-slate-600">
-                  فایل‌های آموزشی، کاتالوگ‌ها، استانداردها، اپلیکیشن‌نوت‌ها و
-                  FAQهای تاییدشده را وارد بانک دانش کنید و کیفیت جست‌وجوی آرتین
-                  را بررسی کنید.
+                  {isEn
+                    ? "Upload approved training files, catalogs, standards, application notes, and FAQs, then review Artin's search quality."
+                    : "فایل‌های آموزشی، کاتالوگ‌ها، استانداردها، اپلیکیشن‌نوت‌ها و FAQهای تاییدشده را وارد بانک دانش کنید و کیفیت جست‌وجوی آرتین را بررسی کنید."}
                 </p>
               </div>
 
@@ -614,11 +650,11 @@ export default function KnowledgePage() {
                   disabled={syncingDrive}
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none disabled:opacity-50"
                 >
-                  <option value={10}>۱۰ فایل</option>
-                  <option value={20}>۲۰ فایل</option>
-                  <option value={50}>۵۰ فایل</option>
-                  <option value={100}>۱۰۰ فایل</option>
-                  <option value={200}>۲۰۰ فایل</option>
+                  <option value={10}>{isEn ? "10 files" : "۱۰ فایل"}</option>
+                  <option value={20}>{isEn ? "20 files" : "۲۰ فایل"}</option>
+                  <option value={50}>{isEn ? "50 files" : "۵۰ فایل"}</option>
+                  <option value={100}>{isEn ? "100 files" : "۱۰۰ فایل"}</option>
+                  <option value={200}>{isEn ? "200 files" : "۲۰۰ فایل"}</option>
                 </select>
 
                 <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
@@ -628,7 +664,7 @@ export default function KnowledgePage() {
                     disabled={syncingDrive}
                     onChange={(e) => setForceDriveResync(e.target.checked)}
                   />
-                  بازسازی کامل
+                  {isEn ? "Full rebuild" : "بازسازی کامل"}
                 </label>
 
                 <button
@@ -641,8 +677,8 @@ export default function KnowledgePage() {
                     className={syncingDrive ? "animate-spin" : ""}
                   />
                   {syncingDrive
-                    ? "در حال همگام‌سازی..."
-                    : "همگام‌سازی Google Drive"}
+                    ? (isEn ? "Syncing..." : "در حال همگام‌سازی...")
+                    : (isEn ? "Sync Google Drive" : "همگام‌سازی Google Drive")}
                 </button>
 
                 <button
@@ -656,7 +692,7 @@ export default function KnowledgePage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
                 >
                   <Download size={18} />
-                  دانلود CSV
+                  {isEn ? "Download CSV" : "دانلود CSV"}
                 </button>
 
                 <button
@@ -664,7 +700,7 @@ export default function KnowledgePage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
                 >
                   <RefreshCw size={18} />
-                  بروزرسانی وضعیت
+                  {isEn ? "Refresh status" : "بروزرسانی وضعیت"}
                 </button>
               </div>
             </div>
@@ -674,7 +710,7 @@ export default function KnowledgePage() {
         <div className="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-bold text-slate-500">
-              تعداد فایل‌ها
+              {isEn ? "File count" : "تعداد فایل‌ها"}
             </div>
             <div className="mt-2 text-3xl font-black text-slate-900">
               {stats?.total_files || 0}
@@ -683,7 +719,7 @@ export default function KnowledgePage() {
 
           <div className="rounded-[28px] border border-purple-100 bg-purple-50 p-5">
             <div className="text-sm font-bold text-purple-700">
-              تعداد بخش‌های متنی
+              {isEn ? "Text chunks" : "تعداد بخش‌های متنی"}
             </div>
             <div className="mt-2 text-3xl font-black text-purple-700">
               {stats?.total_chunks || 0}
@@ -691,14 +727,14 @@ export default function KnowledgePage() {
           </div>
 
           <div className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
-            <div className="text-sm font-bold text-blue-700">دسته‌بندی‌ها</div>
+            <div className="text-sm font-bold text-blue-700">{isEn ? "Categories" : "دسته‌بندی‌ها"}</div>
             <div className="mt-2 text-3xl font-black text-blue-700">
               {stats?.categories?.length || 0}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
-            <div className="text-sm font-bold text-emerald-700">موتور ذخیره</div>
+            <div className="text-sm font-bold text-emerald-700">{isEn ? "Storage engine" : "موتور ذخیره"}</div>
             <div className="mt-2 truncate text-2xl font-black text-emerald-700">
               {stats?.backend || "json"}
             </div>
@@ -710,17 +746,17 @@ export default function KnowledgePage() {
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-bold text-slate-500">Vector store</div>
             <div className="mt-2 text-2xl font-black text-slate-900">
-              {stats?.vector_store_exists ? `${stats.vector_store_size_mb ?? 0} MB` : "ندارد"}
+              {stats?.vector_store_exists ? `${stats.vector_store_size_mb ?? 0} MB` : (isEn ? "None" : "ندارد")}
             </div>
             <div className="mt-2 text-xs font-bold text-slate-500">
-              {formatDateTime(stats?.vector_store_updated_at)}
+              {formatDateTime(stats?.vector_store_updated_at, locale)}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
-            <div className="text-sm font-bold text-amber-700">آخرین sync</div>
+            <div className="text-sm font-bold text-amber-700">{isEn ? "Last sync" : "آخرین sync"}</div>
             <div className="mt-2 truncate text-sm font-black leading-7 text-amber-800">
-              {formatDateTime(stats?.last_sync)}
+              {formatDateTime(stats?.last_sync, locale)}
             </div>
             <div className="mt-1 truncate text-xs font-bold text-amber-700">
               {stats?.last_sync_result || "-"}
@@ -731,12 +767,14 @@ export default function KnowledgePage() {
         {/* Category coverage breakdown */}
         {stats?.category_breakdown && stats.category_breakdown.length > 0 && (
           <div className="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 text-sm font-bold text-slate-700">پوشش دانش به تفکیک حوزه</div>
+            <div className="mb-4 text-sm font-bold text-slate-700">
+              {isEn ? "Knowledge Coverage by Domain" : "پوشش دانش به تفکیک حوزه"}
+            </div>
             <div className="space-y-2.5">
               {stats.category_breakdown.map((item) => (
                 <div key={item.category}>
                   <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700">{getCategoryLabel(item.category)}</span>
+                    <span className="font-bold text-slate-700">{getCategoryLabel(item.category, locale)}</span>
                     <span className="text-slate-500">{item.chunks} chunk — {item.percent}%</span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -777,10 +815,12 @@ export default function KnowledgePage() {
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-slate-900">
-                  گزارش همگام‌سازی Google Drive
+                  {isEn ? "Google Drive Sync Report" : "گزارش همگام‌سازی Google Drive"}
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-slate-500">
-                  فایل‌های اضافه‌شده، بدون تغییر و ردشده در آخرین همگام‌سازی.
+                  {isEn
+                    ? "Added, unchanged, and skipped files from the latest sync."
+                    : "فایل‌های اضافه‌شده، بدون تغییر و ردشده در آخرین همگام‌سازی."}
                 </p>
               </div>
 
@@ -792,16 +832,16 @@ export default function KnowledgePage() {
                 }}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-white"
               >
-                پاک کردن گزارش
+                {isEn ? "Clear report" : "پاک کردن گزارش"}
               </button>
             </div>
 
             <div className="mb-5 grid gap-3 md:grid-cols-4">
               {[
-                ["all", "کل", driveSyncResults.length, "bg-slate-50 text-slate-700 border-slate-200"],
-                ["added", "اضافه‌شده", driveStatusCounts.added || 0, "bg-emerald-50 text-emerald-700 border-emerald-100"],
-                ["unchanged", "بدون تغییر", driveStatusCounts.unchanged || 0, "bg-amber-50 text-amber-700 border-amber-100"],
-                ["skipped", "ردشده/خطا", driveStatusCounts.skipped || 0, "bg-red-50 text-red-700 border-red-100"],
+                ["all", isEn ? "All" : "کل", driveSyncResults.length, "bg-slate-50 text-slate-700 border-slate-200"],
+                ["added", isEn ? "Added" : "اضافه‌شده", driveStatusCounts.added || 0, "bg-emerald-50 text-emerald-700 border-emerald-100"],
+                ["unchanged", isEn ? "Unchanged" : "بدون تغییر", driveStatusCounts.unchanged || 0, "bg-amber-50 text-amber-700 border-amber-100"],
+                ["skipped", isEn ? "Skipped/errors" : "ردشده/خطا", driveStatusCounts.skipped || 0, "bg-red-50 text-red-700 border-red-100"],
               ].map(([status, label, count, classes]) => (
                 <button
                   key={String(status)}
@@ -820,7 +860,7 @@ export default function KnowledgePage() {
               <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-black text-red-700">
                   <AlertCircle size={16} />
-                  دلایل رد شدن یا خطا
+                  {isEn ? "Skip or error reasons" : "دلایل رد شدن یا خطا"}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {skippedReasons.slice(0, 8).map(([reason, count]) => (
@@ -839,11 +879,11 @@ export default function KnowledgePage() {
               <table className="w-full border-collapse text-right text-sm">
                 <thead className="sticky top-0 bg-slate-50">
                   <tr className="border-b border-slate-200 text-slate-600">
-                    <th className="p-4 font-bold">وضعیت</th>
-                    <th className="p-4 font-bold">فایل</th>
-                    <th className="p-4 font-bold">دسته‌بندی</th>
+                    <th className="p-4 font-bold">{isEn ? "Status" : "وضعیت"}</th>
+                    <th className="p-4 font-bold">{isEn ? "File" : "فایل"}</th>
+                    <th className="p-4 font-bold">{isEn ? "Category" : "دسته‌بندی"}</th>
                     <th className="p-4 font-bold">Chunk</th>
-                    <th className="p-4 font-bold">توضیح</th>
+                    <th className="p-4 font-bold">{isEn ? "Note" : "توضیح"}</th>
                   </tr>
                 </thead>
 
@@ -863,13 +903,13 @@ export default function KnowledgePage() {
                                 : "bg-red-50 text-red-700"
                           }`}
                         >
-                          {getDriveStatusLabel(item.status, item.success)}
+                          {getDriveStatusLabel(item.status, item.success, locale)}
                         </span>
                       </td>
 
                       <td className="p-4 align-top">
                         <div className="font-bold text-slate-900">
-                          {item.title || "بدون عنوان"}
+                          {item.title || (isEn ? "Untitled" : "بدون عنوان")}
                         </div>
 
                         {item.file_name && (
@@ -881,7 +921,7 @@ export default function KnowledgePage() {
 
                       <td className="p-4 align-top">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                          {getCategoryLabel(item.category || "general")}
+                          {getCategoryLabel(item.category || "general", locale)}
                         </span>
                       </td>
 
@@ -915,16 +955,16 @@ export default function KnowledgePage() {
 
                 <div>
                   <h2 className="text-xl font-black text-slate-900">
-                    افزودن فایل
+                    {isEn ? "Add File" : "افزودن فایل"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    PDF، TXT یا MD را وارد بانک دانش کنید.
+                    {isEn ? "Import PDF, TXT, or MD files into the knowledge base." : "PDF، TXT یا MD را وارد بانک دانش کنید."}
                   </p>
                 </div>
               </div>
 
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                انتخاب فایل
+                {isEn ? "Choose file" : "انتخاب فایل"}
               </label>
 
               <input
@@ -944,7 +984,7 @@ export default function KnowledgePage() {
                       </p>
                     </div>
                     <div className="shrink-0 rounded-xl bg-purple-100 px-3 py-1 text-center">
-                      <p className="text-xs font-bold text-purple-700">تخمین chunk</p>
+                      <p className="text-xs font-bold text-purple-700">{isEn ? "Estimated chunks" : "تخمین chunk"}</p>
                       <p className="text-lg font-black text-purple-800">
                         {Math.max(1, Math.ceil(
                           Math.max(0, knowledgeFile.size - 200) / (1200 - 200)
@@ -953,25 +993,27 @@ export default function KnowledgePage() {
                     </div>
                   </div>
                   <p className="mt-2 text-[11px] text-purple-600">
-                    * بر اساس اندازه فایل — تعداد واقعی پس از متن‌کشی تعیین می‌شود
+                    {isEn
+                      ? "* Based on file size; the actual count is determined after text extraction."
+                      : "* بر اساس اندازه فایل — تعداد واقعی پس از متن‌کشی تعیین می‌شود"}
                   </p>
                 </div>
               )}
 
               <label className="mb-2 mt-4 block text-sm font-bold text-slate-700">
-                عنوان فایل
+                {isEn ? "File title" : "عنوان فایل"}
               </label>
 
               <input
                 type="text"
-                placeholder="مثلاً: استاندارد ASTM D1151"
+                placeholder={isEn ? "Example: ASTM D1151 standard" : "مثلاً: استاندارد ASTM D1151"}
                 value={knowledgeTitle}
                 onChange={(e) => setKnowledgeTitle(e.target.value)}
                 className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
               />
 
               <label className="mb-2 mt-4 block text-sm font-bold text-slate-700">
-                دسته‌بندی
+                {isEn ? "Category" : "دسته‌بندی"}
               </label>
 
               <select
@@ -986,14 +1028,16 @@ export default function KnowledgePage() {
                   .filter((item) => item.value !== "expert-faq")
                   .map((item) => (
                     <option key={item.value} value={item.value}>
-                      {item.label}
+                      {isEn ? item.labelEn : item.label}
                     </option>
                   ))}
               </select>
 
               {categorySuggested && (
                 <p className="mt-2 text-xs text-purple-600">
-                  ✨ دسته‌بندی بر اساس نام فایل پیشنهاد شد — در صورت نیاز تغییر دهید.
+                  {isEn
+                    ? "Category suggested from the file name. Change it if needed."
+                    : "✨ دسته‌بندی بر اساس نام فایل پیشنهاد شد — در صورت نیاز تغییر دهید."}
                 </p>
               )}
 
@@ -1006,8 +1050,9 @@ export default function KnowledgePage() {
                 />
 
                 <span>
-                  اگر فایل تکراری بود، نسخه قبلی حذف شود و فایل جدید جایگزین
-                  شود.
+                  {isEn
+                    ? "If the file already exists, remove the previous version and replace it with the new file."
+                    : "اگر فایل تکراری بود، نسخه قبلی حذف شود و فایل جدید جایگزین شود."}
                 </span>
               </label>
 
@@ -1017,7 +1062,7 @@ export default function KnowledgePage() {
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-4 font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
               >
                 <UploadCloud size={18} />
-                {loading ? "در حال افزودن..." : "افزودن به بانک دانش"}
+                {loading ? (isEn ? "Adding..." : "در حال افزودن...") : (isEn ? "Add to knowledge base" : "افزودن به بانک دانش")}
               </button>
             </div>
 
@@ -1028,10 +1073,10 @@ export default function KnowledgePage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-900">
-                    جست‌وجوی معنایی (Semantic Search)
+                    {isEn ? "Semantic Search" : "جست‌وجوی معنایی (Semantic Search)"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    با AI vector search در بانک دانش جست‌وجو کن.
+                    {isEn ? "Search the knowledge base with AI vector search." : "با AI vector search در بانک دانش جست‌وجو کن."}
                   </p>
                 </div>
               </div>
@@ -1041,28 +1086,28 @@ export default function KnowledgePage() {
                 onChange={(e) => setTestQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) testKnowledgeSearch(); }}
                 className="h-24 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm leading-7 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="مثلاً: ASTM D 1151 یا آنالیز سولفور در LPG"
+                placeholder={isEn ? "Example: ASTM D 1151 or sulfur analysis in LPG" : "مثلاً: ASTM D 1151 یا آنالیز سولفور در LPG"}
               />
 
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                    فیلتر دسته‌بندی
+                    {isEn ? "Category filter" : "فیلتر دسته‌بندی"}
                   </label>
                   <select
                     value={searchCategory}
                     onChange={(e) => setSearchCategory(e.target.value)}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none transition focus:border-blue-500"
                   >
-                    <option value="all">همه دسته‌ها</option>
+                    <option value="all">{isEn ? "All categories" : "همه دسته‌ها"}</option>
                     {(stats?.categories || []).map((cat) => (
-                      <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
+                      <option key={cat} value={cat}>{getCategoryLabel(cat, locale)}</option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                    تعداد نتایج: <span className="text-blue-700">{searchTopK}</span>
+                    {isEn ? "Results" : "تعداد نتایج"}: <span className="text-blue-700">{searchTopK}</span>
                   </label>
                   <input
                     type="range" min={5} max={25} step={5}
@@ -1079,12 +1124,14 @@ export default function KnowledgePage() {
                 className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3.5 font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
               >
                 {testingSearch ? (
-                  <><RefreshCw size={16} className="animate-spin" /> در حال جست‌وجو...</>
+                  <><RefreshCw size={16} className="animate-spin" /> {isEn ? "Searching..." : "در حال جست‌وجو..."}</>
                 ) : (
-                  <><Search size={16} /> جست‌وجوی معنایی</>
+                  <><Search size={16} /> {isEn ? "Semantic search" : "جست‌وجوی معنایی"}</>
                 )}
               </button>
-              <p className="mt-2 text-center text-xs text-slate-400">Ctrl+Enter برای جست‌وجوی سریع</p>
+              <p className="mt-2 text-center text-xs text-slate-400">
+                {isEn ? "Ctrl+Enter for quick search" : "Ctrl+Enter برای جست‌وجوی سریع"}
+              </p>
 
               {testMessage && (
                 <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
@@ -1100,17 +1147,19 @@ export default function KnowledgePage() {
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-black text-slate-900">
-                      نتایج جست‌وجوی معنایی
+                      {isEn ? "Semantic Search Results" : "نتایج جست‌وجوی معنایی"}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      {testResults.length} chunk از {groupedTestResults.length} فایل — مرتب‌شده بر اساس شباهت معنایی
+                      {isEn
+                        ? `${testResults.length} chunks from ${groupedTestResults.length} files, sorted by semantic similarity`
+                        : `${testResults.length} chunk از ${groupedTestResults.length} فایل — مرتب‌شده بر اساس شباهت معنایی`}
                     </p>
                   </div>
                   <button
                     onClick={() => { setTestResults([]); setTestMessage(""); }}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
                   >
-                    پاک کردن
+                    {isEn ? "Clear" : "پاک کردن"}
                   </button>
                 </div>
 
@@ -1135,22 +1184,26 @@ export default function KnowledgePage() {
                                 {gi + 1}
                               </span>
                               <span className="text-base font-black text-slate-900 leading-snug">
-                                {group.title || "بدون عنوان"}
+                                {group.title || (isEn ? "Untitled" : "بدون عنوان")}
                               </span>
                             </div>
                             <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
                               <span className="break-all">{group.file_name}</span>
                               <span className="rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-700">
-                                {getCategoryLabel(group.category)}
+                                {getCategoryLabel(group.category, locale)}
                               </span>
-                              <span className="font-bold text-slate-600">{group.chunks.length} chunk</span>
+                              <span className="font-bold text-slate-600">
+                                {isEn ? `${group.chunks.length} chunks` : `${group.chunks.length} chunk`}
+                              </span>
                             </div>
                           </div>
                           {/* Score badge */}
                           <div className="shrink-0 flex flex-col items-end gap-1">
-                            <span className="text-xs font-bold text-slate-500">شباهت معنایی</span>
+                            <span className="text-xs font-bold text-slate-500">
+                              {isEn ? "Semantic similarity" : "شباهت معنایی"}
+                            </span>
                             <span className="text-lg font-black text-slate-800">
-                              {normalizedBestScore.toFixed(1)}٪
+                              {normalizedBestScore.toFixed(1)}{isEn ? "%" : "٪"}
                             </span>
                           </div>
                         </div>
@@ -1169,9 +1222,11 @@ export default function KnowledgePage() {
                               className="rounded-2xl bg-white p-4 text-sm leading-7 text-slate-700"
                             >
                               <div className="mb-2 flex items-center justify-between gap-2">
-                                <span className="text-xs font-bold text-slate-400">بخش {index + 1}</span>
+                                <span className="text-xs font-bold text-slate-400">
+                                  {isEn ? `Section ${index + 1}` : `بخش ${index + 1}`}
+                                </span>
                                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
-                                  {normalizeSearchScore(Number(chunk.score)).toFixed(1)}٪
+                                  {normalizeSearchScore(Number(chunk.score)).toFixed(1)}{isEn ? "%" : "٪"}
                                 </span>
                               </div>
                               {(chunk.score_reason || chunk.score_breakdown) && (
@@ -1191,7 +1246,9 @@ export default function KnowledgePage() {
                           ))}
                           {group.chunks.length > 3 && (
                             <div className="text-center text-xs text-slate-400">
-                              +{group.chunks.length - 3} chunk دیگر در این فایل
+                              {isEn
+                                ? `+${group.chunks.length - 3} more chunks in this file`
+                                : `+${group.chunks.length - 3} chunk دیگر در این فایل`}
                             </div>
                           )}
                         </div>
@@ -1207,23 +1264,26 @@ export default function KnowledgePage() {
                 <div>
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700">
                     <FolderOpen size={17} />
-                    فایل‌های ثبت‌شده
+                    {isEn ? "Registered Files" : "فایل‌های ثبت‌شده"}
                   </div>
 
                   <h2 className="text-xl font-black text-slate-900">
-                    فایل‌های بانک دانش
+                    {isEn ? "Knowledge Base Files" : "فایل‌های بانک دانش"}
                   </h2>
 
                   <p className="mt-2 text-sm leading-7 text-slate-600">
-                    فایل‌های واردشده، دسته‌بندی و تعداد chunkهای هر فایل در این
-                    بخش نمایش داده می‌شود.
+                    {isEn
+                      ? "Imported files, categories, and chunk counts are shown here."
+                      : "فایل‌های واردشده، دسته‌بندی و تعداد chunkهای هر فایل در این بخش نمایش داده می‌شود."}
                   </p>
                 </div>
 
                 <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  نمایش:{" "}
-                  <span className="font-bold">{filteredFiles.length}</span> از{" "}
-                  <span className="font-bold">{fileDetails.length}</span> فایل
+                  {isEn ? "Showing" : "نمایش"}:{" "}
+                  <span className="font-bold">{filteredFiles.length}</span>{" "}
+                  {isEn ? "of" : "از"}{" "}
+                  <span className="font-bold">{fileDetails.length}</span>{" "}
+                  {isEn ? "files" : "فایل"}
                 </div>
               </div>
 
@@ -1236,7 +1296,7 @@ export default function KnowledgePage() {
                   <input
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
-                    placeholder="جست‌وجو بر اساس نام فایل، عنوان یا دسته‌بندی..."
+                    placeholder={isEn ? "Search by file name, title, or category..." : "جست‌وجو بر اساس نام فایل، عنوان یا دسته‌بندی..."}
                     className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 text-sm outline-none transition focus:border-purple-600"
                   />
                 </div>
@@ -1246,10 +1306,10 @@ export default function KnowledgePage() {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
                 >
-                  <option value="all">همه دسته‌بندی‌ها</option>
+                  <option value="all">{isEn ? "All categories" : "همه دسته‌بندی‌ها"}</option>
                   {(stats?.categories || []).map((category) => (
                     <option key={category} value={category}>
-                      {getCategoryLabel(category)}
+                      {getCategoryLabel(category, locale)}
                     </option>
                   ))}
                 </select>
@@ -1267,7 +1327,7 @@ export default function KnowledgePage() {
                           : "bg-slate-50 text-slate-600 hover:bg-purple-50 hover:text-purple-700"
                       }`}
                     >
-                      {getCategoryLabel(category)}
+                      {getCategoryLabel(category, locale)}
                     </button>
                   ))}
                 </div>
@@ -1302,14 +1362,14 @@ export default function KnowledgePage() {
 
                           <div className="mt-4 grid gap-3 text-xs sm:grid-cols-3">
                             <div>
-                              <div className="mb-1 font-bold text-slate-400">دسته‌بندی</div>
+                              <div className="mb-1 font-bold text-slate-400">{isEn ? "Category" : "دسته‌بندی"}</div>
                               <div className="flex flex-wrap gap-2">
                                 {categories.map((category) => (
                                   <span
                                     key={category}
                                     className="rounded-full bg-blue-50 px-3 py-1 font-bold text-blue-700"
                                   >
-                                    {getCategoryLabel(category)}
+                                    {getCategoryLabel(category, locale)}
                                   </span>
                                 ))}
                               </div>
@@ -1326,7 +1386,7 @@ export default function KnowledgePage() {
                               <div className="mb-1 font-bold text-slate-400">Embedding</div>
                               <div className="space-y-1.5">
                                 <span className={`rounded-full px-3 py-1 font-black ${getEmbeddingBadgeClass(item.embedding_status)}`}>
-                                  {getEmbeddingLabel(item.embedding_status)}
+                                  {getEmbeddingLabel(item.embedding_status, locale)}
                                 </span>
                                 <div className="font-bold text-slate-500">
                                   {item.embedded_chunks ?? item.chunks} / {item.chunks}
@@ -1341,19 +1401,25 @@ export default function KnowledgePage() {
                               className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
                             >
                               <Eye size={15} />
-                              پیش‌نمایش
+                              {isEn ? "Preview" : "پیش‌نمایش"}
                             </button>
                             <button
                               onClick={() => reindexKnowledgeFile(item.file_name)}
                               disabled={!item.source_exists || reindexingFile === item.file_name}
                               className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
-                              title={!item.source_exists ? "فایل منبع در knowledge_files موجود نیست" : "بازسازی chunk و embedding"}
+                              title={
+                                !item.source_exists
+                                  ? (isEn ? "Source file is missing from knowledge_files" : "فایل منبع در knowledge_files موجود نیست")
+                                  : (isEn ? "Rebuild chunks and embeddings" : "بازسازی chunk و embedding")
+                              }
                             >
                               <RefreshCw
                                 size={15}
                                 className={reindexingFile === item.file_name ? "animate-spin" : ""}
                               />
-                              {reindexingFile === item.file_name ? "در حال بازسازی..." : "بازسازی"}
+                              {reindexingFile === item.file_name
+                                ? (isEn ? "Rebuilding..." : "در حال بازسازی...")
+                                : (isEn ? "Rebuild" : "بازسازی")}
                             </button>
                             <button
                               onClick={() => deleteKnowledgeFile(item.file_name)}
@@ -1362,8 +1428,8 @@ export default function KnowledgePage() {
                             >
                               <Trash2 size={15} />
                               {deletingFile === item.file_name
-                                ? "در حال حذف..."
-                                : "حذف"}
+                                ? (isEn ? "Deleting..." : "در حال حذف...")
+                                : (isEn ? "Delete" : "حذف")}
                             </button>
                           </div>
                         </div>
@@ -1375,12 +1441,12 @@ export default function KnowledgePage() {
                   <table className="min-w-[980px] w-full border-collapse text-right text-sm">
                     <thead className="sticky top-0 bg-slate-50">
                       <tr className="border-b border-slate-200 text-slate-600">
-                        <th className="p-4 font-bold">فایل</th>
-                        <th className="p-4 font-bold">دسته‌بندی</th>
+                        <th className="p-4 font-bold">{isEn ? "File" : "فایل"}</th>
+                        <th className="p-4 font-bold">{isEn ? "Category" : "دسته‌بندی"}</th>
                         <th className="p-4 font-bold">Chunk</th>
                         <th className="p-4 font-bold">Embedding</th>
-                        <th className="p-4 font-bold">فایل منبع</th>
-                        <th className="p-4 font-bold">عملیات</th>
+                        <th className="p-4 font-bold">{isEn ? "Source file" : "فایل منبع"}</th>
+                        <th className="p-4 font-bold">{isEn ? "Actions" : "عملیات"}</th>
                       </tr>
                     </thead>
 
@@ -1419,7 +1485,7 @@ export default function KnowledgePage() {
                                     key={category}
                                     className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700"
                                   >
-                                    {getCategoryLabel(category)}
+                                    {getCategoryLabel(category, locale)}
                                   </span>
                                 ))}
                               </div>
@@ -1434,7 +1500,7 @@ export default function KnowledgePage() {
                             <td className="p-4 align-top">
                               <div className="space-y-1.5">
                                 <span className={`rounded-full px-3 py-1 text-xs font-black ${getEmbeddingBadgeClass(item.embedding_status)}`}>
-                                  {getEmbeddingLabel(item.embedding_status)}
+                                  {getEmbeddingLabel(item.embedding_status, locale)}
                                 </span>
                                 <div className="text-xs font-bold text-slate-500">
                                   {item.embedded_chunks ?? item.chunks} / {item.chunks}
@@ -1451,11 +1517,11 @@ export default function KnowledgePage() {
                                       : "bg-slate-100 text-slate-500"
                                   }`}
                                 >
-                                  {item.source_exists ? "موجود" : "فقط vector"}
+                                  {item.source_exists ? (isEn ? "Exists" : "موجود") : (isEn ? "Vector only" : "فقط vector")}
                                 </span>
                                 {item.source_exists && (
                                   <div className="text-slate-500">
-                                    {item.source_size_kb ?? 0} KB · {formatDateTime(item.source_updated_at)}
+                                    {item.source_size_kb ?? 0} KB · {formatDateTime(item.source_updated_at, locale)}
                                   </div>
                                 )}
                               </div>
@@ -1468,19 +1534,25 @@ export default function KnowledgePage() {
                                   className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
                                 >
                                   <Eye size={15} />
-                                  پیش‌نمایش
+                                  {isEn ? "Preview" : "پیش‌نمایش"}
                                 </button>
                                 <button
                                   onClick={() => reindexKnowledgeFile(item.file_name)}
                                   disabled={!item.source_exists || reindexingFile === item.file_name}
                                   className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
-                                  title={!item.source_exists ? "فایل منبع در knowledge_files موجود نیست" : "بازسازی chunk و embedding"}
+                                  title={
+                                    !item.source_exists
+                                      ? (isEn ? "Source file is missing from knowledge_files" : "فایل منبع در knowledge_files موجود نیست")
+                                      : (isEn ? "Rebuild chunks and embeddings" : "بازسازی chunk و embedding")
+                                  }
                                 >
                                   <RefreshCw
                                     size={15}
                                     className={reindexingFile === item.file_name ? "animate-spin" : ""}
                                   />
-                                  {reindexingFile === item.file_name ? "در حال بازسازی..." : "بازسازی"}
+                                  {reindexingFile === item.file_name
+                                    ? (isEn ? "Rebuilding..." : "در حال بازسازی...")
+                                    : (isEn ? "Rebuild" : "بازسازی")}
                                 </button>
                                 <button
                                   onClick={() =>
@@ -1491,8 +1563,8 @@ export default function KnowledgePage() {
                                 >
                                   <Trash2 size={15} />
                                   {deletingFile === item.file_name
-                                    ? "در حال حذف..."
-                                    : "حذف"}
+                                    ? (isEn ? "Deleting..." : "در حال حذف...")
+                                    : (isEn ? "Delete" : "حذف")}
                                 </button>
                               </div>
                             </td>
@@ -1505,7 +1577,7 @@ export default function KnowledgePage() {
                 </div>
               ) : (
                 <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
-                  فایلی با این فیلتر پیدا نشد.
+                  {isEn ? "No files matched this filter." : "فایلی با این فیلتر پیدا نشد."}
                 </div>
               )}
             </div>
@@ -1524,8 +1596,12 @@ export default function KnowledgePage() {
               <ClipboardList size={20} />
             </div>
             <div>
-              <div className="text-base font-black text-slate-900">تاریخچه عملیات بانک دانش</div>
-              <div className="text-sm text-slate-500">آپلود، حذف، ویرایش chunk، و همگام‌سازی Drive</div>
+              <div className="text-base font-black text-slate-900">
+                {isEn ? "Knowledge Base Activity History" : "تاریخچه عملیات بانک دانش"}
+              </div>
+              <div className="text-sm text-slate-500">
+                {isEn ? "Uploads, deletions, chunk edits, and Drive syncs" : "آپلود، حذف، ویرایش chunk، و همگام‌سازی Drive"}
+              </div>
             </div>
           </div>
           <span className="text-slate-400">{showAuditLog ? "▲" : "▼"}</span>
@@ -1545,7 +1621,15 @@ export default function KnowledgePage() {
                         : "bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700"
                     }`}
                   >
-                    {f === "all" ? "همه" : f === "upload" ? "آپلود" : f === "delete" ? "حذف" : f === "chunk_edit" ? "ویرایش chunk" : "Drive Sync"}
+                    {f === "all"
+                      ? (isEn ? "All" : "همه")
+                      : f === "upload"
+                        ? (isEn ? "Upload" : "آپلود")
+                        : f === "delete"
+                          ? (isEn ? "Delete" : "حذف")
+                          : f === "chunk_edit"
+                            ? (isEn ? "Chunk edit" : "ویرایش chunk")
+                            : "Drive Sync"}
                   </button>
                 ))}
               </div>
@@ -1556,14 +1640,14 @@ export default function KnowledgePage() {
                   className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
                 >
                   <RefreshCw size={12} className={auditLoading ? "animate-spin" : ""} />
-                  بروزرسانی
+                  {isEn ? "Refresh" : "بروزرسانی"}
                 </button>
                 <button
                   onClick={clearAuditLog}
                   className="inline-flex items-center gap-1.5 rounded-2xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100"
                 >
                   <Trash2 size={12} />
-                  پاک کردن
+                  {isEn ? "Clear" : "پاک کردن"}
                 </button>
               </div>
             </div>
@@ -1574,17 +1658,17 @@ export default function KnowledgePage() {
               </div>
             ) : auditLog.length === 0 ? (
               <div className="rounded-3xl bg-slate-50 p-8 text-center text-sm text-slate-500">
-                هنوز عملیاتی ثبت نشده است.
+                {isEn ? "No activity has been recorded yet." : "هنوز عملیاتی ثبت نشده است."}
               </div>
             ) : (
               <div className="max-h-[500px] overflow-y-auto rounded-3xl border border-slate-200">
                 <table className="w-full border-collapse text-right text-sm">
                   <thead className="sticky top-0 bg-slate-50">
                     <tr className="border-b border-slate-200">
-                      <th className="p-3 text-xs font-bold text-slate-600">عملیات</th>
-                      <th className="p-3 text-xs font-bold text-slate-600">فایل / عنوان</th>
-                      <th className="p-3 text-xs font-bold text-slate-600">جزئیات</th>
-                      <th className="p-3 text-xs font-bold text-slate-600">زمان</th>
+                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "Action" : "عملیات"}</th>
+                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "File / title" : "فایل / عنوان"}</th>
+                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "Details" : "جزئیات"}</th>
+                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "Time" : "زمان"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1597,9 +1681,9 @@ export default function KnowledgePage() {
                             entry.action === "chunk_edit" ? "bg-blue-50 text-blue-700" :
                             "bg-purple-50 text-purple-700"
                           }`}>
-                            {entry.action === "upload" ? "آپلود" :
-                             entry.action === "delete" ? "حذف" :
-                             entry.action === "chunk_edit" ? "ویرایش chunk" : "Drive Sync"}
+                            {entry.action === "upload" ? (isEn ? "Upload" : "آپلود") :
+                             entry.action === "delete" ? (isEn ? "Delete" : "حذف") :
+                             entry.action === "chunk_edit" ? (isEn ? "Chunk edit" : "ویرایش chunk") : "Drive Sync"}
                           </span>
                         </td>
                         <td className="p-3 align-top">
@@ -1609,14 +1693,14 @@ export default function KnowledgePage() {
                           )}
                           {entry.category && (
                             <div className="mt-0.5">
-                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">{getCategoryLabel(entry.category)}</span>
+                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">{getCategoryLabel(entry.category, locale)}</span>
                             </div>
                           )}
                         </td>
                         <td className="p-3 align-top text-xs text-slate-500">{entry.detail || "—"}</td>
                         <td className="p-3 align-top text-xs text-slate-400 whitespace-nowrap">
                           {entry.created_at
-                            ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "short", timeStyle: "short" }).format(new Date(entry.created_at + "Z"))
+                            ? new Intl.DateTimeFormat(isEn ? "en-US" : "fa-IR", { dateStyle: "short", timeStyle: "short" }).format(new Date(entry.created_at + "Z"))
                             : "—"}
                         </td>
                       </tr>
@@ -1642,13 +1726,15 @@ export default function KnowledgePage() {
             <div className="flex items-center justify-between border-b border-slate-200 p-6">
               <div>
                 <div className="text-sm font-bold text-blue-700">
-                  پیش‌نمایش بانک دانش
+                  {isEn ? "Knowledge Base Preview" : "پیش‌نمایش بانک دانش"}
                 </div>
                 <div className="mt-1 break-all text-base font-black text-slate-900">
                   {previewFile}
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  {previewChunks.length} بخش (chunk)
+                  {isEn
+                    ? `${previewChunks.length} chunks`
+                    : `${previewChunks.length} بخش (chunk)`}
                 </div>
               </div>
               <button
@@ -1668,7 +1754,7 @@ export default function KnowledgePage() {
                 </div>
               ) : previewChunks.length === 0 ? (
                 <div className="py-10 text-center text-sm text-slate-500">
-                  محتوایی یافت نشد.
+                  {isEn ? "No content found." : "محتوایی یافت نشد."}
                 </div>
               ) : (
                 <>
@@ -1690,7 +1776,7 @@ export default function KnowledgePage() {
                           </span>
                           {chunk.category && (
                             <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
-                              {getCategoryLabel(chunk.category)}
+                              {getCategoryLabel(chunk.category, locale)}
                             </span>
                           )}
                         </div>
@@ -1699,7 +1785,7 @@ export default function KnowledgePage() {
                             onClick={() => { setEditingChunkIndex(chunk.index); setEditingContent(chunk.content); }}
                             className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-600 hover:border-blue-200 hover:text-blue-700 transition"
                           >
-                            <Pencil size={12} /> ویرایش
+                            <Pencil size={12} /> {isEn ? "Edit" : "ویرایش"}
                           </button>
                         ) : (
                           <div className="flex gap-2">
@@ -1708,7 +1794,7 @@ export default function KnowledgePage() {
                               disabled={savingChunk}
                               className="flex items-center gap-1 rounded-xl bg-blue-700 px-2 py-1 text-xs font-bold text-white hover:bg-blue-800 transition disabled:opacity-50"
                             >
-                              <Save size={12} /> {savingChunk ? "..." : "ذخیره"}
+                              <Save size={12} /> {savingChunk ? "..." : (isEn ? "Save" : "ذخیره")}
                             </button>
                             <button
                               onClick={() => setEditingChunkIndex(null)}

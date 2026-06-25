@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { adminUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -41,17 +43,26 @@ function toneFor(level: string) {
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
-function formatDate(value: string) {
-  if (!value) return "No timestamp";
+function formatDate(value: string, locale: "fa" | "en") {
+  if (!value) return locale === "en" ? "No timestamp" : "بدون زمان";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
 }
 
+const filterLabels: Record<(typeof filters)[number], { fa: string; en: string }> = {
+  ALL: { fa: "همه", en: "ALL" },
+  WARNING: { fa: "هشدار", en: "WARNING" },
+  ERROR: { fa: "خطا", en: "ERROR" },
+  CRITICAL: { fa: "بحرانی", en: "CRITICAL" },
+};
+
 export default function AdminErrorLogPage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const [data, setData] = useState<ErrorLogResponse | null>(null);
   const [level, setLevel] = useState<(typeof filters)[number]>("ALL");
   const [loading, setLoading] = useState(false);
@@ -72,12 +83,12 @@ export default function AdminErrorLogPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setData(await res.json());
     } catch {
-      setError("Could not load backend error log.");
+      setError(isEn ? "Could not load backend error log." : "امکان بارگذاری لاگ خطای بک‌اند وجود ندارد.");
       setData(null);
     } finally {
       setLoading(false);
     }
-  }, [level]);
+  }, [isEn, level]);
 
   function selectLevel(nextLevel: (typeof filters)[number]) {
     setLevel(nextLevel);
@@ -89,19 +100,27 @@ export default function AdminErrorLogPage() {
   }, [loadLogs]);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir="ltr">
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-r from-slate-50 via-white to-red-50 p-8">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
+
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">
                   <FileWarning size={17} />
-                  Backend Observability
+                  {isEn ? "Backend Observability" : "پایش بک‌اند"}
                 </div>
-                <h1 className="text-3xl font-black text-slate-950">Error Log</h1>
+                <h1 className="text-3xl font-black text-slate-950">
+                  {isEn ? "Error Log" : "لاگ خطاها"}
+                </h1>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                  Recent warning, error, and critical events from the backend rotating log file.
+                  {isEn
+                    ? "Recent warning, error, and critical events from the backend rotating log file."
+                    : "رویدادهای هشدار، خطا و خطای بحرانی اخیر از فایل لاگ چرخشی بک‌اند."}
                 </p>
               </div>
 
@@ -111,7 +130,7 @@ export default function AdminErrorLogPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
                 <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-                Refresh
+                {isEn ? "Refresh" : "بروزرسانی"}
               </button>
             </div>
           </div>
@@ -124,25 +143,29 @@ export default function AdminErrorLogPage() {
         )}
 
         <div className="mb-6 grid gap-4 md:grid-cols-4">
-          <SummaryCard title="Warnings" value={data?.summary.WARNING ?? 0} tone="amber" />
-          <SummaryCard title="Errors" value={data?.summary.ERROR ?? 0} tone="rose" />
-          <SummaryCard title="Critical" value={data?.summary.CRITICAL ?? 0} tone="red" />
+          <SummaryCard title={isEn ? "Warnings" : "هشدارها"} value={data?.summary.WARNING ?? 0} tone="amber" />
+          <SummaryCard title={isEn ? "Errors" : "خطاها"} value={data?.summary.ERROR ?? 0} tone="rose" />
+          <SummaryCard title={isEn ? "Critical" : "بحرانی"} value={data?.summary.CRITICAL ?? 0} tone="red" />
           <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-black text-slate-600">
               {data?.sentry_enabled ? <CheckCircle2 size={17} /> : <ShieldCheck size={17} />}
               Sentry
             </div>
             <div className="mt-2 text-2xl font-black text-slate-950">
-              {data?.sentry_enabled ? "Enabled" : "Local log"}
+              {data?.sentry_enabled ? (isEn ? "Enabled" : "فعال") : (isEn ? "Local log" : "لاگ محلی")}
             </div>
           </div>
         </div>
 
         <div className="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="text-sm text-slate-500">
-              File: <span className="font-mono text-slate-700">{data?.log_file || "storage/app.log"}</span>
-              {!data?.log_file_exists && <span className="ml-2 font-bold text-amber-700">not created yet</span>}
+            <div className="text-sm text-slate-500" dir="ltr">
+              {isEn ? "File" : "فایل"}: <span className="font-mono text-slate-700">{data?.log_file || "storage/app.log"}</span>
+              {!data?.log_file_exists && (
+                <span className="ml-2 font-bold text-amber-700">
+                  {isEn ? "not created yet" : "هنوز ساخته نشده"}
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               {filters.map((item) => (
@@ -155,7 +178,7 @@ export default function AdminErrorLogPage() {
                       : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  {item}
+                  {filterLabels[item][locale]}
                 </button>
               ))}
             </div>
@@ -163,11 +186,17 @@ export default function AdminErrorLogPage() {
 
           {loading ? (
             <div className="rounded-2xl bg-slate-50 p-10 text-center text-sm font-bold text-slate-500">
-              Loading logs...
+              {isEn ? "Loading logs..." : "در حال بارگذاری لاگ‌ها..."}
             </div>
           ) : !data?.entries.length ? (
             <div className="rounded-2xl bg-emerald-50 p-10 text-center text-sm font-bold text-emerald-700">
-              {totalErrors === 0 ? "No recent errors found." : "No entries match this filter."}
+              {totalErrors === 0
+                ? isEn
+                  ? "No recent errors found."
+                  : "خطای تازه‌ای پیدا نشد."
+                : isEn
+                  ? "No entries match this filter."
+                  : "موردی با این فیلتر پیدا نشد."}
             </div>
           ) : (
             <div className="space-y-3">
@@ -179,7 +208,7 @@ export default function AdminErrorLogPage() {
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500">
                       <Clock size={13} />
-                      {formatDate(entry.ts)}
+                      {formatDate(entry.ts, locale)}
                     </span>
                     {entry.logger && <span className="text-xs font-bold text-slate-500">{entry.logger}</span>}
                     {entry.endpoint && <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">{entry.endpoint}</span>}
@@ -188,7 +217,7 @@ export default function AdminErrorLogPage() {
                   </div>
                   <p className="text-sm font-bold leading-7 text-slate-900">{entry.msg || entry.raw}</p>
                   {entry.exc && (
-                    <pre className="mt-3 max-h-56 overflow-auto rounded-xl bg-slate-950 p-4 text-xs leading-5 text-slate-100">
+                    <pre className="mt-3 max-h-56 overflow-auto rounded-xl bg-slate-950 p-4 text-xs leading-5 text-slate-100" dir="ltr">
                       {entry.exc}
                     </pre>
                   )}
@@ -199,10 +228,20 @@ export default function AdminErrorLogPage() {
         </div>
 
         <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
-          <AlertTriangle className="mr-2 inline-block" size={17} />
-          This page shows server-side logs only to authenticated admins. For production alerts, set
-          <span className="mx-1 font-mono font-bold">SENTRY_DSN</span>
-          to enable Sentry alongside this local dashboard.
+          <AlertTriangle className="mx-2 inline-block" size={17} />
+          {isEn ? (
+            <>
+              This page shows server-side logs only to authenticated admins. For production alerts, set
+              <span className="mx-1 font-mono font-bold">SENTRY_DSN</span>
+              to enable Sentry alongside this local dashboard.
+            </>
+          ) : (
+            <>
+              این صفحه لاگ‌های سمت سرور را فقط به ادمین‌های احراز هویت شده نشان می‌دهد. برای هشدارهای تولید، مقدار
+              <span className="mx-1 font-mono font-bold" dir="ltr">SENTRY_DSN</span>
+              را تنظیم کنید تا Sentry کنار این داشبورد محلی فعال شود.
+            </>
+          )}
         </div>
       </div>
     </section>

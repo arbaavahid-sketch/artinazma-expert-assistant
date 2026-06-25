@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useI18n } from "@/lib/i18n";
 import {
   ArrowLeft,
   Database,
@@ -14,6 +16,10 @@ import {
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
+  const iconSide = isEn ? "left-4" : "right-4";
+  const inputPadding = isEn ? "pl-11 pr-4" : "pl-4 pr-11";
 
   const [nextPath, setNextPath] = useState("/admin");
   const [password, setPassword] = useState("");
@@ -29,7 +35,7 @@ export default function AdminLoginPage() {
     setError("");
 
     if (!password.trim()) {
-      setError("لطفاً رمز ادمین را وارد کنید.");
+      setError(isEn ? "Please enter the admin password." : "لطفاً رمز ادمین را وارد کنید.");
       return;
     }
 
@@ -47,14 +53,14 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(data.message || "ورود ناموفق بود.");
+        setError(isEn ? "Admin login failed." : data.message || "ورود ناموفق بود.");
         return;
       }
 
       router.push(nextPath);
       router.refresh();
     } catch {
-      setError("خطا در اتصال به سیستم ورود ادمین.");
+      setError(isEn ? "Could not connect to the admin login system." : "خطا در اتصال به سیستم ورود ادمین.");
     } finally {
       setLoading(false);
     }
@@ -67,33 +73,38 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center">
         <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-slate-200 shadow-sm lg:grid-cols-[1fr_420px]">
           <div className="p-8 lg:p-12">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
+
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
               <ShieldCheck size={17} />
-              پنل داخلی آرتین آزما
+              {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
             </div>
 
             <h1 className="text-3xl font-black leading-[1.5] text-slate-900 md:text-4xl">
-              ورود ادمین
+              {isEn ? "Admin Login" : "ورود ادمین"}
             </h1>
 
             <p className="mt-4 max-w-2xl leading-8 text-slate-600">
-              برای دسترسی به داشبورد، بانک دانش، سوالات کاربران و درخواست‌های
-              مشتریان، رمز ادمین را وارد کنید.
+              {isEn
+                ? "Enter the admin password to access the dashboard, knowledge base, user questions, and customer requests."
+                : "برای دسترسی به داشبورد، بانک دانش، سوالات کاربران و درخواست‌های مشتریان، رمز ادمین را وارد کنید."}
             </p>
 
             <div className="mt-8">
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                رمز ادمین
+                {isEn ? "Admin password" : "رمز ادمین"}
               </label>
 
               <div className="relative">
                 <LockKeyhole
                   size={18}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`}
                 />
 
                 <input
@@ -101,8 +112,9 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="ui-input rounded-2xl py-4 pl-4 pr-11 focus:border-purple-600 focus:shadow-[0_0_0_3px_rgba(147,51,234,0.18)]"
-                  placeholder="رمز را وارد کنید"
+                  className={`ui-input rounded-2xl py-4 ${inputPadding} focus:border-purple-600 focus:shadow-[0_0_0_3px_rgba(147,51,234,0.18)]`}
+                  placeholder={isEn ? "Enter password" : "رمز را وارد کنید"}
+                  dir="ltr"
                 />
               </div>
             </div>
@@ -118,8 +130,8 @@ export default function AdminLoginPage() {
               disabled={loading}
               className="ui-btn mt-6 inline-flex w-full gap-2 rounded-2xl bg-purple-700 px-5 py-4 text-white hover:bg-purple-800"
             >
-              {loading ? "در حال ورود..." : "ورود به پنل ادمین"}
-              <ArrowLeft size={18} />
+              {loading ? (isEn ? "Signing in..." : "در حال ورود...") : (isEn ? "Enter admin panel" : "ورود به پنل ادمین")}
+              <ArrowLeft size={18} className={isEn ? "rotate-180" : ""} />
             </button>
           </div>
 
@@ -130,28 +142,29 @@ export default function AdminLoginPage() {
               </div>
 
               <div className="text-center text-xl font-black text-slate-900">
-                مدیریت داخلی آرتین
+                {isEn ? "Artin Internal Management" : "مدیریت داخلی آرتین"}
               </div>
 
               <p className="mt-3 text-center leading-8 text-slate-600">
-                این بخش مخصوص مدیریت بانک دانش، بررسی پاسخ‌ها و پیگیری
-                درخواست‌های مشتریان است.
+                {isEn
+                  ? "This area is for managing the knowledge base, reviewing answer quality, and following up on customer requests."
+                  : "این بخش مخصوص مدیریت بانک دانش، بررسی پاسخ‌ها و پیگیری درخواست‌های مشتریان است."}
               </p>
 
               <div className="mt-5 grid gap-3 text-sm">
                 <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
                   <LayoutDashboard size={18} className="text-purple-700" />
-                  داشبورد مدیریتی
+                  {isEn ? "Management dashboard" : "داشبورد مدیریتی"}
                 </div>
 
                 <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
                   <Database size={18} className="text-purple-700" />
-                  مدیریت بانک دانش
+                  {isEn ? "Knowledge base management" : "مدیریت بانک دانش"}
                 </div>
 
                 <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
                   <Sparkles size={18} className="text-purple-700" />
-                  پایش کیفیت پاسخ‌های آرتین
+                  {isEn ? "Artin answer quality monitoring" : "پایش کیفیت پاسخ‌های آرتین"}
                 </div>
               </div>
             </div>

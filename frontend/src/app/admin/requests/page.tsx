@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { adminUrl, apiUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   ArrowDownUp,
   Building2,
@@ -52,24 +54,28 @@ const REQUEST_PRIORITIES = [
   {
     value: "low",
     label: "کم",
+    labelEn: "Low",
     badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
     selectClass: "border-slate-200 bg-slate-50 text-slate-700",
   },
   {
     value: "normal",
     label: "عادی",
+    labelEn: "Normal",
     badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
     selectClass: "border-blue-100 bg-blue-50 text-blue-700",
   },
   {
     value: "high",
     label: "بالا",
+    labelEn: "High",
     badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
     selectClass: "border-amber-100 bg-amber-50 text-amber-700",
   },
   {
     value: "urgent",
     label: "فوری",
+    labelEn: "Urgent",
     badgeClass: "bg-red-50 text-red-700 border-red-100",
     selectClass: "border-red-100 bg-red-50 text-red-700",
   },
@@ -85,24 +91,24 @@ const PRIORITY_WEIGHT: Record<RequestPriorityValue, number> = {
 };
 
 const FOLLOW_UP_FILTERS = [
-  { value: "all", label: "همه موعدها" },
-  { value: "overdue", label: "عقب‌افتاده" },
-  { value: "today", label: "امروز" },
-  { value: "upcoming", label: "آینده" },
-  { value: "empty", label: "بدون موعد" },
+  { value: "all", label: "همه موعدها", labelEn: "All follow-ups" },
+  { value: "overdue", label: "عقب‌افتاده", labelEn: "Overdue" },
+  { value: "today", label: "امروز", labelEn: "Today" },
+  { value: "upcoming", label: "آینده", labelEn: "Upcoming" },
+  { value: "empty", label: "بدون موعد", labelEn: "No follow-up" },
 ] as const;
 
 const ASSIGNMENT_FILTERS = [
-  { value: "all", label: "همه مسئول‌ها" },
-  { value: "assigned", label: "مسئول‌دار" },
-  { value: "unassigned", label: "بدون مسئول" },
+  { value: "all", label: "همه مسئول‌ها", labelEn: "All owners" },
+  { value: "assigned", label: "مسئول‌دار", labelEn: "Assigned" },
+  { value: "unassigned", label: "بدون مسئول", labelEn: "Unassigned" },
 ] as const;
 
 const REQUEST_SORT_OPTIONS = [
-  { value: "follow_up_asc", label: "نزدیک‌ترین پیگیری" },
-  { value: "priority_desc", label: "اولویت بالاتر" },
-  { value: "newest", label: "جدیدترین" },
-  { value: "oldest", label: "قدیمی‌ترین" },
+  { value: "follow_up_asc", label: "نزدیک‌ترین پیگیری", labelEn: "Nearest follow-up" },
+  { value: "priority_desc", label: "اولویت بالاتر", labelEn: "Highest priority" },
+  { value: "newest", label: "جدیدترین", labelEn: "Newest" },
+  { value: "oldest", label: "قدیمی‌ترین", labelEn: "Oldest" },
 ] as const;
 
 type FollowUpFilterValue = (typeof FOLLOW_UP_FILTERS)[number]["value"];
@@ -113,7 +119,9 @@ const REQUEST_WORKFLOW = [
   {
     value: "new",
     label: "جدید",
+    labelEn: "New",
     actionLabel: "شروع بررسی",
+    actionLabelEn: "Start review",
     badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
     filterClass: "bg-blue-50 text-blue-700 hover:bg-blue-100",
     activeClass: "bg-blue-600 text-white",
@@ -122,7 +130,9 @@ const REQUEST_WORKFLOW = [
   {
     value: "reviewing",
     label: "در حال بررسی",
+    labelEn: "Reviewing",
     actionLabel: "ارسال به قیمت‌گذاری",
+    actionLabelEn: "Send to pricing",
     badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
     filterClass: "bg-amber-50 text-amber-700 hover:bg-amber-100",
     activeClass: "bg-amber-500 text-white",
@@ -131,7 +141,9 @@ const REQUEST_WORKFLOW = [
   {
     value: "pricing",
     label: "قیمت‌گذاری",
+    labelEn: "Pricing",
     actionLabel: "ثبت ارسال پیشنهاد",
+    actionLabelEn: "Mark proposal sent",
     badgeClass: "bg-purple-50 text-purple-700 border-purple-100",
     filterClass: "bg-purple-50 text-purple-700 hover:bg-purple-100",
     activeClass: "bg-purple-600 text-white",
@@ -140,7 +152,9 @@ const REQUEST_WORKFLOW = [
   {
     value: "sent",
     label: "ارسال‌شده",
+    labelEn: "Sent",
     actionLabel: "بستن درخواست",
+    actionLabelEn: "Close request",
     badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-100",
     filterClass: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
     activeClass: "bg-emerald-600 text-white",
@@ -149,7 +163,9 @@ const REQUEST_WORKFLOW = [
   {
     value: "closed",
     label: "بسته‌شده",
+    labelEn: "Closed",
     actionLabel: "بازگشایی",
+    actionLabelEn: "Reopen",
     badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
     filterClass: "bg-slate-50 text-slate-500 hover:bg-slate-100",
     activeClass: "bg-slate-500 text-white",
@@ -180,8 +196,9 @@ function getStatusMeta(status: string) {
   return REQUEST_WORKFLOW.find((item) => item.value === normalized) || REQUEST_WORKFLOW[0];
 }
 
-function getStatusLabel(status: string) {
-  return getStatusMeta(status).label;
+function getStatusLabel(status: string, locale: "fa" | "en" = "fa") {
+  const meta = getStatusMeta(status);
+  return locale === "en" ? meta.labelEn : meta.label;
 }
 
 function getStatusClass(status: string) {
@@ -199,21 +216,23 @@ function getPriorityMeta(priority?: string) {
   return REQUEST_PRIORITIES.find((item) => item.value === normalized) || REQUEST_PRIORITIES[1];
 }
 
-function getTypeLabel(type: string) {
-  if (type === "equipment") return "تجهیزات";
-  if (type === "chemical") return "مواد شیمیایی / افزودنی‌ها";
-  if (type === "catalyst") return "کاتالیست / جاذب";
-  if (type === "test-analysis") return "تحلیل تست";
-  if (type === "troubleshooting") return "عیب‌یابی";
-  if (type === "price-inquiry") return "استعلام قیمت";
-  return "مشاوره فنی";
+function getTypeLabel(type: string, locale: "fa" | "en" = "fa") {
+  const labels: Record<string, { fa: string; en: string }> = {
+    equipment: { fa: "تجهیزات", en: "Equipment" },
+    chemical: { fa: "مواد شیمیایی / افزودنی‌ها", en: "Chemicals / Additives" },
+    catalyst: { fa: "کاتالیست / جاذب", en: "Catalyst / Adsorbent" },
+    "test-analysis": { fa: "تحلیل تست", en: "Test analysis" },
+    troubleshooting: { fa: "عیب‌یابی", en: "Troubleshooting" },
+    "price-inquiry": { fa: "استعلام قیمت", en: "Price inquiry" },
+  };
+  return labels[type]?.[locale] || (locale === "en" ? "Technical consultation" : "مشاوره فنی");
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return "نامشخص";
+function formatDate(value?: string | null, locale: "fa" | "en" = "fa") {
+  if (!value) return locale === "en" ? "Unknown" : "نامشخص";
 
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(value));
@@ -243,6 +262,8 @@ function getFollowUpSortValue(value?: string | null) {
 }
 
 export default function AdminRequestsPage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const [requests, setRequests] = useState<CustomerRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -393,13 +414,13 @@ export default function AdminRequestsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setMessage("وضعیت درخواست بروزرسانی شد.");
+        setMessage(isEn ? "Request status updated." : "وضعیت درخواست بروزرسانی شد.");
         await loadRequests();
       } else {
-        setMessage(data.message || "خطا در بروزرسانی وضعیت.");
+        setMessage(data.message || (isEn ? "Could not update request status." : "خطا در بروزرسانی وضعیت."));
       }
     } catch {
-      setMessage("خطا در اتصال به سرور.");
+      setMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     }
   }
 
@@ -446,13 +467,13 @@ export default function AdminRequestsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setMessage("اطلاعات پیگیری داخلی ذخیره شد.");
+        setMessage(isEn ? "Internal follow-up information saved." : "اطلاعات پیگیری داخلی ذخیره شد.");
         await loadRequests();
       } else {
-        setMessage(data.message || "خطا در ذخیره اطلاعات پیگیری.");
+        setMessage(data.message || (isEn ? "Could not save follow-up information." : "خطا در ذخیره اطلاعات پیگیری."));
       }
     } catch {
-      setMessage("خطا در اتصال به سرور.");
+      setMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {
       setSavingCrmId(null);
     }
@@ -463,25 +484,28 @@ export default function AdminRequestsPage() {
   }, []);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
                   <Inbox size={17} />
-                  پنل داخلی آرتین آزما
+                  {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
                 </div>
 
                 <h1 className="text-3xl font-black text-slate-900">
-                  درخواست‌های مشتریان
+                  {isEn ? "Customer Requests" : "درخواست‌های مشتریان"}
                 </h1>
 
                 <p className="mt-4 max-w-3xl leading-8 text-slate-600">
-                  درخواست‌های ثبت‌شده برای مشاوره، تجهیزات، مواد شیمیایی،
-                  کاتالیست، تحلیل تست، عیب‌یابی و استعلام قیمت در این بخش قابل
-                  پیگیری هستند.
+                  {isEn
+                    ? "Track registered consultation, equipment, chemical, catalyst, test analysis, troubleshooting, and price inquiry requests."
+                    : "درخواست‌های ثبت‌شده برای مشاوره، تجهیزات، مواد شیمیایی، کاتالیست، تحلیل تست، عیب‌یابی و استعلام قیمت در این بخش قابل پیگیری هستند."}
                 </p>
               </div>
 
@@ -494,7 +518,7 @@ export default function AdminRequestsPage() {
                   size={18}
                   className={loading ? "animate-spin" : ""}
                 />
-                بروزرسانی
+                {isEn ? "Refresh" : "بروزرسانی"}
               </button>
             </div>
           </div>
@@ -503,7 +527,7 @@ export default function AdminRequestsPage() {
         <div className="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-bold text-slate-500">
-              کل درخواست‌ها
+              {isEn ? "Total requests" : "کل درخواست‌ها"}
             </div>
             <div className="mt-2 text-3xl font-black text-slate-900">
               {requests.length}
@@ -511,7 +535,7 @@ export default function AdminRequestsPage() {
           </div>
 
           <div className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
-            <div className="text-sm font-bold text-blue-700">جدید</div>
+            <div className="text-sm font-bold text-blue-700">{isEn ? "New" : "جدید"}</div>
             <div className="mt-2 text-3xl font-black text-blue-700">
               {statusCounts.new}
             </div>
@@ -519,7 +543,7 @@ export default function AdminRequestsPage() {
 
           <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
             <div className="text-sm font-bold text-amber-700">
-              در حال بررسی
+              {isEn ? "Reviewing" : "در حال بررسی"}
             </div>
             <div className="mt-2 text-3xl font-black text-amber-700">
               {statusCounts.reviewing}
@@ -528,7 +552,7 @@ export default function AdminRequestsPage() {
 
           <div className="rounded-[28px] border border-purple-100 bg-purple-50 p-5">
             <div className="text-sm font-bold text-purple-700">
-              قیمت‌گذاری
+              {isEn ? "Pricing" : "قیمت‌گذاری"}
             </div>
             <div className="mt-2 text-3xl font-black text-purple-700">
               {statusCounts.pricing}
@@ -536,14 +560,14 @@ export default function AdminRequestsPage() {
           </div>
 
           <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
-            <div className="text-sm font-bold text-emerald-700">ارسال‌شده</div>
+            <div className="text-sm font-bold text-emerald-700">{isEn ? "Sent" : "ارسال‌شده"}</div>
             <div className="mt-2 text-3xl font-black text-emerald-700">
               {statusCounts.sent}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-            <div className="text-sm font-bold text-slate-600">بسته‌شده</div>
+            <div className="text-sm font-bold text-slate-600">{isEn ? "Closed" : "بسته‌شده"}</div>
             <div className="mt-2 text-3xl font-black text-slate-600">
               {statusCounts.closed}
             </div>
@@ -561,7 +585,7 @@ export default function AdminRequestsPage() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-4 pr-11 outline-none transition focus:border-purple-500 focus:bg-white"
-              placeholder="جستجو در نام، شرکت، شماره، موضوع یا متن درخواست..."
+              placeholder={isEn ? "Search by name, company, phone, subject, or request text..." : "جستجو در نام، شرکت، شماره، موضوع یا متن درخواست..."}
             />
           </div>
 
@@ -570,14 +594,14 @@ export default function AdminRequestsPage() {
             {[
               {
                 value: "all",
-                label: "همه",
+                label: isEn ? "All" : "همه",
                 count: requests.length,
                 cls: "bg-slate-100 text-slate-700 hover:bg-slate-200",
                 active: "bg-slate-800 text-white",
               },
               ...REQUEST_WORKFLOW.map((item) => ({
                 value: item.value,
-                label: item.label,
+                label: isEn ? item.labelEn : item.label,
                 count: statusCounts[item.value],
                 cls: item.filterClass,
                 active: item.activeClass,
@@ -600,17 +624,17 @@ export default function AdminRequestsPage() {
             <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
                 <Flag size={15} />
-                اولویت
+                {isEn ? "Priority" : "اولویت"}
               </span>
               <select
                 value={priorityFilter}
                 onChange={(event) => setPriorityFilter(event.target.value as "all" | RequestPriorityValue)}
                 className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
               >
-                <option value="all">همه اولویت‌ها</option>
+                <option value="all">{isEn ? "All priorities" : "همه اولویت‌ها"}</option>
                 {REQUEST_PRIORITIES.map((priority) => (
                   <option key={priority.value} value={priority.value}>
-                    {priority.label}
+                    {isEn ? priority.labelEn : priority.label}
                   </option>
                 ))}
               </select>
@@ -619,7 +643,7 @@ export default function AdminRequestsPage() {
             <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
                 <CalendarDays size={15} />
-                موعد پیگیری
+                {isEn ? "Follow-up date" : "موعد پیگیری"}
               </span>
               <select
                 value={followUpFilter}
@@ -628,7 +652,7 @@ export default function AdminRequestsPage() {
               >
                 {FOLLOW_UP_FILTERS.map((filter) => (
                   <option key={filter.value} value={filter.value}>
-                    {filter.label}
+                    {isEn ? filter.labelEn : filter.label}
                   </option>
                 ))}
               </select>
@@ -637,7 +661,7 @@ export default function AdminRequestsPage() {
             <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
                 <UserRound size={15} />
-                مسئول پیگیری
+                {isEn ? "Owner" : "مسئول پیگیری"}
               </span>
               <select
                 value={assignmentFilter}
@@ -646,7 +670,7 @@ export default function AdminRequestsPage() {
               >
                 {ASSIGNMENT_FILTERS.map((filter) => (
                   <option key={filter.value} value={filter.value}>
-                    {filter.label}
+                    {isEn ? filter.labelEn : filter.label}
                   </option>
                 ))}
               </select>
@@ -655,7 +679,7 @@ export default function AdminRequestsPage() {
             <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
                 <ArrowDownUp size={15} />
-                مرتب‌سازی
+                {isEn ? "Sort" : "مرتب‌سازی"}
               </span>
               <select
                 value={sortMode}
@@ -664,7 +688,7 @@ export default function AdminRequestsPage() {
               >
                 {REQUEST_SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {isEn ? option.labelEn : option.label}
                   </option>
                 ))}
               </select>
@@ -672,7 +696,9 @@ export default function AdminRequestsPage() {
           </div>
 
           <div className="mb-5 text-sm font-bold text-slate-500">
-            نمایش {filteredRequests.length} درخواست از {requests.length} درخواست
+            {isEn
+              ? `Showing ${filteredRequests.length} of ${requests.length} requests`
+              : `نمایش ${filteredRequests.length} درخواست از ${requests.length} درخواست`}
           </div>
 
           {message && (
@@ -684,7 +710,7 @@ export default function AdminRequestsPage() {
 
           {loading ? (
             <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
-              در حال دریافت درخواست‌ها...
+              {isEn ? "Loading requests..." : "در حال دریافت درخواست‌ها..."}
             </div>
           ) : filteredRequests.length > 0 ? (
             <div className="space-y-4">
@@ -710,40 +736,40 @@ export default function AdminRequestsPage() {
                             item.status,
                           )}`}
                         >
-                          {getStatusLabel(item.status)}
+                          {getStatusLabel(item.status, locale)}
                         </span>
 
                         <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
-                          {getTypeLabel(item.request_type)}
+                          {getTypeLabel(item.request_type, locale)}
                         </span>
 
                         <span
                           className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${getPriorityMeta(item.priority).badgeClass}`}
                         >
                           <Flag size={13} />
-                          {getPriorityMeta(item.priority).label}
+                          {isEn ? getPriorityMeta(item.priority).labelEn : getPriorityMeta(item.priority).label}
                         </span>
                       </div>
 
                       <h2 className="mt-3 text-xl font-black text-slate-900">
-                        {item.subject || "بدون موضوع"}
+                        {item.subject || (isEn ? "No subject" : "بدون موضوع")}
                       </h2>
 
                       <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
                         <Clock3 size={15} />
-                        ثبت شده در {formatDate(item.created_at)}
+                        {isEn ? "Created at" : "ثبت شده در"} {formatDate(item.created_at, locale)}
                       </div>
 
                       {(item.assigned_to || item.follow_up_at) && (
                         <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
                           {item.assigned_to && (
                             <span className="rounded-full bg-white px-3 py-1">
-                              مسئول: {item.assigned_to}
+                              {isEn ? "Owner" : "مسئول"}: {item.assigned_to}
                             </span>
                           )}
                           {item.follow_up_at && (
                             <span className="rounded-full bg-white px-3 py-1">
-                              پیگیری: {formatDate(item.follow_up_at)}
+                              {isEn ? "Follow-up" : "پیگیری"}: {formatDate(item.follow_up_at, locale)}
                             </span>
                           )}
                         </div>
@@ -765,7 +791,7 @@ export default function AdminRequestsPage() {
                           ) : (
                             <PlayCircle size={15} />
                           )}
-                          {statusMeta.actionLabel}
+                          {isEn ? statusMeta.actionLabelEn : statusMeta.actionLabel}
                         </button>
                       )}
                       {false && item.status === "new" && (
@@ -774,7 +800,7 @@ export default function AdminRequestsPage() {
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100 border border-amber-100"
                         >
                           <PlayCircle size={15} />
-                          شروع پیگیری
+                          {isEn ? "Start follow-up" : "شروع پیگیری"}
                         </button>
                       )}
                       {false && item.status === "in_progress" && (
@@ -783,7 +809,7 @@ export default function AdminRequestsPage() {
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 border border-emerald-100"
                         >
                           <CheckCircle2 size={15} />
-                          انجام شد
+                          {isEn ? "Done" : "انجام شد"}
                         </button>
                       )}
                       {false && item.status !== "closed" && (
@@ -792,7 +818,7 @@ export default function AdminRequestsPage() {
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500 transition hover:bg-slate-200"
                         >
                           <XCircle size={15} />
-                          بستن
+                          {isEn ? "Close" : "بستن"}
                         </button>
                       )}
                       {false && item.status === "closed" && (
@@ -800,7 +826,7 @@ export default function AdminRequestsPage() {
                           onClick={() => updateStatus(item.id, "new")}
                           className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-50 px-3 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-100"
                         >
-                          بازگشایی
+                          {isEn ? "Reopen" : "بازگشایی"}
                         </button>
                       )}
                     </div>
@@ -810,7 +836,7 @@ export default function AdminRequestsPage() {
                     <div className="space-y-3">
                       <div className="rounded-2xl bg-white p-4">
                         <div className="mb-3 text-sm font-black text-slate-900">
-                          اطلاعات مشتری
+                          {isEn ? "Customer information" : "اطلاعات مشتری"}
                         </div>
 
                         <div className="space-y-3 text-sm leading-7 text-slate-600">
@@ -853,11 +879,11 @@ export default function AdminRequestsPage() {
                       <div className="rounded-2xl bg-white p-4">
                         <div className="mb-3 flex items-center gap-2 text-sm font-black text-slate-900">
                           <Flag size={16} className="text-purple-700" />
-                          پیگیری داخلی
+                          {isEn ? "Internal follow-up" : "پیگیری داخلی"}
                         </div>
 
                         <label className="mb-2 block text-xs font-bold text-slate-500">
-                          اولویت
+                          {isEn ? "Priority" : "اولویت"}
                         </label>
                         <select
                           value={crmDrafts[item.id]?.priority || normalizePriority(item.priority)}
@@ -866,38 +892,38 @@ export default function AdminRequestsPage() {
                         >
                           {REQUEST_PRIORITIES.map((priority) => (
                             <option key={priority.value} value={priority.value}>
-                              {priority.label}
+                              {isEn ? priority.labelEn : priority.label}
                             </option>
                           ))}
                         </select>
 
                         <label className="mb-2 block text-xs font-bold text-slate-500">
-                          یادداشت داخلی
+                          {isEn ? "Internal note" : "یادداشت داخلی"}
                         </label>
                         <textarea
                           value={crmDrafts[item.id]?.internal_note ?? item.internal_note ?? ""}
                           onChange={(event) => updateCrmDraft(item.id, { internal_note: event.target.value })}
                           rows={4}
                           className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm leading-7 text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
-                          placeholder="مثلا: با مشتری تماس گرفته شد، نیاز به پیش‌فاکتور GC دارد..."
+                          placeholder={isEn ? "Example: contacted the customer; needs a GC proforma..." : "مثلا: با مشتری تماس گرفته شد، نیاز به پیش‌فاکتور GC دارد..."}
                         />
 
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           <div>
                             <label className="mb-2 block text-xs font-bold text-slate-500">
-                              مسئول پیگیری
+                              {isEn ? "Owner" : "مسئول پیگیری"}
                             </label>
                             <input
                               value={crmDrafts[item.id]?.assigned_to ?? item.assigned_to ?? ""}
                               onChange={(event) => updateCrmDraft(item.id, { assigned_to: event.target.value })}
                               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
-                              placeholder="مثلا: واحد فروش"
+                              placeholder={isEn ? "Example: Sales team" : "مثلا: واحد فروش"}
                             />
                           </div>
 
                           <div>
                             <label className="mb-2 block text-xs font-bold text-slate-500">
-                              پیگیری بعدی
+                              {isEn ? "Next follow-up" : "پیگیری بعدی"}
                             </label>
                             <input
                               type="date"
@@ -914,14 +940,16 @@ export default function AdminRequestsPage() {
                           className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-700 disabled:opacity-50"
                         >
                           <Save size={15} />
-                          {savingCrmId === item.id ? "در حال ذخیره..." : "ذخیره پیگیری"}
+                          {savingCrmId === item.id
+                            ? (isEn ? "Saving..." : "در حال ذخیره...")
+                            : (isEn ? "Save follow-up" : "ذخیره پیگیری")}
                         </button>
                       </div>
                     </div>
 
                     <div className="rounded-2xl bg-white p-4">
                       <div className="mb-3 text-sm font-black text-slate-900">
-                        متن درخواست
+                        {isEn ? "Request text" : "متن درخواست"}
                       </div>
 
                       <div className="whitespace-pre-wrap leading-8 text-slate-700">
@@ -931,7 +959,7 @@ export default function AdminRequestsPage() {
                       {!!item.updates?.length && (
                         <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                           <div className="mb-3 text-sm font-black text-blue-800">
-                            توضیحات تکمیلی مشتری ({item.updates.length})
+                            {isEn ? "Customer follow-up notes" : "توضیحات تکمیلی مشتری"} ({item.updates.length})
                           </div>
 
                           <div className="max-h-64 space-y-2 overflow-y-auto">
@@ -951,11 +979,11 @@ export default function AdminRequestsPage() {
                                     className="mt-2 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-50"
                                   >
                                     <FileText size={14} />
-                                    {update.file_name || "فایل پیوست"}
+                                    {update.file_name || (isEn ? "Attached file" : "فایل پیوست")}
                                   </a>
                                 )}
                                 <div className="mt-2 text-xs font-bold text-slate-400">
-                                  {formatDate(update.created_at)}
+                                  {formatDate(update.created_at, locale)}
                                 </div>
                               </div>
                             ))}
@@ -965,7 +993,7 @@ export default function AdminRequestsPage() {
 
                       {item.updated_at && (
                         <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs text-slate-500">
-                          آخرین بروزرسانی: {formatDate(item.updated_at)}
+                          {isEn ? "Last updated" : "آخرین بروزرسانی"}: {formatDate(item.updated_at, locale)}
                         </div>
                       )}
                     </div>
@@ -976,7 +1004,7 @@ export default function AdminRequestsPage() {
             </div>
           ) : (
             <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
-              درخواستی با این فیلتر یا جستجو پیدا نشد.
+              {isEn ? "No requests matched this filter or search." : "درخواستی با این فیلتر یا جستجو پیدا نشد."}
             </div>
           )}
         </div>

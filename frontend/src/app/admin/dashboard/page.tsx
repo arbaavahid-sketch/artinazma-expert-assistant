@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { apiUrl, adminUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   Activity,
   AlertTriangle,
@@ -152,12 +154,12 @@ type BusinessAnalytics = {
   }[];
 };
 
-const REQUEST_STATUS_LABELS: Record<string, string> = {
-  new: "جدید",
-  reviewing: "در حال بررسی",
-  pricing: "قیمت‌گذاری",
-  sent: "ارسال‌شده",
-  closed: "بسته‌شده",
+const REQUEST_STATUS_LABELS: Record<string, { fa: string; en: string }> = {
+  new: { fa: "جدید", en: "New" },
+  reviewing: { fa: "در حال بررسی", en: "Reviewing" },
+  pricing: { fa: "قیمت‌گذاری", en: "Pricing" },
+  sent: { fa: "ارسال‌شده", en: "Sent" },
+  closed: { fa: "بسته‌شده", en: "Closed" },
 };
 
 function normalizeRequestStatus(status: string) {
@@ -166,50 +168,54 @@ function normalizeRequestStatus(status: string) {
   return REQUEST_STATUS_LABELS[status] ? status : "new";
 }
 
-function getStatusLabel(status: string) {
-  return REQUEST_STATUS_LABELS[normalizeRequestStatus(status)] || REQUEST_STATUS_LABELS.new;
+function getStatusLabel(status: string, locale = "fa") {
+  const label = REQUEST_STATUS_LABELS[normalizeRequestStatus(status)] || REQUEST_STATUS_LABELS.new;
+  return locale === "en" ? label.en : label.fa;
 }
 
-function getTypeLabel(type: string) {
-  if (type === "equipment") return "تجهیزات";
-  if (type === "chemical") return "مواد شیمیایی / افزودنی‌ها";
-  if (type === "catalyst") return "کاتالیست / جاذب";
-  if (type === "test-analysis") return "تحلیل تست";
-  if (type === "troubleshooting") return "عیب‌یابی";
-  if (type === "price-inquiry") return "استعلام قیمت";
-  return "مشاوره فنی";
+function getTypeLabel(type: string, locale = "fa") {
+  const isEn = locale === "en";
+  if (type === "equipment") return isEn ? "Equipment" : "تجهیزات";
+  if (type === "chemical") return isEn ? "Chemicals / additives" : "مواد شیمیایی / افزودنی‌ها";
+  if (type === "catalyst") return isEn ? "Catalyst / adsorbent" : "کاتالیست / جاذب";
+  if (type === "test-analysis") return isEn ? "Test analysis" : "تحلیل تست";
+  if (type === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
+  if (type === "price-inquiry") return isEn ? "Price inquiry" : "استعلام قیمت";
+  return isEn ? "Technical consultation" : "مشاوره فنی";
 }
 
-function getDomainLabel(domain: string) {
-  if (domain === "catalyst") return "کاتالیست";
-  if (domain === "equipment") return "تجهیزات";
-  if (domain === "chromatography") return "کروماتوگرافی";
-  if (domain === "mercury-analysis") return "آنالیز جیوه";
-  if (domain === "sulfur-analysis") return "آنالیز سولفور";
-  if (domain === "troubleshooting") return "عیب‌یابی";
-  if (domain === "analysis") return "آنالیز و تست";
-  return domain || "تشخیص خودکار";
+function getDomainLabel(domain: string, locale = "fa") {
+  const isEn = locale === "en";
+  if (domain === "catalyst") return isEn ? "Catalyst" : "کاتالیست";
+  if (domain === "equipment") return isEn ? "Equipment" : "تجهیزات";
+  if (domain === "chromatography") return isEn ? "Chromatography" : "کروماتوگرافی";
+  if (domain === "mercury-analysis") return isEn ? "Mercury analysis" : "آنالیز جیوه";
+  if (domain === "sulfur-analysis") return isEn ? "Sulfur analysis" : "آنالیز سولفور";
+  if (domain === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
+  if (domain === "analysis") return isEn ? "Analysis and testing" : "آنالیز و تست";
+  return domain || (isEn ? "Auto detected" : "تشخیص خودکار");
 }
 
-function getCategoryLabel(category: string) {
-  if (category === "general") return "عمومی";
-  if (category === "catalyst") return "کاتالیست";
-  if (category === "equipment") return "تجهیزات";
-  if (category === "chromatography") return "کروماتوگرافی";
-  if (category === "mercury-analysis") return "آنالیز جیوه";
-  if (category === "sulfur-analysis") return "آنالیز سولفور";
-  if (category === "troubleshooting") return "عیب‌یابی";
-  if (category === "application-note") return "اپلیکیشن نوت";
-  if (category === "ASTM Standards") return "استانداردهای ASTM";
-  if (category === "expert-faq") return "FAQ تاییدشده";
-  return category || "بدون دسته‌بندی";
+function getCategoryLabel(category: string, locale = "fa") {
+  const isEn = locale === "en";
+  if (category === "general") return isEn ? "General" : "عمومی";
+  if (category === "catalyst") return isEn ? "Catalyst" : "کاتالیست";
+  if (category === "equipment") return isEn ? "Equipment" : "تجهیزات";
+  if (category === "chromatography") return isEn ? "Chromatography" : "کروماتوگرافی";
+  if (category === "mercury-analysis") return isEn ? "Mercury analysis" : "آنالیز جیوه";
+  if (category === "sulfur-analysis") return isEn ? "Sulfur analysis" : "آنالیز سولفور";
+  if (category === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
+  if (category === "application-note") return isEn ? "Application note" : "اپلیکیشن نوت";
+  if (category === "ASTM Standards") return isEn ? "ASTM Standards" : "استانداردهای ASTM";
+  if (category === "expert-faq") return isEn ? "Approved FAQ" : "FAQ تاییدشده";
+  return category || (isEn ? "Uncategorized" : "بدون دسته‌بندی");
 }
 
-function formatDate(value?: string) {
-  if (!value) return "نامشخص";
+function formatDate(value?: string, locale = "fa") {
+  if (!value) return locale === "en" ? "Unknown" : "نامشخص";
 
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(value));
@@ -227,11 +233,12 @@ function getStatusCount(stats: RequestStats | null, status: string) {
   }, 0) ?? 0;
 }
 
-function getReminderReasonLabel(reason: string) {
-  if (reason === "overdue_follow_up") return "موعد گذشته";
-  if (reason === "due_today") return "پیگیری امروز";
-  if (reason === "stale_open") return "معطل‌مانده";
-  return "نیازمند پیگیری";
+function getReminderReasonLabel(reason: string, locale = "fa") {
+  const isEn = locale === "en";
+  if (reason === "overdue_follow_up") return isEn ? "Overdue" : "موعد گذشته";
+  if (reason === "due_today") return isEn ? "Due today" : "پیگیری امروز";
+  if (reason === "stale_open") return isEn ? "Stale" : "معطل‌مانده";
+  return isEn ? "Needs follow-up" : "نیازمند پیگیری";
 }
 
 function getReminderReasonClass(reason: string) {
@@ -240,14 +247,17 @@ function getReminderReasonClass(reason: string) {
   return "bg-slate-100 text-slate-700 border-slate-200";
 }
 
-function getPriorityLabel(priority: string) {
-  if (priority === "urgent") return "فوری";
-  if (priority === "high") return "بالا";
-  if (priority === "low") return "کم";
-  return "عادی";
+function getPriorityLabel(priority: string, locale = "fa") {
+  const isEn = locale === "en";
+  if (priority === "urgent") return isEn ? "Urgent" : "فوری";
+  if (priority === "high") return isEn ? "High" : "بالا";
+  if (priority === "low") return isEn ? "Low" : "کم";
+  return isEn ? "Normal" : "عادی";
 }
 
 export default function DashboardPage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const [knowledgeStats, setKnowledgeStats] = useState<KnowledgeStats | null>(null);
   const [questionStats, setQuestionStats] = useState<QuestionStats | null>(null);
   const [requestStats, setRequestStats] = useState<RequestStats | null>(null);
@@ -327,43 +337,47 @@ export default function DashboardPage() {
   const currentMonthParam = useMemo(() => new Date().toISOString().slice(0, 7), []);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
                   <BarChart3 size={17} />
-                  داشبورد مدیریتی آرتین آزما
+                  {isEn ? "ArtinAzma Management Dashboard" : "داشبورد مدیریتی آرتین آزما"}
                 </div>
 
                 <h1 className="text-3xl font-black text-slate-900">
-                  نمای کلی سیستم
+                  {isEn ? "System Overview" : "نمای کلی سیستم"}
                 </h1>
 
                 <p className="mt-4 max-w-4xl leading-8 text-slate-600">
-                  وضعیت بانک دانش، سوالات کاربران، درخواست‌های مشتریان و مسیرهای
-                  مهم مدیریتی را از این بخش دنبال کنید.
+                  {isEn
+                    ? "Track knowledge base status, user questions, customer requests, and key management workflows."
+                    : "وضعیت بانک دانش، سوالات کاربران، درخواست‌های مشتریان و مسیرهای مهم مدیریتی را از این بخش دنبال کنید."}
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <div className="flex items-center gap-2 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2">
-                  <span className="text-xs font-bold text-purple-700">خروجی مدیریتی:</span>
+                  <span className="text-xs font-bold text-purple-700">{isEn ? "Management export:" : "خروجی مدیریتی:"}</span>
                   <a
                     href={adminUrl("/admin/report/export?period=week")}
                     download
                     className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm border border-purple-200 hover:bg-purple-100 transition"
                   >
-                    <Download size={13} /> هفتگی
+                    <Download size={13} /> {isEn ? "Weekly" : "هفتگی"}
                   </a>
                   <a
                     href={adminUrl(`/admin/report/export?period=month&month=${currentMonthParam}`)}
                     download
                     className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm border border-purple-200 hover:bg-purple-100 transition"
                   >
-                    <Download size={13} /> ماه جاری
+                    <Download size={13} /> {isEn ? "Current month" : "ماه جاری"}
                   </a>
                 </div>
                 <button
@@ -375,7 +389,7 @@ export default function DashboardPage() {
                     size={18}
                     className={loading ? "animate-spin" : ""}
                   />
-                  بروزرسانی داشبورد
+                  {isEn ? "Refresh dashboard" : "بروزرسانی داشبورد"}
                 </button>
               </div>
             </div>
@@ -384,7 +398,7 @@ export default function DashboardPage() {
 
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <DashboardCard
-            title="فایل‌های بانک دانش"
+            title={isEn ? "Knowledge files" : "فایل‌های بانک دانش"}
             value={knowledgeStats?.total_files ?? 0}
             icon={<Database size={24} />}
             tone="purple"
@@ -392,7 +406,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="بخش‌های متنی"
+            title={isEn ? "Text chunks" : "بخش‌های متنی"}
             value={knowledgeStats?.total_chunks ?? 0}
             icon={<FolderOpen size={24} />}
             tone="blue"
@@ -400,7 +414,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="کل سوالات"
+            title={isEn ? "Total questions" : "کل سوالات"}
             value={questionStats?.total_questions ?? 0}
             icon={<FileQuestion size={24} />}
             tone="slate"
@@ -408,7 +422,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="کل درخواست‌ها"
+            title={isEn ? "Total requests" : "کل درخواست‌ها"}
             value={requestStats?.total_requests ?? 0}
             icon={<Inbox size={24} />}
             tone="emerald"
@@ -416,7 +430,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="درخواست‌های جدید"
+            title={isEn ? "New requests" : "درخواست‌های جدید"}
             value={customerStats?.new_requests ?? getStatusCount(requestStats, "new")}
             icon={<MessageSquareText size={24} />}
             tone="amber"
@@ -424,7 +438,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="در حال بررسی"
+            title={isEn ? "Reviewing" : "در حال بررسی"}
             value={getStatusCount(requestStats, "reviewing")}
             icon={<Activity size={24} />}
             tone="red"
@@ -432,7 +446,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="نیازمند پیگیری"
+            title={isEn ? "Needs follow-up" : "نیازمند پیگیری"}
             value={requestStats?.reminder_summary?.total_attention ?? 0}
             icon={<BellRing size={24} />}
             tone="red"
@@ -449,10 +463,12 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-900">
-                    یادآوری پیگیری درخواست‌ها
+                    {isEn ? "Request Follow-Up Reminders" : "یادآوری پیگیری درخواست‌ها"}
                   </h2>
                   <p className="mt-1 text-sm font-bold leading-7 text-slate-600">
-                    درخواست‌هایی که موعدشان گذشته، امروز باید پیگیری شوند، یا چند روز بدون موعد مانده‌اند.
+                    {isEn
+                      ? "Requests that are overdue, due today, or have been left open without a follow-up time."
+                      : "درخواست‌هایی که موعدشان گذشته، امروز باید پیگیری شوند، یا چند روز بدون موعد مانده‌اند."}
                   </p>
                 </div>
               </div>
@@ -462,25 +478,25 @@ export default function DashboardPage() {
                   <div className="text-2xl font-black text-red-700">
                     {requestStats.reminder_summary.overdue_follow_ups}
                   </div>
-                  <div className="text-xs font-bold text-slate-500">گذشته</div>
+                  <div className="text-xs font-bold text-slate-500">{isEn ? "Overdue" : "گذشته"}</div>
                 </div>
                 <div className="rounded-2xl bg-white px-4 py-3">
                   <div className="text-2xl font-black text-amber-700">
                     {requestStats.reminder_summary.due_today}
                   </div>
-                  <div className="text-xs font-bold text-slate-500">امروز</div>
+                  <div className="text-xs font-bold text-slate-500">{isEn ? "Today" : "امروز"}</div>
                 </div>
                 <div className="rounded-2xl bg-white px-4 py-3">
                   <div className="text-2xl font-black text-slate-700">
                     {requestStats.reminder_summary.stale_open}
                   </div>
-                  <div className="text-xs font-bold text-slate-500">معطل</div>
+                  <div className="text-xs font-bold text-slate-500">{isEn ? "Stale" : "معطل"}</div>
                 </div>
                 <div className="rounded-2xl bg-white px-4 py-3">
                   <div className="text-2xl font-black text-purple-700">
                     {requestStats.reminder_summary.unassigned_open}
                   </div>
-                  <div className="text-xs font-bold text-slate-500">بدون مسئول</div>
+                  <div className="text-xs font-bold text-slate-500">{isEn ? "Unassigned" : "بدون مسئول"}</div>
                 </div>
               </div>
             </div>
@@ -500,10 +516,10 @@ export default function DashboardPage() {
                             #{item.id}
                           </span>
                           <span className={`rounded-full border px-3 py-1 text-xs font-black ${getReminderReasonClass(item.reason)}`}>
-                            {getReminderReasonLabel(item.reason)}
+                            {getReminderReasonLabel(item.reason, locale)}
                           </span>
                           <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">
-                            {getPriorityLabel(item.priority)}
+                            {getPriorityLabel(item.priority, locale)}
                           </span>
                         </div>
                         <div className="mt-2 truncate text-sm font-black text-slate-900">
@@ -515,14 +531,14 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="shrink-0 text-xs font-bold leading-6 text-slate-500 lg:text-left">
-                        <div>مسئول: {item.assigned_to || "تعیین نشده"}</div>
-                        <div>موعد: {item.follow_up_at ? formatDate(item.follow_up_at) : "بدون موعد"}</div>
+                        <div>{isEn ? "Owner" : "مسئول"}: {item.assigned_to || (isEn ? "Unassigned" : "تعیین نشده")}</div>
+                        <div>{isEn ? "Due" : "موعد"}: {item.follow_up_at ? formatDate(item.follow_up_at, locale) : (isEn ? "No due date" : "بدون موعد")}</div>
                       </div>
                     </div>
                   </Link>
                 ))
               ) : (
-                <EmptyState text="فعلاً درخواست نیازمند پیگیری فوری دیده نمی‌شود." />
+                <EmptyState text={isEn ? "No urgent follow-up requests are visible right now." : "فعلاً درخواست نیازمند پیگیری فوری دیده نمی‌شود."} />
               )}
             </div>
           </div>
@@ -531,7 +547,7 @@ export default function DashboardPage() {
         {/* ─── Cache Stats Row ────────────────────────────────────── */}
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <DashboardCard
-            title="پاسخ‌های کش‌شده"
+            title={isEn ? "Cached responses" : "پاسخ‌های کش‌شده"}
             value={cacheStats?.total_entries ?? 0}
             icon={<Zap size={24} />}
             tone="amber"
@@ -541,9 +557,9 @@ export default function DashboardPage() {
           <div className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
-                <div className="text-sm font-bold text-slate-500">ظرفیت Cache</div>
+                <div className="text-sm font-bold text-slate-500">{isEn ? "Cache capacity" : "ظرفیت Cache"}</div>
                 <div className="mt-3 text-4xl font-black text-slate-900">
-                  {cacheStats ? `${cacheStats.fill_pct}٪` : "—"}
+                  {cacheStats ? `${cacheStats.fill_pct}${isEn ? "%" : "٪"}` : "—"}
                 </div>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-emerald-50 text-emerald-700 border-emerald-100">
@@ -559,7 +575,9 @@ export default function DashboardPage() {
                   />
                 </div>
                 <div className="mt-2 text-xs text-slate-400 font-bold">
-                  {cacheStats.total_entries} / {cacheStats.max_entries} — نگهداری تا {cacheStats.ttl_hours} ساعت
+                  {isEn
+                    ? `${cacheStats.total_entries} / ${cacheStats.max_entries}, retained for ${cacheStats.ttl_hours} hours`
+                    : `${cacheStats.total_entries} / ${cacheStats.max_entries} — نگهداری تا ${cacheStats.ttl_hours} ساعت`}
                 </div>
               </div>
             )}
@@ -568,7 +586,7 @@ export default function DashboardPage() {
           <div className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-bold text-slate-500">صرفه‌جویی API</div>
+                <div className="text-sm font-bold text-slate-500">{isEn ? "API savings" : "صرفه‌جویی API"}</div>
                 <div className="mt-3 text-4xl font-black text-slate-900">
                   {cacheStats?.total_entries ?? "—"}x
                 </div>
@@ -578,7 +596,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-4 text-xs font-bold text-slate-400">
-              هر سوال تکراری از Cache برگردانده می‌شود بدون صدا زدن OpenAI
+              {isEn
+                ? "Repeated questions are returned from cache without calling OpenAI."
+                : "هر سوال تکراری از Cache برگردانده می‌شود بدون صدا زدن OpenAI"}
             </div>
           </div>
         </div>
@@ -586,7 +606,7 @@ export default function DashboardPage() {
         {/* ─── Customer Stats Row ─────────────────────────────────── */}
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <DashboardCard
-            title="مشتریان ثبت‌نام‌شده"
+            title={isEn ? "Registered customers" : "مشتریان ثبت‌نام‌شده"}
             value={customerStats?.total_customers ?? 0}
             icon={<Users size={24} />}
             tone="purple"
@@ -594,7 +614,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="جلسات گفتگوی مشتریان"
+            title={isEn ? "Customer chat sessions" : "جلسات گفتگوی مشتریان"}
             value={customerStats?.total_sessions ?? 0}
             icon={<MessagesSquare size={24} />}
             tone="blue"
@@ -602,7 +622,7 @@ export default function DashboardPage() {
           />
 
           <DashboardCard
-            title="کل پیام‌های مشتریان"
+            title={isEn ? "Total customer messages" : "کل پیام‌های مشتریان"}
             value={customerStats?.total_messages ?? 0}
             icon={<BookOpen size={24} />}
             tone="emerald"
@@ -613,9 +633,11 @@ export default function DashboardPage() {
         <div className="mb-5 grid auto-rows-[340px] gap-4 xl:grid-cols-3">
           <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 shrink-0">
-              <h2 className="text-lg font-black text-slate-900">سوالات پرتکرار</h2>
+              <h2 className="text-lg font-black text-slate-900">{isEn ? "Frequent Questions" : "سوالات پرتکرار"}</h2>
               <p className="mt-1 text-xs font-bold text-slate-500">
-                سوال‌هایی که در بازه انتخاب‌شده با متن مشابه چندبار پرسیده شده‌اند.
+                {isEn
+                  ? "Questions with similar wording that were asked multiple times in the selected period."
+                  : "سوال‌هایی که در بازه انتخاب‌شده با متن مشابه چندبار پرسیده شده‌اند."}
               </p>
             </div>
             {businessAnalytics?.frequent_questions?.length ? (
@@ -631,25 +653,25 @@ export default function DashboardPage() {
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-blue-700">
-                        {getDomainLabel(item.domain)}
+                        {getDomainLabel(item.domain, locale)}
                       </span>
                       <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-black text-white">
-                        {item.count} بار
+                        {isEn ? `${item.count} times` : `${item.count} بار`}
                       </span>
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <EmptyState text="هنوز سوال تکراری کافی در این بازه دیده نشده است." />
+              <EmptyState text={isEn ? "Not enough repeated questions have appeared in this period yet." : "هنوز سوال تکراری کافی در این بازه دیده نشده است."} />
             )}
           </div>
 
           <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 shrink-0">
-              <h2 className="text-lg font-black text-slate-900">محصولات و موضوعات پرتکرار</h2>
+              <h2 className="text-lg font-black text-slate-900">{isEn ? "Frequent Products and Topics" : "محصولات و موضوعات پرتکرار"}</h2>
               <p className="mt-1 text-xs font-bold text-slate-500">
-                استخراج‌شده از متن سوال‌ها و درخواست‌های مشتریان.
+                {isEn ? "Extracted from user questions and customer requests." : "استخراج‌شده از متن سوال‌ها و درخواست‌های مشتریان."}
               </p>
             </div>
             {businessAnalytics?.top_products?.length ? (
@@ -674,23 +696,23 @@ export default function DashboardPage() {
                 })()}
               </div>
             ) : (
-              <EmptyState text="هنوز محصول یا موضوع پرتکراری شناسایی نشده است." />
+              <EmptyState text={isEn ? "No frequent product or topic has been identified yet." : "هنوز محصول یا موضوع پرتکراری شناسایی نشده است."} />
             )}
           </div>
 
           <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex shrink-0 items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-black text-slate-900">مشتریان فعال</h2>
+                <h2 className="text-lg font-black text-slate-900">{isEn ? "Active Customers" : "مشتریان فعال"}</h2>
                 <p className="mt-1 text-xs font-bold text-slate-500">
-                  بر اساس پیام‌ها، جلسات گفتگو و درخواست‌های ثبت‌شده.
+                  {isEn ? "Based on messages, chat sessions, and registered requests." : "بر اساس پیام‌ها، جلسات گفتگو و درخواست‌های ثبت‌شده."}
                 </p>
               </div>
               <Link
                 href="/admin/customers"
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-white"
               >
-                همه
+                {isEn ? "All" : "همه"}
               </Link>
             </div>
             {businessAnalytics?.active_customers?.length ? (
@@ -713,15 +735,15 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
-                      <span>{customer.message_count} پیام</span>
-                      <span>{customer.session_count} جلسه</span>
-                      <span>{customer.request_count} درخواست</span>
+                      <span>{isEn ? `${customer.message_count} messages` : `${customer.message_count} پیام`}</span>
+                      <span>{isEn ? `${customer.session_count} sessions` : `${customer.session_count} جلسه`}</span>
+                      <span>{isEn ? `${customer.request_count} requests` : `${customer.request_count} درخواست`}</span>
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <EmptyState text="هنوز مشتری فعالی در این بازه دیده نشده است." />
+              <EmptyState text={isEn ? "No active customers are visible in this period yet." : "هنوز مشتری فعالی در این بازه دیده نشده است."} />
             )}
           </div>
         </div>
@@ -733,10 +755,10 @@ export default function DashboardPage() {
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-black text-slate-900">
-                      وضعیت درخواست‌های مشتریان
+                      {isEn ? "Customer Request Status" : "وضعیت درخواست‌های مشتریان"}
                     </h2>
                     <p className="mt-1 text-xs font-bold text-slate-500">
-                      تفکیک درخواست‌ها بر اساس وضعیت پیگیری.
+                      {isEn ? "Requests broken down by follow-up status." : "تفکیک درخواست‌ها بر اساس وضعیت پیگیری."}
                     </p>
                   </div>
 
@@ -744,7 +766,7 @@ export default function DashboardPage() {
                     href="/admin/requests"
                     className="inline-flex items-center gap-2 rounded-xl bg-purple-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-purple-800"
                   >
-                    مشاهده
+                    {isEn ? "View" : "مشاهده"}
                     <ArrowUpRight size={16} />
                   </Link>
                 </div>
@@ -757,7 +779,7 @@ export default function DashboardPage() {
                         className="flex items-center justify-between rounded-2xl bg-slate-50 p-3"
                       >
                         <span className="text-sm font-bold text-slate-700">
-                          {getStatusLabel(item.status)}
+                          {getStatusLabel(item.status, locale)}
                         </span>
 
                         <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black text-purple-700">
@@ -767,17 +789,17 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState text="هنوز درخواستی ثبت نشده است." />
+                  <EmptyState text={isEn ? "No requests have been registered yet." : "هنوز درخواستی ثبت نشده است."} />
                 )}
               </div>
 
               <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="mb-3">
                   <h2 className="text-lg font-black text-slate-900">
-                    نوع درخواست‌های مشتریان
+                    {isEn ? "Customer Request Types" : "نوع درخواست‌های مشتریان"}
                   </h2>
                   <p className="mt-1 text-xs font-bold text-slate-500">
-                    موضوعاتی که مشتریان بیشتر درباره آن‌ها درخواست ثبت کرده‌اند.
+                    {isEn ? "Topics customers most often submit requests about." : "موضوعاتی که مشتریان بیشتر درباره آن‌ها درخواست ثبت کرده‌اند."}
                   </p>
                 </div>
 
@@ -789,7 +811,7 @@ export default function DashboardPage() {
                         className="flex items-center justify-between rounded-2xl bg-slate-50 p-3"
                       >
                         <span className="text-sm font-bold text-slate-700">
-                          {getTypeLabel(item.request_type)}
+                          {getTypeLabel(item.request_type, locale)}
                         </span>
 
                         <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black text-emerald-700">
@@ -799,7 +821,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState text="هنوز نوع درخواستی ثبت نشده است." />
+                  <EmptyState text={isEn ? "No request type has been registered yet." : "هنوز نوع درخواستی ثبت نشده است."} />
                 )}
               </div>
             </div>
@@ -808,10 +830,10 @@ export default function DashboardPage() {
               <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-black text-slate-900">
-                    آخرین سوالات کاربران
+                    {isEn ? "Latest User Questions" : "آخرین سوالات کاربران"}
                   </h2>
                   <p className="mt-1 text-xs font-bold text-slate-500">
-                    سوالات اخیر که توسط کاربران از آرتین پرسیده شده‌اند.
+                    {isEn ? "Recent questions users have asked Artin." : "سوالات اخیر که توسط کاربران از آرتین پرسیده شده‌اند."}
                   </p>
                 </div>
 
@@ -819,7 +841,7 @@ export default function DashboardPage() {
                   href="/admin/questions"
                   className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-white"
                 >
-                  همه سوالات
+                  {isEn ? "All questions" : "همه سوالات"}
                 </Link>
               </div>
 
@@ -837,19 +859,19 @@ export default function DashboardPage() {
 
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
                         <span className="rounded-full bg-white px-2.5 py-1 font-bold text-purple-700">
-                          {getDomainLabel(item.detected_domain)}
+                          {getDomainLabel(item.detected_domain, locale)}
                         </span>
 
                         <span className="inline-flex items-center gap-1">
                           <Clock3 size={14} />
-                          {formatDate(item.created_at)}
+                          {formatDate(item.created_at, locale)}
                         </span>
                       </div>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <EmptyState text="هنوز سوالی ثبت نشده است." />
+                <EmptyState text={isEn ? "No questions have been registered yet." : "هنوز سوالی ثبت نشده است."} />
               )}
             </div>
           </div>
@@ -859,10 +881,10 @@ export default function DashboardPage() {
               <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-black text-slate-900">
-                    حوزه‌های پرتکرار سوالات
+                    {isEn ? "Frequent Question Domains" : "حوزه‌های پرتکرار سوالات"}
                   </h2>
                   <p className="mt-1 text-xs font-bold text-slate-500">
-                    حوزه‌هایی که کاربران بیشتر درباره آن‌ها سوال پرسیده‌اند.
+                    {isEn ? "Domains users ask about most often." : "حوزه‌هایی که کاربران بیشتر درباره آن‌ها سوال پرسیده‌اند."}
                   </p>
                 </div>
               </div>
@@ -874,7 +896,7 @@ export default function DashboardPage() {
                     return topDomains.map((item) => (
                       <div key={item.domain}>
                         <div className="mb-1 flex items-center justify-between text-sm">
-                          <span className="font-bold text-slate-700">{getDomainLabel(item.domain)}</span>
+                          <span className="font-bold text-slate-700">{getDomainLabel(item.domain, locale)}</span>
                           <span className="font-black text-blue-700">{item.count}</span>
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -888,7 +910,7 @@ export default function DashboardPage() {
                   })()}
                 </div>
               ) : (
-                <EmptyState text="هنوز سوالی ثبت نشده است." />
+                <EmptyState text={isEn ? "No questions have been registered yet." : "هنوز سوالی ثبت نشده است."} />
               )}
             </div>
 
@@ -899,17 +921,18 @@ export default function DashboardPage() {
                 analyticsDays={analyticsDays}
                 loading={loading}
                 onDaysChange={setAnalyticsDays}
+                locale={locale}
               />
             )}
 
             {/* ─── Domain Pie Chart ─────────────────────────────────── */}
             {topDomains.length > 0 && (
-              <DomainPieChart domains={topDomains} />
+              <DomainPieChart domains={topDomains} locale={locale} />
             )}
 
             {/* ─── Hourly Heatmap ──────────────────────────────────────── */}
             {analyticsData?.hourly && analyticsData.hourly.length > 0 && (
-              <HourlyHeatmap data={analyticsData.hourly} />
+              <HourlyHeatmap data={analyticsData.hourly} locale={locale} />
             )}
 
             {/* ─── Response Time Widget ───────────────────────────────── */}
@@ -917,6 +940,7 @@ export default function DashboardPage() {
               <ResponseTimeWidget
                 avgMs={responseTimeStats.avg_ms}
                 totalAnswered={responseTimeStats.total_answered}
+                locale={locale}
               />
             )}
 
@@ -924,8 +948,12 @@ export default function DashboardPage() {
             {analyticsData?.top_keywords && analyticsData.top_keywords.length > 0 && (
               <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="mb-3 shrink-0">
-                  <h2 className="text-lg font-black text-slate-900">کلمات پرتکرار {analyticsDays} روز اخیر</h2>
-                  <p className="mt-1 text-xs font-bold text-slate-500">موضوعاتی که کاربران بیشتر جستجو کرده‌اند.</p>
+                  <h2 className="text-lg font-black text-slate-900">
+                    {isEn ? `Frequent keywords in the last ${analyticsDays} days` : `کلمات پرتکرار ${analyticsDays} روز اخیر`}
+                  </h2>
+                  <p className="mt-1 text-xs font-bold text-slate-500">
+                    {isEn ? "Topics users have searched most often." : "موضوعاتی که کاربران بیشتر جستجو کرده‌اند."}
+                  </p>
                 </div>
                 <div className="flex min-h-0 flex-1 flex-wrap content-start gap-1.5 overflow-y-auto pl-1">
                   {analyticsData.top_keywords.map((kw) => (
@@ -945,22 +973,22 @@ export default function DashboardPage() {
 
             {/* ─── Cache Gauge Widget ──────────────────────────────── */}
             {cacheStats && (
-              <CacheGaugeWidget stats={cacheStats} />
+              <CacheGaugeWidget stats={cacheStats} locale={locale} />
             )}
 
             {/* ─── Feedback Stats Widget ───────────────────────────── */}
             {feedbackStats && (
-              <FeedbackStatsWidget stats={feedbackStats} />
+              <FeedbackStatsWidget stats={feedbackStats} locale={locale} />
             )}
 
             <div className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-black text-slate-900">
-                    دسته‌بندی‌های بانک دانش
+                    {isEn ? "Knowledge Base Categories" : "دسته‌بندی‌های بانک دانش"}
                   </h2>
                   <p className="mt-1 text-xs font-bold text-slate-500">
-                    دسته‌بندی‌های فعال در بانک دانش آرتین.
+                    {isEn ? "Active categories in Artin's knowledge base." : "دسته‌بندی‌های فعال در بانک دانش آرتین."}
                   </p>
                 </div>
               </div>
@@ -972,12 +1000,12 @@ export default function DashboardPage() {
                       key={category}
                       className="rounded-full bg-purple-50 px-2.5 py-1.5 text-xs font-bold text-purple-700"
                     >
-                      {getCategoryLabel(category)}
+                      {getCategoryLabel(category, locale)}
                     </span>
                   ))}
                 </div>
               ) : (
-                <EmptyState text="هنوز دسته‌بندی ثبت نشده است." />
+                <EmptyState text={isEn ? "No category has been registered yet." : "هنوز دسته‌بندی ثبت نشده است."} />
               )}
             </div>
 
@@ -985,10 +1013,10 @@ export default function DashboardPage() {
               <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-black text-slate-900">
-                    فایل‌های اخیر بانک دانش
+                    {isEn ? "Recent Knowledge Base Files" : "فایل‌های اخیر بانک دانش"}
                   </h2>
                   <p className="mt-1 text-xs font-bold text-slate-500">
-                    بخشی از فایل‌های ثبت‌شده در بانک دانش.
+                    {isEn ? "A subset of files registered in the knowledge base." : "بخشی از فایل‌های ثبت‌شده در بانک دانش."}
                   </p>
                 </div>
               </div>
@@ -1005,14 +1033,14 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <EmptyState text="هنوز فایلی ثبت نشده است." />
+                <EmptyState text={isEn ? "No file has been registered yet." : "هنوز فایلی ثبت نشده است."} />
               )}
 
               <Link
                 href="/admin/knowledge"
                 className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800"
               >
-                مدیریت بانک دانش
+                {isEn ? "Manage knowledge base" : "مدیریت بانک دانش"}
                 <ArrowUpRight size={16} />
               </Link>
             </div>
@@ -1053,12 +1081,15 @@ function DailyLineChart({
   analyticsDays,
   loading,
   onDaysChange,
+  locale,
 }: {
   data: DailyCount[];
   analyticsDays: number;
   loading: boolean;
   onDaysChange: (days: number) => void;
+  locale: string;
 }) {
+  const isEn = locale === "en";
   const W = 360, H = 96, PAD = { top: 10, right: 8, bottom: 24, left: 28 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
@@ -1094,11 +1125,13 @@ function DailyLineChart({
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-lg font-black text-slate-900">فعالیت روزانه</h2>
-          <p className="mt-1 text-xs font-bold text-slate-500">تعداد سوالات ثبت‌شده به تفکیک روز</p>
+          <h2 className="text-lg font-black text-slate-900">{isEn ? "Daily Activity" : "فعالیت روزانه"}</h2>
+          <p className="mt-1 text-xs font-bold text-slate-500">
+            {isEn ? "Registered questions by day" : "تعداد سوالات ثبت‌شده به تفکیک روز"}
+          </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <span className="text-xs font-black text-slate-500">بازه:</span>
+          <span className="text-xs font-black text-slate-500">{isEn ? "Range" : "بازه"}:</span>
           {[7, 14, 30, 90].map((d) => (
             <button
               key={d}
@@ -1109,18 +1142,18 @@ function DailyLineChart({
                   : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-purple-50 hover:text-purple-700"
               }`}
             >
-              {d} روز
+              {isEn ? `${d} days` : `${d} روز`}
             </button>
           ))}
           <button
-            onClick={() => downloadCSV("daily-activity.csv", ["تاریخ", "تعداد سوال"], data.map((d) => [d.day, d.count]))}
+            onClick={() => downloadCSV("daily-activity.csv", [isEn ? "Date" : "تاریخ", isEn ? "Question count" : "تعداد سوال"], data.map((d) => [d.day, d.count]))}
             className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
-            title="دانلود CSV"
+            title={isEn ? "Download CSV" : "دانلود CSV"}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             CSV
           </button>
-          {loading && <span className="text-xs font-bold text-slate-400">در حال بارگذاری...</span>}
+          {loading && <span className="text-xs font-bold text-slate-400">{isEn ? "Loading..." : "در حال بارگذاری..."}</span>}
         </div>
       </div>
       <svg
@@ -1163,7 +1196,7 @@ function DailyLineChart({
           <g key={d.day}>
             <circle cx={xOf(i)} cy={yOf(d.count)} r="3.5" fill="white" stroke="#3b82f6" strokeWidth="2" />
             {d.count > 0 && (
-              <title>{`${d.day}: ${d.count} سوال`}</title>
+              <title>{isEn ? `${d.day}: ${d.count} questions` : `${d.day}: ${d.count} سوال`}</title>
             )}
           </g>
         ))}
@@ -1181,7 +1214,8 @@ function DailyLineChart({
 // ─── Pie Chart: question domains ─────────────────────────────────────────────
 const PIE_COLORS = ["#6366f1", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
-function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
+function DomainPieChart({ domains, locale }: { domains: QuestionDomain[]; locale: string }) {
+  const isEn = locale === "en";
   const total = domains.reduce((s, d) => s + d.count, 0);
   if (total === 0) return null;
 
@@ -1205,20 +1239,22 @@ function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
     const pct = Math.round((d.count / total) * 100);
     const midAngle = startAngle + angle / 2;
     startAngle = endAngle;
-    return { path, color, pct, midAngle, label: getDomainLabel(d.domain), count: d.count };
+    return { path, color, pct, midAngle, label: getDomainLabel(d.domain, locale), count: d.count };
   });
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-2 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-slate-900">توزیع حوزه‌های سوالات</h2>
-          <p className="mt-1 text-xs font-bold text-slate-500">سهم هر حوزه از کل سوالات دریافتی</p>
+          <h2 className="text-base font-black text-slate-900">{isEn ? "Question Domain Distribution" : "توزیع حوزه‌های سوالات"}</h2>
+          <p className="mt-1 text-xs font-bold text-slate-500">
+            {isEn ? "Share of each domain from all received questions" : "سهم هر حوزه از کل سوالات دریافتی"}
+          </p>
         </div>
         <button
-          onClick={() => downloadCSV("domain-distribution.csv", ["حوزه", "تعداد", "درصد"], domains.map((d) => [d.domain, d.count, total > 0 ? ((d.count / total) * 100).toFixed(1) : 0]))}
+          onClick={() => downloadCSV("domain-distribution.csv", [isEn ? "Domain" : "حوزه", isEn ? "Count" : "تعداد", isEn ? "Percent" : "درصد"], domains.map((d) => [d.domain, d.count, total > 0 ? ((d.count / total) * 100).toFixed(1) : 0]))}
           className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
-          title="دانلود CSV"
+          title={isEn ? "Download CSV" : "دانلود CSV"}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           CSV
@@ -1232,14 +1268,14 @@ function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
             </path>
           ))}
           <text x={CX} y={CY - 4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">{total}</text>
-          <text x={CX} y={CY + 10} textAnchor="middle" fontSize="7.5" fill="#64748b">سوال</text>
+          <text x={CX} y={CY + 10} textAnchor="middle" fontSize="7.5" fill="#64748b">{isEn ? "questions" : "سوال"}</text>
         </svg>
-        <div className="flex flex-col gap-1.5" style={{ direction: "rtl" }}>
+        <div className="flex flex-col gap-1.5" style={{ direction: isEn ? "ltr" : "rtl" }}>
           {slices.map((s, i) => (
             <div key={i} className="flex items-center gap-2 text-xs">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
               <span className="font-bold text-slate-700">{s.label}</span>
-              <span className="text-slate-400">{s.pct}٪</span>
+              <span className="text-slate-400">{s.pct}{isEn ? "%" : "٪"}</span>
             </div>
           ))}
         </div>
@@ -1249,7 +1285,8 @@ function DomainPieChart({ domains }: { domains: QuestionDomain[] }) {
 }
 
 // ─── Feedback Stats Widget ───────────────────────────────────────────────────
-function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
+function FeedbackStatsWidget({ stats, locale }: { stats: FeedbackStats; locale: string }) {
+  const isEn = locale === "en";
   const pct = stats.satisfaction_pct;
   const ratedPct = stats.total_questions > 0
     ? Math.round((stats.rated / stats.total_questions) * 100)
@@ -1262,17 +1299,17 @@ function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
           <Star size={20} />
         </div>
         <div>
-          <h2 className="text-lg font-black text-slate-900">رضایت کاربران</h2>
-          <p className="text-xs text-slate-500">بازخورد روی پاسخ‌های آرتین</p>
+          <h2 className="text-lg font-black text-slate-900">{isEn ? "User Satisfaction" : "رضایت کاربران"}</h2>
+          <p className="text-xs text-slate-500">{isEn ? "Feedback on Artin's answers" : "بازخورد روی پاسخ‌های آرتین"}</p>
         </div>
       </div>
 
       {/* Satisfaction score */}
       <div className="mb-3 flex items-end gap-3">
         <div className="text-3xl font-black text-slate-900">
-          {pct !== null ? `${pct}٪` : "—"}
+          {pct !== null ? `${pct}${isEn ? "%" : "٪"}` : "—"}
         </div>
-        <div className="mb-1 text-sm font-bold text-emerald-600">رضایت</div>
+        <div className="mb-1 text-sm font-bold text-emerald-600">{isEn ? "Satisfaction" : "رضایت"}</div>
       </div>
 
       {/* Progress bar */}
@@ -1300,14 +1337,14 @@ function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
           <ThumbsUp size={16} className="text-emerald-600" />
           <div>
             <div className="text-xl font-black text-emerald-700">{stats.up}</div>
-            <div className="text-[11px] font-bold text-emerald-500">مفید بود</div>
+            <div className="text-[11px] font-bold text-emerald-500">{isEn ? "Helpful" : "مفید بود"}</div>
           </div>
         </div>
         <div className="flex items-center gap-2 rounded-2xl bg-red-50 p-3">
           <ThumbsDown size={16} className="text-red-500" />
           <div>
             <div className="text-xl font-black text-red-600">{stats.down}</div>
-            <div className="text-[11px] font-bold text-red-400">نیاز به بهبود</div>
+            <div className="text-[11px] font-bold text-red-400">{isEn ? "Needs improvement" : "نیاز به بهبود"}</div>
           </div>
         </div>
       </div>
@@ -1315,11 +1352,13 @@ function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
       {/* Rated vs unrated */}
       <div className="rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-500 space-y-1">
         <div className="flex justify-between">
-          <span>ارزیابی‌شده</span>
-          <span className="text-slate-700">{stats.rated} از {stats.total_questions} ({ratedPct}٪)</span>
+          <span>{isEn ? "Rated" : "ارزیابی‌شده"}</span>
+          <span className="text-slate-700">
+            {isEn ? `${stats.rated} of ${stats.total_questions} (${ratedPct}%)` : `${stats.rated} از ${stats.total_questions} (${ratedPct}٪)`}
+          </span>
         </div>
         <div className="flex justify-between">
-          <span>بدون نظر</span>
+          <span>{isEn ? "Unrated" : "بدون نظر"}</span>
           <span>{stats.unrated}</span>
         </div>
       </div>
@@ -1329,7 +1368,8 @@ function FeedbackStatsWidget({ stats }: { stats: FeedbackStats }) {
 
 
 // ─── Cache Gauge Widget ──────────────────────────────────────────────────────
-function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
+function CacheGaugeWidget({ stats, locale }: { stats: CacheStats; locale: string }) {
+  const isEn = locale === "en";
   const pct = stats.fill_pct;
   const R = 52, CX = 70, CY = 68;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -1345,8 +1385,10 @@ function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-2">
-        <h2 className="text-base font-black text-slate-900">وضعیت Cache هوشمند</h2>
-        <p className="mt-1 text-xs font-bold text-slate-500">پاسخ‌های ذخیره‌شده برای کاهش هزینه API</p>
+        <h2 className="text-base font-black text-slate-900">{isEn ? "Smart Cache Status" : "وضعیت Cache هوشمند"}</h2>
+        <p className="mt-1 text-xs font-bold text-slate-500">
+          {isEn ? "Stored responses to reduce API cost" : "پاسخ‌های ذخیره‌شده برای کاهش هزینه API"}
+        </p>
       </div>
       <div className="flex items-center justify-between gap-3">
         <svg viewBox="0 0 140 80" className="w-24 shrink-0" aria-hidden="true" style={{ direction: "ltr" }}>
@@ -1354,20 +1396,22 @@ function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
           {pct > 0 && (
             <path d={arcD} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round" />
           )}
-          <text x={CX} y={CY - 8} textAnchor="middle" fontSize="18" fontWeight="bold" fill="#1e293b">{pct}٪</text>
-          <text x={CX} y={CY + 6} textAnchor="middle" fontSize="7.5" fill="#64748b">پر شده</text>
-          <text x="8" y={CY + 16} textAnchor="middle" fontSize="7" fill="#94a3b8">۰</text>
+          <text x={CX} y={CY - 8} textAnchor="middle" fontSize="18" fontWeight="bold" fill="#1e293b">{pct}{isEn ? "%" : "٪"}</text>
+          <text x={CX} y={CY + 6} textAnchor="middle" fontSize="7.5" fill="#64748b">{isEn ? "filled" : "پر شده"}</text>
+          <text x="8" y={CY + 16} textAnchor="middle" fontSize="7" fill="#94a3b8">{isEn ? "0" : "۰"}</text>
           <text x="132" y={CY + 16} textAnchor="middle" fontSize="7" fill="#94a3b8">{stats.max_entries}</text>
         </svg>
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs" style={{ direction: "rtl" }}>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs" style={{ direction: isEn ? "ltr" : "rtl" }}>
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-            <span className="font-bold text-slate-700">{stats.total_entries} پاسخ کش‌شده</span>
+            <span className="font-bold text-slate-700">
+              {isEn ? `${stats.total_entries} cached responses` : `${stats.total_entries} پاسخ کش‌شده`}
+            </span>
           </div>
-          <div className="text-slate-500">حداکثر: {stats.max_entries} ورودی</div>
-          <div className="text-slate-500">مدت نگهداری: {stats.ttl_hours} ساعت</div>
+          <div className="text-slate-500">{isEn ? `Maximum: ${stats.max_entries} entries` : `حداکثر: ${stats.max_entries} ورودی`}</div>
+          <div className="text-slate-500">{isEn ? `Retention: ${stats.ttl_hours} hours` : `مدت نگهداری: ${stats.ttl_hours} ساعت`}</div>
           <div className="mt-1 w-fit rounded-xl bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
-            {stats.total_entries} بار صرفه‌جویی API
+            {isEn ? `${stats.total_entries} API calls saved` : `${stats.total_entries} بار صرفه‌جویی API`}
           </div>
         </div>
       </div>
@@ -1377,7 +1421,8 @@ function CacheGaugeWidget({ stats }: { stats: CacheStats }) {
 
 
 // ─── Hourly Activity Heatmap ───────────────────────────────────────────────
-function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
+function HourlyHeatmap({ data, locale }: { data: { hour: number; count: number }[]; locale: string }) {
+  const isEn = locale === "en";
   const maxCount = Math.max(...data.map(d => d.count), 1);
 
   function getColor(count: number) {
@@ -1392,8 +1437,8 @@ function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-2">
-        <h2 className="text-base font-black text-slate-900">ساعات پرتردد</h2>
-        <p className="mt-1 text-xs font-bold text-slate-500">فعالیت کاربران به تفکیک ساعت روز</p>
+        <h2 className="text-base font-black text-slate-900">{isEn ? "Peak Hours" : "ساعات پرتردد"}</h2>
+        <p className="mt-1 text-xs font-bold text-slate-500">{isEn ? "User activity by hour of day" : "فعالیت کاربران به تفکیک ساعت روز"}</p>
       </div>
       <div className="grid grid-cols-12 gap-1.5" style={{ direction: "ltr" }}>
         {data.map((d) => (
@@ -1401,7 +1446,7 @@ function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
             <div
               className="aspect-square w-full rounded-md transition-all hover:scale-110"
               style={{ background: getColor(d.count) }}
-              title={`ساعت ${d.hour}: ${d.count} سوال`}
+              title={isEn ? `Hour ${d.hour}: ${d.count} questions` : `ساعت ${d.hour}: ${d.count} سوال`}
             />
             <span className="text-[9px] font-bold text-slate-400">
               {d.hour}
@@ -1410,22 +1455,29 @@ function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
         ))}
       </div>
       <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-slate-400">
-        <span>کم</span>
+        <span>{isEn ? "Low" : "کم"}</span>
         <div className="flex gap-0.5">
           {["#f1f5f9", "#c7d2fe", "#818cf8", "#6366f1", "#4338ca"].map((c) => (
             <div key={c} className="h-3 w-3 rounded-sm" style={{ background: c }} />
           ))}
         </div>
-        <span>زیاد</span>
+        <span>{isEn ? "High" : "زیاد"}</span>
       </div>
     </div>
   );
 }
 
 // ─── Response Time Stats Widget ──────────────────────────────────────────────
-function ResponseTimeWidget({ avgMs, totalAnswered }: { avgMs: number; totalAnswered: number }) {
+function ResponseTimeWidget({ avgMs, totalAnswered, locale }: { avgMs: number; totalAnswered: number; locale: string }) {
+  const isEn = locale === "en";
   const avgSec = (avgMs / 1000).toFixed(1);
-  const rating = avgMs < 3000 ? "عالی" : avgMs < 8000 ? "خوب" : avgMs < 15000 ? "متوسط" : "کند";
+  const rating = avgMs < 3000
+    ? (isEn ? "Excellent" : "عالی")
+    : avgMs < 8000
+      ? (isEn ? "Good" : "خوب")
+      : avgMs < 15000
+        ? (isEn ? "Average" : "متوسط")
+        : (isEn ? "Slow" : "کند");
   const ratingColor = avgMs < 3000 ? "text-emerald-600" : avgMs < 8000 ? "text-blue-600" : avgMs < 15000 ? "text-amber-600" : "text-red-600";
   const barPct = Math.min(100, Math.round((avgMs / 20000) * 100));
 
@@ -1436,14 +1488,14 @@ function ResponseTimeWidget({ avgMs, totalAnswered }: { avgMs: number; totalAnsw
           <Clock3 size={20} />
         </div>
         <div>
-          <h2 className="text-lg font-black text-slate-900">زمان پاسخ</h2>
-          <p className="text-xs text-slate-500">میانگین زمان تولید پاسخ AI</p>
+          <h2 className="text-lg font-black text-slate-900">{isEn ? "Response Time" : "زمان پاسخ"}</h2>
+          <p className="text-xs text-slate-500">{isEn ? "Average AI answer generation time" : "میانگین زمان تولید پاسخ AI"}</p>
         </div>
       </div>
 
       <div className="mb-3 flex items-end gap-3">
         <div className="text-3xl font-black text-slate-900">{avgSec}</div>
-        <div className="mb-1 text-sm font-bold text-slate-500">ثانیه</div>
+        <div className="mb-1 text-sm font-bold text-slate-500">{isEn ? "seconds" : "ثانیه"}</div>
         <div className={`mb-1 mr-2 text-sm font-black ${ratingColor}`}>{rating}</div>
       </div>
 
@@ -1455,13 +1507,13 @@ function ResponseTimeWidget({ avgMs, totalAnswered }: { avgMs: number; totalAnsw
           />
         </div>
         <div className="mt-2 flex justify-between text-[10px] text-slate-400">
-          <span>۰ ثانیه</span>
-          <span>۲۰ ثانیه</span>
+          <span>{isEn ? "0 sec" : "۰ ثانیه"}</span>
+          <span>{isEn ? "20 sec" : "۲۰ ثانیه"}</span>
         </div>
       </div>
 
       <div className="rounded-2xl bg-slate-50 p-3 text-xs font-bold text-slate-500">
-        {totalAnswered} سوال پاسخ داده‌شده
+        {isEn ? `${totalAnswered} answered questions` : `${totalAnswered} سوال پاسخ داده‌شده`}
       </div>
     </div>
   );
@@ -1480,6 +1532,8 @@ function DashboardCard({
   tone: "purple" | "blue" | "slate" | "emerald" | "amber" | "red";
   href: string;
 }) {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const toneClass = {
     purple: "bg-purple-50 text-purple-700 border-purple-100",
     blue: "bg-blue-50 text-blue-700 border-blue-100",
@@ -1508,7 +1562,7 @@ function DashboardCard({
       </div>
 
       <div className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-slate-400 transition group-hover:text-purple-700">
-        مشاهده جزئیات
+        {isEn ? "View details" : "مشاهده جزئیات"}
         <ArrowUpRight size={14} />
       </div>
     </Link>

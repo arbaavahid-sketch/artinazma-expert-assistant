@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileQuestion, Loader2, Search, Users, Inbox } from "lucide-react";
 import { adminUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 
 type QResult = { id: number; question: string; detected_domain: string; created_at: string };
 type CResult = { id: number; full_name: string; email: string; company: string };
@@ -19,6 +20,8 @@ const EMPTY: SearchResults = { questions: [], customers: [], requests: [] };
 
 export default function AdminGlobalSearch() {
   const router = useRouter();
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -96,7 +99,7 @@ export default function AdminGlobalSearch() {
   }
 
   return (
-    <div ref={wrapperRef} className="relative w-full max-w-xs">
+    <div ref={wrapperRef} className="relative w-full max-w-xs" dir={dir}>
       {/* Trigger */}
       <button
         onClick={() => {
@@ -106,7 +109,7 @@ export default function AdminGlobalSearch() {
         className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400 shadow-sm transition hover:border-purple-200 hover:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
       >
         <Search size={15} />
-        <span className="flex-1 text-right">جستجو...</span>
+        <span className="flex-1 text-right">{isEn ? "Search..." : "جستجو..."}</span>
         <kbd className="hidden rounded-lg border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-400 dark:border-slate-600 dark:bg-slate-700 sm:inline">
           Ctrl K
         </kbd>
@@ -127,14 +130,14 @@ export default function AdminGlobalSearch() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="جستجو در سوالات، مشتریان، درخواست‌ها..."
+              placeholder={isEn ? "Search questions, customers, requests..." : "جستجو در سوالات، مشتریان، درخواست‌ها..."}
               className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
               autoComplete="off"
             />
             {query && (
               <button
                 onClick={() => { setQuery(""); setResults(EMPTY); inputRef.current?.focus(); }}
-                aria-label="پاک کردن جستجو"
+                aria-label={isEn ? "Clear search" : "پاک کردن جستجو"}
                 className="shrink-0 text-xs text-slate-400 hover:text-slate-600"
               >
                 <span aria-hidden="true">✕</span>
@@ -146,11 +149,11 @@ export default function AdminGlobalSearch() {
           <div className="max-h-80 overflow-y-auto">
             {query.length < 2 ? (
               <p className="px-4 py-6 text-center text-xs text-slate-400">
-                حداقل ۲ کاراکتر وارد کنید
+                {isEn ? "Enter at least 2 characters" : "حداقل ۲ کاراکتر وارد کنید"}
               </p>
             ) : !loading && totalResults === 0 ? (
               <p className="px-4 py-6 text-center text-xs text-slate-400">
-                نتیجه‌ای یافت نشد
+                {isEn ? "No results found" : "نتیجه‌ای یافت نشد"}
               </p>
             ) : (
               <div className="p-2">
@@ -159,7 +162,7 @@ export default function AdminGlobalSearch() {
                   <div className="mb-2">
                     <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-slate-400">
                       <FileQuestion size={11} />
-                      سوالات
+                      {isEn ? "Questions" : "سوالات"}
                     </div>
                     {results.questions.map((q) => (
                       <button
@@ -183,7 +186,7 @@ export default function AdminGlobalSearch() {
                   <div className="mb-2">
                     <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-slate-400">
                       <Users size={11} />
-                      مشتریان
+                      {isEn ? "Customers" : "مشتریان"}
                     </div>
                     {results.customers.map((c) => (
                       <button
@@ -210,7 +213,7 @@ export default function AdminGlobalSearch() {
                   <div>
                     <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-slate-400">
                       <Inbox size={11} />
-                      درخواست‌ها
+                      {isEn ? "Requests" : "درخواست‌ها"}
                     </div>
                     {results.requests.map((r) => (
                       <button
@@ -222,7 +225,7 @@ export default function AdminGlobalSearch() {
                           #{r.id}
                         </span>
                         <span className="line-clamp-1 text-xs text-slate-700 dark:text-slate-300">
-                          {r.full_name} — {r.subject || "درخواست"}
+                          {r.full_name} — {r.subject || (isEn ? "Request" : "درخواست")}
                         </span>
                       </button>
                     ))}

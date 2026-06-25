@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { adminUrl } from "@/lib/api";
 import { apiUrl } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   Activity,
   AlertCircle,
@@ -39,12 +41,13 @@ type SystemStatus = {
   knowledge_stats: KnowledgeStats;
 };
 
-function getAiStatusLabel(status: string) {
-  if (status === "connected") return "متصل";
-  if (status === "failed") return "خطا در اتصال";
-  if (status === "not_configured") return "تنظیم نشده";
-  if (status === "unknown") return "نامشخص";
-  return "تست نشده";
+function getAiStatusLabel(status: string, locale: string) {
+  const isEn = locale === "en";
+  if (status === "connected") return isEn ? "Connected" : "متصل";
+  if (status === "failed") return isEn ? "Connection failed" : "خطا در اتصال";
+  if (status === "not_configured") return isEn ? "Not configured" : "تنظیم نشده";
+  if (status === "unknown") return isEn ? "Unknown" : "نامشخص";
+  return isEn ? "Not tested" : "تست نشده";
 }
 
 function getAiStatusClass(status: string) {
@@ -63,18 +66,19 @@ function getAiStatusClass(status: string) {
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
-function getCategoryLabel(category: string) {
-  if (category === "general") return "عمومی";
-  if (category === "catalyst") return "کاتالیست";
-  if (category === "equipment") return "تجهیزات";
-  if (category === "chromatography") return "کروماتوگرافی";
-  if (category === "mercury-analysis") return "آنالیز جیوه";
-  if (category === "sulfur-analysis") return "آنالیز سولفور";
-  if (category === "troubleshooting") return "عیب‌یابی";
-  if (category === "application-note") return "اپلیکیشن نوت";
-  if (category === "ASTM Standards") return "استانداردهای ASTM";
-  if (category === "expert-faq") return "FAQ تاییدشده";
-  return category || "بدون دسته‌بندی";
+function getCategoryLabel(category: string, locale: string) {
+  const isEn = locale === "en";
+  if (category === "general") return isEn ? "General" : "عمومی";
+  if (category === "catalyst") return isEn ? "Catalyst" : "کاتالیست";
+  if (category === "equipment") return isEn ? "Equipment" : "تجهیزات";
+  if (category === "chromatography") return isEn ? "Chromatography" : "کروماتوگرافی";
+  if (category === "mercury-analysis") return isEn ? "Mercury analysis" : "آنالیز جیوه";
+  if (category === "sulfur-analysis") return isEn ? "Sulfur analysis" : "آنالیز سولفور";
+  if (category === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
+  if (category === "application-note") return isEn ? "Application note" : "اپلیکیشن نوت";
+  if (category === "ASTM Standards") return isEn ? "ASTM Standards" : "استانداردهای ASTM";
+  if (category === "expert-faq") return isEn ? "Approved FAQ" : "FAQ تاییدشده";
+  return category || (isEn ? "Uncategorized" : "بدون دسته‌بندی");
 }
 
 function getHealthTone(check?: DeepHealthCheck) {
@@ -116,6 +120,8 @@ type DeepHealth = {
 };
 
 export default function AdminSettingsPage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkingAi, setCheckingAi] = useState(false);
@@ -169,7 +175,7 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       setStatus(data);
     } catch {
-      setMessage("خطا در اتصال به Backend.");
+      setMessage(isEn ? "Failed to connect to the backend." : "خطا در اتصال به Backend.");
     } finally {
       setLoading(false);
       setCheckingAi(false);
@@ -214,10 +220,10 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({ interval_hours: interval }),
       });
       const data = await res.json();
-      setGdriveMessage(data.message || "ذخیره شد.");
+      setGdriveMessage(data.message || (isEn ? "Saved." : "ذخیره شد."));
       await loadGdriveSchedule();
     } catch {
-      setGdriveMessage("خطا در اتصال به سرور.");
+      setGdriveMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setSavingSchedule(false);
     }
@@ -236,17 +242,17 @@ export default function AdminSettingsPage() {
 
       if (res.ok && data.success) {
         setGdriveMessage(
-          data.message || "همگام‌سازی در پس‌زمینه آغاز شد.",
+          data.message || (isEn ? "Background sync started." : "همگام‌سازی در پس‌زمینه آغاز شد."),
         );
       } else {
         setGdriveMessage(
-          data.message || data.detail || "خطا در همگام‌سازی.",
+          data.message || data.detail || (isEn ? "Sync failed." : "خطا در همگام‌سازی."),
         );
       }
 
       await loadGdriveSchedule();
     } catch {
-      setGdriveMessage("خطا در اتصال به سرور.");
+      setGdriveMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setSyncingNow(false);
     }
@@ -274,10 +280,10 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       setEmailMessageType(data.success ? "success" : "error");
-      setEmailMessage(data.message || "ذخیره شد.");
+      setEmailMessage(data.message || (isEn ? "Saved." : "ذخیره شد."));
     } catch {
       setEmailMessageType("error");
-      setEmailMessage("خطا در اتصال به سرور.");
+      setEmailMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setSavingEmail(false);
     }
@@ -290,10 +296,10 @@ export default function AdminSettingsPage() {
       const res = await fetch(adminUrl("/admin/send-weekly-report"), { method: "POST" });
       const data = await res.json();
       setEmailMessageType(data.success ? "success" : "error");
-      setEmailMessage(data.message || (data.success ? "ارسال شد." : "خطا در ارسال."));
+      setEmailMessage(data.message || (data.success ? (isEn ? "Sent." : "ارسال شد.") : (isEn ? "Send failed." : "خطا در ارسال.")));
     } catch {
       setEmailMessageType("error");
-      setEmailMessage("خطا در اتصال به سرور.");
+      setEmailMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setSendingReport(false);
     }
@@ -329,11 +335,11 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       setTgMessageType(data.success ? "success" : "error");
-      setTgMessage(data.message || "ذخیره شد.");
+      setTgMessage(data.message || (isEn ? "Saved." : "ذخیره شد."));
       await loadTgSettings();
     } catch {
       setTgMessageType("error");
-      setTgMessage("خطا در اتصال به سرور.");
+      setTgMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setSavingTg(false);
     }
@@ -346,10 +352,10 @@ export default function AdminSettingsPage() {
       const res = await fetch(adminUrl("/admin/telegram-test"), { method: "POST" });
       const data = await res.json();
       setTgMessageType(data.success ? "success" : "error");
-      setTgMessage(data.message || "پیام ارسال شد.");
+      setTgMessage(data.message || (isEn ? "Message sent." : "پیام ارسال شد."));
     } catch {
       setTgMessageType("error");
-      setTgMessage("خطا در اتصال به سرور.");
+      setTgMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setTestingTg(false);
     }
@@ -375,24 +381,28 @@ export default function AdminSettingsPage() {
   }, [gdriveSchedule?.sync_status]);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
                   <Settings2 size={17} />
-                  تنظیمات سیستم آرتین
+                  {isEn ? "Artin System Settings" : "تنظیمات سیستم آرتین"}
                 </div>
 
                 <h1 className="text-3xl font-black text-slate-900">
-                  وضعیت اتصال، بانک دانش و حالت پاسخ‌دهی
+                  {isEn ? "Connection, Knowledge Base, and Response Mode" : "وضعیت اتصال، بانک دانش و حالت پاسخ‌دهی"}
                 </h1>
 
                 <p className="mt-4 max-w-4xl leading-8 text-slate-600">
-                  وضعیت Backend، اتصال OpenAI، پاسخ محلی و آمار بانک دانش آرتین
-                  آزما را از این بخش بررسی کنید.
+                  {isEn
+                    ? "Check backend status, OpenAI connectivity, local fallback, and ArtinAzma knowledge base statistics."
+                    : "وضعیت Backend، اتصال OpenAI، پاسخ محلی و آمار بانک دانش آرتین آزما را از این بخش بررسی کنید."}
                 </p>
               </div>
 
@@ -405,7 +415,9 @@ export default function AdminSettingsPage() {
                   size={18}
                   className={loading ? "animate-spin" : ""}
                 />
-                {loading ? "در حال بروزرسانی..." : "بروزرسانی وضعیت"}
+                {loading
+                  ? (isEn ? "Updating..." : "در حال بروزرسانی...")
+                  : (isEn ? "Refresh status" : "بروزرسانی وضعیت")}
               </button>
             </div>
           </div>
@@ -421,9 +433,13 @@ export default function AdminSettingsPage() {
         <div className="mb-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-xl font-black text-slate-900">Deep Health Check</h2>
+              <h2 className="text-xl font-black text-slate-900">
+                {isEn ? "Deep Health Check" : "بررسی عمیق سلامت سیستم"}
+              </h2>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                Database, OpenAI, Qdrant, Google Drive and email readiness.
+                {isEn
+                  ? "Database, OpenAI, Qdrant, Google Drive and email readiness."
+                  : "آمادگی دیتابیس، OpenAI، Qdrant، Google Drive و ایمیل."}
                 {deepHealth ? ` Response: ${deepHealth.response_ms}ms` : ""}
               </p>
             </div>
@@ -434,7 +450,7 @@ export default function AdminSettingsPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 <RefreshCw size={16} className={loadingDeepHealth ? "animate-spin" : ""} />
-                Refresh
+                {isEn ? "Refresh" : "بروزرسانی"}
               </button>
               <button
                 onClick={() => loadDeepHealth(true)}
@@ -442,7 +458,7 @@ export default function AdminSettingsPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
               >
                 <Play size={16} />
-                External check
+                {isEn ? "External check" : "بررسی خارجی"}
               </button>
             </div>
           </div>
@@ -450,14 +466,21 @@ export default function AdminSettingsPage() {
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             {["database", "openai", "qdrant", "google_drive", "email"].map((name) => {
               const check = deepHealth?.checks?.[name];
+              const healthLabel: Record<string, string> = {
+                database: isEn ? "database" : "دیتابیس",
+                openai: "OpenAI",
+                qdrant: "Qdrant",
+                google_drive: "Google Drive",
+                email: isEn ? "email" : "ایمیل",
+              };
               return (
                 <div key={name} className={`rounded-2xl border px-4 py-3 ${getHealthTone(check)}`}>
                   <div className="mb-1 flex items-center gap-2 text-sm font-black">
                     {getHealthIcon(check)}
-                    <span>{name.replace("_", " ")}</span>
+                    <span>{healthLabel[name] || name.replace("_", " ")}</span>
                   </div>
                   <div className="text-xs font-bold opacity-80">
-                    {check?.status || (loadingDeepHealth ? "checking" : "not checked")}
+                    {check?.status || (loadingDeepHealth ? (isEn ? "checking" : "در حال بررسی") : (isEn ? "not checked" : "بررسی نشده"))}
                   </div>
                   {check?.error && (
                     <div className="mt-2 line-clamp-2 text-xs leading-5 opacity-90">
@@ -473,32 +496,32 @@ export default function AdminSettingsPage() {
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatusCard
             title="Backend"
-            value={status?.backend_status === "running" ? "فعال" : "نامشخص"}
-            description="وضعیت API اصلی اپلیکیشن"
+            value={status?.backend_status === "running" ? (isEn ? "Active" : "فعال") : (isEn ? "Unknown" : "نامشخص")}
+            description={isEn ? "Main application API status" : "وضعیت API اصلی اپلیکیشن"}
             icon={<Server size={24} />}
             tone="emerald"
           />
 
           <StatusCard
             title="OpenAI API Key"
-            value={status?.openai_configured ? "تنظیم شده" : "غیرفعال"}
-            description="وضعیت تنظیم کلید OpenAI"
+            value={status?.openai_configured ? (isEn ? "Configured" : "تنظیم شده") : (isEn ? "Inactive" : "غیرفعال")}
+            description={isEn ? "OpenAI key configuration status" : "وضعیت تنظیم کلید OpenAI"}
             icon={<Bot size={24} />}
             tone={status?.openai_configured ? "blue" : "amber"}
           />
 
           <StatusCard
             title="Local Fallback"
-            value={status?.local_fallback_enabled ? "فعال" : "غیرفعال"}
-            description="پاسخ‌دهی محلی در صورت قطع AI"
+            value={status?.local_fallback_enabled ? (isEn ? "Active" : "فعال") : (isEn ? "Inactive" : "غیرفعال")}
+            description={isEn ? "Local responses when AI is unavailable" : "پاسخ‌دهی محلی در صورت قطع AI"}
             icon={<ShieldCheck size={24} />}
             tone={status?.local_fallback_enabled ? "purple" : "slate"}
           />
 
           <StatusCard
-            title="بانک دانش"
-            value={`${status?.knowledge_stats?.total_files ?? 0} فایل`}
-            description={`${status?.knowledge_stats?.total_chunks ?? 0} بخش متنی ذخیره شده`}
+            title={isEn ? "Knowledge Base" : "بانک دانش"}
+            value={isEn ? `${status?.knowledge_stats?.total_files ?? 0} files` : `${status?.knowledge_stats?.total_files ?? 0} فایل`}
+            description={isEn ? `${status?.knowledge_stats?.total_chunks ?? 0} stored text chunks` : `${status?.knowledge_stats?.total_chunks ?? 0} بخش متنی ذخیره شده`}
             icon={<Database size={24} />}
             tone="purple"
           />
@@ -507,19 +530,25 @@ export default function AdminSettingsPage() {
             title="Qdrant Vector DB"
             value={
               qdrantStatus === null
-                ? "در حال بررسی…"
+                ? (isEn ? "Checking..." : "در حال بررسی…")
                 : qdrantStatus.enabled
                 ? qdrantStatus.error
-                  ? "خطا در اتصال"
-                  : `${(qdrantStatus.points_count ?? 0).toLocaleString()} بردار`
-                : "غیرفعال (JSON)"
+                  ? (isEn ? "Connection error" : "خطا در اتصال")
+                  : isEn
+                    ? `${(qdrantStatus.points_count ?? 0).toLocaleString()} vectors`
+                    : `${(qdrantStatus.points_count ?? 0).toLocaleString()} بردار`
+                : isEn ? "Inactive (JSON)" : "غیرفعال (JSON)"
             }
             description={
               qdrantStatus?.enabled
                 ? qdrantStatus.error
                   ? qdrantStatus.error
-                  : `وضعیت: ${qdrantStatus.status ?? "ok"} | backend: qdrant`
-                : "متغیر QDRANT_URL تنظیم نشده — از فایل JSON استفاده می‌شود"
+                  : isEn
+                    ? `Status: ${qdrantStatus.status ?? "ok"} | backend: qdrant`
+                    : `وضعیت: ${qdrantStatus.status ?? "ok"} | backend: qdrant`
+                : isEn
+                  ? "QDRANT_URL is not configured; JSON storage is being used."
+                  : "متغیر QDRANT_URL تنظیم نشده — از فایل JSON استفاده می‌شود"
             }
             icon={<Server size={24} />}
             tone={
@@ -535,10 +564,10 @@ export default function AdminSettingsPage() {
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-xl font-black text-slate-900">
-                  تست اتصال OpenAI
+                  {isEn ? "OpenAI Connection Test" : "تست اتصال OpenAI"}
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-slate-600">
-                  این تست فقط وقتی اجرا می‌شود که روی دکمه بزنید.
+                  {isEn ? "This test only runs when you press the button." : "این تست فقط وقتی اجرا می‌شود که روی دکمه بزنید."}
                 </p>
               </div>
 
@@ -548,7 +577,7 @@ export default function AdminSettingsPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
               >
                 <Wifi size={18} />
-                {checkingAi ? "در حال تست..." : "تست اتصال AI"}
+                {checkingAi ? (isEn ? "Testing..." : "در حال تست...") : (isEn ? "Test AI connection" : "تست اتصال AI")}
               </button>
             </div>
 
@@ -557,7 +586,7 @@ export default function AdminSettingsPage() {
                 status?.openai_status || "not_checked",
               )}`}
             >
-              وضعیت: {getAiStatusLabel(status?.openai_status || "not_checked")}
+              {isEn ? "Status" : "وضعیت"}: {getAiStatusLabel(status?.openai_status || "not_checked", locale)}
             </div>
 
             {status?.openai_error && (
@@ -567,14 +596,15 @@ export default function AdminSettingsPage() {
             )}
 
             <div className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-              اگر اتصال OpenAI برقرار باشد، آرتین از بانک دانش جست‌وجو می‌کند و
-              پاسخ نهایی را با مدل AI کامل‌تر و تحلیلی‌تر می‌نویسد.
+              {isEn
+                ? "When OpenAI is available, Artin searches the knowledge base and writes a fuller, more analytical final response with the AI model."
+                : "اگر اتصال OpenAI برقرار باشد، آرتین از بانک دانش جست‌وجو می‌کند و پاسخ نهایی را با مدل AI کامل‌تر و تحلیلی‌تر می‌نویسد."}
             </div>
           </div>
 
           <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-xl font-black text-slate-900">
-              دسته‌بندی‌های بانک دانش
+              {isEn ? "Knowledge Base Categories" : "دسته‌بندی‌های بانک دانش"}
             </h2>
 
             {status?.knowledge_stats?.categories?.length ? (
@@ -584,13 +614,13 @@ export default function AdminSettingsPage() {
                     key={category}
                     className="rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700"
                   >
-                    {getCategoryLabel(category)}
+                    {getCategoryLabel(category, locale)}
                   </span>
                 ))}
               </div>
             ) : (
               <div className="rounded-3xl bg-slate-50 p-6 text-center text-sm text-slate-500">
-                هنوز دسته‌بندی‌ای ثبت نشده است.
+                {isEn ? "No categories have been registered yet." : "هنوز دسته‌بندی‌ای ثبت نشده است."}
               </div>
             )}
           </div>
@@ -604,10 +634,10 @@ export default function AdminSettingsPage() {
 
             <div>
               <h2 className="text-xl font-black text-slate-900">
-                حالت‌های پاسخ‌دهی آرتین
+                {isEn ? "Artin Response Modes" : "حالت‌های پاسخ‌دهی آرتین"}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                آرتین بسته به وضعیت اتصال، از AI یا پاسخ محلی استفاده می‌کند.
+                {isEn ? "Artin uses AI or local fallback depending on connection status." : "آرتین بسته به وضعیت اتصال، از AI یا پاسخ محلی استفاده می‌کند."}
               </p>
             </div>
           </div>
@@ -616,22 +646,24 @@ export default function AdminSettingsPage() {
             <div className="rounded-3xl bg-slate-50 p-5">
               <div className="mb-2 flex items-center gap-2 font-black text-slate-900">
                 <CheckCircle2 size={18} className="text-emerald-700" />
-                حالت AI
+                {isEn ? "AI mode" : "حالت AI"}
               </div>
               <p className="text-sm leading-7 text-slate-600">
-                وقتی OpenAI در دسترس باشد، آرتین از بانک دانش جست‌وجو می‌کند و
-                پاسخ نهایی را با تحلیل تخصصی کامل‌تر می‌نویسد.
+                {isEn
+                  ? "When OpenAI is available, Artin searches the knowledge base and writes the final answer with deeper expert analysis."
+                  : "وقتی OpenAI در دسترس باشد، آرتین از بانک دانش جست‌وجو می‌کند و پاسخ نهایی را با تحلیل تخصصی کامل‌تر می‌نویسد."}
               </p>
             </div>
 
             <div className="rounded-3xl bg-slate-50 p-5">
               <div className="mb-2 flex items-center gap-2 font-black text-slate-900">
                 <ShieldCheck size={18} className="text-blue-700" />
-                حالت محلی
+                {isEn ? "Local mode" : "حالت محلی"}
               </div>
               <p className="text-sm leading-7 text-slate-600">
-                وقتی OpenAI در دسترس نباشد، آرتین داخل بانک دانش محلی جست‌وجو
-                می‌کند و بر اساس متن‌های پیدا شده پاسخ می‌دهد.
+                {isEn
+                  ? "When OpenAI is unavailable, Artin searches the local knowledge base and answers from the matched text."
+                  : "وقتی OpenAI در دسترس نباشد، آرتین داخل بانک دانش محلی جست‌وجو می‌کند و بر اساس متن‌های پیدا شده پاسخ می‌دهد."}
               </p>
             </div>
           </div>
@@ -643,17 +675,19 @@ export default function AdminSettingsPage() {
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900">
-                همزمان‌سازی خودکار Google Drive
+                {isEn ? "Automatic Google Drive Sync" : "همزمان‌سازی خودکار Google Drive"}
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                بانک دانش را به صورت زمان‌بندی‌شده با Google Drive همزمان کنید.
+                {isEn ? "Sync the knowledge base with Google Drive on a schedule." : "بانک دانش را به صورت زمان‌بندی‌شده با Google Drive همزمان کنید."}
               </p>
             </div>
           </div>
 
           {!gdriveSchedule?.folder_id_configured && (
             <div className="mb-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold text-amber-700">
-              متغیر محیطی GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است. برای فعال‌کردن این قابلیت، آن را در فایل .env تنظیم کنید.
+              {isEn
+                ? "GOOGLE_DRIVE_ROOT_FOLDER_ID is not configured. Set it in the .env file to enable this feature."
+                : "متغیر محیطی GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است. برای فعال‌کردن این قابلیت، آن را در فایل .env تنظیم کنید."}
             </div>
           )}
 
@@ -661,7 +695,7 @@ export default function AdminSettingsPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
-                  فاصله زمانی (ساعت)
+                  {isEn ? "Interval (hours)" : "فاصله زمانی (ساعت)"}
                 </label>
                 <input
                   type="number"
@@ -670,9 +704,11 @@ export default function AdminSettingsPage() {
                   value={gdriveIntervalInput}
                   onChange={(e) => setGdriveIntervalInput(e.target.value)}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-blue-400 focus:outline-none"
-                  placeholder="۲۴"
+                  placeholder={isEn ? "24" : "۲۴"}
                 />
-                <p className="mt-1 text-xs text-slate-500">مثلاً ۲۴ = هر روز یک‌بار</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {isEn ? "For example: 24 = once per day" : "مثلاً ۲۴ = هر روز یک‌بار"}
+                </p>
               </div>
 
               <div className="flex gap-3">
@@ -682,7 +718,7 @@ export default function AdminSettingsPage() {
                   className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
                 >
                   <Clock size={16} />
-                  {savingSchedule ? "ذخیره..." : "فعال‌کردن زمان‌بندی"}
+                  {savingSchedule ? (isEn ? "Saving..." : "ذخیره...") : (isEn ? "Enable schedule" : "فعال‌کردن زمان‌بندی")}
                 </button>
 
                 <button
@@ -690,7 +726,7 @@ export default function AdminSettingsPage() {
                   disabled={savingSchedule}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-white disabled:opacity-50"
                 >
-                  غیرفعال
+                  {isEn ? "Disable" : "غیرفعال"}
                 </button>
               </div>
 
@@ -700,7 +736,9 @@ export default function AdminSettingsPage() {
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
               >
                 <Play size={16} />
-                {syncingNow || gdriveSchedule?.sync_status === "running" ? "در حال همزمان‌سازی..." : "همزمان‌سازی فوری"}
+                {syncingNow || gdriveSchedule?.sync_status === "running"
+                  ? (isEn ? "Syncing..." : "در حال همزمان‌سازی...")
+                  : (isEn ? "Sync now" : "همزمان‌سازی فوری")}
               </button>
 
               {gdriveMessage && (
@@ -712,19 +750,21 @@ export default function AdminSettingsPage() {
 
             <div className="space-y-3">
               <div className="rounded-2xl bg-slate-50 p-4">
-                <div className="text-xs font-bold text-slate-500 mb-1">وضعیت زمان‌بندی</div>
+                <div className="text-xs font-bold text-slate-500 mb-1">{isEn ? "Schedule status" : "وضعیت زمان‌بندی"}</div>
                 <div className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${gdriveSchedule?.enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>
                   {gdriveSchedule?.enabled
-                    ? `هر ${gdriveSchedule.interval_hours} ساعت یک‌بار`
-                    : "غیرفعال"}
+                    ? isEn
+                      ? `Every ${gdriveSchedule.interval_hours} hours`
+                      : `هر ${gdriveSchedule.interval_hours} ساعت یک‌بار`
+                    : isEn ? "Inactive" : "غیرفعال"}
                 </div>
               </div>
 
               {gdriveSchedule?.last_sync && (
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <div className="text-xs font-bold text-slate-500 mb-1">آخرین همزمان‌سازی</div>
+                  <div className="text-xs font-bold text-slate-500 mb-1">{isEn ? "Last sync" : "آخرین همزمان‌سازی"}</div>
                   <div className="text-sm text-slate-700">
-                    {new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(gdriveSchedule.last_sync))}
+                    {new Intl.DateTimeFormat(isEn ? "en-US" : "fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(gdriveSchedule.last_sync))}
                   </div>
                   {gdriveSchedule.last_sync_result && (
                     <div className="mt-1 text-xs text-slate-500">{gdriveSchedule.last_sync_result}</div>
@@ -742,8 +782,12 @@ export default function AdminSettingsPage() {
               <Mail size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900">گزارش هفتگی ایمیل</h2>
-              <p className="mt-1 text-sm text-slate-500">تنظیمات SMTP برای ارسال خودکار گزارش به ادمین</p>
+              <h2 className="text-xl font-black text-slate-900">
+                {isEn ? "Weekly Email Report" : "گزارش هفتگی ایمیل"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {isEn ? "SMTP settings for automatic admin reports" : "تنظیمات SMTP برای ارسال خودکار گزارش به ادمین"}
+              </p>
             </div>
           </div>
 
@@ -780,7 +824,9 @@ export default function AdminSettingsPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">نام کاربری SMTP</label>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                {isEn ? "SMTP username" : "نام کاربری SMTP"}
+              </label>
               <input
                 value={emailSettings.smtp_user}
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_user: e.target.value }))}
@@ -790,18 +836,22 @@ export default function AdminSettingsPage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">رمز عبور SMTP</label>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                {isEn ? "SMTP password" : "رمز عبور SMTP"}
+              </label>
               <input
                 type="password"
                 value={emailSettings.smtp_pass}
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_pass: e.target.value }))}
-                placeholder="App password یا رمز عبور"
+                placeholder={isEn ? "App password or password" : "App password یا رمز عبور"}
                 dir="ltr"
                 className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">آدرس فرستنده</label>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                {isEn ? "Sender address" : "آدرس فرستنده"}
+              </label>
               <input
                 value={emailSettings.from_addr}
                 onChange={(e) => setEmailSettings((s) => ({ ...s, from_addr: e.target.value }))}
@@ -811,7 +861,9 @@ export default function AdminSettingsPage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">ایمیل گیرنده (ادمین)</label>
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                {isEn ? "Recipient email (admin)" : "ایمیل گیرنده (ادمین)"}
+              </label>
               <input
                 value={emailSettings.to_addr}
                 onChange={(e) => setEmailSettings((s) => ({ ...s, to_addr: e.target.value }))}
@@ -828,7 +880,9 @@ export default function AdminSettingsPage() {
               checked={emailSettings.weekly_enabled}
               onChange={(e) => setEmailSettings((s) => ({ ...s, weekly_enabled: e.target.checked }))}
             />
-            <span className="font-bold">ارسال خودکار گزارش هر هفته یک‌بار</span>
+            <span className="font-bold">
+              {isEn ? "Send the report automatically once a week" : "ارسال خودکار گزارش هر هفته یک‌بار"}
+            </span>
           </label>
 
           <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
@@ -837,7 +891,9 @@ export default function AdminSettingsPage() {
               checked={emailSettings.request_alerts_enabled}
               onChange={(e) => setEmailSettings((s) => ({ ...s, request_alerts_enabled: e.target.checked }))}
             />
-            <span className="font-bold">ارسال ایمیل فوری به ادمین برای درخواست جدید مشتری</span>
+            <span className="font-bold">
+              {isEn ? "Send instant admin email for new customer requests" : "ارسال ایمیل فوری به ادمین برای درخواست جدید مشتری"}
+            </span>
           </label>
 
           <div className="mt-5 flex flex-wrap gap-3">
@@ -847,7 +903,7 @@ export default function AdminSettingsPage() {
               className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
             >
               <Save size={16} />
-              {savingEmail ? "در حال ذخیره..." : "ذخیره تنظیمات"}
+              {savingEmail ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save settings" : "ذخیره تنظیمات")}
             </button>
 
             <button
@@ -856,7 +912,7 @@ export default function AdminSettingsPage() {
               className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
             >
               <Send size={16} />
-              {sendingReport ? "در حال ارسال..." : "ارسال گزارش الان"}
+              {sendingReport ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Send report now" : "ارسال گزارش الان")}
             </button>
           </div>
         </div>
@@ -868,9 +924,13 @@ export default function AdminSettingsPage() {
               <MessageCircle size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900">اعلان‌های تلگرام</h2>
+              <h2 className="text-xl font-black text-slate-900">
+                {isEn ? "Telegram Notifications" : "اعلان‌های تلگرام"}
+              </h2>
               <p className="mt-1 text-sm text-slate-500">
-                ثبت‌نام مشتری جدید و درخواست‌های تماس را روی تلگرام دریافت کن
+                {isEn
+                  ? "Receive new customer registrations and contact requests on Telegram."
+                  : "ثبت‌نام مشتری جدید و درخواست‌های تماس را روی تلگرام دریافت کن"}
               </p>
             </div>
           </div>
@@ -887,7 +947,7 @@ export default function AdminSettingsPage() {
           {tgSettings.enabled && (
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
               <CheckCircle2 size={15} />
-              تلگرام فعال است
+              {isEn ? "Telegram is active" : "تلگرام فعال است"}
             </div>
           )}
 
@@ -901,7 +961,7 @@ export default function AdminSettingsPage() {
                   rel="noreferrer"
                   className="mr-2 font-normal text-sky-600 hover:underline"
                 >
-                  (از @BotFather بگیر)
+                  {isEn ? "(get it from @BotFather)" : "(از @BotFather بگیر)"}
                 </a>
               </label>
               <input
@@ -916,7 +976,7 @@ export default function AdminSettingsPage() {
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
                 Chat ID
                 <span className="mr-2 font-normal text-slate-400">
-                  (شناسه گروه یا کانال)
+                  {isEn ? "(group or channel ID)" : "(شناسه گروه یا کانال)"}
                 </span>
               </label>
               <input
@@ -930,11 +990,13 @@ export default function AdminSettingsPage() {
           </div>
 
           <p className="mt-3 rounded-2xl bg-slate-50 p-4 text-xs leading-7 text-slate-500">
-            برای پیداکردن Chat ID: ربات را به گروه اضافه کن، سپس از{" "}
+            {isEn ? "To find the Chat ID, add the bot to the group, then use " : "برای پیداکردن Chat ID: ربات را به گروه اضافه کن، سپس از"}{" "}
             <span dir="ltr" className="font-mono text-slate-700">
               https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates
             </span>{" "}
-            استفاده کن و عدد <span className="font-bold">chat.id</span> را کپی کن.
+            {isEn ? "and copy the " : "استفاده کن و عدد "}
+            <span className="font-bold">chat.id</span>
+            {isEn ? " value." : " را کپی کن."}
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">
@@ -944,7 +1006,7 @@ export default function AdminSettingsPage() {
               className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50"
             >
               <Save size={16} />
-              {savingTg ? "در حال ذخیره..." : "ذخیره تنظیمات"}
+              {savingTg ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save settings" : "ذخیره تنظیمات")}
             </button>
             <button
               onClick={testTg}
@@ -952,7 +1014,7 @@ export default function AdminSettingsPage() {
               className="inline-flex items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-3 text-sm font-bold text-sky-700 transition hover:bg-sky-100 disabled:opacity-50"
             >
               <Send size={16} />
-              {testingTg ? "در حال ارسال..." : "ارسال پیام آزمایشی"}
+              {testingTg ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Send test message" : "ارسال پیام آزمایشی")}
             </button>
           </div>
         </div>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { adminUrl } from "@/lib/api";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useI18n } from "@/lib/i18n";
 import {
   ArrowRight,
   BookOpenCheck,
@@ -52,11 +54,12 @@ type QuestionMetadata = {
   response_time_ms?: number;
 };
 
-function getStatusLabel(status: string) {
-  if (status === "approved") return "تایید شده";
-  if (status === "needs_edit") return "نیازمند اصلاح";
-  if (status === "rejected") return "رد شده";
-  return "در انتظار بررسی";
+function getStatusLabel(status: string, locale = "fa") {
+  const isEn = locale === "en";
+  if (status === "approved") return isEn ? "Approved" : "تایید شده";
+  if (status === "needs_edit") return isEn ? "Needs edit" : "نیازمند اصلاح";
+  if (status === "rejected") return isEn ? "Rejected" : "رد شده";
+  return isEn ? "Pending review" : "در انتظار بررسی";
 }
 
 function getStatusClass(status: string) {
@@ -75,22 +78,23 @@ function getStatusClass(status: string) {
   return "bg-slate-100 text-slate-700 border-slate-200";
 }
 
-function getDomainLabel(domain: string) {
-  if (domain === "catalyst") return "کاتالیست";
-  if (domain === "equipment") return "تجهیزات";
-  if (domain === "chromatography") return "کروماتوگرافی";
-  if (domain === "mercury-analysis") return "آنالیز جیوه";
-  if (domain === "sulfur-analysis") return "آنالیز سولفور";
-  if (domain === "troubleshooting") return "عیب‌یابی";
-  if (domain === "analysis") return "آنالیز و تست";
-  return domain || "تشخیص خودکار";
+function getDomainLabel(domain: string, locale = "fa") {
+  const isEn = locale === "en";
+  if (domain === "catalyst") return isEn ? "Catalyst" : "کاتالیست";
+  if (domain === "equipment") return isEn ? "Equipment" : "تجهیزات";
+  if (domain === "chromatography") return isEn ? "Chromatography" : "کروماتوگرافی";
+  if (domain === "mercury-analysis") return isEn ? "Mercury analysis" : "آنالیز جیوه";
+  if (domain === "sulfur-analysis") return isEn ? "Sulfur analysis" : "آنالیز سولفور";
+  if (domain === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
+  if (domain === "analysis") return isEn ? "Analysis and testing" : "آنالیز و تست";
+  return domain || (isEn ? "Auto detected" : "تشخیص خودکار");
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return "نامشخص";
+function formatDate(value?: string | null, locale = "fa") {
+  if (!value) return locale === "en" ? "Unknown" : "نامشخص";
 
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(value));
@@ -110,6 +114,8 @@ function formatMs(value?: number) {
 }
 
 export default function QuestionDetailPage() {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
   const params = useParams();
   const questionId = params.id as string;
 
@@ -180,15 +186,15 @@ export default function QuestionDetailPage() {
 
       if (data.success) {
         setSaveMessageType("success");
-        setSaveMessage("بررسی کارشناس با موفقیت ذخیره شد.");
+        setSaveMessage(isEn ? "Expert review saved successfully." : "بررسی کارشناس با موفقیت ذخیره شد.");
         await loadQuestion();
       } else {
         setSaveMessageType("error");
-        setSaveMessage(data.message || "خطا در ذخیره بررسی.");
+        setSaveMessage(data.message || (isEn ? "Failed to save the review." : "خطا در ذخیره بررسی."));
       }
     } catch {
       setSaveMessageType("error");
-      setSaveMessage("خطا در اتصال به سرور.");
+      setSaveMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setSaving(false);
     }
@@ -212,15 +218,17 @@ export default function QuestionDetailPage() {
       if (data.success) {
         setAddKnowledgeType("success");
         setAddKnowledgeMessage(
-          `با موفقیت به بانک دانش اضافه شد. تعداد بخش‌های اضافه‌شده: ${data.chunks_added}`,
+          isEn
+            ? `Added to the knowledge base successfully. Added chunks: ${data.chunks_added}`
+            : `با موفقیت به بانک دانش اضافه شد. تعداد بخش‌های اضافه‌شده: ${data.chunks_added}`,
         );
       } else {
         setAddKnowledgeType("error");
-        setAddKnowledgeMessage(data.message || "خطا در افزودن به بانک دانش.");
+        setAddKnowledgeMessage(data.message || (isEn ? "Failed to add to the knowledge base." : "خطا در افزودن به بانک دانش."));
       }
     } catch {
       setAddKnowledgeType("error");
-      setAddKnowledgeMessage("خطا در اتصال به سرور.");
+      setAddKnowledgeMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
     } finally {
       setAddingToKnowledge(false);
     }
@@ -236,14 +244,14 @@ export default function QuestionDetailPage() {
 
   if (loading) {
     return (
-      <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+      <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
         <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
           <RefreshCw
             className="mx-auto mb-4 animate-spin text-purple-700"
             size={28}
           />
           <div className="font-bold text-slate-700">
-            در حال دریافت اطلاعات سوال...
+            {isEn ? "Loading question details..." : "در حال دریافت اطلاعات سوال..."}
           </div>
         </div>
       </section>
@@ -252,14 +260,14 @@ export default function QuestionDetailPage() {
 
   if (!question) {
     return (
-      <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+      <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
         <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
-          سوال موردنظر پیدا نشد.
+          {isEn ? "Question not found." : "سوال موردنظر پیدا نشد."}
           <Link
             href="/admin/questions"
             className="mt-5 inline-flex rounded-2xl bg-purple-700 px-5 py-3 font-bold text-white"
           >
-            بازگشت به سوالات
+            {isEn ? "Back to questions" : "بازگشت به سوالات"}
           </Link>
         </div>
       </section>
@@ -269,10 +277,13 @@ export default function QuestionDetailPage() {
   const sources = question.sources || [];
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+            <div className="mb-6 flex justify-end">
+              <LanguageSwitcher variant="purple" />
+            </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <Link
@@ -280,12 +291,12 @@ export default function QuestionDetailPage() {
                   className="mb-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
                 >
                   <ArrowRight size={17} />
-                  بازگشت به سوالات
+                  {isEn ? "Back to questions" : "بازگشت به سوالات"}
                 </Link>
 
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-700">
-                    سوال #{question.id}
+                    {isEn ? "Question" : "سوال"} #{question.id}
                   </span>
 
                   <span
@@ -293,28 +304,28 @@ export default function QuestionDetailPage() {
                       question.expert_status,
                     )}`}
                   >
-                    {getStatusLabel(question.expert_status)}
+                    {getStatusLabel(question.expert_status, locale)}
                   </span>
 
                   <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
-                    {getDomainLabel(question.detected_domain)}
+                    {getDomainLabel(question.detected_domain, locale)}
                   </span>
                 </div>
 
                 <h1 className="text-3xl font-black text-slate-900">
-                  جزئیات بررسی سوال کاربر
+                  {isEn ? "User Question Review Details" : "جزئیات بررسی سوال کاربر"}
                 </h1>
 
                 <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
                   <span className="inline-flex items-center gap-1">
                     <Clock3 size={15} />
-                    ثبت: {formatDate(question.created_at)}
+                    {isEn ? "Created" : "ثبت"}: {formatDate(question.created_at, locale)}
                   </span>
 
                   {question.updated_at && (
                     <span className="inline-flex items-center gap-1">
                       <ShieldCheck size={15} />
-                      بروزرسانی: {formatDate(question.updated_at)}
+                      {isEn ? "Updated" : "بروزرسانی"}: {formatDate(question.updated_at, locale)}
                     </span>
                   )}
                 </div>
@@ -325,7 +336,7 @@ export default function QuestionDetailPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 <RefreshCw size={18} />
-                بروزرسانی
+                {isEn ? "Refresh" : "بروزرسانی"}
               </button>
             </div>
           </div>
@@ -339,7 +350,7 @@ export default function QuestionDetailPage() {
                   <MessageSquareText size={22} />
                 </div>
                 <h2 className="text-xl font-black text-slate-900">
-                  سوال کاربر
+                  {isEn ? "User Question" : "سوال کاربر"}
                 </h2>
               </div>
 
@@ -355,7 +366,7 @@ export default function QuestionDetailPage() {
                     <FileText size={22} />
                   </div>
                   <h2 className="text-xl font-black text-slate-900">
-                    پاسخ اولیه آرتین
+                    {isEn ? "Artin's Initial Answer" : "پاسخ اولیه آرتین"}
                   </h2>
                 </div>
 
@@ -364,12 +375,12 @@ export default function QuestionDetailPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
                 >
                   <Copy size={16} />
-                  کپی
+                  {isEn ? "Copy" : "کپی"}
                 </button>
               </div>
 
               <div className="whitespace-pre-wrap rounded-3xl bg-slate-50 p-5 leading-8 text-slate-800">
-                {question.answer || "پاسخی ثبت نشده است."}
+                {question.answer || (isEn ? "No answer has been registered." : "پاسخی ثبت نشده است.")}
               </div>
             </div>
 
@@ -380,10 +391,12 @@ export default function QuestionDetailPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-900">
-                    منابع استفاده‌شده
+                    {isEn ? "Used Sources" : "منابع استفاده‌شده"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    منابعی که هنگام پاسخ‌گویی از بانک دانش پیدا شده‌اند.
+                    {isEn
+                      ? "Sources found in the knowledge base while answering."
+                      : "منابعی که هنگام پاسخ‌گویی از بانک دانش پیدا شده‌اند."}
                   </p>
                 </div>
               </div>
@@ -396,27 +409,27 @@ export default function QuestionDetailPage() {
                       className="rounded-3xl border border-slate-200 bg-slate-50 p-4"
                     >
                       <div className="font-black text-slate-900">
-                        {source.title || "بدون عنوان"}
+                        {source.title || (isEn ? "Untitled" : "بدون عنوان")}
                       </div>
 
                       <div className="mt-3 grid gap-2 text-sm leading-7 text-slate-600 md:grid-cols-3">
                         <div>
                           <span className="font-bold text-slate-900">
-                            فایل:
+                            {isEn ? "File" : "فایل"}:
                           </span>{" "}
                           {source.file_name || "-"}
                         </div>
 
                         <div>
                           <span className="font-bold text-slate-900">
-                            دسته:
+                            {isEn ? "Category" : "دسته"}:
                           </span>{" "}
                           {source.category || "-"}
                         </div>
 
                         <div>
                           <span className="font-bold text-slate-900">
-                            امتیاز:
+                            {isEn ? "Score" : "امتیاز"}:
                           </span>{" "}
                           {typeof source.score === "number"
                             ? source.score.toFixed(3)
@@ -428,7 +441,7 @@ export default function QuestionDetailPage() {
                 </div>
               ) : (
                 <div className="rounded-3xl bg-slate-50 p-6 text-center text-slate-500">
-                  برای این پاسخ منبعی از بانک دانش پیدا نشده است.
+                  {isEn ? "No knowledge base source was found for this answer." : "برای این پاسخ منبعی از بانک دانش پیدا نشده است."}
                 </div>
               )}
             </div>
@@ -440,10 +453,12 @@ export default function QuestionDetailPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-900">
-                    متادیتای کیفیت پاسخ
+                    {isEn ? "Answer Quality Metadata" : "متادیتای کیفیت پاسخ"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    داده‌های مسیر پاسخ‌دهی برای بررسی کیفیت، منابع و حالت جستجو.
+                    {isEn
+                      ? "Response-route data for reviewing quality, sources, and search mode."
+                      : "داده‌های مسیر پاسخ‌دهی برای بررسی کیفیت، منابع و حالت جستجو."}
                   </p>
                 </div>
               </div>
@@ -484,16 +499,16 @@ export default function QuestionDetailPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-black text-slate-900">
-                    بررسی کارشناس
+                    {isEn ? "Expert Review" : "بررسی کارشناس"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    پاسخ را تایید، اصلاح یا رد کنید.
+                    {isEn ? "Approve, edit, or reject the answer." : "پاسخ را تایید، اصلاح یا رد کنید."}
                   </p>
                 </div>
               </div>
 
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                وضعیت بررسی
+                {isEn ? "Review status" : "وضعیت بررسی"}
               </label>
 
               <select
@@ -501,36 +516,36 @@ export default function QuestionDetailPage() {
                 onChange={(e) => setExpertStatus(e.target.value)}
                 className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-purple-600"
               >
-                <option value="pending">در انتظار بررسی</option>
-                <option value="approved">تایید شده</option>
-                <option value="needs_edit">نیازمند اصلاح</option>
-                <option value="rejected">رد شده</option>
+                <option value="pending">{isEn ? "Pending review" : "در انتظار بررسی"}</option>
+                <option value="approved">{isEn ? "Approved" : "تایید شده"}</option>
+                <option value="needs_edit">{isEn ? "Needs edit" : "نیازمند اصلاح"}</option>
+                <option value="rejected">{isEn ? "Rejected" : "رد شده"}</option>
               </select>
 
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
-                پاسخ اصلاح‌شده کارشناس
+                {isEn ? "Expert revised answer" : "پاسخ اصلاح‌شده کارشناس"}
               </label>
 
               <textarea
                 value={reviewedAnswer}
                 onChange={(e) => setReviewedAnswer(e.target.value)}
                 className="h-72 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none transition focus:border-purple-600"
-                placeholder="پاسخ نهایی و تاییدشده کارشناس را اینجا وارد کنید..."
+                placeholder={isEn ? "Enter the final expert-approved answer here..." : "پاسخ نهایی و تاییدشده کارشناس را اینجا وارد کنید..."}
               />
 
               <div className="mt-2 text-xs leading-6 text-slate-500">
-                این متن در صورت تایید می‌تواند به بانک دانش اضافه شود.
+                {isEn ? "If approved, this text can be added to the knowledge base." : "این متن در صورت تایید می‌تواند به بانک دانش اضافه شود."}
               </div>
 
               <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
-                یادداشت داخلی کارشناس
+                {isEn ? "Internal expert note" : "یادداشت داخلی کارشناس"}
               </label>
 
               <textarea
                 value={expertNote}
                 onChange={(e) => setExpertNote(e.target.value)}
                 className="h-28 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none transition focus:border-purple-600"
-                placeholder="مثلاً: پاسخ خوب است اما برای مشتری باید مدل دستگاه دقیق‌تر مشخص شود."
+                placeholder={isEn ? "Example: The answer is good, but the device model should be clarified for the customer." : "مثلاً: پاسخ خوب است اما برای مشتری باید مدل دستگاه دقیق‌تر مشخص شود."}
               />
 
               <button
@@ -539,7 +554,7 @@ export default function QuestionDetailPage() {
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-4 font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
               >
                 <Save size={18} />
-                {saving ? "در حال ذخیره..." : "ذخیره بررسی"}
+                {saving ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save review" : "ذخیره بررسی")}
               </button>
 
               {saveMessage && (
@@ -562,18 +577,18 @@ export default function QuestionDetailPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-black text-slate-900">
-                    افزودن به بانک دانش
+                    {isEn ? "Add to Knowledge Base" : "افزودن به بانک دانش"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    فقط پاسخ تاییدشده را به بانک دانش اضافه کنید.
+                    {isEn ? "Only add approved answers to the knowledge base." : "فقط پاسخ تاییدشده را به بانک دانش اضافه کنید."}
                   </p>
                 </div>
               </div>
 
               <div className="rounded-3xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-                وقتی وضعیت سوال روی «تایید شده» ذخیره شود، می‌توانید پاسخ
-                اصلاح‌شده را وارد بانک دانش کنید تا آرتین در پاسخ‌های بعدی از آن
-                استفاده کند.
+                {isEn
+                  ? "After the question status is saved as Approved, you can add the revised answer to the knowledge base for Artin to use in future answers."
+                  : "وقتی وضعیت سوال روی «تایید شده» ذخیره شود، می‌توانید پاسخ اصلاح‌شده را وارد بانک دانش کنید تا آرتین در پاسخ‌های بعدی از آن استفاده کند."}
               </div>
 
               <button
@@ -584,13 +599,14 @@ export default function QuestionDetailPage() {
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
               >
                 <Database size={18} />
-                {addingToKnowledge ? "در حال افزودن..." : "افزودن به بانک دانش"}
+                {addingToKnowledge ? (isEn ? "Adding..." : "در حال افزودن...") : (isEn ? "Add to knowledge base" : "افزودن به بانک دانش")}
               </button>
 
               {question.expert_status !== "approved" && (
                 <div className="mt-3 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
-                  برای فعال شدن این دکمه، ابتدا وضعیت را روی «تایید شده» بگذارید
-                  و بررسی را ذخیره کنید.
+                  {isEn
+                    ? "To enable this button, first set the status to Approved and save the review."
+                    : "برای فعال شدن این دکمه، ابتدا وضعیت را روی «تایید شده» بگذارید و بررسی را ذخیره کنید."}
                 </div>
               )}
 
@@ -609,21 +625,21 @@ export default function QuestionDetailPage() {
 
             <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="mb-3 text-lg font-black text-slate-900">
-                روند پیشنهادی بررسی
+                {isEn ? "Suggested Review Flow" : "روند پیشنهادی بررسی"}
               </h3>
 
               <div className="space-y-3 text-sm leading-7 text-slate-600">
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  1. پاسخ اولیه آرتین را با سوال کاربر مقایسه کنید.
+                  {isEn ? "1. Compare Artin's initial answer with the user's question." : "1. پاسخ اولیه آرتین را با سوال کاربر مقایسه کنید."}
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  2. اگر لازم بود پاسخ اصلاح‌شده را کامل‌تر کنید.
+                  {isEn ? "2. Complete the revised answer if needed." : "2. اگر لازم بود پاسخ اصلاح‌شده را کامل‌تر کنید."}
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  3. وضعیت را روی تایید شده یا نیازمند اصلاح بگذارید.
+                  {isEn ? "3. Set the status to Approved or Needs edit." : "3. وضعیت را روی تایید شده یا نیازمند اصلاح بگذارید."}
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-3">
-                  4. پاسخ تاییدشده را به بانک دانش اضافه کنید.
+                  {isEn ? "4. Add the approved answer to the knowledge base." : "4. پاسخ تاییدشده را به بانک دانش اضافه کنید."}
                 </div>
               </div>
             </div>
