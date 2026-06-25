@@ -57,6 +57,7 @@ const statusOptions = [
 
 const domainOptions = [
   { value: "all", label: "همه حوزه‌ها", labelEn: "All domains" },
+  { value: "general", label: "عمومی", labelEn: "General" },
   { value: "catalyst", label: "کاتالیست", labelEn: "Catalyst" },
   { value: "equipment", label: "تجهیزات", labelEn: "Equipment" },
   { value: "chromatography", label: "کروماتوگرافی", labelEn: "Chromatography" },
@@ -64,6 +65,9 @@ const domainOptions = [
   { value: "sulfur-analysis", label: "آنالیز سولفور", labelEn: "Sulfur analysis" },
   { value: "troubleshooting", label: "عیب‌یابی", labelEn: "Troubleshooting" },
   { value: "analysis", label: "آنالیز و تست", labelEn: "Analysis and testing" },
+  { value: "sales", label: "فروش", labelEn: "Sales" },
+  { value: "petroleum", label: "نفت و پتروشیمی", labelEn: "Petroleum" },
+  { value: "technical_general", label: "فنی عمومی", labelEn: "Technical general" },
 ];
 
 const ratingOptions = [
@@ -93,6 +97,25 @@ function getDomainLabel(domain: string, locale: "fa" | "en" = "fa") {
   const found = domainOptions.find((d) => d.value === domain);
   if (found && found.value !== "all") return locale === "en" ? found.labelEn : found.label;
   return domain || (locale === "en" ? "Auto detected" : "تشخیص خودکار");
+}
+
+function getIntentLabel(metadata?: QuestionMetadata, locale: "fa" | "en" = "fa") {
+  const intent = metadata?.question_intent || "";
+  if (locale === "fa") return metadata?.question_intent_label || intent || "-";
+
+  const labels: Record<string, string> = {
+    sales: "Sales",
+    technical_general: "Technical general",
+    equipment_recommendation: "Equipment recommendation",
+    troubleshooting: "Troubleshooting",
+    lab_analysis: "Lab analysis",
+    product_info: "Product information",
+    price_inquiry: "Price inquiry",
+    customer_request: "Customer request",
+    general: "General",
+  };
+
+  return labels[intent] || intent.replace(/_/g, " ") || "-";
 }
 
 function formatDate(value?: string | null, locale: "fa" | "en" = "fa") {
@@ -686,7 +709,7 @@ export default function QuestionsPage() {
 
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-bold">
                         <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
-                          intent: {item.metadata?.question_intent_label || item.metadata?.question_intent || "-"}
+                          intent: {getIntentLabel(item.metadata, locale)}
                         </span>
                         <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-blue-700">
                           search: {item.metadata?.search_mode || "-"}

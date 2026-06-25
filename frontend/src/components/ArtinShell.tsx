@@ -50,6 +50,12 @@ type SidebarItem = {
   Icon: LucideIcon;
 };
 
+type SidebarItemDef = {
+  href: string;
+  label: { fa: string; en: string };
+  Icon: LucideIcon;
+};
+
 type Customer = {
   id: number;
   full_name: string;
@@ -76,17 +82,17 @@ const navItemDefs: { href: string; labelKey: string; fallback: string; Icon: Luc
   { href: "/customer-dashboard", labelKey: "nav.dashboard", fallback: "حساب من", Icon: CircleUserRound },
 ];
 
-const adminItems: SidebarItem[] = [
-  { href: "/admin", label: "پنل ادمین", Icon: LayoutDashboard },
-  { href: "/admin/knowledge", label: "بانک دانش", Icon: Database },
-  { href: "/admin/questions", label: "سوالات کاربران", Icon: MessagesSquare },
-  { href: "/admin/requests", label: "درخواست‌ها", Icon: Inbox },
-  { href: "/admin/customers", label: "مشتریان", Icon: Users },
-  { href: "/admin/dashboard", label: "داشبورد", Icon: ChartBar },
-  { href: "/admin/knowledge-gaps", label: "شکاف دانش", Icon: SearchX },
-  { href: "/admin/error-log", label: "Error Log", Icon: ListX },
-  { href: "/admin/backup", label: "پشتیبان‌گیری", Icon: HardDrive },
-  { href: "/admin/settings", label: "تنظیمات سیستم", Icon: Settings },
+const adminItemDefs: SidebarItemDef[] = [
+  { href: "/admin", label: { fa: "پنل ادمین", en: "Admin Panel" }, Icon: LayoutDashboard },
+  { href: "/admin/knowledge", label: { fa: "بانک دانش", en: "Knowledge Base" }, Icon: Database },
+  { href: "/admin/questions", label: { fa: "سوالات کاربران", en: "User Questions" }, Icon: MessagesSquare },
+  { href: "/admin/requests", label: { fa: "درخواست‌ها", en: "Requests" }, Icon: Inbox },
+  { href: "/admin/customers", label: { fa: "مشتریان", en: "Customers" }, Icon: Users },
+  { href: "/admin/dashboard", label: { fa: "داشبورد", en: "Dashboard" }, Icon: ChartBar },
+  { href: "/admin/knowledge-gaps", label: { fa: "شکاف دانش", en: "Knowledge Gaps" }, Icon: SearchX },
+  { href: "/admin/error-log", label: { fa: "لاگ خطاها", en: "Error Log" }, Icon: ListX },
+  { href: "/admin/backup", label: { fa: "پشتیبان‌گیری", en: "Backups" }, Icon: HardDrive },
+  { href: "/admin/settings", label: { fa: "تنظیمات سیستم", en: "System Settings" }, Icon: Settings },
 ];
 
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
@@ -103,6 +109,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
 
   const navItems: SidebarItem[] = navItemDefs.map(d => ({ href: d.href, label: t(d.labelKey) || d.fallback, Icon: d.Icon }));
+  const adminItems: SidebarItem[] = adminItemDefs.map((item) => ({
+    href: item.href,
+    label: isRtl ? item.label.fa : item.label.en,
+    Icon: item.Icon,
+  }));
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);

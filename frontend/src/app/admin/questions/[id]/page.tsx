@@ -80,6 +80,7 @@ function getStatusClass(status: string) {
 
 function getDomainLabel(domain: string, locale = "fa") {
   const isEn = locale === "en";
+  if (domain === "general") return isEn ? "General" : "عمومی";
   if (domain === "catalyst") return isEn ? "Catalyst" : "کاتالیست";
   if (domain === "equipment") return isEn ? "Equipment" : "تجهیزات";
   if (domain === "chromatography") return isEn ? "Chromatography" : "کروماتوگرافی";
@@ -87,7 +88,29 @@ function getDomainLabel(domain: string, locale = "fa") {
   if (domain === "sulfur-analysis") return isEn ? "Sulfur analysis" : "آنالیز سولفور";
   if (domain === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
   if (domain === "analysis") return isEn ? "Analysis and testing" : "آنالیز و تست";
+  if (domain === "sales") return isEn ? "Sales" : "فروش";
+  if (domain === "petroleum") return isEn ? "Petroleum" : "نفت و پتروشیمی";
+  if (domain === "technical_general") return isEn ? "Technical general" : "فنی عمومی";
   return domain || (isEn ? "Auto detected" : "تشخیص خودکار");
+}
+
+function getIntentLabel(metadata?: QuestionMetadata, locale = "fa") {
+  const intent = metadata?.question_intent || "";
+  if (locale === "fa") return metadata?.question_intent_label || intent || "-";
+
+  const labels: Record<string, string> = {
+    sales: "Sales",
+    technical_general: "Technical general",
+    equipment_recommendation: "Equipment recommendation",
+    troubleshooting: "Troubleshooting",
+    lab_analysis: "Lab analysis",
+    product_info: "Product information",
+    price_inquiry: "Price inquiry",
+    customer_request: "Customer request",
+    general: "General",
+  };
+
+  return labels[intent] || intent.replace(/_/g, " ") || "-";
 }
 
 function formatDate(value?: string | null, locale = "fa") {
@@ -465,7 +488,7 @@ export default function QuestionDetailPage() {
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {[
-                  ["Intent", question.metadata?.question_intent_label || question.metadata?.question_intent || "-"],
+                  ["Intent", getIntentLabel(question.metadata, locale)],
                   ["Search mode", question.metadata?.search_mode || "-"],
                   ["Best score", formatScore(question.metadata?.best_score)],
                   ["Web search", question.metadata?.web_search_used ? "on" : "off"],

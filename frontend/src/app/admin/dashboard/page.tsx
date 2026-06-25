@@ -186,6 +186,7 @@ function getTypeLabel(type: string, locale = "fa") {
 
 function getDomainLabel(domain: string, locale = "fa") {
   const isEn = locale === "en";
+  if (domain === "general") return isEn ? "General" : "عمومی";
   if (domain === "catalyst") return isEn ? "Catalyst" : "کاتالیست";
   if (domain === "equipment") return isEn ? "Equipment" : "تجهیزات";
   if (domain === "chromatography") return isEn ? "Chromatography" : "کروماتوگرافی";
@@ -193,6 +194,9 @@ function getDomainLabel(domain: string, locale = "fa") {
   if (domain === "sulfur-analysis") return isEn ? "Sulfur analysis" : "آنالیز سولفور";
   if (domain === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
   if (domain === "analysis") return isEn ? "Analysis and testing" : "آنالیز و تست";
+  if (domain === "sales") return isEn ? "Sales" : "فروش";
+  if (domain === "petroleum") return isEn ? "Petroleum" : "نفت و پتروشیمی";
+  if (domain === "technical_general") return isEn ? "Technical general" : "فنی عمومی";
   return domain || (isEn ? "Auto detected" : "تشخیص خودکار");
 }
 
@@ -1244,11 +1248,13 @@ function DomainPieChart({ domains, locale }: { domains: QuestionDomain[]; locale
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-black text-slate-900">{isEn ? "Question Domain Distribution" : "توزیع حوزه‌های سوالات"}</h2>
-          <p className="mt-1 text-xs font-bold text-slate-500">
-            {isEn ? "Share of each domain from all received questions" : "سهم هر حوزه از کل سوالات دریافتی"}
+      <div className="mb-3 flex shrink-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-base font-black leading-6 text-slate-900">
+            {isEn ? "Question Domains" : "حوزه‌های سوالات"}
+          </h2>
+          <p className="mt-1 max-w-[180px] text-[11px] font-bold leading-4 text-slate-500">
+            {isEn ? "Share of all questions" : "سهم از کل سوالات"}
           </p>
         </div>
         <button
@@ -1260,24 +1266,28 @@ function DomainPieChart({ domains, locale }: { domains: QuestionDomain[]; locale
           CSV
         </button>
       </div>
-      <div className="flex min-h-0 flex-1 items-center gap-3" style={{ direction: "ltr" }}>
-        <svg viewBox="0 0 160 160" className="w-24 shrink-0" aria-hidden="true">
-          {slices.map((s, i) => (
-            <path key={i} d={s.path} fill={s.color} stroke="white" strokeWidth="2">
-              <title>{`${s.label}: ${s.count} (${s.pct}%)`}</title>
-            </path>
-          ))}
-          <text x={CX} y={CY - 4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">{total}</text>
-          <text x={CX} y={CY + 10} textAnchor="middle" fontSize="7.5" fill="#64748b">{isEn ? "questions" : "سوال"}</text>
-        </svg>
-        <div className="flex flex-col gap-1.5" style={{ direction: isEn ? "ltr" : "rtl" }}>
-          {slices.map((s, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
-              <span className="font-bold text-slate-700">{s.label}</span>
-              <span className="text-slate-400">{s.pct}{isEn ? "%" : "٪"}</span>
-            </div>
-          ))}
+      <div className="flex min-h-0 flex-1 items-center gap-4" dir="ltr">
+        <div className="flex w-[92px] shrink-0 justify-center">
+          <svg viewBox="0 0 160 160" className="h-[92px] w-[92px]" aria-hidden="true">
+            {slices.map((s, i) => (
+              <path key={i} d={s.path} fill={s.color} stroke="white" strokeWidth="2">
+                <title>{`${s.label}: ${s.count} (${s.pct}%)`}</title>
+              </path>
+            ))}
+            <text x={CX} y={CY - 4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">{total}</text>
+            <text x={CX} y={CY + 10} textAnchor="middle" fontSize="7.5" fill="#64748b">{isEn ? "questions" : "سوال"}</text>
+          </svg>
+        </div>
+        <div className="min-w-0 flex-1 self-stretch overflow-y-auto pr-1">
+          <div className="flex flex-col gap-1.5 py-1" dir={isEn ? "ltr" : "rtl"}>
+            {slices.map((s, i) => (
+              <div key={i} className={`flex min-w-0 items-center gap-2 text-xs ${isEn ? "text-left" : "text-right"}`}>
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+                <span className="min-w-0 flex-1 truncate font-bold text-slate-700">{s.label}</span>
+                <span className="shrink-0 tabular-nums text-slate-400">{s.pct}{isEn ? "%" : "٪"}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
