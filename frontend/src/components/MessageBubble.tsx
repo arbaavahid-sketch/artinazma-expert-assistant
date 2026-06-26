@@ -13,9 +13,12 @@ import {
   FileText,
   ImageIcon,
   ListChecks,
+  Mail,
+  MessageCircle,
   MoreHorizontal,
   MessageSquarePlus,
   RotateCcw,
+  Send,
   Share2,
   Table2,
   ThumbsUp,
@@ -234,6 +237,7 @@ function MessageBubble({
   const [editText, setEditText] = useState(item.content);
   const [showFeedbackMenu, setShowFeedbackMenu] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const isUser = item.role === "user";
 
   const displayContent = isUser
@@ -248,23 +252,61 @@ function MessageBubble({
     setTimeout(() => setCopied(false), 1800);
   }
 
+  function getSharePayload() {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    const title = isEn ? "ArtinAzma Expert Assistant" : "دستیار تخصصی آرتین آزما";
+    const textWithLink = url ? `${displayContent}\n\n${url}` : displayContent;
+    return { title, url, text: displayContent, textWithLink };
+  }
+
   async function handleShare() {
+    const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isWindows = /Windows/i.test(userAgent);
     const canUseNativeShare =
       typeof navigator !== "undefined" &&
-      "share" in navigator &&
-      (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-        navigator.maxTouchPoints > 1);
+      typeof navigator.share === "function" &&
+      !isWindows;
 
     if (canUseNativeShare) {
       try {
-        await navigator.share({ text: displayContent });
+        const payload = getSharePayload();
+        await navigator.share({
+          title: payload.title,
+          text: payload.text,
+          url: payload.url || undefined,
+        });
         return;
       } catch (error) {
         const name = error instanceof DOMException ? error.name : "";
         if (name === "AbortError") return;
       }
     }
-    handleCopy(displayContent);
+    setShowShareMenu((current) => !current);
+  }
+
+  function openShareTarget(target: "whatsapp" | "telegram" | "email" | "copy") {
+    const payload = getSharePayload();
+    setShowShareMenu(false);
+
+    if (target === "copy") {
+      handleCopy(payload.textWithLink);
+      return;
+    }
+
+    const encodedText = encodeURIComponent(payload.textWithLink);
+    const encodedTitle = encodeURIComponent(payload.title);
+    const encodedUrl = encodeURIComponent(payload.url);
+    const url =
+      target === "whatsapp"
+        ? `https://wa.me/?text=${encodedText}`
+        : target === "telegram"
+          ? `https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(payload.text)}`
+          : `mailto:?subject=${encodedTitle}&body=${encodedText}`;
+
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      window.location.href = url;
+    }
   }
 
   const actionLabels = {
@@ -284,6 +326,10 @@ function MessageBubble({
     request: isEn ? "Request consultation" : "ثبت مشاوره",
     share: isEn ? "Share" : "اشتراک‌گذاری",
     more: isEn ? "More" : "بیشتر",
+    whatsapp: isEn ? "WhatsApp" : "واتساپ",
+    telegram: isEn ? "Telegram" : "تلگرام",
+    email: isEn ? "Email" : "ایمیل",
+    copyShare: isEn ? "Copy text and link" : "کپی متن و لینک",
   };
   const actionButtonClass =
     "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:h-8 sm:w-8";
@@ -593,20 +639,70 @@ function MessageBubble({
                   {isSpeaking ? <VolumeX size={15} /> : <Volume2 size={15} />}
                 </button>
               </Tooltip>
-              <Tooltip label={actionLabels.share} position="top">
-                <button
-                  onClick={() => void handleShare()}
-                  className={actionButtonClass}
-                  aria-label={actionLabels.share}
-                  title={actionLabels.share}
-                >
-                  <Share2 size={14} />
-                </button>
-              </Tooltip>
+              <div className="relative">
+                <Tooltip label={actionLabels.share} position="top">
+                  <button
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      setShowFeedbackMenu(false);
+                      void handleShare();
+                    }}
+                    className={actionButtonClass}
+                    aria-label={actionLabels.share}
+                    aria-haspopup="menu"
+                    aria-expanded={showShareMenu}
+                    title={actionLabels.share}
+                  >
+                    <Share2 size={14} />
+                  </button>
+                </Tooltip>
+                {showShareMenu && (
+                  <div
+                    className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+                    role="menu"
+                  >
+                    <button
+                      onClick={() => openShareTarget("whatsapp")}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.whatsapp}</span>
+                      <MessageCircle size={15} />
+                    </button>
+                    <button
+                      onClick={() => openShareTarget("telegram")}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.telegram}</span>
+                      <Send size={15} />
+                    </button>
+                    <button
+                      onClick={() => openShareTarget("email")}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.email}</span>
+                      <Mail size={15} />
+                    </button>
+                    <button
+                      onClick={() => openShareTarget("copy")}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.copyShare}</span>
+                      <Copy size={15} />
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="relative">
                 <Tooltip label={actionLabels.more} position="top">
                   <button
-                    onClick={() => setShowActionsMenu((v) => !v)}
+                    onClick={() => {
+                      setShowShareMenu(false);
+                      setShowActionsMenu((v) => !v);
+                    }}
                     className={actionButtonClass}
                     aria-label={actionLabels.more}
                     aria-haspopup="menu"
