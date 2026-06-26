@@ -13,8 +13,10 @@ import {
   FileText,
   ImageIcon,
   ListChecks,
+  MoreHorizontal,
   MessageSquarePlus,
   RotateCcw,
+  Share2,
   Table2,
   ThumbsUp,
   ThumbsDown,
@@ -231,6 +233,7 @@ function MessageBubble({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.content);
   const [showFeedbackMenu, setShowFeedbackMenu] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
   const isUser = item.role === "user";
 
   const displayContent = isUser
@@ -243,6 +246,25 @@ function MessageBubble({
     onCopy(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
+  }
+
+  async function handleShare() {
+    const canUseNativeShare =
+      typeof navigator !== "undefined" &&
+      "share" in navigator &&
+      (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+        navigator.maxTouchPoints > 1);
+
+    if (canUseNativeShare) {
+      try {
+        await navigator.share({ text: displayContent });
+        return;
+      } catch (error) {
+        const name = error instanceof DOMException ? error.name : "";
+        if (name === "AbortError") return;
+      }
+    }
+    handleCopy(displayContent);
   }
 
   const actionLabels = {
@@ -260,9 +282,13 @@ function MessageBubble({
     sources: isEn ? "Sources and next steps" : "منابع و اقدام بعدی",
     regenerate: isEn ? "Regenerate" : "تولید دوباره",
     request: isEn ? "Request consultation" : "ثبت مشاوره",
+    share: isEn ? "Share" : "اشتراک‌گذاری",
+    more: isEn ? "More" : "بیشتر",
   };
   const actionButtonClass =
-    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700";
+    "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:h-8 sm:w-8";
+  const menuActionClass =
+    "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-700";
 
   return (
     <div
@@ -271,9 +297,9 @@ function MessageBubble({
     >
       <div
         className={`flex min-w-0 gap-2 sm:gap-3 ${
-          isUser
-            ? "max-w-[92%] flex-row-reverse sm:max-w-[88%]"
-            : "w-full max-w-full flex-row-reverse sm:w-auto sm:max-w-[88%]"
+            isUser
+              ? "max-w-[88%] flex-row-reverse sm:max-w-[88%]"
+              : "w-full max-w-full flex-row-reverse sm:w-auto sm:max-w-[88%]"
         }`}
       >
         {!isUser && (
@@ -287,7 +313,7 @@ function MessageBubble({
         <div
           className={`min-w-0 shadow-sm ${
             isUser
-              ? "max-w-[760px] rounded-[22px] bg-blue-700 px-4 py-3 text-white sm:rounded-[26px] sm:px-5 sm:py-4"
+              ? "max-w-[760px] rounded-[20px] bg-blue-700 px-3.5 py-2.5 text-white sm:rounded-[26px] sm:px-5 sm:py-4"
               : "ai-message-card w-full"
           }`}
         >
@@ -296,7 +322,7 @@ function MessageBubble({
             style={{ fontFamily }}
             className={
               isUser
-                ? "whitespace-pre-wrap text-right leading-8"
+                ? "whitespace-pre-wrap break-words text-right text-sm leading-7 [overflow-wrap:anywhere] sm:text-base sm:leading-8"
                 : direction === "rtl"
                   ? "ai-markdown rtl-markdown"
                   : "ai-markdown ltr-markdown"
@@ -482,7 +508,7 @@ function MessageBubble({
           )}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {!isUser && !loading && (
-            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-100 transition-opacity">
+            <div className="mt-1 flex flex-wrap items-center gap-0.5 opacity-100 transition-opacity sm:mt-2 sm:gap-1">
               <Tooltip label={actionLabels.copy} position="top">
                 <button
                   onClick={() => handleCopy(displayContent)}
@@ -493,67 +519,11 @@ function MessageBubble({
                   {copied ? <Check size={15} /> : <Copy size={15} />}
                 </button>
               </Tooltip>
-              <Tooltip label={actionLabels.speak} position="top">
-                <button
-                  onClick={() => onSpeak(displayContent, index)}
-                  className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition ${
-                    isSpeaking
-                      ? "bg-indigo-50 text-indigo-600"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                  }`}
-                  aria-label={actionLabels.speak}
-                  title={actionLabels.speak}
-                >
-                  {isSpeaking ? <VolumeX size={15} /> : <Volume2 size={15} />}
-                </button>
-              </Tooltip>
-              <div className="mx-1 h-3.5 w-px bg-slate-200" />
-              <Tooltip label={actionLabels.shorter} position="top">
-                <button
-                  onClick={() => onQuickAction("shorter", item.content)}
-                  className={actionButtonClass}
-                  aria-label={actionLabels.shorter}
-                  title={actionLabels.shorter}
-                >
-                  <FileText size={15} />
-                </button>
-              </Tooltip>
-              <Tooltip label={actionLabels.technical} position="top">
-                <button
-                  onClick={() => onQuickAction("technical", item.content)}
-                  className={actionButtonClass}
-                  aria-label={actionLabels.technical}
-                  title={actionLabels.technical}
-                >
-                  <Wrench size={15} />
-                </button>
-              </Tooltip>
-              <Tooltip label={actionLabels.table} position="top">
-                <button
-                  onClick={() => onQuickAction("table", item.content)}
-                  className={actionButtonClass}
-                  aria-label={actionLabels.table}
-                  title={actionLabels.table}
-                >
-                  <Table2 size={15} />
-                </button>
-              </Tooltip>
-              <Tooltip label={actionLabels.sources} position="top">
-                <button
-                  onClick={() => onQuickAction("sources", item.content)}
-                  className={actionButtonClass}
-                  aria-label={actionLabels.sources}
-                  title={actionLabels.sources}
-                >
-                  <ListChecks size={15} />
-                </button>
-              </Tooltip>
-              <div className="mx-1 h-3.5 w-px bg-slate-200" />
               <Tooltip label={isEn ? "Helpful" : "مفید بود"} position="top">
                 <button
                   onClick={() => onFeedback(item.question_id, "up")}
                   disabled={!!feedbackValue}
-                  className={`rounded-lg p-1.5 transition ${
+                  className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${
                     feedbackValue === "up"
                       ? "text-emerald-600 bg-emerald-50"
                       : feedbackValue === "down"
@@ -572,7 +542,7 @@ function MessageBubble({
                       setShowFeedbackMenu((v) => !v);
                     }}
                     disabled={!!feedbackValue}
-                    className={`rounded-lg p-1.5 transition ${
+                    className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${
                       feedbackValue === "down"
                         ? "text-red-500 bg-red-50"
                         : feedbackValue === "up"
@@ -609,32 +579,119 @@ function MessageBubble({
                   </div>
                 )}
               </div>
-              <div className="mx-1 h-3.5 w-px bg-slate-200" />
-              {canRegenerate && onRegenerate && (
-                <Tooltip label={actionLabels.regenerate} position="top">
-                  <button
-                    onClick={onRegenerate}
-                    className={actionButtonClass}
-                    aria-label={actionLabels.regenerate}
-                    title={actionLabels.regenerate}
-                  >
-                    <RotateCcw size={15} />
-                  </button>
-                </Tooltip>
-              )}
-              {canRegenerate && onRegenerate && (
-                <div className="mx-1 h-3.5 w-px bg-slate-200" />
-              )}
-              <Tooltip label={actionLabels.request} position="top">
+              <Tooltip label={actionLabels.speak} position="top">
                 <button
-                  onClick={onRequest}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-blue-600 transition hover:bg-blue-50"
-                  aria-label={actionLabels.request}
-                  title={actionLabels.request}
+                  onClick={() => onSpeak(displayContent, index)}
+                  className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${
+                    isSpeaking
+                      ? "bg-indigo-50 text-indigo-600"
+                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  }`}
+                  aria-label={actionLabels.speak}
+                  title={actionLabels.speak}
                 >
-                  <MessageSquarePlus size={15} />
+                  {isSpeaking ? <VolumeX size={15} /> : <Volume2 size={15} />}
                 </button>
               </Tooltip>
+              <Tooltip label={actionLabels.share} position="top">
+                <button
+                  onClick={() => void handleShare()}
+                  className={actionButtonClass}
+                  aria-label={actionLabels.share}
+                  title={actionLabels.share}
+                >
+                  <Share2 size={14} />
+                </button>
+              </Tooltip>
+              <div className="relative">
+                <Tooltip label={actionLabels.more} position="top">
+                  <button
+                    onClick={() => setShowActionsMenu((v) => !v)}
+                    className={actionButtonClass}
+                    aria-label={actionLabels.more}
+                    aria-haspopup="menu"
+                    aria-expanded={showActionsMenu}
+                    title={actionLabels.more}
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
+                </Tooltip>
+                {showActionsMenu && (
+                  <div
+                    className="absolute bottom-full left-0 z-50 mb-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+                    role="menu"
+                  >
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        onQuickAction("shorter", item.content);
+                      }}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.shorter}</span>
+                      <FileText size={15} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        onQuickAction("technical", item.content);
+                      }}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.technical}</span>
+                      <Wrench size={15} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        onQuickAction("table", item.content);
+                      }}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.table}</span>
+                      <Table2 size={15} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        onQuickAction("sources", item.content);
+                      }}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.sources}</span>
+                      <ListChecks size={15} />
+                    </button>
+                    {canRegenerate && onRegenerate && (
+                      <button
+                        onClick={() => {
+                          setShowActionsMenu(false);
+                          onRegenerate();
+                        }}
+                        className={menuActionClass}
+                        role="menuitem"
+                      >
+                        <span>{actionLabels.regenerate}</span>
+                        <RotateCcw size={15} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        onRequest();
+                      }}
+                      className={menuActionClass}
+                      role="menuitem"
+                    >
+                      <span>{actionLabels.request}</span>
+                      <MessageSquarePlus size={15} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

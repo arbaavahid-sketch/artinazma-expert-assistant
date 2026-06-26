@@ -157,7 +157,7 @@
 /* ── Markdown body ──────────────────────────────────────────── */
 .ai-markdown {
   font-size: 15px !important;
-  line-height: 1.85 !important;
+  line-height: 1.78 !important;
   color: #111827 !important;
 }
 
@@ -197,13 +197,13 @@
 
 /* Paragraph */
 .ai-md-paragraph {
-  margin: 0 0 10px !important;
-  line-height: 1.85 !important;
+  margin: 0 0 8px !important;
+  line-height: 1.78 !important;
 }
 
 /* Lists */
 .ai-md-list {
-  margin: 8px 0 14px !important;
+  margin: 6px 0 12px !important;
   padding-right: 22px !important;
   padding-left: 0 !important;
 }
@@ -214,8 +214,8 @@
 }
 
 .ai-md-list-item {
-  margin: 4px 0 !important;
-  line-height: 1.8 !important;
+  margin: 3px 0 !important;
+  line-height: 1.72 !important;
 }
 
 .ai-md-list-item::marker {
@@ -298,7 +298,8 @@
 /* ── Mobile responsive ──────────────────────────────────────── */
 @media (max-width: 640px) {
   .ai-markdown {
-    font-size: 14px !important;
+    font-size: 14.5px !important;
+    line-height: 1.72 !important;
   }
 
   .ai-md-table {
@@ -311,7 +312,7 @@
   }
 
   .chat-composer-box {
-    border-radius: 12px;
+    border-radius: 18px;
   }
 
   .ai-md-list {
@@ -390,30 +391,56 @@
 /* ── Mobile responsive improvements ────────────────────────── */
 @media (max-width: 640px) {
   .ai-message-card {
-    padding: 14px !important;
-    border-radius: 18px !important;
+    padding: 0 2px !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
   }
 
   .chat-composer-box {
-    border-radius: 18px;
+    border-radius: 20px;
     margin: 0;
   }
 
   .chat-composer-icon-button {
-    height: 38px;
-    width: 38px;
-    border-radius: 14px;
+    height: 36px;
+    width: 36px;
+    border-radius: 13px;
   }
 
   .chat-composer-textarea {
-    padding: 0.58rem 0.35rem;
+    padding: 0.48rem 0.3rem;
     font-size: 14.5px;
+    line-height: 1.55;
   }
 
   .ai-markdown {
     font-size: 14.5px !important;
-    line-height: 1.9 !important;
+    line-height: 1.72 !important;
+  }
+
+  .ai-md-title {
+    margin: 14px 0 7px !important;
+    font-size: 16px !important;
+    line-height: 1.45 !important;
+  }
+
+  .ai-md-section {
+    margin: 12px 0 5px !important;
+    font-size: 15px !important;
+    line-height: 1.48 !important;
+  }
+
+  .ai-md-paragraph {
+    margin-bottom: 7px !important;
+    line-height: 1.72 !important;
+  }
+
+  .ai-md-list {
+    margin: 5px 0 10px !important;
+  }
+
+  .ai-md-list-item {
+    line-height: 1.65 !important;
   }
 
   .ai-markdown pre {

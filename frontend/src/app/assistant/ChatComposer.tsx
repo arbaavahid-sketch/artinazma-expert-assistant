@@ -67,7 +67,7 @@ export default function ChatComposer({
   onSend,
 }: ChatComposerProps) {
   return (
-    <footer className="shrink-0 border-t border-slate-100 bg-white/95 pb-2 pt-3 backdrop-blur">
+    <footer className="shrink-0 border-t border-slate-100 bg-white/95 pb-1.5 pt-2 backdrop-blur sm:pb-2 sm:pt-3">
       <div className="mx-auto w-full max-w-3xl px-3 sm:px-4">
         <div className="relative">
           {showTools && (
@@ -84,7 +84,7 @@ export default function ChatComposer({
               onClear={onClearStagedImage}
               isEn={isEn}
             />
-            <div className="flex items-end gap-1.5 p-2 sm:gap-2 sm:p-2.5">
+            <div className="flex items-end gap-1.5 p-1.5 sm:gap-2 sm:p-2.5">
               <button
                 onClick={onToggleTools}
                 aria-label={isEn ? "Tools and attachments" : "ابزارها و پیوست‌ها"}
@@ -118,7 +118,7 @@ export default function ChatComposer({
                 ref={chatInputRef}
                 dir="auto"
                 style={{ fontFamily: getTextFont(message || (isEn ? "English" : "فارسی")) }}
-                className="chat-composer-textarea max-h-40 min-h-[44px]"
+                className="chat-composer-textarea max-h-36 min-h-[40px] sm:max-h-40 sm:min-h-[44px]"
                 placeholder={
                   stagedImage
                     ? (isEn ? "Write an optional note for the image..." : "توضیحی برای عکس بنویسید (اختیاری)...")
@@ -168,7 +168,7 @@ export default function ChatComposer({
             </div>
           </div>
 
-          <p className="mt-2 text-center text-[11px] text-slate-400">
+          <p className="mt-1.5 text-center text-[10px] leading-5 text-slate-400 sm:mt-2 sm:text-[11px]">
             {isEn
               ? "Artin can make mistakes. For important decisions, submit an expert consultation request."
               : "آرتین ممکن است اشتباه کند. برای تصمیم‌های مهم مشاوره کارشناسی ثبت کنید."}

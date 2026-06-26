@@ -441,7 +441,8 @@ ${cleanAnswer}`,
       return;
     }
 
-    const finalMessage = customMessage || message;
+    const liveInputMessage = chatInputRef.current?.value ?? "";
+    const finalMessage = customMessage || liveInputMessage || message;
     const visibleMessage = displayMessage || finalMessage;
 
     if (!finalMessage.trim()) return;
@@ -1258,7 +1259,7 @@ ${cleanAnswer}`,
             </div>
           ) : (
             <div
-              className="mx-auto w-full max-w-5xl space-y-3 pb-4 sm:space-y-5 md:space-y-7"
+              className="mx-auto w-full max-w-5xl space-y-2 pb-3 sm:space-y-4 md:space-y-6"
               role="log"
               aria-live="polite"
               aria-relevant="additions text"
@@ -1328,12 +1329,12 @@ ${cleanAnswer}`,
 
               {loading && (
                 <div className="flex justify-start">
-                  <div className="flex max-w-[80%] flex-row-reverse items-center gap-3 rounded-[28px] bg-[--surface] px-5 py-4 text-slate-600 dark:text-slate-300 shadow-sm border border-[--border-soft]">
+                  <div className="flex max-w-[82%] flex-row-reverse items-center gap-2 rounded-2xl border border-[--border-soft] bg-[--surface] px-3.5 py-2.5 text-slate-600 shadow-sm dark:text-slate-300 sm:gap-3 sm:rounded-[28px] sm:px-5 sm:py-4">
                     <div className="relative shrink-0">
                       <img
                         src="/images/artin-avatar.png"
                         alt={isEn ? "Artin" : "آرتین"}
-                        className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 object-cover"
+                        className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 object-cover sm:h-9 sm:w-9"
                       />
                       <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900">
                         <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white" />

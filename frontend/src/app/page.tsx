@@ -131,45 +131,45 @@ export default function Home() {
   ];
 
   return (
-    <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8" dir={dir}>
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="brand-panel hero-grid-bg overflow-hidden rounded-[34px]">
-          <div className="grid gap-8 p-6 md:p-8 lg:grid-cols-[1fr_420px] lg:p-10 xl:p-12">
+    <section className="brand-shell-bg min-h-full px-3 py-3 sm:px-5 sm:py-6 md:px-8 md:py-8" dir={dir}>
+      <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
+        <div className="brand-panel hero-grid-bg overflow-hidden rounded-[24px] sm:rounded-[34px]">
+          <div className="grid gap-6 p-4 sm:p-6 md:p-8 lg:grid-cols-[1fr_420px] lg:p-10 xl:p-12">
             <div className="flex flex-col justify-center">
-              <div className="brand-kicker mb-6">
+              <div className="brand-kicker mb-6 hidden sm:flex">
                 <Sparkles size={17} />
                 ArtinAzma Expert Assistant
               </div>
 
-              <h1 className="max-w-4xl text-[var(--font-size-display)] font-black leading-[1.45] text-slate-950">
+              <h1 className="max-w-4xl text-center text-2xl font-black leading-[1.55] text-slate-950 sm:text-start sm:text-[var(--font-size-display)] sm:leading-[1.45]">
                 {isEn ? "ArtinAzma Expert Assistant" : "دستیار تخصصی آرتین آزما"}
                 <span className="block text-blue-700">
                   {isEn ? "For oil, gas, and petrochemical industries" : "برای صنایع نفت، گاز و پتروشیمی"}
                 </span>
               </h1>
 
-              <p className="mt-5 max-w-3xl text-lg leading-9 text-slate-600">
+              <p className="mt-4 max-w-3xl text-center text-base leading-8 text-slate-600 sm:mt-5 sm:text-start sm:text-lg sm:leading-9">
                 {isEn
                   ? "Artin is designed for specialized answers, lab report analysis, instrument suggestions, equipment troubleshooting, and catalyst review in oil, gas, and petrochemical industries."
                   : "آرتین برای پاسخ‌گویی تخصصی، تحلیل گزارش‌های آزمایشگاهی، پیشنهاد دستگاه، عیب‌یابی تجهیزات و بررسی کاتالیست‌ها در صنایع نفت، گاز و پتروشیمی طراحی شده است."}
               </p>
 
-              <div className="mt-7 flex flex-wrap gap-2">
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:mt-7 sm:flex sm:flex-wrap">
                 {domains.map((item) => (
-                  <span key={item} className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-sm font-extrabold text-slate-700 shadow-sm">
+                  <span key={item} className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 text-center text-xs font-extrabold leading-5 text-slate-700 shadow-sm sm:min-h-0 sm:rounded-full sm:px-4 sm:text-sm">
                     {item}
                   </span>
                 ))}
               </div>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-col gap-2.5 sm:mt-8 sm:flex-row sm:gap-3">
                 <HeroLink href="/assistant" primary label={isEn ? "Start chatting with Artin" : "شروع گفتگو با آرتین"} icon={<ArrowLeft size={18} />} />
                 <HeroLink href="/analyze" label={isEn ? "Analyze test file" : "تحلیل فایل تست"} icon={<Beaker size={18} />} />
                 <HeroLink href="/customer-request" label={isEn ? "Submit request" : "ثبت درخواست"} icon={<PhoneCall size={18} />} />
               </div>
             </div>
 
-            <div className="relative flex items-center justify-center rounded-[30px] border border-blue-100 bg-gradient-to-b from-blue-50/80 via-white/95 to-slate-50 p-6 shadow-inner">
+            <div className="relative hidden items-center justify-center rounded-[30px] border border-blue-100 bg-gradient-to-b from-blue-50/80 via-white/95 to-slate-50 p-6 shadow-inner lg:flex">
               <div className="absolute right-5 top-5 rounded-2xl border border-emerald-100 bg-white/95 px-3 py-1.5 text-xs font-black text-emerald-700 shadow-sm">
                 {isEn ? "Ready for technical answers" : "آماده پاسخ‌گویی تخصصی"}
               </div>
@@ -294,7 +294,7 @@ export default function Home() {
 
 function HeroLink({ href, label, icon, primary = false }: { href: string; label: string; icon: ReactNode; primary?: boolean }) {
   return (
-    <Link href={href} className={`ui-btn ${primary ? "ui-btn-primary" : "ui-btn-ghost"} gap-2 rounded-2xl px-6 py-4 text-base`}>
+    <Link href={href} className={`ui-btn ${primary ? "ui-btn-primary" : "ui-btn-ghost"} w-full justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm sm:w-auto sm:px-6 sm:py-4 sm:text-base`}>
       {label}{icon}
     </Link>
   );

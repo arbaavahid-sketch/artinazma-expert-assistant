@@ -58,7 +58,7 @@ export default function HeroComposer({
       )}
 
       <div className="chat-composer-box">
-        <div className="flex items-end gap-2 p-2 sm:gap-3 sm:p-3">
+        <div className="flex items-end gap-1.5 p-1.5 sm:gap-3 sm:p-3">
           <button
             onClick={onToggleTools}
             aria-label={isEn ? "Tools and attachments" : "ابزارها و پیوست‌ها"}
@@ -72,7 +72,7 @@ export default function HeroComposer({
             ref={chatInputRef}
             dir="auto"
             style={{ fontFamily: getTextFont(message || (isEn ? "English" : "فارسی")) }}
-            className="chat-composer-textarea max-h-32 min-h-[46px]"
+            className="chat-composer-textarea max-h-32 min-h-[40px] sm:min-h-[46px]"
             placeholder={isEn ? "Ask Artin..." : "از آرتین بپرسید..."}
             value={message}
             onChange={(e) => onMessageChange(e.target.value)}
