@@ -262,3 +262,6 @@ outputs/unpacked/ppt/slides/_rels/slide15.xml.rels
 outputs/unpacked/ppt/slides/_rels/slide16.xml.rels
 outputs/unpacked/ppt/theme/theme1.xml
 outputs/unpacked/ppt/theme/theme2.xml
+frontend/android/app/release/baselineProfiles/0/app-release.dm
+frontend/android/app/release/baselineProfiles/1/app-release.dm
+frontend/android/app/release/output-metadata.json
