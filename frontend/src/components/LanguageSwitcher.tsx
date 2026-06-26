@@ -4,6 +4,7 @@ import { useI18n } from "@/lib/i18n";
 
 type LanguageSwitcherProps = {
   variant?: "blue" | "purple";
+  size?: "default" | "compact";
   className?: string;
 };
 
@@ -38,20 +39,27 @@ function UkFlag() {
   );
 }
 
-export function LanguageSwitcher({ variant = "blue", className = "" }: LanguageSwitcherProps) {
+export function LanguageSwitcher({ variant = "blue", size = "default", className = "" }: LanguageSwitcherProps) {
   const { locale, setLocale } = useI18n();
   const isEn = locale === "en";
   const activeClass = activeColorClass[variant];
+  const isCompact = size === "compact";
+  const containerClass = isCompact
+    ? "rounded-xl p-0.5 text-[11px]"
+    : "rounded-2xl p-1 text-sm";
+  const buttonClass = isCompact
+    ? "min-w-9 rounded-lg px-1.5 py-1"
+    : "min-w-14 rounded-xl px-3 py-2";
 
   return (
-    <div className={`inline-flex rounded-2xl bg-slate-100 p-1 text-sm font-bold text-slate-600 ${className}`}>
+    <div className={`inline-flex bg-slate-100 font-bold text-slate-600 ${containerClass} ${className}`}>
       <button
         type="button"
         onClick={() => setLocale("fa")}
         aria-pressed={locale === "fa"}
         aria-label={isEn ? "Switch to Persian" : "تغییر به فارسی"}
         title={isEn ? "Persian" : "فارسی"}
-        className={`min-w-14 rounded-xl px-3 py-2 text-lg leading-none transition-colors ${
+        className={`${buttonClass} text-lg leading-none transition-colors ${
           locale === "fa" ? `bg-white ${activeClass} shadow-sm` : "hover:bg-white/70 hover:text-slate-900"
         }`}
       >
@@ -63,7 +71,7 @@ export function LanguageSwitcher({ variant = "blue", className = "" }: LanguageS
         aria-pressed={locale === "en"}
         aria-label={isEn ? "Switch to English" : "تغییر به انگلیسی"}
         title={isEn ? "English" : "انگلیسی"}
-        className={`min-w-14 rounded-xl px-3 py-2 text-lg leading-none transition-colors ${
+        className={`${buttonClass} text-lg leading-none transition-colors ${
           locale === "en" ? `bg-white ${activeClass} shadow-sm` : "hover:bg-white/70 hover:text-slate-900"
         }`}
       >

@@ -16,6 +16,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import AdminGlobalSearch from "@/components/AdminGlobalSearch";
 import ServerStatus from "@/components/ServerStatus";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   ChartBar,
   CircleUserRound,
@@ -393,24 +394,29 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             </button>
 
             {!sidebarCollapsed ? (
-              <Link href="/" className="block">
-                <div className="mx-auto w-[78%]">
-                  <img
-                    src="/images/artinazma-logo.png"
-                    alt={isRtl ? "آرتین آزما" : "ArtinAzma"}
-                    className="mx-auto h-auto max-h-14 w-full object-contain"
-                  />
-                </div>
+              <>
+                <Link href="/" className="block">
+                  <div className="mx-auto w-[78%]">
+                    <img
+                      src="/images/artinazma-logo.png"
+                      alt={isRtl ? "آرتین آزما" : "ArtinAzma"}
+                      className="mx-auto h-auto max-h-14 w-full object-contain"
+                    />
+                  </div>
 
-                <div className="mt-3 text-center">
-                  <div className="text-sm font-bold text-slate-900">
-                    {isRtl ? "دستیار هوشمند آرتین آزما" : "ArtinAzma Intelligent Assistant"}
+                  <div className="mt-3 text-center">
+                    <div className="text-sm font-bold text-slate-900">
+                      {isRtl ? "دستیار هوشمند آرتین آزما" : "ArtinAzma Intelligent Assistant"}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      ArtinAzma Expert Assistant
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    ArtinAzma Expert Assistant
-                  </div>
+                </Link>
+                <div className="mt-3 flex justify-center">
+                  <LanguageSwitcher size="compact" />
                 </div>
-              </Link>
+              </>
             ) : (
               <Link
                 href="/"
