@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { registerPlugin } from "@capacitor/core";
 import { ArrowLeft, Download, FileText, Loader2, Printer } from "lucide-react";
 import { apiUrl, customerFetch } from "@/lib/api";
 import { getSavedCustomer } from "@/lib/customer";
@@ -16,6 +17,14 @@ type SavedCustomer = {
   id: number;
   full_name?: string;
 };
+
+type NativeExportPlugin = {
+  saveHtml(options: { html: string; fileName: string }): Promise<{ uri?: string }>;
+  printHtml(options: { html: string; fileName: string }): Promise<void>;
+  shareHtml(options: { html: string; fileName: string }): Promise<void>;
+};
+
+const NativeExport = registerPlugin<NativeExportPlugin>("NativeExport");
 
 function escapeHtml(value: string) {
   return value
@@ -103,6 +112,21 @@ function CustomerDashboardExportInner() {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isNativeApp, setIsNativeApp] = useState(false);
+  const [nativeExportAvailable, setNativeExportAvailable] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    void import("@capacitor/core")
+      .then(({ Capacitor }) => {
+        setIsNativeApp(Capacitor.isNativePlatform());
+        setNativeExportAvailable(Capacitor.isPluginAvailable("NativeExport"));
+      })
+      .catch(() => {
+        setIsNativeApp(false);
+        setNativeExportAvailable(false);
+      });
+  }, []);
 
   useEffect(() => {
     const saved = getSavedCustomer();
@@ -160,17 +184,73 @@ function CustomerDashboardExportInner() {
     router.push("/customer-dashboard");
   }
 
-  function downloadHtml() {
+  function getExportDocument() {
     const html = buildExportHtml({ title, customerName, date, messages, isEn });
+    const fileName = `${safeFileName(title)}.html`;
+    return { html, fileName };
+  }
+
+  async function downloadHtml() {
+    const { html, fileName } = getExportDocument();
+
+    if (isNativeApp && nativeExportAvailable) {
+      try {
+        await NativeExport.saveHtml({ html, fileName });
+        setStatusMessage(isEn ? "File saved in Downloads." : "فایل در پوشه Downloads ذخیره شد.");
+        return;
+      } catch {
+        try {
+          await NativeExport.shareHtml({ html, fileName });
+          setStatusMessage(isEn ? "Choose where to save or share the file." : "محل ذخیره یا ارسال فایل را انتخاب کنید.");
+          return;
+        } catch {
+          setStatusMessage(isEn ? "Could not save the file on this device." : "ذخیره فایل روی این دستگاه انجام نشد.");
+          return;
+        }
+      }
+    }
+
+    if (isNativeApp) {
+      setStatusMessage(
+        isEn
+          ? "Saving files inside the mobile app requires the next app update."
+          : "ذخیره فایل داخل اپ موبایل نیاز به آپدیت نسخه اپ دارد.",
+      );
+      return;
+    }
+
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${safeFileName(title)}.html`;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+  }
+
+  async function printExport() {
+    if (isNativeApp && nativeExportAvailable) {
+      try {
+        const { html, fileName } = getExportDocument();
+        await NativeExport.printHtml({ html, fileName });
+      } catch {
+        setStatusMessage(isEn ? "Print/PDF is not available on this device." : "چاپ/PDF روی این دستگاه در دسترس نیست.");
+      }
+      return;
+    }
+
+    if (isNativeApp) {
+      setStatusMessage(
+        isEn
+          ? "Print/PDF inside the mobile app requires the next app update."
+          : "چاپ/PDF داخل اپ موبایل نیاز به آپدیت نسخه اپ دارد.",
+      );
+      return;
+    }
+
+    window.print();
   }
 
   return (
@@ -199,7 +279,7 @@ function CustomerDashboardExportInner() {
           </button>
           <div className="flex items-center gap-2">
             <button
-              onClick={downloadHtml}
+              onClick={() => void downloadHtml()}
               disabled={loading || messages.length === 0}
               className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-xs font-black text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
             >
@@ -207,7 +287,7 @@ function CustomerDashboardExportInner() {
               {isEn ? "Save file" : "ذخیره فایل"}
             </button>
             <button
-              onClick={() => window.print()}
+              onClick={() => void printExport()}
               disabled={loading || messages.length === 0}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
             >
@@ -216,6 +296,12 @@ function CustomerDashboardExportInner() {
             </button>
           </div>
         </div>
+
+        {statusMessage && (
+          <div className="export-actions mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-center text-xs font-bold text-blue-700">
+            {statusMessage}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex min-h-[50vh] items-center justify-center text-slate-500">
