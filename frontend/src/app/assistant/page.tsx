@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { apiUrl, backendFetch, getCsrfToken } from "@/lib/api";
@@ -454,20 +455,29 @@ ${cleanAnswer}`,
       content: visibleMessage,
     };
 
-    savedMsgRef.current = finalMessage;
-    setMessage("");
-    setLoading(true);
-    setShowTools(false);
-    // Undo window: 5 seconds before Artin responds
     abortIntentRef.current = null;
     abortControllerRef.current = new AbortController();
-    setCanUndo(true);
-    undoTimerRef.current = setTimeout(() => { setCanUndo(false); }, 5000);
 
-    setSuggestedQuestions([]);
-    // پیام placeholder خالی برای نمایش حین streaming
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+
+    savedMsgRef.current = finalMessage;
     const placeholderMsg: ChatMessage = { role: "assistant", content: "" };
-    setMessages([...previousMessages, userMessage, placeholderMsg]);
+    const optimisticMessages = [...previousMessages, userMessage, placeholderMsg];
+
+    flushSync(() => {
+      setMessage("");
+      setLoading(true);
+      setShowTools(false);
+      setCanUndo(true);
+      setSuggestedQuestions([]);
+      setMessages(optimisticMessages);
+    });
+
+    // Undo window: 5 seconds before Artin responds
+    undoTimerRef.current = setTimeout(() => { setCanUndo(false); }, 5000);
 
     const customerSessionId = await ensureCustomerSession(visibleMessage);
 
@@ -669,6 +679,7 @@ ${cleanAnswer}`,
   }
 
   function clearChat() {
+    savedMsgRef.current = "";
     setMessages([]);
     setMessage("");
     setShowTools(false);
@@ -1213,7 +1224,7 @@ ${cleanAnswer}`,
           </div>
         )}
         <div className="mx-auto w-full max-w-6xl px-2 pb-3 pt-3 sm:px-3 sm:pb-4 sm:pt-4 md:px-6 md:pb-6 md:pt-6">
-          {messages.length === 0 ? (
+          {messages.length === 0 && !loading ? (
             <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
               <AssistantWelcome isEn={isEn} />
 
@@ -1287,7 +1298,7 @@ ${cleanAnswer}`,
 
               {/* سوالات پیشنهادی */}
               {!loading && suggestedQuestions.length > 0 && (
-                <div className="flex flex-col gap-2 pb-1 pt-1 md:flex-row md:flex-wrap">
+                <div className="grid grid-cols-1 gap-2 pb-1 pt-1 md:grid-cols-3">
                   {suggestedQuestions.map((q, i) => (
                     <button
                       key={i}
@@ -1295,7 +1306,7 @@ ${cleanAnswer}`,
                         setSuggestedQuestions([]);
                         sendMessage(q, q);
                       }}
-                      className="inline-flex w-full max-w-full items-center gap-1.5 whitespace-normal rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-right text-sm font-bold leading-6 text-blue-700 transition hover:bg-blue-100 md:w-auto md:max-w-md"
+                      className="inline-flex min-h-20 w-full items-center justify-center gap-1.5 whitespace-normal rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-center text-sm font-bold leading-6 text-blue-700 transition hover:bg-blue-100"
                     >
                       {q}
                     </button>
