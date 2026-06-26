@@ -3,7 +3,7 @@
  * کامپوننت حباب پیام — استخراج‌شده از assistant/page.tsx
  */
 
-import { useState, memo } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -238,6 +238,7 @@ function MessageBubble({
   const [showFeedbackMenu, setShowFeedbackMenu] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const actionBarRef = useRef<HTMLDivElement | null>(null);
   const isUser = item.role === "user";
 
   const displayContent = isUser
@@ -245,6 +246,40 @@ function MessageBubble({
     : cleanMarkdownText(item.content);
   const direction = getTextDirection(displayContent);
   const fontFamily = getTextFont(displayContent);
+
+  useEffect(() => {
+    if (!showFeedbackMenu && !showActionsMenu && !showShareMenu) return;
+
+    function closeMenus() {
+      setShowFeedbackMenu(false);
+      setShowActionsMenu(false);
+      setShowShareMenu(false);
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (
+        target instanceof Node &&
+        actionBarRef.current?.contains(target)
+      ) {
+        return;
+      }
+      closeMenus();
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeMenus();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showFeedbackMenu, showActionsMenu, showShareMenu]);
 
   function handleCopy(text: string) {
     onCopy(text);
@@ -554,7 +589,10 @@ function MessageBubble({
           )}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {!isUser && !loading && (
-            <div className="mt-1 flex flex-wrap items-center gap-0.5 opacity-100 transition-opacity sm:mt-2 sm:gap-1">
+            <div
+              ref={actionBarRef}
+              className="mt-1 flex flex-wrap items-center gap-0.5 opacity-100 transition-opacity sm:mt-2 sm:gap-1"
+            >
               <Tooltip label={actionLabels.copy} position="top">
                 <button
                   onClick={() => handleCopy(displayContent)}
@@ -585,6 +623,8 @@ function MessageBubble({
                   <button
                     onClick={() => {
                       if (feedbackValue) return;
+                      setShowActionsMenu(false);
+                      setShowShareMenu(false);
                       setShowFeedbackMenu((v) => !v);
                     }}
                     disabled={!!feedbackValue}
