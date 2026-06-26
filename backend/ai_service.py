@@ -219,7 +219,7 @@ def _chat_via_requests(messages: list, model: str, temperature: float) -> str:
     raise last_err
 
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.1")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4")
 OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 
 # ─────────────────────────────────────────────

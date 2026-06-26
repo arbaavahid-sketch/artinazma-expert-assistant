@@ -482,7 +482,7 @@ function MessageBubble({
           )}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {!isUser && !loading && (
-            <div className="mt-2 flex flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 opacity-100 transition-opacity md:flex-wrap">
+            <div className="mt-2 flex flex-wrap items-center gap-1 opacity-100 transition-opacity">
               <Tooltip label={actionLabels.copy} position="top">
                 <button
                   onClick={() => handleCopy(displayContent)}

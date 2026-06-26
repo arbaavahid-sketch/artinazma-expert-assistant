@@ -14,6 +14,8 @@ import {
 import { findRelatedDevices } from "@/lib/device-assets";
 import {
   shouldShowRelatedDeviceCards,
+  cleanAssistantOutput,
+  normalizeSuggestedQuestions,
   testTypes,
   imageTypes,
   getTestTypeLabel,
@@ -452,16 +454,7 @@ ${cleanAnswer}`,
       content: visibleMessage,
     };
 
-    const customerSessionId = await ensureCustomerSession(visibleMessage);
-
-    await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
-      domain,
-      response_mode: responseMode,
-      actual_prompt: displayMessage ? finalMessage : undefined,
-    });
-
     savedMsgRef.current = finalMessage;
-    setMessages([...previousMessages, userMessage]);
     setMessage("");
     setLoading(true);
     setShowTools(false);
@@ -475,6 +468,18 @@ ${cleanAnswer}`,
     // پیام placeholder خالی برای نمایش حین streaming
     const placeholderMsg: ChatMessage = { role: "assistant", content: "" };
     setMessages([...previousMessages, userMessage, placeholderMsg]);
+
+    const customerSessionId = await ensureCustomerSession(visibleMessage);
+
+    await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
+      domain,
+      response_mode: responseMode,
+      actual_prompt: displayMessage ? finalMessage : undefined,
+    });
+
+    if (abortIntentRef.current === "undo") {
+      return;
+    }
 
     const activeCustomer = customer || getSavedCustomer();
 
@@ -546,7 +551,7 @@ ${cleanAnswer}`,
               metaData = event;
               finalAssistantMsg = {
                 role: "assistant",
-                content: accumulatedText,
+                content: cleanAssistantOutput(accumulatedText),
                 sources: (event.sources as Source[]) || [],
                 detected_domain: event.detected_domain as string,
                 resource_links: (event.resource_links as ResourceLink[]) || [],
@@ -554,18 +559,20 @@ ${cleanAnswer}`,
               };
             } else if (event.type === "chunk") {
               accumulatedText += event.text as string;
+              const visibleAccumulatedText = cleanAssistantOutput(accumulatedText);
               setMessages([
                 ...previousMessages,
                 userMessage,
-                { ...finalAssistantMsg, content: accumulatedText },
+                { ...finalAssistantMsg, content: visibleAccumulatedText },
               ]);
             } else if (event.type === "done") {
+              const finalContent = cleanAssistantOutput(accumulatedText);
               const relatedDevices = shouldShowRelatedDeviceCards(finalMessage, domain)
-                ? findRelatedDevices(`${finalMessage}\n${accumulatedText}`, 2)
+                ? findRelatedDevices(`${finalMessage}\n${finalContent}`, 2)
                 : [];
               finalAssistantMsg = {
                 ...finalAssistantMsg,
-                content: accumulatedText,
+                content: finalContent,
                 question_id: event.question_id as number,
                 relatedDevices,
               };
@@ -601,18 +608,22 @@ ${cleanAnswer}`,
       void metaData; // suppress unused warning
 
       // پیشنهاد سوالات مرتبط (non-blocking)
-      if (accumulatedText.length > 100) {
+      const finalCleanAnswer = cleanAssistantOutput(accumulatedText);
+      if (finalCleanAnswer.length > 100) {
         fetch(apiUrl("/chat/suggest-questions"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             question: finalMessage,
-            answer: accumulatedText,
+            answer: finalCleanAnswer,
             domain: finalAssistantMsg.detected_domain || "auto",
           }),
         })
           .then((r) => r.json())
-          .then((d) => { if (d.questions?.length) setSuggestedQuestions(d.questions); })
+          .then((d) => {
+            const questions = normalizeSuggestedQuestions(d.questions || []);
+            if (questions.length) setSuggestedQuestions(questions);
+          })
           .catch(() => {});
       }
     } catch (error) {
@@ -1276,7 +1287,7 @@ ${cleanAnswer}`,
 
               {/* سوالات پیشنهادی */}
               {!loading && suggestedQuestions.length > 0 && (
-                <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pt-1 md:flex-wrap">
+                <div className="flex flex-col gap-2 pb-1 pt-1 md:flex-row md:flex-wrap">
                   {suggestedQuestions.map((q, i) => (
                     <button
                       key={i}
@@ -1284,7 +1295,7 @@ ${cleanAnswer}`,
                         setSuggestedQuestions([]);
                         sendMessage(q, q);
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
+                      className="inline-flex w-full max-w-full items-center gap-1.5 whitespace-normal rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-right text-sm font-bold leading-6 text-blue-700 transition hover:bg-blue-100 md:w-auto md:max-w-md"
                     >
                       {q}
                     </button>

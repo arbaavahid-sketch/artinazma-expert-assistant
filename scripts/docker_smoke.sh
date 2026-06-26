@@ -25,7 +25,7 @@ if [ ! -f backend/.env ]; then
 OPENAI_API_KEY=sk-docker-smoke-placeholder
 ADMIN_API_KEY=docker-smoke-admin-key
 JWT_SECRET=docker-smoke-jwt-secret
-OPENAI_MODEL=gpt-5.1
+OPENAI_MODEL=gpt-5.4
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 FRONTEND_ORIGINS=http://localhost,http://127.0.0.1
 QDRANT_URL=http://qdrant:6333
