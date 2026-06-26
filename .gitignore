@@ -265,3 +265,7 @@ outputs/unpacked/ppt/theme/theme2.xml
 frontend/android/app/release/baselineProfiles/0/app-release.dm
 frontend/android/app/release/baselineProfiles/1/app-release.dm
 frontend/android/app/release/output-metadata.json
+
+# Android signing secrets
+frontend/android/app/*.jks
+frontend/android/app/keystore.properties
