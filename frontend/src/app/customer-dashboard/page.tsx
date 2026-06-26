@@ -466,6 +466,7 @@ export default function CustomerDashboardPage() {
       const now = new Date().toLocaleDateString(isEn ? "en-US" : "fa-IR", { year: "numeric", month: "long", day: "numeric" });
       const title = session.title || (isEn ? "Untitled conversation" : "گفتگوی بدون عنوان");
       const exportedCustomerName = displayNameForLocale(customer.full_name) || (isEn ? "Customer" : "مشتری");
+      const returnUrl = "/customer-dashboard";
 
       const msgHtml = msgs.map((msg) => {
         const safe = (msg.content || "")
@@ -485,7 +486,10 @@ export default function CustomerDashboardPage() {
 <title>${title} - ArtinAzma</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Tahoma, Arial, 'Segoe UI', sans-serif; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: ${isEn ? "ltr" : "rtl"}; }
+  body { font-family: Tahoma, Arial, 'Segoe UI', sans-serif; background: #fff; color: #1e293b; padding: 88px 40px 40px; font-size: 13px; direction: ${isEn ? "ltr" : "rtl"}; }
+  .screen-actions { position: fixed; z-index: 10; top: 14px; ${isEn ? "left" : "right"}: 14px; display: flex; gap: 8px; align-items: center; padding: 6px; border: 1px solid #dbeafe; border-radius: 18px; background: rgba(255,255,255,0.96); box-shadow: 0 14px 35px rgba(15,23,42,0.12); }
+  .screen-actions button { border: 0; border-radius: 13px; padding: 9px 14px; background: #eff6ff; color: #1d4ed8; font-family: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+  .screen-actions button.primary { background: #1d4ed8; color: #fff; }
   .header { border-bottom: 2px solid #1d4ed8; padding-bottom: 16px; margin-bottom: 28px; }
   .header h1 { font-size: 18px; font-weight: 900; color: #1d4ed8; }
   .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }
@@ -497,17 +501,53 @@ export default function CustomerDashboardPage() {
   .bubble.artin .label { color: #0ea5e9; }
   p { line-height: 2; }
   .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 10px; color: #94a3b8; text-align: center; }
-  @media print { body { padding: 20px; } }
+  @media (max-width: 640px) { body { padding: 74px 18px 26px; } .screen-actions { top: 10px; ${isEn ? "left" : "right"}: 10px; } .screen-actions button { padding: 8px 11px; } }
+  @media print { body { padding: 20px; } .screen-actions { display: none; } }
 </style>
 </head>
 <body>
+<div class="screen-actions">
+  <button type="button" onclick="window.__artinLeaveExport && window.__artinLeaveExport()">${isEn ? "Back" : "بازگشت"}</button>
+  <button type="button" class="primary" onclick="window.print()">${isEn ? "Print / Save PDF" : "چاپ / ذخیره PDF"}</button>
+</div>
 <div class="header">
   <h1>${title}</h1>
   <div class="meta">${isEn ? "Customer" : "مشتری"}: ${exportedCustomerName} | ${isEn ? "Date" : "تاریخ"}: ${now}</div>
 </div>
 ${msgHtml}
 <div class="footer">${isEn ? "ArtinAzma Mehr" : "آرتین آزما مهر"} - artinazma.net</div>
-<script>window.onload=function(){window.print();}<\/script>
+<script>
+(function(){
+  var returnUrl = ${JSON.stringify(returnUrl)};
+  var leaving = false;
+  function leaveExport(){
+    if (leaving) return;
+    leaving = true;
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.close();
+      }
+    } catch (e) {}
+    setTimeout(function(){
+      try {
+        if (!window.closed) window.location.replace(returnUrl);
+      } catch (e) {
+        window.location.href = returnUrl;
+      }
+    }, 120);
+  }
+  window.__artinLeaveExport = leaveExport;
+  try {
+    history.replaceState({ artinExport: true }, "", location.href);
+    history.pushState({ artinExportReady: true }, "", location.href);
+    window.addEventListener("popstate", leaveExport);
+  } catch (e) {}
+  window.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") leaveExport();
+  });
+  window.onload = function(){ setTimeout(function(){ window.print(); }, 350); };
+})();
+<\/script>
 </body>
 </html>`;
       const w = window.open("", "_blank");
