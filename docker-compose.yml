@@ -1,5 +1,3 @@
-version: "3.9"
-
 # ─── Required environment variables ──────────────────────────────────────────
 # Copy .env.example → .env and fill in:
 #   POSTGRES_PASSWORD   strong database password
@@ -59,10 +57,11 @@ services:
 
   # ── FastAPI Backend ─────────────────────────────────────────────────────────
   backend:
+    init: true
+    stop_grace_period: 30s
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: artin_backend
     # Port 8000 is NOT exposed externally — nginx is the sole public entry point
     env_file:
       - ./backend/.env
@@ -88,10 +87,12 @@ services:
       retries: 3
     command: >
       sh -c "alembic upgrade head &&
-      uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '*'"
+      exec uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '*'"
 
   # ── Next.js Frontend ─────────────────────────────────────────────────────────
   frontend:
+    init: true
+    stop_grace_period: 30s
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -101,7 +102,6 @@ services:
         # SSR calls (Node) are also routed via nginx for consistency.
         - NEXT_PUBLIC_API_BASE_URL=https://${DOMAIN:-localhost}/api
         - NEXT_PUBLIC_WS_BASE_URL=wss://${DOMAIN:-localhost}/api
-    container_name: artin_frontend
     # Port 3000 is NOT exposed externally — nginx proxies all traffic
     environment:
       - NEXT_PUBLIC_API_BASE_URL=https://${DOMAIN:-localhost}/api
