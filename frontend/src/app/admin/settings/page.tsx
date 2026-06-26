@@ -368,6 +368,8 @@ export default function AdminSettingsPage() {
     loadEmailSettings();
     loadQdrantStatus();
     loadTgSettings();
+    // This is a one-time settings bootstrap; the loader functions are invoked by explicit refresh actions after mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import ArtinShell from "@/components/ArtinShell";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import InstallPrompt from "@/components/InstallPrompt";
+import NativeBackButton from "@/components/NativeBackButton";
 import NetworkStatus from "@/components/NetworkStatus";
 import ThemeProvider from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
@@ -86,6 +87,7 @@ export default function RootLayout({
           <I18nProvider>
           <ConfirmDialogProvider>
             <NetworkStatus />
+            <NativeBackButton />
             <ErrorBoundary>
               <ArtinShell>{children}</ArtinShell>
             </ErrorBoundary>

@@ -34,6 +34,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   PhoneCall,
+  Power,
   SearchX,
   Settings,
   Sparkles,
@@ -127,6 +128,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [isOnline, setIsOnline] = useState(true);
   const [showReconnected, setShowReconnected] = useState(false);
+  const [isNativeApp, setIsNativeApp] = useState(false);
   // Theme is owned by ThemeProvider (single source of truth, key: artin_theme).
   // The sidebar control cycles light → dark → system.
   const { pref, cycleTheme } = useTheme();
@@ -220,15 +222,28 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
   async function logoutCustomer() {
     clearSavedCustomer();
-
-    // Clear httpOnly session cookies via server-side API route
-    await fetch("/api/customer-session", { method: "DELETE" }).catch(() => {});
-
     setCustomer(null);
     setCustomerSessions([]);
     setMobileSidebarOpen(false);
 
-    window.location.href = "/customer-login";
+    // Clear httpOnly session cookies via server-side API route
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 1500);
+    await fetch("/api/customer-session", {
+      method: "DELETE",
+      signal: controller.signal,
+    }).catch(() => {}).finally(() => window.clearTimeout(timeout));
+
+    window.location.assign("/customer-login");
+  }
+
+  async function exitNativeApp() {
+    try {
+      const { App } = await import("@capacitor/app");
+      await App.exitApp();
+    } catch {
+      setMobileSidebarOpen(false);
+    }
   }
 
   useEffect(() => {
@@ -285,6 +300,22 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     };
   }, []);
 
+  useEffect(() => {
+    void import("@capacitor/core")
+      .then(({ Capacitor }) => setIsNativeApp(Capacitor.isNativePlatform()))
+      .catch(() => setIsNativeApp(false));
+  }, []);
+
+  useEffect(() => {
+    function closeMobileSidebar() {
+      setMobileSidebarOpen(false);
+    }
+
+    window.addEventListener("artin:close-mobile-sidebar", closeMobileSidebar);
+    return () => {
+      window.removeEventListener("artin:close-mobile-sidebar", closeMobileSidebar);
+    };
+  }, []);
   // (Theme init/toggle now lives in ThemeProvider — see useTheme above.)
 
   // Online/offline detection
@@ -308,7 +339,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
   return (
     <ToastProvider>
-    <div className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]" dir={isRtl ? "rtl" : "ltr"}>
+    <div
+      className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]"
+      data-mobile-sidebar-open={mobileSidebarOpen ? "true" : "false"}
+      dir={isRtl ? "rtl" : "ltr"}
+    >
       {/* Skip to main content — visible only on keyboard focus */}
       <a href="#main-content" className="skip-link">
         {isRtl ? "پرش به محتوای اصلی" : "Skip to main content"}
@@ -332,14 +367,14 @@ export default function ArtinShell({ children }: ArtinShellProps) {
       {mobileSidebarOpen && (
         <button
           onClick={() => setMobileSidebarOpen(false)}
-          className="absolute inset-0 z-30 bg-black/25 backdrop-blur-sm md:hidden"
+          className="absolute inset-0 z-30 bg-slate-950/35 md:hidden"
           aria-label="بستن منو"
         />
       )}
 
       {/* Sidebar — absolute positioning, visibility controlled by display (translate unreliable in RTL) */}
       <aside
-        className={`absolute inset-y-0 z-40 flex-col border-[--border-soft] bg-[--sidebar-bg] transition-all duration-300 ${
+        className={`absolute inset-y-0 z-40 flex-col border-[--border-soft] bg-white shadow-2xl shadow-slate-950/20 transition-all duration-300 dark:bg-slate-950 ${
           isRtl ? "right-0 border-l" : "left-0 border-r"
         } ${
           sidebarCollapsed ? "w-[88px]" : "w-[300px]"
@@ -669,6 +704,26 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 )}
               </button>
             </div>
+
+            {isNativeApp && (
+              <div className={`mt-3 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
+                <button
+                  onClick={exitNativeApp}
+                  aria-label={isRtl ? "خروج از برنامه" : "Exit app"}
+                  title={isRtl ? "خروج از برنامه" : "Exit app"}
+                  className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${
+                    sidebarCollapsed ? "justify-center px-2" : "w-full"
+                  }`}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-300">
+                    <Power size={19} strokeWidth={1.9} />
+                  </span>
+                  {!sidebarCollapsed && (
+                    <span>{isRtl ? "خروج از برنامه" : "Exit app"}</span>
+                  )}
+                </button>
+              </div>
+            )}
 
             {!sidebarCollapsed && (
               <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 px-4 text-[11px] text-slate-400">

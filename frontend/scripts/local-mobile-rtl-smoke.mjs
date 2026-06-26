@@ -52,19 +52,26 @@ async function launchBrowser() {
   }
 }
 
-function getLocalAdminPassword() {
-  if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
-
+function getLocalEnvValue(key) {
+  if (process.env[key]) return process.env[key];
   const envPath = resolve(process.cwd(), ".env.local");
   const content = readFileSync(envPath, "utf8");
-  const line = content.split(/\r?\n/).find((item) => item.startsWith("ADMIN_PASSWORD="));
-  const value = line?.replace(/^ADMIN_PASSWORD=/, "").trim().replace(/^["']|["']$/g, "");
+  const line = content.split(/\r?\n/).find((item) => item.startsWith(`${key}=`));
+  const value = line?.slice(key.length + 1).trim().replace(/^["']|["']$/g, "");
 
   if (!value) {
-    throw new Error("ADMIN_PASSWORD is not set in frontend/.env.local.");
+    throw new Error(`${key} is not set in frontend/.env.local.`);
   }
 
   return value;
+}
+
+function getLocalAdminPassword() {
+  return getLocalEnvValue("ADMIN_PASSWORD");
+}
+
+function getLocalAdminApiKey() {
+  return getLocalEnvValue("ADMIN_API_KEY");
 }
 
 async function apiJson(path, init) {
@@ -102,6 +109,11 @@ async function registerSmokeCustomer() {
   if (!result.success || !result.customer?.id) {
     throw new Error("Could not create RTL smoke customer.");
   }
+
+  await apiJson(`/admin/customers/${result.customer.id}/approve`, {
+    method: "POST",
+    headers: { "X-Admin-Key": getLocalAdminApiKey() },
+  });
 
   return { customer: result.customer, email, password };
 }
