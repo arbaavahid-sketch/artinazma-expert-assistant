@@ -190,9 +190,32 @@ function AssistantPageInner() {
   });
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const draftMessageRef = useRef("");
+
+  function syncComposerMessage(value: string) {
+    draftMessageRef.current = value;
+    if (chatInputRef.current && chatInputRef.current.value !== value) {
+      chatInputRef.current.value = value;
+    }
+    setMessage(value);
+  }
+
+  function handleComposerMessageChange(value: string) {
+    draftMessageRef.current = value;
+
+    setMessage((prev) => {
+      const previousHasText = Boolean(prev.trim());
+      const nextHasText = Boolean(value.trim());
+
+      return previousHasText === nextHasText ? prev : value;
+    });
+  }
 
   const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(
-    (transcript) => setMessage((prev) => prev ? prev + " " + transcript : transcript)
+    (transcript) => {
+      const currentText = chatInputRef.current?.value || draftMessageRef.current || message;
+      syncComposerMessage(currentText ? `${currentText} ${transcript}` : transcript);
+    }
   );
 
   async function copyText(text: string) {
@@ -294,7 +317,7 @@ ${cleanAnswer}`,
     }
     setCanUndo(false);
     setLoading(false);
-    setMessage(savedMsgRef.current);
+    syncComposerMessage(savedMsgRef.current);
     setMessages((prev) => prev.slice(0, -2)); // remove user msg + placeholder
   }
 
@@ -434,9 +457,9 @@ ${cleanAnswer}`,
     // If there's a staged image, route to image analysis instead
     if (stagedImage && !customMessage) {
       const imgFile = stagedImage;
-      const note = message.trim();
+      const note = (chatInputRef.current?.value ?? message).trim();
       clearStagedImage();
-      setMessage("");
+      syncComposerMessage("");
       uploadAndAnalyzeImage(imgFile, note, "general");
       return;
     }
@@ -469,7 +492,7 @@ ${cleanAnswer}`,
     const optimisticMessages = [...previousMessages, userMessage, placeholderMsg];
 
     flushSync(() => {
-      setMessage("");
+      syncComposerMessage("");
       setLoading(true);
       setShowTools(false);
       setCanUndo(true);
@@ -682,7 +705,7 @@ ${cleanAnswer}`,
   function clearChat() {
     savedMsgRef.current = "";
     setMessages([]);
-    setMessage("");
+    syncComposerMessage("");
     setShowTools(false);
     setActiveSessionId(null);
     router.replace("/assistant");
@@ -958,7 +981,7 @@ ${cleanAnswer}`,
 
     if (action === "troubleshooting") {
       setDomain("troubleshooting");
-      setMessage(
+      syncComposerMessage(
         isEn
           ? "For troubleshooting this equipment issue, provide likely causes and a step-by-step checklist: "
           : "برای عیب‌یابی این مشکل دستگاه، علت‌های احتمالی و چک‌لیست مرحله‌ای بده: ",
@@ -968,7 +991,7 @@ ${cleanAnswer}`,
 
     if (action === "device-suggestion") {
       setDomain("equipment");
-      setMessage(
+      syncComposerMessage(
         isEn
           ? "For this application or sample type, suggest the suitable ArtinAzma device/equipment: "
           : "برای این کاربرد یا نوع نمونه، دستگاه/تجهیز مناسب آرتین آزما را پیشنهاد بده: ",
@@ -978,7 +1001,7 @@ ${cleanAnswer}`,
 
     if (action === "catalyst-suggestion") {
       setDomain("catalyst");
-      setMessage(
+      syncComposerMessage(
         isEn
           ? "For this process or issue, suggest the suitable catalyst or the tests needed to evaluate the catalyst: "
           : "برای این فرایند یا مشکل، کاتالیست مناسب یا تست‌های لازم برای بررسی کاتالیست را پیشنهاد بده: ",
@@ -1237,7 +1260,7 @@ ${cleanAnswer}`,
                 onToolSelect={handleToolClick}
                 chatInputRef={chatInputRef}
                 message={message}
-                onMessageChange={setMessage}
+                onMessageChange={handleComposerMessageChange}
                 onKeyDown={handleKeyDown}
                 isVoiceSupported={isVoiceSupported}
                 onToggleVoice={toggleVoice}
@@ -1381,7 +1404,7 @@ ${cleanAnswer}`,
           onStageImage={stageImageFile}
           chatInputRef={chatInputRef}
           message={message}
-          onMessageChange={setMessage}
+          onMessageChange={handleComposerMessageChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           isVoiceSupported={isVoiceSupported}

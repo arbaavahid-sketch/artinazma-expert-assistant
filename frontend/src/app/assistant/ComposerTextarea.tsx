@@ -32,6 +32,7 @@ export default function ComposerTextarea({
   useEffect(() => {
     const textarea = chatInputRef.current;
     if (!textarea || textarea.value === message) return;
+    if (document.activeElement === textarea && message && textarea.value.trim()) return;
 
     textarea.value = message;
   }, [chatInputRef, message]);
