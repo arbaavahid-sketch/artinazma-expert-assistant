@@ -6,6 +6,7 @@ import type {
   KeyboardEvent,
   RefObject,
 } from "react";
+import { useEffect } from "react";
 
 type ComposerTextareaProps = {
   chatInputRef: RefObject<HTMLTextAreaElement | null>;
@@ -18,26 +19,6 @@ type ComposerTextareaProps = {
   placeholder: string;
 };
 
-function restoreSelection(
-  textarea: HTMLTextAreaElement,
-  start: number | null,
-  end: number | null,
-  direction: "forward" | "backward" | "none" | null,
-) {
-  if (start === null || end === null) return;
-
-  window.requestAnimationFrame(() => {
-    if (document.activeElement !== textarea) return;
-
-    const max = textarea.value.length;
-    textarea.setSelectionRange(
-      Math.min(start, max),
-      Math.min(end, max),
-      direction || "none",
-    );
-  });
-}
-
 export default function ComposerTextarea({
   chatInputRef,
   className,
@@ -48,12 +29,15 @@ export default function ComposerTextarea({
   onPaste,
   placeholder,
 }: ComposerTextareaProps) {
-  function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
-    const textarea = event.currentTarget;
-    const { selectionStart, selectionEnd, selectionDirection, value } = textarea;
+  useEffect(() => {
+    const textarea = chatInputRef.current;
+    if (!textarea || textarea.value === message) return;
 
-    onMessageChange(value);
-    restoreSelection(textarea, selectionStart, selectionEnd, selectionDirection);
+    textarea.value = message;
+  }, [chatInputRef, message]);
+
+  function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    onMessageChange(event.currentTarget.value);
   }
 
   return (
@@ -69,7 +53,7 @@ export default function ComposerTextarea({
       enterKeyHint="send"
       className={className}
       placeholder={placeholder}
-      value={message}
+      defaultValue={message}
       onChange={handleChange}
       onKeyDown={onKeyDown}
       onPaste={onPaste}
