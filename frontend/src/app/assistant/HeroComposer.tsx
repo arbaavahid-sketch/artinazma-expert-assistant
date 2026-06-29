@@ -3,9 +3,9 @@
 import { ArrowUp, Loader, Mic, MicOff, Plus, StopCircle } from "lucide-react";
 import type { RefObject, KeyboardEvent } from "react";
 import type { ToolAction } from "@/lib/chat-types";
-import { getTextFont } from "@/lib/chat-helpers";
 import { useI18n } from "@/lib/i18n";
 import ToolMenu from "@/app/assistant/ToolMenu";
+import ComposerTextarea from "@/app/assistant/ComposerTextarea";
 
 /**
  * Centered composer shown on the empty assistant page (before any messages).
@@ -68,14 +68,13 @@ export default function HeroComposer({
             <Plus size={19} aria-hidden="true" />
           </button>
 
-          <textarea
-            ref={chatInputRef}
-            dir="auto"
-            style={{ fontFamily: getTextFont(message || (isEn ? "English" : "فارسی")) }}
+          <ComposerTextarea
+            chatInputRef={chatInputRef}
+            isEn={isEn}
             className="chat-composer-textarea max-h-32 min-h-[40px] sm:min-h-[46px]"
             placeholder={isEn ? "Ask Artin..." : "از آرتین بپرسید..."}
-            value={message}
-            onChange={(e) => onMessageChange(e.target.value)}
+            message={message}
+            onMessageChange={onMessageChange}
             onKeyDown={onKeyDown}
           />
 

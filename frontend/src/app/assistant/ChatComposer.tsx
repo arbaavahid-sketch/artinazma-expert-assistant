@@ -11,9 +11,9 @@ import {
 } from "lucide-react";
 import type { RefObject, KeyboardEvent, ClipboardEvent } from "react";
 import type { ToolAction } from "@/lib/chat-types";
-import { getTextFont } from "@/lib/chat-helpers";
 import ToolMenu from "@/app/assistant/ToolMenu";
 import StagedImagePreview from "@/app/assistant/StagedImagePreview";
+import ComposerTextarea from "@/app/assistant/ComposerTextarea";
 
 /**
  * Bottom chat composer shown once a conversation has started: tools menu,
@@ -114,18 +114,17 @@ export default function ChatComposer({
                 <ImagePlus size={18} aria-hidden="true" />
               </button>
 
-              <textarea
-                ref={chatInputRef}
-                dir="auto"
-                style={{ fontFamily: getTextFont(message || (isEn ? "English" : "فارسی")) }}
+              <ComposerTextarea
+                chatInputRef={chatInputRef}
+                isEn={isEn}
                 className="chat-composer-textarea max-h-36 min-h-[40px] sm:max-h-40 sm:min-h-[44px]"
                 placeholder={
                   stagedImage
                     ? (isEn ? "Write an optional note for the image..." : "توضیحی برای عکس بنویسید (اختیاری)...")
                     : (isEn ? "Ask Artin..." : "از آرتین بپرسید...")
                 }
-                value={message}
-                onChange={(e) => onMessageChange(e.target.value)}
+                message={message}
+                onMessageChange={onMessageChange}
                 onKeyDown={onKeyDown}
                 onPaste={onPaste}
               />

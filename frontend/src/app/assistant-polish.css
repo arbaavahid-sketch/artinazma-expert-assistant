@@ -50,6 +50,7 @@
   background: transparent !important;
   padding: 0.72rem 0.55rem;
   color: #1e293b;
+  font-family: var(--font-persian), var(--font-english), var(--font-persian-fallback);
   font-size: 15.5px;
   line-height: 1.75;
   outline: none !important;
