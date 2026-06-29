@@ -110,6 +110,32 @@ def test_chat_sources_include_citation_fields(app_client, monkeypatch):
     assert "JFTOT-230" in source["excerpt"]
 
 
+def test_chat_injects_lab_answer_contract_for_d3227(app_client, monkeypatch):
+    import routes.chat as chat_mod
+
+    captured = {}
+
+    def fake_ask(*args, **kwargs):
+        captured.update(kwargs)
+        return "D3227 answer"
+
+    monkeypatch.setattr(chat_mod, "ask_expert_assistant", fake_ask)
+    monkeypatch.setattr(chat_mod, "search_knowledge_base", lambda *a, **k: [])
+    monkeypatch.setattr(chat_mod, "find_artinazma_resources", lambda *a, **k: [])
+    monkeypatch.setattr(chat_mod, "build_local_answer", lambda *a, **k: "local")
+
+    res = app_client.post("/chat", json={"message": "محلول تیترانت رو طبق ASTM D3227 چطوری درست کنم؟"})
+    assert res.status_code == 200
+
+    context = captured["context"]
+    assert "Laboratory answer contract" in context
+    assert "Correctness has priority over style" in context
+    assert "ASTM D3227 guardrail" in context
+    assert "silver nitrate" in context
+    assert "AgNO3" in context
+    assert "do not describe it as a NaOH titrant" in context
+
+
 def test_chat_requires_message_field(app_client, monkeypatch):
     _patch_externals(monkeypatch)
     # بدنه بدون فیلد اجباری message → خطای اعتبارسنجی 422

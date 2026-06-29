@@ -340,6 +340,12 @@ def detect_domain_hints(message: str) -> Dict[str, List[str]]:
 def build_core_quality_rules() -> str:
     return """
 قواعد عمومی کیفیت پاسخ:
+- Accuracy-first contract:
+  - Correctness has priority over style, length, and persuasive wording.
+  - Before giving a procedure, standard method, reagent preparation, instrument capability, formula, concentration, or safety instruction, internally check whether the method, analyte, matrix, reagent, and standard code match each other.
+  - If a value is version-specific or not certain from the available context, clearly label it as needing verification in the current official method; do not fill the gap with a confident-looking guess.
+  - Never substitute one ASTM/ISO/EPA code, reagent, technique, or titrant for another. If the user asks about D3227, answer D3227; do not drift to a different mercaptan or sulfur method.
+  - If context conflicts with a known standard fact, mention the conflict carefully and prefer the safer, verifiable explanation instead of forcing the context into the answer.
 - پاسخ باید فنی، کاربردی، قابل اجرا و قابل اعتماد باشد؛ نه تبلیغاتی و نه بیش از حد کلی.
 - پاسخ را با جمع‌بندی مستقیم شروع کن، سپس تحلیل فنی و پیشنهاد عملی بده.
 - هیچ عدد، محدوده، LOD، LOQ، دقت، استاندارد، قابلیت دستگاه، قیمت یا موجودی را نساز.

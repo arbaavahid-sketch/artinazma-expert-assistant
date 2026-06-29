@@ -15,6 +15,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from utils.chat_utils import (
+    _ASTM_KNOWN_STANDARDS,
     make_safe_filename,
     is_specific_product_or_model_question,
     context_has_exact_model_match,
@@ -58,6 +59,16 @@ class TestIsSpecificProductOrModelQuestion:
 
     def test_empty_returns_false(self):
         assert is_specific_product_or_model_question("") is False
+
+
+class TestKnownStandards:
+    def test_d3227_uses_silver_nitrate_not_naoh(self):
+        description = _ASTM_KNOWN_STANDARDS["D3227"].lower()
+
+        assert "mercaptan sulfur" in description
+        assert "silver nitrate" in description
+        assert "agno3" in description
+        assert "not naoh" in description
 
 
 class TestContextHasExactModelMatch:

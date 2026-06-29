@@ -31,6 +31,7 @@ _ASTM_KNOWN_STANDARDS: dict[str, str] = {
     "D4294":  "ASTM D4294 — Standard Test Method for Sulfur in Petroleum and Petroleum Products by Energy-Dispersive X-ray Fluorescence Spectrometry",
     "D2622":  "ASTM D2622 — Standard Test Method for Sulfur in Petroleum Products by Wavelength-Dispersive X-ray Fluorescence Spectrometry",
     "D5453":  "ASTM D5453 — Standard Test Method for Determination of Total Sulfur in Light Hydrocarbons, Spark Ignition Engine Fuel, Diesel Engine Fuel, and Engine Oil by Ultraviolet Fluorescence",
+    "D3227":  "ASTM D3227 — Standard Test Method for Mercaptan Sulfur in Gasoline, Kerosine, Aviation Turbine, and Distillate Fuels by Potentiometric Titration (uses alcoholic silver nitrate, AgNO3, titrant, not NaOH titrant)",
     "D7039":  "ASTM D7039 — Standard Test Method for Sulfur in Gasoline, Diesel Fuel, Jet Fuel, Kerosine, Biodiesel, Biodiesel Blends, and Related Products by Monochromatic Wavelength Dispersive X-ray Fluorescence Spectrometry",
     "D1266":  "ASTM D1266 — Standard Test Method for Sulfur in Petroleum Products (Lamp Method)",
     "D1552":  "ASTM D1552 — Standard Test Method for Sulfur in Petroleum Products by High-Temperature Combustion and Infrared (IR) Detection or Thermal Conductivity Detection (TCD)",
