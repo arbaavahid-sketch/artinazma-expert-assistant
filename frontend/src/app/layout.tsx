@@ -73,7 +73,7 @@ export default function RootLayout({
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html:
-              "if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}",
+              "if('serviceWorker'in navigator){window.addEventListener('load',function(){var reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(reloaded)return;reloaded=true;if(!sessionStorage.getItem('artin_sw_reloaded')){sessionStorage.setItem('artin_sw_reloaded','1');window.location.reload();}});navigator.serviceWorker.register('/sw.js').then(function(r){if(r.update)r.update();if(r.waiting)r.waiting.postMessage({type:'SKIP_WAITING'});r.addEventListener('updatefound',function(){var w=r.installing;if(!w)return;w.addEventListener('statechange',function(){if(w.state==='installed'&&navigator.serviceWorker.controller){w.postMessage({type:'SKIP_WAITING'});}});});}).catch(function(){})})}",
           }}
         />
         <Script

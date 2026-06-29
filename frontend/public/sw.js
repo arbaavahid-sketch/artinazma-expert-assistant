@@ -1,5 +1,5 @@
-// ArtinAzma PWA Service Worker v3
-const CACHE_VERSION = "artinazma-v3";
+// ArtinAzma PWA Service Worker v4
+const CACHE_VERSION = "artinazma-v4";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
