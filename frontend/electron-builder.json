@@ -1,0 +1,41 @@
+{
+  "appId": "net.artinazma.expertassistant.desktop",
+  "productName": "ArtinAzma Expert Assistant",
+  "directories": {
+    "app": "electron",
+    "output": "../outputs/windows"
+  },
+  "files": [
+    "main.cjs",
+    "preload.cjs",
+    "assets/**",
+    "package.json",
+    "!node_modules/**"
+  ],
+  "win": {
+    "icon": "electron/assets/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "artifactName": "ArtinAzma-${version}-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "ArtinAzma Expert Assistant"
+  }
+}

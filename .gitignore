@@ -143,6 +143,8 @@ nginx/certs/*.key
 nginx/certs/*.crt
 outputs/.~lock.artinazma-expert-assistant-v3-new.pdf#
 outputs/android/
+outputs/windows/
+downloads/
 outputs/.~lock.artinazma-expert-assistant-v3.pdf#
 outputs/artinazma-expert-assistant-v3-new.pdf
 outputs/artinazma-expert-assistant-v3-new.pptx

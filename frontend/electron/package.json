@@ -1,0 +1,8 @@
+{
+  "name": "artinazma-desktop",
+  "version": "1.2.0",
+  "description": "ArtinAzma Expert Assistant desktop client",
+  "author": "ArtinAzma Mehr",
+  "main": "main.cjs",
+  "private": true
+}
