@@ -120,6 +120,7 @@ frontend/android/app/google-services.json
 # Temp / Debug files (already tracked — use git rm --cached to untrack)
 # --------------------
 node_modules/
+.tools/
 frontend/answer.txt
 frontend/tsconfig.tsbuildinfo
 
@@ -141,6 +142,7 @@ nginx/certs/*.pem
 nginx/certs/*.key
 nginx/certs/*.crt
 outputs/.~lock.artinazma-expert-assistant-v3-new.pdf#
+outputs/android/
 outputs/.~lock.artinazma-expert-assistant-v3.pdf#
 outputs/artinazma-expert-assistant-v3-new.pdf
 outputs/artinazma-expert-assistant-v3-new.pptx
