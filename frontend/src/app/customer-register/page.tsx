@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import PrivacyConsent from "@/components/PrivacyConsent";
 import {
   ArrowLeft,
   Building2,
@@ -29,6 +30,7 @@ export default function CustomerRegisterPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,6 +45,11 @@ export default function CustomerRegisterPage() {
 
     if (password.length < 6) {
       setMessage(isEn ? "Password must be at least 6 characters." : "رمز عبور باید حداقل ۶ کاراکتر باشد.");
+      return;
+    }
+
+    if (!privacyAccepted) {
+      setMessage(isEn ? "Please read and accept the Privacy Policy before registration." : "لطفاً پیش از ثبت‌نام، سیاست حفظ حریم خصوصی را مطالعه و تأیید کنید.");
       return;
     }
 
@@ -137,13 +144,15 @@ export default function CustomerRegisterPage() {
               </div>
             </div>
 
+            <PrivacyConsent checked={privacyAccepted} onChange={setPrivacyAccepted} context="register" />
+
             {message && (
               <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
                 {message}
               </div>
             )}
 
-            <button onClick={register} disabled={loading} className="ui-btn ui-btn-primary mt-6 inline-flex w-full gap-2 rounded-2xl px-5 py-4">
+            <button onClick={register} disabled={loading || !privacyAccepted} className="ui-btn ui-btn-primary mt-6 inline-flex w-full gap-2 rounded-2xl px-5 py-4 disabled:cursor-not-allowed disabled:opacity-60">
               {loading ? (isEn ? "Registering..." : "در حال ثبت‌نام...") : (isEn ? "Submit for approval" : "ثبت‌نام و ارسال برای تأیید")}
               <ArrowLeft size={18} />
             </button>

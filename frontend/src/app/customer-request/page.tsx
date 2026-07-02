@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { apiUrl } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import PrivacyConsent from "@/components/PrivacyConsent";
 import {
   Building2,
   CheckCircle2,
@@ -94,6 +96,7 @@ export default function CustomerRequestPage() {
   const [quoteDetails, setQuoteDetails] = useState<Record<string, string>>({});
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
   const [resultType, setResultType] = useState<"success" | "error" | "">("");
@@ -143,6 +146,12 @@ export default function CustomerRequestPage() {
     if (!fullName.trim() || !phone.trim() || !message.trim()) {
       setResultType("error");
       setResultMessage(isEn ? "Please enter your name, phone number, and request details." : "لطفاً نام، شماره تماس و توضیحات درخواست را وارد کنید.");
+      return;
+    }
+
+    if (!privacyAccepted) {
+      setResultType("error");
+      setResultMessage(isEn ? "Please read and accept the Privacy Policy before submitting your request." : "لطفاً پیش از ثبت درخواست، سیاست حفظ حریم خصوصی را مطالعه و تأیید کنید.");
       return;
     }
 
@@ -342,7 +351,16 @@ export default function CustomerRequestPage() {
 
             <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-slate-600">
               {isEn ? "Selected request type:" : "نوع درخواست انتخاب‌شده:"} <span className="font-black text-blue-700">{typeLabel(requestType)}</span>
+              <span className="mt-2 block">
+                {isEn ? "See how this information is handled in the " : "نحوه استفاده از این اطلاعات در "}
+                <Link href="/privacy" className="font-black text-blue-700 underline-offset-4 hover:underline">
+                  {isEn ? "Privacy Policy" : "سیاست حفظ حریم خصوصی"}
+                </Link>
+                {isEn ? "." : " توضیح داده شده است."}
+              </span>
             </div>
+
+            <PrivacyConsent checked={privacyAccepted} onChange={setPrivacyAccepted} context="request" />
 
             {resultMessage && (
               <div className={`mt-5 rounded-2xl p-4 text-sm leading-7 ${resultType === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
@@ -350,7 +368,7 @@ export default function CustomerRequestPage() {
               </div>
             )}
 
-            <button onClick={submitRequest} disabled={loading} className="ui-btn ui-btn-primary mt-6 inline-flex w-full justify-center gap-2 rounded-2xl px-5 py-4">
+            <button onClick={submitRequest} disabled={loading || !privacyAccepted} className="ui-btn ui-btn-primary mt-6 inline-flex w-full justify-center gap-2 rounded-2xl px-5 py-4 disabled:cursor-not-allowed disabled:opacity-60">
               <Send size={18} />
               {loading ? (isEn ? "Submitting request..." : "در حال ثبت درخواست...") : (isEn ? "Submit request for follow-up" : "ثبت درخواست و ارسال برای پیگیری")}
             </button>

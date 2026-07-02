@@ -106,6 +106,24 @@ export default function CustomerLoginPage() {
                 : "برای استفاده از آرتین، مشاهده گفتگوهای قبلی، ثبت درخواست مشاوره و ادامه ارتباط با کارشناسان، وارد حساب خود شوید."}
             </p>
 
+            <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm leading-7 text-slate-700">
+              <div className="flex items-start gap-3">
+                <ShieldCheck size={20} className="mt-1 shrink-0 text-blue-700" />
+                <p>
+                  <span className="font-bold text-slate-800">
+                    {isEn ? "Privacy notice: " : "اطلاعیه حریم خصوصی: "}
+                  </span>
+                  {isEn
+                    ? "Email and password are used only for secure account login, session management, support, and request follow-up. Before logging in or registering, review the "
+                    : "ایمیل و رمز عبور فقط برای ورود امن به حساب، مدیریت نشست، پشتیبانی و پیگیری درخواست‌ها استفاده می‌شود. پیش از ورود یا ثبت‌نام، متن "}
+                  <Link href="/privacy" className="font-bold text-blue-700 underline-offset-4 hover:underline">
+                    {isEn ? "Privacy Policy" : "سیاست حفظ حریم خصوصی"}
+                  </Link>
+                  {isEn ? "." : " را مطالعه کنید."}
+                </p>
+              </div>
+            </div>
+
             <div className="mt-8 space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700">
