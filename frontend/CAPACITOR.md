@@ -18,7 +18,7 @@ $env:CAPACITOR_SERVER_URL="https://your-domain.example"
 npm run cap:sync
 ```
 
-The domain must use HTTPS for camera/microphone, PWA, cookies, and store review.
+The domain must use HTTPS for PWA, cookies, and store review.
 
 ## Android Test Build
 
@@ -106,7 +106,9 @@ Use Xcode and TestFlight for iPhone testing and App Store submission.
 
 - Android package id: `net.artinazma.expertassistant`
 - App display name: `Artin`
-- The native Android shell has microphone and Android notification permissions.
+- The native Android shell has Android notification permission. Microphone input
+  is disabled in the Android store build to avoid requesting an unused sensitive
+  permission.
 - Native splash and launcher icons are generated from `public/icons`.
 - The app uses a hosted web app model — the native shell loads
   `https://assistant.artinazma.net` which is live in production.

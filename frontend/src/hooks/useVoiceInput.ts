@@ -7,13 +7,28 @@ import { useState, useRef, useCallback } from "react";
 
 type VoiceState = "idle" | "listening" | "processing" | "unsupported";
 
+type CapacitorWindow = Window & {
+  Capacitor?: {
+    getPlatform?: () => string;
+    isNativePlatform?: () => boolean;
+  };
+};
+
+function isNativeAndroidApp() {
+  if (typeof window === "undefined") return false;
+  const capacitor = (window as CapacitorWindow).Capacitor;
+  return capacitor?.isNativePlatform?.() === true && capacitor?.getPlatform?.() === "android";
+}
+
 export function useVoiceInput(onTranscript: (text: string) => void) {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
   const isSupported =
-    typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+    typeof window !== "undefined" &&
+    !isNativeAndroidApp() &&
+    !!navigator.mediaDevices?.getUserMedia;
 
   const stopAndTranscribe = useCallback(async () => {
     const recorder = mediaRecorderRef.current;
