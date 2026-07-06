@@ -85,7 +85,7 @@ export default function Home() {
         <div className="brand-panel hero-grid-bg relative overflow-hidden rounded-[26px] sm:rounded-[34px]">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-l from-blue-600 via-cyan-500 to-emerald-500" />
           <div className="grid gap-8 p-5 sm:p-7 md:p-9 lg:grid-cols-[minmax(0,1fr)_470px] lg:p-10 xl:p-12">
-            <div className="flex flex-col justify-center">
+            <div className="order-2 flex flex-col justify-center lg:order-1">
               <div className="brand-kicker mb-5 hidden sm:flex">
                 <Sparkles size={17} />
                 ArtinAzma Expert Assistant
@@ -128,13 +128,13 @@ export default function Home() {
               </ul>
             </div>
 
-            <div className="relative hidden items-center justify-center rounded-[30px] border border-blue-100 bg-gradient-to-b from-blue-50/80 via-white/95 to-slate-50 p-6 shadow-inner lg:flex">
-              <div className="absolute right-5 top-5 rounded-2xl border border-emerald-100 bg-white/95 px-3 py-1.5 text-xs font-black text-emerald-700 shadow-sm">
+            <div className="relative order-1 flex items-center justify-center rounded-[26px] border border-blue-100 bg-gradient-to-b from-blue-50/80 via-white/95 to-slate-50 p-4 shadow-inner sm:rounded-[30px] sm:p-6 lg:order-2">
+              <div className="absolute right-4 top-4 rounded-2xl border border-emerald-100 bg-white/95 px-3 py-1.5 text-xs font-black text-emerald-700 shadow-sm sm:right-5 sm:top-5">
                 {isEn ? "Ready for technical answers" : "آماده پاسخ‌گویی تخصصی"}
               </div>
 
               <div className="w-full text-center">
-                <div className="mx-auto mb-5 flex h-44 w-44 items-center justify-center overflow-hidden rounded-[34px] bg-blue-50 shadow-lg shadow-slate-200/70">
+                <div className="mx-auto mb-5 mt-8 flex h-40 w-40 items-center justify-center overflow-hidden rounded-[30px] bg-blue-50 shadow-lg shadow-slate-200/70 sm:mt-0 sm:h-44 sm:w-44 sm:rounded-[34px]">
                   <Image src="/images/artin-avatar-hero.png" alt={isEn ? "Artin" : "آرتین"} width={220} height={220} priority className="h-full w-full object-cover" />
                 </div>
 
