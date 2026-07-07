@@ -130,3 +130,18 @@ class TestAstmWebSearchFlag:
     def test_unknown_astm_code_keeps_web_search(self):
         p = self._pipeline("استاندارد ASTM D9999 برای چیست؟")
         assert p["allow_web_search"] is True
+
+    def test_link_request_keeps_web_search_even_for_known_code(self):
+        # درخواست لینک/دانلود/خرید → لنگر داخلی کافی نیست و لینک زندهٔ به‌روز مهم است،
+        # پس وب باید روشن بماند تا مدل URL حدسی نسازد.
+        for q in [
+            "URL رسمی ASTM D445 چیست؟",
+            "لینک دانلود استاندارد ASTM D445 را بده",
+            "استاندارد ASTM D445 را از کجا بخرم؟",
+        ]:
+            assert self._pipeline(q)["allow_web_search"] is True, q
+
+    def test_usage_question_is_not_treated_as_link_request(self):
+        # «کجا کاربرد دارد» نباید به‌اشتباه درخواست لینک تلقی شود؛ وب خاموش می‌ماند.
+        p = self._pipeline("ASTM D445 کجا کاربرد دارد؟")
+        assert p["allow_web_search"] is False

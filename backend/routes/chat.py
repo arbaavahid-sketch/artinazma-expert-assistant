@@ -159,7 +159,13 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     # وقتی عنوان دقیق استاندارد از دیکشنری داخلی تزریق شده، پاسخ یک لنگر معتبر و
     # ثابت دارد. در این حالت وب‌سرچ فقط نویز و ناپایداری اضافه می‌کند (پاسخ به یک
     # سؤال یکسان بین اجراها فرق می‌کرد و گاهی از موضوع منحرف می‌شد)، پس خاموشش کن.
-    if _astm_inject:
+    # استثنا: اگر کاربر لینک/دانلود/خرید استاندارد را می‌خواهد، لنگر داخلی کافی نیست
+    # و لینک زندهٔ به‌روز مهم است (بدون وب مدل ممکن است URL حدسی/غلط بسازد)؛ وب روشن بماند.
+    _asks_for_source = bool(
+        re.search(r"لینک|link|url|آدرس|دانلود|download|خرید|بخرم|تهیه|بگیرم",
+                  body.message, flags=re.IGNORECASE)
+    )
+    if _astm_inject and not _asks_for_source:
         allow_web_search = False
     if question_intent in _COMMERCIAL_INTENTS:
         allow_web_search = False
