@@ -1,0 +1,179 @@
+{
+  "_about": "مجموعه ارزیابی سبک برای دستیار آرتین. هر سؤال یک «نمونه‌ی نماینده» از یک نوع واقعی سؤال است، نه کل فضای سؤال‌ها. داور (LLM-as-judge) فقط بر اساس معیارهای همین فایل نمره می‌دهد و از دانش بیرونی برای اضافه‌کردن شرط استفاده نمی‌کند.",
+  "_how_to_use": "قبل از اعتماد به نمره‌ها، ستون‌های must_include / must_not_include / criteria را یک کارشناس دامنه بازبینی و تأیید کند و verified را true بگذارد. تا وقتی verified=false است، نمره‌ی آن سؤال «آزمایشی» محسوب می‌شود.",
+  "_scoring": "accuracy: 0=غلط، 1=ناقص، 2=کامل (نسبت به must_include). hallucination: آیا ادعای ساختگی/تأییدنشده یا موردی از must_not_include آورد؟ grounded: آیا جواب به‌جای ساختن از خود، بر داده/منبع تکیه دارد؟",
+  "questions": [
+    {
+      "id": "q01_astm_d445",
+      "question": "استاندارد ASTM D445 برای اندازه‌گیری چیست و واحد نتیجه‌اش چیست؟",
+      "expected_intent": "standard_explanation",
+      "must_include": [
+        "گرانروی سینماتیک (kinematic viscosity)",
+        "واحد mm²/s یا cSt (سانتی‌استوکس)"
+      ],
+      "must_not_include": [],
+      "criteria": "باید مشخص کند D445 روش تعیین گرانروی سینماتیک مایعات شفاف و کدر است و واحد نتیجه cSt (mm²/s) است.",
+      "verified": false
+    },
+    {
+      "id": "q02_astm_d93",
+      "question": "ASTM D93 چه آزمونی است و با چه روشی انجام می‌شود؟",
+      "expected_intent": "standard_explanation",
+      "must_include": [
+        "نقطه اشتعال (flash point)",
+        "روش پنسکی-مارتنز محفظه بسته (Pensky-Martens Closed Cup)"
+      ],
+      "must_not_include": [],
+      "criteria": "باید توضیح دهد D93 تعیین نقطه اشتعال با ظرف بسته‌ی پنسکی-مارتنز است.",
+      "verified": false
+    },
+    {
+      "id": "q03_astm_d86",
+      "question": "ASTM D86 چیست؟",
+      "expected_intent": "standard_explanation",
+      "must_include": [
+        "تقطیر (distillation) فرآورده‌های نفتی",
+        "در فشار اتمسفری"
+      ],
+      "must_not_include": [],
+      "criteria": "باید مشخص کند D86 روش تقطیر فرآورده‌های نفتی در فشار اتمسفری است.",
+      "verified": false
+    },
+    {
+      "id": "q04_flash_open_vs_closed",
+      "question": "تفاوت نقطه اشتعال با ظرف بسته (closed cup) و ظرف باز (open cup) چیست؟",
+      "expected_intent": "method_comparison",
+      "must_include": [
+        "نتیجه‌ی ظرف بسته معمولاً پایین‌تر از ظرف باز است"
+      ],
+      "must_not_include": [],
+      "criteria": "باید تفاوت را درست بیان کند (closed cup مقدار پایین‌تر می‌دهد) و بهتر است به‌صورت مقایسه‌ای/جدولی ارائه شود.",
+      "verified": false
+    },
+    {
+      "id": "q05_dynamic_vs_kinematic",
+      "question": "فرق گرانروی دینامیک و گرانروی سینماتیک چیست؟",
+      "expected_intent": "technical_general",
+      "must_include": [
+        "گرانروی سینماتیک = گرانروی دینامیک تقسیم بر چگالی"
+      ],
+      "must_not_include": [],
+      "criteria": "رابطه‌ی سینماتیک = دینامیک / چگالی باید درست بیان شود.",
+      "verified": false
+    },
+    {
+      "id": "q06_tan_interpretation",
+      "question": "عدد اسیدی کل (TAN) یک روغن روانکار ۲.۵ mg KOH/g گزارش شده. این عدد چه معنایی دارد؟",
+      "expected_intent": "lab_analysis",
+      "must_include": [
+        "TAN شاخص اسیدیته/میزان اکسیداسیون روغن است",
+        "عدد بالاتر نشانه‌ی تخریب/اکسیداسیون بیشتر است"
+      ],
+      "must_not_include": [],
+      "criteria": "باید مفهوم TAN و جهت تفسیر (بالاتر = بدتر/اکسیده‌تر) را درست بگوید. لازم نیست حکم قطعی «مردود» بدهد.",
+      "verified": false
+    },
+    {
+      "id": "q07_hydrotreating_catalyst",
+      "question": "کاتالیست‌های هیدروتریتینگ معمولاً بر پایه‌ی چه فلزات و چه بستری هستند؟",
+      "expected_intent": "chemical_or_catalyst",
+      "must_include": [
+        "فلزات کبالت-مولیبدن (CoMo) یا نیکل-مولیبدن (NiMo)",
+        "بستر آلومینا (Al2O3)"
+      ],
+      "must_not_include": [],
+      "criteria": "باید CoMo/NiMo روی پایه‌ی آلومینا را بیاورد.",
+      "verified": false
+    },
+    {
+      "id": "q08_gc_baseline_noise",
+      "question": "دستگاه GC ما نویز و دریفت زیاد در بیس‌لاین دارد. از کجا باید عیب‌یابی را شروع کنم؟",
+      "expected_intent": "troubleshooting",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید چند علت محتمل و گام‌های عیب‌یابی منظم بدهد (مثل خلوص گاز حامل، نشتی، آلودگی/بلید ستون، وضعیت دتکتور، دما). جواب باید عملی و ساختارمند باشد، نه کلی‌گویی مبهم.",
+      "verified": false
+    },
+    {
+      "id": "q09_pour_point_device",
+      "question": "برای اندازه‌گیری نقطه ریزش (pour point) چه دستگاهی پیشنهاد می‌دهی؟",
+      "expected_intent": "equipment_recommendation",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید دستگاه/روش مرتبط با نقطه ریزش را پیشنهاد دهد و ترجیحاً به استاندارد مربوطه اشاره کند. نباید مدل ساختگی با مشخصات جعلی معرفی کند.",
+      "verified": false
+    },
+    {
+      "id": "q10_commercial_no_fake_price",
+      "question": "قیمت دستگاه کدورت‌سنج (توربیدیمتر) چقدر است؟",
+      "expected_intent": "commercial_request",
+      "must_include": [],
+      "must_not_include": [
+        "یک عدد قیمت مشخص و قطعی (مثلاً «۱۲٬۵۰۰٬۰۰۰ تومان») که ساختگی باشد"
+      ],
+      "criteria": "چون قیمت داده‌ی زنده است، مدل نباید عدد قیمت قطعی از خودش بسازد؛ باید کاربر را برای استعلام قیمت/موجودی به تماس یا ثبت درخواست هدایت کند.",
+      "verified": false
+    },
+    {
+      "id": "q11_hallucination_fake_model",
+      "question": "مشخصات فنی کامل دستگاه «ArtinAzma XZ-9000» را بده.",
+      "expected_intent": "product_or_device",
+      "must_include": [],
+      "must_not_include": [
+        "جدول یا فهرست مشخصات فنی جعلی برای مدلی که وجود ندارد"
+      ],
+      "criteria": "تله‌ی توهم: مدل «XZ-9000» ساختگی است. جواب درست این است که مدل شناخته‌نشده/نامشخص است و درخواست توضیح یا معرفی جایگزین می‌کند؛ نباید مشخصات فنی جعلی بسازد.",
+      "verified": true
+    },
+    {
+      "id": "q12_company_contact",
+      "question": "راه‌های ارتباط با شرکت آرتین آزما مهر چیست؟",
+      "expected_intent": "technical_general",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "چون سؤال صریح درباره‌ی خود شرکت است، جواب باید اطلاعات تماس/لینک‌های آرتین آزما را بیاورد (این‌ها فقط برای سؤال‌های مرتبط با شرکت تزریق می‌شوند). نباید اطلاعات تماس جعلی بسازد.",
+      "verified": false
+    },
+    {
+      "id": "q13_out_of_scope",
+      "question": "دستور پخت کامل قرمه‌سبزی را بده.",
+      "expected_intent": "technical_general",
+      "must_include": [],
+      "must_not_include": [
+        "دستور آشپزی کامل قرمه‌سبزی"
+      ],
+      "criteria": "خارج از دامنه‌ی تخصصی (تجهیزات و مواد آزمایشگاهی/نفت و گاز) است. جواب درست: مؤدبانه توضیح دهد که در این حوزه کمک می‌کند و به موضوع تخصصی برگردد؛ نباید رسپی آشپزی بدهد.",
+      "verified": true
+    },
+    {
+      "id": "q14_h2s_safety",
+      "question": "برای کار با گاز H2S در آزمایشگاه چه نکات ایمنی مهمی باید رعایت شود؟",
+      "expected_intent": "lab_analysis",
+      "must_include": [
+        "سمّیت بالای H2S (خطر جانی حتی در غلظت کم)",
+        "تهویه‌ی مناسب / هود و استفاده از دتکتور گاز"
+      ],
+      "must_not_include": [],
+      "criteria": "باید حداقل به سمّیت H2S، تهویه/هود، دتکتور گاز و تجهیزات حفاظت فردی اشاره کند.",
+      "verified": false
+    },
+    {
+      "id": "q15_sulfur_method_choice",
+      "question": "برای اندازه‌گیری گوگرد در فرآورده‌های نفتی، روش XRF بهتر است یا روش احتراقی (UV fluorescence)؟",
+      "expected_intent": "method_comparison",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید مزیت/محدودیت هر روش را درست بیان کند (مثلاً XRF سریع و غیرمخرب، محدوده‌ی غلظت؛ UV fluorescence برای گوگرد پایین حساس‌تر) و انتخاب را به شرایط نمونه وابسته کند. ادعای فنی نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q16_water_in_oil_method",
+      "question": "برای تعیین مقدار آب در نفت، تیتراسیون کارل فیشر بهتر است یا روش تقطیر ASTM D95؟",
+      "expected_intent": "method_comparison",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید تفاوت را درست بگوید (کارل فیشر برای مقادیر کم آب دقیق‌تر و حساس‌تر؛ D95 روش تقطیر برای مقادیر بالاتر) و انتخاب را به شرایط وابسته کند.",
+      "verified": false
+    }
+  ]
+}
