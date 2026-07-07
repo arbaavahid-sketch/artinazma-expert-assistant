@@ -121,6 +121,7 @@ frontend/android/app/google-services.json
 # --------------------
 node_modules/
 .tools/
+tmp/
 frontend/answer.txt
 frontend/tsconfig.tsbuildinfo
 
