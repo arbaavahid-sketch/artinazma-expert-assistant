@@ -156,6 +156,11 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         allow_web_search = True
     if specific_model_question or has_astm_code or not related_docs:
         allow_web_search = True
+    # وقتی عنوان دقیق استاندارد از دیکشنری داخلی تزریق شده، پاسخ یک لنگر معتبر و
+    # ثابت دارد. در این حالت وب‌سرچ فقط نویز و ناپایداری اضافه می‌کند (پاسخ به یک
+    # سؤال یکسان بین اجراها فرق می‌کرد و گاهی از موضوع منحرف می‌شد)، پس خاموشش کن.
+    if _astm_inject:
+        allow_web_search = False
     if question_intent in _COMMERCIAL_INTENTS:
         allow_web_search = False
     if is_transform_followup:

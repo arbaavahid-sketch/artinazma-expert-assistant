@@ -108,3 +108,25 @@ class TestIsFollowupTransformRequest:
     def test_arabic_yeh_kaf_normalized(self):
         # «ك/ي» عربی باید نرمال‌سازی شده و همچنان تشخیص داده شوند
         assert is_followup_transform_request("به جدول تبديل كن") is True
+
+
+class TestAstmWebSearchFlag:
+    """
+    وقتی کد ASTM در دیکشنری داخلی شناخته‌شده است، عنوان معتبر تزریق می‌شود و دیگر
+    نیازی به وب‌سرچ نیست؛ خاموش‌کردن وب‌سرچ پاسخ را پایدار (بین اجراها یکسان) می‌کند.
+    برای کد ناشناخته، لنگر داخلی وجود ندارد پس وب‌سرچ باید روشن بماند.
+    """
+
+    def _pipeline(self, message: str):
+        from routes.chat import _build_chat_pipeline
+        from schemas.models import ChatRequest
+
+        return _build_chat_pipeline(ChatRequest(message=message))
+
+    def test_known_astm_code_disables_web_search(self):
+        p = self._pipeline("استاندارد ASTM D445 برای چیست؟")
+        assert p["allow_web_search"] is False
+
+    def test_unknown_astm_code_keeps_web_search(self):
+        p = self._pipeline("استاندارد ASTM D9999 برای چیست؟")
+        assert p["allow_web_search"] is True
