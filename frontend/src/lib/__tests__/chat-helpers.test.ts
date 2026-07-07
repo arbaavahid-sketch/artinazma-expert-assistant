@@ -5,6 +5,7 @@ import {
   getTextDirection,
   getTextFont,
   cleanAssistantOutput,
+  cleanMarkdownText,
   normalizeSuggestedQuestions,
   shouldShowRelatedDeviceCards,
   getTestTypeLabel,
@@ -84,6 +85,38 @@ describe("assistant output cleanup", () => {
 
     expect(question).toBeTruthy();
     expect(question.length).toBeLessThanOrEqual(180);
+  });
+});
+
+describe("assistant markdown cleanup", () => {
+  it("turns numbered Persian SOP sections into markdown headings", () => {
+    const answer = [
+      "مقدمه کوتاه",
+      "",
+      "1) هدف و دامنه کاربرد",
+      "توضیح بخش هدف",
+      "",
+      "۲) تجهیزات و مواد موردنیاز:",
+      "- تیتراتور",
+    ].join("\n");
+
+    expect(cleanMarkdownText(answer)).toContain("## هدف و دامنه کاربرد");
+    expect(cleanMarkdownText(answer)).toContain("## تجهیزات و مواد موردنیاز");
+  });
+
+  it("removes decorative divider headings from assistant answers", () => {
+    const answer = [
+      "متن اصلی",
+      "ــــــــــــ هدف و دامنه ــــــــــــ",
+      "این بخش باید تیتر شود.",
+      "________________",
+    ].join("\n");
+
+    const cleaned = cleanMarkdownText(answer);
+
+    expect(cleaned).toContain("## هدف و دامنه");
+    expect(cleaned).not.toContain("ــــــــ");
+    expect(cleaned).not.toContain("________________");
   });
 });
 

@@ -77,16 +77,40 @@ export function normalizeSuggestedQuestions(questions: string[]) {
 
 /** عناوین بخش های فارسی که باید به Markdown heading تبدیل شوند */
 const SECTION_TITLES = [
+  "هدف و دامنه کاربرد", "هدف و دامنه", "دامنه کاربرد",
+  "تجهیزات و مواد موردنیاز", "تجهیزات و مواد مورد نیاز",
+  "تجهیزات و مواد", "مواد و معرف‌ها", "مواد و معرف ها",
+  "روش اجرا", "روش کار", "مراحل اجرا", "مراحل انجام آزمون",
+  "محاسبه", "محاسبات", "فرمول محاسبه",
+  "نکات QC و ایمنی", "نکات کنترل کیفیت و ایمنی",
+  "ایمنی و نگهداری", "هشدار ایمنی",
   "جمع‌بندی کاربردی", "جمع بندی کاربردی", "جمع‌بندی", "جمع بندی",
   "تفاوت بنیادی", "مقایسه فنی و عملیاتی", "مقایسه فنی",
   "روش‌ها یا دستگاه‌های مناسب", "روش ها یا دستگاه های مناسب",
   "معیار انتخاب", "نکات نمونه‌برداری", "نکات نمونه برداری",
   "آماده‌سازی نمونه", "آماده سازی نمونه", "کنترل کیفیت", "QC",
   "محدودیت‌ها و خطاهای رایج", "محدودیت‌ها", "محدودیت ها", "خطاهای رایج",
-  "سناریوی انتخاب", "پیشنهاد عملی", "اقدام بعدی",
+  "اشتباهات رایج", "سناریوی انتخاب", "پیشنهاد عملی", "اقدام بعدی",
   "اطلاعات لازم برای تصمیم قطعی", "اطلاعات تکمیلی موردنیاز",
-  "اطلاعات تکمیلی مورد نیاز",
+  "اطلاعات تکمیلی مورد نیاز", "خلاصه عملی", "جمع‌بندی کوتاه",
 ];
+
+const DECORATIVE_HEADING_CHARS = String.raw`[_\-—–=─━ـ]{4,}`;
+
+function normalizeSectionTitleCandidate(value: string) {
+  return value
+    .replace(/^[#*\s]+/, "")
+    .replace(/[*\s:：]+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isKnownSectionTitle(value: string) {
+  const normalized = normalizeSectionTitleCandidate(value);
+  return SECTION_TITLES.some((title) => title.toLowerCase() === normalized.toLowerCase())
+    ? normalized
+    : "";
+}
 
 /**
  * پاکسازی و بهبود متن Markdown دریافتی از AI:
@@ -101,7 +125,7 @@ export function cleanMarkdownText(text: string) {
   let cleaned = cleanAssistantOutput(text)
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
-    .replace(/^\s*---+\s*$/gm, "")
+    .replace(/^\s*(?:---+|___+|\*\*\*+)\s*$/gm, "")
     .trim();
 
   // استخراج جدول از code block
@@ -123,10 +147,33 @@ export function cleanMarkdownText(text: string) {
     })
     .join("\n");
 
+  // تبدیل تیترهای شماره‌دار یا تزئینی AI به Markdown تمیز
+  const decorativeHeadingPattern = new RegExp(
+    `^\\s*(?:${DECORATIVE_HEADING_CHARS}\\s*)+(?:[0-9۰-۹]+\\s*[).)]\\s*)?(.{2,70}?)(?:\\s*${DECORATIVE_HEADING_CHARS})*\\s*$`,
+    "gmi",
+  );
+  cleaned = cleaned.replace(decorativeHeadingPattern, (line, title) => {
+    const knownTitle = isKnownSectionTitle(title);
+    return knownTitle ? `## ${knownTitle}` : line.replace(new RegExp(DECORATIVE_HEADING_CHARS, "g"), "").trim();
+  });
+
+  cleaned = cleaned.replace(
+    /^[\s_\-—–=─━ـ]{4,}\s*$/gm,
+    "",
+  );
+
+  cleaned = cleaned.replace(
+    /^\s*(?:[0-9۰-۹]+\s*[).)]\s*)(.{2,70}?)(?:\s*:)?\s*$/gmi,
+    (line, title) => {
+      const knownTitle = isKnownSectionTitle(title);
+      return knownTitle ? `## ${knownTitle}` : line;
+    },
+  );
+
   // تبدیل عناوین بخش ها
   for (const title of SECTION_TITLES) {
     const pattern = new RegExp(
-      `^\\s*(?:[-*]\\s*)?(?:\\*\\*\\s*)?${escapeRegExp(title)}(?:\\s*\\*\\*)?(?:\\s*:)?\\s*$`,
+      `^\\s*(?:[-*]\\s*)?(?:\\*\\*\\s*)?(?:[0-9۰-۹]+\\s*[).)]\\s*)?${escapeRegExp(title)}(?:\\s*\\*\\*)?(?:\\s*:)?\\s*$`,
       "gmi",
     );
     cleaned = cleaned.replace(pattern, `## ${title}`);
