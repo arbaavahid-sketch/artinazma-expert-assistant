@@ -40,7 +40,24 @@
       "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m eval.run_eval --base-url http://127.0.0.1:8001 --out eval/reports/baseline_after_scope_fix.json)",
       "PowerShell($c = Get-NetTCPConnection -LocalPort 8001 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c.OwningProcess -Force; \"stopped 8001 PID $\\($c.OwningProcess\\)\" } else { \"nothing on 8001\" })",
       "Bash(./venv/Scripts/python.exe -c \"import json; json.load\\(open\\('eval/eval_questions.json',encoding='utf-8'\\)\\); print\\('JSON valid'\\)\")",
-      "Bash(./venv/Scripts/python.exe -m eval.run_eval --base-url http://127.0.0.1:8000 --only q12_company_contact)"
+      "Bash(./venv/Scripts/python.exe -m eval.run_eval --base-url http://127.0.0.1:8000 --only q12_company_contact)",
+      "Bash(netstat -ano)",
+      "Bash(grep -oE \"\\\\\"D[0-9]{2,5}\\\\\"\\\\s*:\" utils/chat_utils.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8000/health)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8000 --log-level warning)",
+      "Bash(PYTHONIOENCODING=utf-8 /d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -c ' *)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8002 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"8002=%{http_code}\\\\n\" http://127.0.0.1:8002/health)",
+      "Bash(PYTHONIOENCODING=utf-8 /d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m pytest tests/test_chat_logic.py tests/test_chat_endpoint.py -q)",
+      "Bash(TESTING=1 OPENAI_API_KEY=test QDRANT_URL='' PYTHONIOENCODING=utf-8 /d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 /d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m pytest tests/test_chat_logic.py -q)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8003 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8003/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8004/health)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8005 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8005/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8006/health)"
     ]
   }
 }
