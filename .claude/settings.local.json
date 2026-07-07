@@ -4,7 +4,13 @@
       "Bash(python -c \"import ast; ast.parse\\(open\\('main.py'\\).read\\(\\)\\); print\\('main.py: OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('ai_service.py'\\).read\\(\\)\\); print\\('ai_service.py: OK'\\)\")",
       "Bash(npx tsc *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(mkdir -p /c/Users/A/.jdks)",
+      "Bash(curl -sL -o /c/Users/A/.jdks/temurin21.zip \"https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jdk/hotspot/normal/eclipse\")",
+      "Read(//c/Users/A/.jdks/**)",
+      "Bash(JAVA_HOME=\"C:\\\\\\\\Users\\\\\\\\A\\\\\\\\.jdks\\\\\\\\jdk-21.0.11+10\" ./gradlew assembleDebug)",
+      "Bash(/c/Users/A/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)"
     ]
   }
 }
