@@ -17,7 +17,24 @@
       "Bash(xxd)",
       "Bash(ls /d/artinazma-expert-assistant/outputs/ && find /d/artinazma-expert-assistant -maxdepth 3 -iname \"*bundlesigner*\" -o -maxdepth 3 -iname \"*bundle-signer*\" 2>/dev/null; find /c/Users/A/Downloads /d/ -maxdepth 2 -iname \"*bundlesigner*\" 2>/dev/null | head)",
       "Bash(\"/c/Users/A/.jdks/jdk-21.0.11+10/bin/java.exe\" -jar .tools/bundlesigner-0.1.13.jar genbin --help)",
-      "Bash(cp /c/Users/A/AppData/Local/Temp/claude/D--artinazma-expert-assistant/b2c6c72a-906e-4cf2-a4ee-624d7be76910/scratchpad/binout/artin-bazaar-v1.bin /d/artinazma-expert-assistant/outputs/android/artin-bazaar-v1.4-code5.bin && head -c 48 /d/artinazma-expert-assistant/outputs/android/artin-bazaar-v1.4-code5.bin && echo && ls -lh /d/artinazma-expert-assistant/outputs/android/*v1.4*)"
+      "Bash(cp /c/Users/A/AppData/Local/Temp/claude/D--artinazma-expert-assistant/b2c6c72a-906e-4cf2-a4ee-624d7be76910/scratchpad/binout/artin-bazaar-v1.bin /d/artinazma-expert-assistant/outputs/android/artin-bazaar-v1.4-code5.bin && head -c 48 /d/artinazma-expert-assistant/outputs/android/artin-bazaar-v1.4-code5.bin && echo && ls -lh /d/artinazma-expert-assistant/outputs/android/*v1.4*)",
+      "Bash(python -c \"import json,sys; d=json.load\\(open\\('eval/eval_questions.json',encoding='utf-8'\\)\\); print\\('JSON ok:',len\\(d['questions']\\),'questions'\\); ids=[q['id'] for q in d['questions']]; assert len\\(ids\\)==len\\(set\\(ids\\)\\),'dup ids'; print\\('unique ids ok'\\)\")",
+      "Bash(./venv/Scripts/python.exe -m eval.run_eval --help)",
+      "Bash(./venv/Scripts/python.exe -m uvicorn main:app --port 8000 --log-level warning)",
+      "Bash(./venv/Scripts/python.exe -m eval.run_eval --only q01_astm_d445,q11_hallucination_fake_model)",
+      "Bash(./venv/Scripts/python.exe -m eval.run_eval)",
+      "Bash(git -C /d/artinazma-expert-assistant status --short)",
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/chat -H \"Content-Type: application/json\" -d '{\"message\":\"دستور پخت کامل قرمه‌سبزی را بده.\",\"user_id\":\"eval_probe\"}')",
+      "Bash(./venv/Scripts/python.exe -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('INTENT:',d.get\\('question_intent'\\)\\); print\\('MODE:',d.get\\('answer_mode'\\),'| web:',d.get\\('web_search_used'\\),'| sources:',d.get\\('source_count'\\)\\); print\\('ANSWER:'\\); print\\(d.get\\('answer',''\\)[:900]\\)\")",
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 ./venv/Scripts/python.exe -c ' *)",
+      "Bash(./venv/Scripts/python.exe -m uvicorn main:app --port 8001 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8001/health)",
+      "Bash(./venv/Scripts/python.exe -m eval.run_eval --base-url http://127.0.0.1:8001 --only q13_out_of_scope,q05_dynamic_vs_kinematic,q01_astm_d445)",
+      "Bash(curl -s -X POST http://127.0.0.1:8001/shutdown)",
+      "Bash(git -C /d/artinazma-expert-assistant diff --stat backend/prompts.py)",
+      "PowerShell($c = Get-NetTCPConnection -LocalPort 8001 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c.OwningProcess -Force; \"stopped PID $\\($c.OwningProcess\\)\" } else { \"nothing on 8001\" })"
     ]
   }
 }
