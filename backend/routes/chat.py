@@ -54,7 +54,7 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     Returns a dict with all computed fields needed by both endpoints.
     """
     has_astm_code = bool(
-        re.search(r"\bD\s*\d{3,5}\b", body.message, flags=re.IGNORECASE)
+        re.search(r"\bD\s*\d{2,5}\b", body.message, flags=re.IGNORECASE)
     )
     specific_model_question = is_specific_product_or_model_question(body.message)
     allow_company_reference = is_artinazma_related_question(body.message)
@@ -72,7 +72,7 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     # ── استخراج عنوان استاندارد ASTM از دیکشنری داخلی ──
     _astm_inject: str = ""
     if has_astm_code:
-        _astm_matches = re.findall(r"\bD\s*(\d{3,5})\b", body.message, flags=re.IGNORECASE)
+        _astm_matches = re.findall(r"\bD\s*(\d{2,5})\b", body.message, flags=re.IGNORECASE)
         _injected_titles = [
             _ASTM_KNOWN_STANDARDS[f"D{n}"]
             for n in _astm_matches

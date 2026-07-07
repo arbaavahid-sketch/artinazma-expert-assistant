@@ -61,7 +61,7 @@ def format_answer_for_ui(text: str) -> str:
 
     # تبدیل خطوط کلیدی به بولت، فقط وقتی بولت ندارند
     text = re.sub(
-        r"(?m)^(ASTM\s+D\d{3,5}|ISO\s+\d+|EPA\s+\d+|XRF|ICP|ICP-OES|ICP-MS|GC-MS|GC|HPLC|AAS|FTIR|UV-Vis)(\s*:)",
+        r"(?m)^(ASTM\s+D\d{2,5}|ISO\s+\d+|EPA\s+\d+|XRF|ICP|ICP-OES|ICP-MS|GC-MS|GC|HPLC|AAS|FTIR|UV-Vis)(\s*:)",
         r"- **\1**:",
         text,
     )

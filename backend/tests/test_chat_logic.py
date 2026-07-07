@@ -131,6 +131,14 @@ class TestAstmWebSearchFlag:
         p = self._pipeline("استاندارد ASTM D9999 برای چیست؟")
         assert p["allow_web_search"] is True
 
+    def test_two_digit_astm_code_is_recognized(self):
+        # کدهای دو رقمی پرکاربرد (D86/D93/D97/D56) هم باید لنگر بگیرند و قطعی شوند؛
+        # web=False یعنی وارد مسیر ASTM شده و عنوان معتبر تزریق شده است.
+        for code in ["D86", "D93", "D97", "D56"]:
+            p = self._pipeline(f"استاندارد ASTM {code} چیست؟")
+            assert p["allow_web_search"] is False, code
+            assert "gpt_astm_direct" in p["search_mode"], code
+
     def test_link_request_keeps_web_search_even_for_known_code(self):
         # درخواست لینک/دانلود/خرید → لنگر داخلی کافی نیست و لینک زندهٔ به‌روز مهم است،
         # پس وب باید روشن بماند تا مدل URL حدسی نسازد.

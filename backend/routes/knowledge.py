@@ -131,7 +131,7 @@ def knowledge_search(request: KnowledgeSearchRequest):
     query = request.message
     top_k = max(1, min(request.top_k or 10, 30))
 
-    has_astm_code = bool(re.search(r"\bD\s*\d{3,5}\b", query, flags=re.IGNORECASE))
+    has_astm_code = bool(re.search(r"\bD\s*\d{2,5}\b", query, flags=re.IGNORECASE))
 
     if has_astm_code:
         local_results = local_search_knowledge_base(query, top_k=top_k)

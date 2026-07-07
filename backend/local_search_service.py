@@ -19,7 +19,7 @@ def tokenize(text: str) -> List[str]:
 
 def extract_astm_codes(text: str) -> List[str]:
     normalized = normalize_text(text)
-    codes = re.findall(r"d\s*\d{3,5}", normalized)
+    codes = re.findall(r"d\s*\d{2,5}", normalized)
     return [code.replace(" ", "") for code in codes]
 
 
