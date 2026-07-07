@@ -10,7 +10,9 @@
       "Bash(curl -sL -o /c/Users/A/.jdks/temurin21.zip \"https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jdk/hotspot/normal/eclipse\")",
       "Read(//c/Users/A/.jdks/**)",
       "Bash(JAVA_HOME=\"C:\\\\\\\\Users\\\\\\\\A\\\\\\\\.jdks\\\\\\\\jdk-21.0.11+10\" ./gradlew assembleDebug)",
-      "Bash(/c/Users/A/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)"
+      "Bash(/c/Users/A/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Bump Android app to v1.4 \\(code 5\\) *)"
     ]
   }
 }
