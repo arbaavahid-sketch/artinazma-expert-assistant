@@ -6,7 +6,7 @@ import type {
   KeyboardEvent,
   RefObject,
 } from "react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 type ComposerTextareaProps = {
   chatInputRef: RefObject<HTMLTextAreaElement | null>;
@@ -29,9 +29,12 @@ export default function ComposerTextarea({
   onPaste,
   placeholder,
 }: ComposerTextareaProps) {
+  const isComposingRef = useRef(false);
+
   useEffect(() => {
     const textarea = chatInputRef.current;
     if (!textarea || textarea.value === message) return;
+    if (isComposingRef.current) return;
     if (document.activeElement === textarea && message && textarea.value.trim()) return;
 
     textarea.value = message;
@@ -44,7 +47,7 @@ export default function ComposerTextarea({
   return (
     <textarea
       ref={chatInputRef}
-      dir="auto"
+      dir={isEn ? "ltr" : "rtl"}
       lang={isEn ? "en" : "fa"}
       spellCheck
       autoCorrect="on"
@@ -58,6 +61,13 @@ export default function ComposerTextarea({
       onChange={handleChange}
       onKeyDown={onKeyDown}
       onPaste={onPaste}
+      onCompositionStart={() => {
+        isComposingRef.current = true;
+      }}
+      onCompositionEnd={(event) => {
+        isComposingRef.current = false;
+        onMessageChange(event.currentTarget.value);
+      }}
     />
   );
 }

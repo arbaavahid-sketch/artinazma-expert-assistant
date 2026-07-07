@@ -202,13 +202,7 @@ function AssistantPageInner() {
 
   function handleComposerMessageChange(value: string) {
     draftMessageRef.current = value;
-
-    setMessage((prev) => {
-      const previousHasText = Boolean(prev.trim());
-      const nextHasText = Boolean(value.trim());
-
-      return previousHasText === nextHasText ? prev : value;
-    });
+    setMessage(value);
   }
 
   const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(

@@ -24,10 +24,17 @@ describe("ComposerTextarea", () => {
     renderComposer();
 
     const textarea = screen.getByPlaceholderText("از آرتین بپرسید...");
+    expect(textarea).toHaveAttribute("dir", "rtl");
     expect(textarea).toHaveAttribute("spellcheck", "true");
     expect(textarea).toHaveAttribute("autocorrect", "on");
     expect(textarea).toHaveAttribute("autocomplete", "on");
     expect(textarea).toHaveAttribute("inputmode", "text");
+  });
+
+  it("uses ltr direction for the English composer", () => {
+    renderComposer({ isEn: true });
+
+    expect(screen.getByPlaceholderText("از آرتین بپرسید...")).toHaveAttribute("dir", "ltr");
   });
 
   it("lets the browser own caret placement while typing", () => {
@@ -40,6 +47,65 @@ describe("ComposerTextarea", () => {
 
     expect(props.onMessageChange).toHaveBeenCalledWith("سلام خوب دنیا");
     expect(textarea).not.toHaveAttribute("value");
+  });
+
+  it("does not overwrite middle-of-text edits on rerender while focused", () => {
+    const ref = createRef<HTMLTextAreaElement>();
+    const onMessageChange = vi.fn();
+    const { rerender } = render(
+      <ComposerTextarea
+        chatInputRef={ref}
+        className="composer-test"
+        isEn={false}
+        message="سلام دنیا"
+        onKeyDown={vi.fn()}
+        onMessageChange={onMessageChange}
+        placeholder="از آرتین بپرسید..."
+      />,
+    );
+    const textarea = screen.getByPlaceholderText("از آرتین بپرسید...") as HTMLTextAreaElement;
+
+    textarea.focus();
+    textarea.setSelectionRange(5, 5);
+    fireEvent.change(textarea, { target: { value: "سلام خوب دنیا" } });
+    textarea.setSelectionRange(9, 9);
+
+    rerender(
+      <ComposerTextarea
+        chatInputRef={ref}
+        className="composer-test"
+        isEn={false}
+        message="سلام دنیا"
+        onKeyDown={vi.fn()}
+        onMessageChange={onMessageChange}
+        placeholder="از آرتین بپرسید..."
+      />,
+    );
+
+    expect(textarea.value).toBe("سلام خوب دنیا");
+    expect(textarea.selectionStart).toBe(9);
+  });
+
+  it("keeps IME composition text owned by the browser until composition ends", () => {
+    const { props, rerender } = renderComposer({ message: "متن اول" });
+    const textarea = screen.getByPlaceholderText("از آرتین بپرسید...") as HTMLTextAreaElement;
+
+    textarea.focus();
+    fireEvent.compositionStart(textarea);
+    fireEvent.change(textarea, { target: { value: "متن اصلاح‌شده" } });
+
+    rerender(
+      <ComposerTextarea
+        {...props}
+        message="متن اول"
+      />,
+    );
+
+    expect(textarea.value).toBe("متن اصلاح‌شده");
+
+    fireEvent.compositionEnd(textarea);
+
+    expect(props.onMessageChange).toHaveBeenLastCalledWith("متن اصلاح‌شده");
   });
 
   it("syncs external message changes without making typing controlled", () => {
