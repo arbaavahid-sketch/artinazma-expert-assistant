@@ -12,7 +12,12 @@
       "Bash(JAVA_HOME=\"C:\\\\\\\\Users\\\\\\\\A\\\\\\\\.jdks\\\\\\\\jdk-21.0.11+10\" ./gradlew assembleDebug)",
       "Bash(/c/Users/A/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'Bump Android app to v1.4 \\(code 5\\) *)"
+      "Bash(git commit -m 'Bump Android app to v1.4 \\(code 5\\) *)",
+      "Bash(file *.bin)",
+      "Bash(xxd)",
+      "Bash(ls /d/artinazma-expert-assistant/outputs/ && find /d/artinazma-expert-assistant -maxdepth 3 -iname \"*bundlesigner*\" -o -maxdepth 3 -iname \"*bundle-signer*\" 2>/dev/null; find /c/Users/A/Downloads /d/ -maxdepth 2 -iname \"*bundlesigner*\" 2>/dev/null | head)",
+      "Bash(\"/c/Users/A/.jdks/jdk-21.0.11+10/bin/java.exe\" -jar .tools/bundlesigner-0.1.13.jar genbin --help)",
+      "Bash(cp /c/Users/A/AppData/Local/Temp/claude/D--artinazma-expert-assistant/b2c6c72a-906e-4cf2-a4ee-624d7be76910/scratchpad/binout/artin-bazaar-v1.bin /d/artinazma-expert-assistant/outputs/android/artin-bazaar-v1.4-code5.bin && head -c 48 /d/artinazma-expert-assistant/outputs/android/artin-bazaar-v1.4-code5.bin && echo && ls -lh /d/artinazma-expert-assistant/outputs/android/*v1.4*)"
     ]
   }
 }
