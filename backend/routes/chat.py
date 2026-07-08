@@ -22,7 +22,12 @@ from utils.chat_utils import (
 )
 
 from intent_service import detect_question_intent
-from astm_link_service import official_astm_url, build_official_links, seed_valid
+from astm_link_service import (
+    official_astm_url,
+    build_official_links,
+    seed_valid,
+    extract_astm_codes,
+)
 from local_search_service import local_search_knowledge_base, build_local_answer
 from knowledge_service import search_knowledge_base
 from site_resource_service import find_artinazma_resources
@@ -57,9 +62,9 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     Shared pre-processing pipeline for /chat and /chat/stream.
     Returns a dict with all computed fields needed by both endpoints.
     """
-    has_astm_code = bool(
-        re.search(r"\bD\s*\d{2,5}\b", body.message, flags=re.IGNORECASE)
-    )
+    # کدهای ASTM هر سری (A/B/C/D/E/F/G…) — سری‌های غیر-D فقط با پیشوند «ASTM».
+    _astm_codes = extract_astm_codes(body.message)
+    has_astm_code = bool(_astm_codes)
     specific_model_question = is_specific_product_or_model_question(body.message)
     allow_company_reference = is_artinazma_related_question(body.message)
     is_transform_followup = is_followup_transform_request(body.message)
@@ -82,8 +87,6 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     _astm_inject: str = ""
     _astm_link_inject: str = ""
     if has_astm_code:
-        _astm_matches = re.findall(r"\bD\s*(\d{2,5})\b", body.message, flags=re.IGNORECASE)
-        _astm_codes = [f"D{n}" for n in _astm_matches]
         _known_codes = [c for c in _astm_codes if c in _ASTM_KNOWN_STANDARDS]
         if _known_codes:
             _lines = [

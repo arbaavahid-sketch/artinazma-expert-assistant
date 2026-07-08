@@ -33,10 +33,40 @@ _CACHE: dict[str, bool] = {}
 _LOCK = threading.Lock()
 
 
+# کدهای ASTM با پیشوندِ «ASTM» — هر سری (A/B/C/D/E/F/G…). چون کدِ لختِ غیر-D
+# ریسک false-positive بالایی دارد (A4، B12، C4…)، سری‌های غیر-D فقط با پیشوند ASTM
+# پذیرفته می‌شوند. کدِ لختِ D (مثل «D445») برای سازگاری با رفتار قبلی حفظ می‌شود.
+_PREFIXED_RE = re.compile(r"ASTM\s*[-:]?\s*([A-Za-z])\s*0*(\d{1,5})", re.IGNORECASE)
+_BARE_D_RE = re.compile(r"\bD\s*0*(\d{2,5})\b", re.IGNORECASE)
+
+
 def _normalize(code: str) -> str:
-    """'D 445' یا 'd0445' → 'd445'."""
-    digits = re.sub(r"[^0-9]", "", code)
-    return f"d{digits}"
+    """'D 445'/'d0445' → 'd445'، 'A106'/'a 106' → 'a106' (سری حفظ می‌شود)."""
+    m = re.match(r"\s*([A-Za-z])\s*0*(\d+)", code)
+    if not m:
+        return re.sub(r"\s+", "", code).lower()
+    return f"{m.group(1).lower()}{int(m.group(2))}"
+
+
+def extract_astm_codes(text: str) -> list[str]:
+    """
+    کدهای ASTM را از متن استخراج می‌کند و به شکل «A106»/«D445» برمی‌گرداند
+    (حرف بزرگ + عدد بدون صفرِ ابتدایی)، بدون تکرار و به ترتیب ظهور.
+    """
+    text = text or ""
+    codes: list[str] = []
+    seen: set[str] = set()
+    for series, num in _PREFIXED_RE.findall(text):
+        code = f"{series.upper()}{int(num)}"
+        if code not in seen:
+            seen.add(code)
+            codes.append(code)
+    for num in _BARE_D_RE.findall(text):
+        code = f"D{int(num)}"
+        if code not in seen:
+            seen.add(code)
+            codes.append(code)
+    return codes
 
 
 def official_astm_url(code: str) -> str:

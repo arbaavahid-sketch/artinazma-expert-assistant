@@ -175,3 +175,38 @@ class TestAstmWebSearchFlag:
         p = self._pipeline("لینک استاندارد ASTM D99999 را بده")
         assert "https://store.astm.org/standards/d99999" not in p["context"]
         assert "یافت نشد" in p["context"]
+
+    def test_a_series_link_with_astm_prefix(self, monkeypatch):
+        # سری A (لوله‌ی فولادی) هم باید لینک بگیرد وقتی پیشوند ASTM دارد.
+        import astm_link_service
+        astm_link_service._CACHE.pop("a106", None)
+        monkeypatch.setattr(astm_link_service, "verify_astm_code", lambda code: True)
+        p = self._pipeline("لینک استاندارد ASTM A106 را بده")
+        assert p["allow_web_search"] is False
+        assert "https://store.astm.org/standards/a106" in p["context"]
+
+
+class TestAstmCodeExtraction:
+    """استخراج کد ASTM از متن — سری‌های غیر-D فقط با پیشوند ASTM."""
+
+    def _codes(self, text):
+        from astm_link_service import extract_astm_codes
+        return extract_astm_codes(text)
+
+    def test_bare_d_code_matched(self):
+        assert self._codes("استاندارد D445 چیست؟") == ["D445"]
+
+    def test_prefixed_any_series_matched(self):
+        assert self._codes("لینک ASTM A106 را بده") == ["A106"]
+        assert self._codes("ASTM E8 چیست؟") == ["E8"]
+        assert self._codes("astm a 106") == ["A106"]
+
+    def test_bare_non_d_code_not_matched(self):
+        # «A106» بدون پیشوند ASTM نباید کد تلقی شود (ریسک false-positive).
+        assert self._codes("کاغذ A4 و باتری B12") == []
+
+    def test_leading_zeros_and_casing_normalized(self):
+        assert self._codes("ASTM d0445") == ["D445"]
+
+    def test_multiple_codes_deduped_in_order(self):
+        assert self._codes("ASTM D86 و ASTM A106 و D86") == ["D86", "A106"]
