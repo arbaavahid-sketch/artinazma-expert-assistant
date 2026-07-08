@@ -57,7 +57,18 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8004/health)",
       "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8005 --log-level warning)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8005/health)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8006/health)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8006/health)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8008 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8008/health)",
+      "WebFetch(domain:www.astm.org)",
+      "WebSearch",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8009 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8009/health)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8010 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8010/health)",
+      "Bash(grep -iE \"docker|deploy|fly|render|railway|vercel|procfile|makefile|\\\\.sh$\")",
+      "Bash(git push *)",
+      "Bash(gh run *)"
     ]
   }
 }
