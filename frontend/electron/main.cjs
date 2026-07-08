@@ -1,6 +1,15 @@
 const { app, BrowserWindow, Menu, shell, session } = require("electron");
 const path = require("path");
 
+// به‌روزرسانی خودکارِ پوسته (اختیاری). require را دفاعی می‌گیریم تا اگر به هر دلیل
+// (باندل‌نشدن، نبود شبکه) در دسترس نبود، اپ کرش نکند و فقط از آپدیت صرف‌نظر شود.
+let autoUpdater = null;
+try {
+  ({ autoUpdater } = require("electron-updater"));
+} catch (err) {
+  console.error("[updater] electron-updater unavailable — skipping auto-update:", err.message);
+}
+
 const APP_URL = process.env.ARTIN_DESKTOP_URL || "https://assistant.artinazma.net";
 const APP_ORIGIN = new URL(APP_URL).origin;
 
@@ -66,6 +75,14 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+
+  // بررسی آپدیتِ پوسته فقط در نسخهٔ بسته‌بندی‌شده؛ خطا هرگز اپ را متوقف نکند.
+  if (app.isPackaged && autoUpdater) {
+    autoUpdater.autoDownload = true;
+    autoUpdater
+      .checkForUpdatesAndNotify()
+      .catch((err) => console.error("[updater] check failed:", err && err.message));
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

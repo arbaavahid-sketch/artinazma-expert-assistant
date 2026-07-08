@@ -10,7 +10,13 @@
     "preload.cjs",
     "assets/**",
     "package.json",
-    "!node_modules/**"
+    "node_modules/**"
+  ],
+  "publish": [
+    {
+      "provider": "generic",
+      "url": "https://assistant.artinazma.net/desktop/"
+    }
   ],
   "win": {
     "icon": "electron/assets/icon.ico",
