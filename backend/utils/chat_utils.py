@@ -12,6 +12,33 @@ logger = logging.getLogger("utils.chat_utils")
 _LOCAL_SCORE_THRESHOLD = 10      # local search score >= this → use local
 _MODEL_LOCAL_SCORE_THRESHOLD = 8 # model question: exact local match threshold
 _WEAK_CONTEXT_THRESHOLD = 14     # below this → discard internal context for tech intents
+# حداقل شباهت کسینوسی (0-1) تا یک نتیجهٔ معنایی «مرتبط» شمرده شود؛ برای پیوند
+# بین‌زبانی (سؤال فارسی ↔ سند انگلیسی) استفاده می‌شود.
+_VECTOR_RELEVANT_THRESHOLD = 0.30
+
+
+def vector_relevance(doc: dict) -> float:
+    """شباهت کسینوسی واقعی (0-1) یک نتیجهٔ جست‌وجوی معنایی.
+
+    نمرهٔ `score` در مسیر Qdrant نسبت به بهترین نتیجه نرمال می‌شود (نتیجهٔ اول
+    همیشه 100)، پس برای سنجش ربطِ واقعی باید vector_score خام را خواند؛ در مسیر
+    JSON، score همان کسینوس ×۱۰۰ است.
+    """
+    breakdown = doc.get("score_breakdown") or {}
+    raw = breakdown.get("vector_score")
+    if raw is not None:
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return 0.0
+    algorithm = breakdown.get("algorithm", "")
+    if algorithm == "json_vector" or not breakdown:
+        try:
+            return float(doc.get("score", 0) or 0) / 100.0
+        except (TypeError, ValueError):
+            return 0.0
+    # نتیجهٔ RRF بدون vector_score یعنی فقط تطبیق کلیدواژه‌ای بوده؛ ربط معنایی نامعلوم.
+    return 0.0
 
 # ─── Upload limits ───────────────────────────────────────────────────────────
 _MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB

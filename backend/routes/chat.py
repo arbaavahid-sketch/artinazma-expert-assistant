@@ -14,7 +14,9 @@ from utils.chat_utils import (
     _LOCAL_SCORE_THRESHOLD,
     _MODEL_LOCAL_SCORE_THRESHOLD,
     _WEAK_CONTEXT_THRESHOLD,
+    _VECTOR_RELEVANT_THRESHOLD,
     _TECHNICAL_INTENTS,
+    vector_relevance,
     is_specific_product_or_model_question,
     context_has_exact_model_match,
     is_artinazma_related_question,
@@ -117,6 +119,9 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
                 _unknown_codes, set(_ASTM_KNOWN_STANDARDS)
             )
 
+    _local_best = float(local_docs[0].get("score", 0) or 0) if local_docs else 0.0
+    _vector_best = 0.0
+
     if has_astm_code:
         related_docs = []
         search_mode = "gpt_astm_direct"
@@ -125,7 +130,7 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         if (
             exact_local_match
             and local_docs
-            and float(local_docs[0].get("score", 0) or 0) >= _MODEL_LOCAL_SCORE_THRESHOLD
+            and _local_best >= _MODEL_LOCAL_SCORE_THRESHOLD
         ):
             related_docs = local_docs[:8]
             search_mode = "local_exact_model"
@@ -133,17 +138,49 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             related_docs = []
             search_mode = "no_exact_model_context"
     else:
-        if local_docs and float(local_docs[0].get("score", 0) or 0) >= _LOCAL_SCORE_THRESHOLD:
-            related_docs = local_docs[:8]
+        # ── بازیابی ترکیبی (hybrid: کلیدواژه‌ای + معنایی) ──
+        # جست‌وجوی کلیدواژه‌ای فقط هم‌زبان را خوب پیدا می‌کند؛ بیشترِ اسناد انگلیسی‌اند
+        # و سؤال‌ها فارسی. جست‌وجوی معنایی (embedding) بین‌زبانی است، پس همیشه هر دو
+        # اجرا و ادغام می‌شوند تا سندِ انگلیسیِ مرتبط پشتِ تطبیقِ کلیدواژه‌ایِ فارسی نماند.
+        try:
+            _vector_docs = search_knowledge_base(body.message, top_k=6)
+        except Exception as e:
+            logger.warning("AI vector search failed: %s", e)
+            _vector_docs = []
+
+        _vector_hits = [
+            d for d in _vector_docs if vector_relevance(d) >= _VECTOR_RELEVANT_THRESHOLD
+        ]
+        _vector_best = max((vector_relevance(d) for d in _vector_hits), default=0.0)
+        _local_hits = local_docs[:6] if _local_best >= _LOCAL_SCORE_THRESHOLD else []
+
+        def _doc_key(d: dict):
+            return (d.get("file_name", ""), (d.get("content", "") or "")[:80])
+
+        # اگر تطبیق کلیدواژه‌ای قوی است اول local، وگرنه نتایج معنایی مقدم‌اند.
+        _first, _second = (
+            (_local_hits, _vector_hits)
+            if _local_best >= _WEAK_CONTEXT_THRESHOLD
+            else (_vector_hits, _local_hits)
+        )
+        _seen: set = set()
+        related_docs = []
+        for d in _first + _second:
+            k = _doc_key(d)
+            if k in _seen:
+                continue
+            _seen.add(k)
+            related_docs.append(d)
+        related_docs = related_docs[:8]
+
+        if _local_hits and _vector_hits:
+            search_mode = "hybrid"
+        elif _vector_hits:
+            search_mode = "ai_vector"
+        elif _local_hits:
             search_mode = "local_fast"
         else:
-            try:
-                related_docs = search_knowledge_base(body.message, top_k=5)
-                search_mode = "ai_vector"
-            except Exception as e:
-                logger.warning("AI vector search failed, using local: %s", e)
-                related_docs = local_docs[:8]
-                search_mode = "local_fallback"
+            search_mode = "no_internal_match"
 
     if related_docs:
         try:
@@ -151,7 +188,14 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         except Exception:
             best_score = 0.0
 
-    if question_intent in _TECHNICAL_INTENTS and best_score < _WEAK_CONTEXT_THRESHOLD:
+    # ضعف context باید scale-aware باشد: کلیدواژه‌ای (0-100) و معنایی (کسینوس 0-1)
+    # مقیاس متفاوتی دارند؛ یک تطبیق معناییِ خوب نباید به‌خاطر مقیاسِ کوچکش دور ریخته شود.
+    _context_is_weak = (
+        _local_best < _WEAK_CONTEXT_THRESHOLD
+        and _vector_best < _VECTOR_RELEVANT_THRESHOLD
+    )
+
+    if question_intent in _TECHNICAL_INTENTS and related_docs and _context_is_weak:
         related_docs = []
         best_score = 0.0
         search_mode = f"{search_mode}+ignored_weak_internal_context"
@@ -245,8 +289,9 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             _is_standard_query
             or specific_model_question
             or not related_docs
-            # سند داخلی ضعیف (امتیاز پایین) هم با وب راستی‌آزمایی شود، نه فقط وقتی خالی است.
-            or best_score < _WEAK_CONTEXT_THRESHOLD
+            # سند داخلی ضعیف (نه کلیدواژه‌ایِ قوی، نه معناییِ مرتبط) هم با وب
+            # راستی‌آزمایی شود، نه فقط وقتی بازیابی خالی است.
+            or _context_is_weak
         )
     ):
         try:

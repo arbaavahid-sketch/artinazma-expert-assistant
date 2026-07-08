@@ -210,3 +210,98 @@ class TestAstmCodeExtraction:
 
     def test_multiple_codes_deduped_in_order(self):
         assert self._codes("ASTM D86 و ASTM A106 و D86") == ["D86", "A106"]
+
+
+class TestHybridRetrieval:
+    """بازیابی ترکیبی: سؤال فارسی باید سند انگلیسیِ مرتبط را از مسیر معنایی بگیرد."""
+
+    def _pipeline(self, message: str, monkeypatch, local_docs, vector_docs):
+        import routes.chat as chat_module
+        from schemas.models import ChatRequest
+
+        monkeypatch.setattr(
+            chat_module, "local_search_knowledge_base", lambda q, top_k=12: local_docs
+        )
+        monkeypatch.setattr(
+            chat_module, "search_knowledge_base", lambda q, top_k=6: vector_docs
+        )
+        return chat_module._build_chat_pipeline(ChatRequest(message=message))
+
+    @staticmethod
+    def _vec_doc(title, cosine, content="DPD method free chlorine ..."):
+        # شکل خروجی Qdrant: score نرمال‌شده (اولی همیشه 100) + کسینوس واقعی در breakdown
+        return {
+            "title": title,
+            "file_name": title,
+            "category": "water-analysis",
+            "content": content,
+            "score": 100.0,
+            "score_breakdown": {"algorithm": "qdrant_rrf_hybrid", "vector_score": cosine},
+        }
+
+    @staticmethod
+    def _local_doc(title, score, content="متن فارسی ..."):
+        return {"title": title, "file_name": title, "category": "general",
+                "content": content, "score": score}
+
+    def test_persian_question_reaches_english_doc(self, monkeypatch):
+        # کلیدواژه‌ای ضعیف (سند فارسیِ کم‌ربط) + معناییِ قوی (سند انگلیسی) → سند انگلیسی اول
+        p = self._pipeline(
+            "روش اندازه‌گیری کلر آزاد در آب چگونه است؟",
+            monkeypatch,
+            local_docs=[self._local_doc("08-آب-در-نفت.txt", 12.0)],
+            vector_docs=[self._vec_doc("Water Analysis.pdf", 0.52)],
+        )
+        assert p["search_mode"].startswith("hybrid")
+        assert p["related_docs"][0]["file_name"] == "Water Analysis.pdf"
+        assert "Water Analysis.pdf" in p["context"]
+
+    def test_strong_local_comes_first_but_vector_still_merged(self, monkeypatch):
+        p = self._pipeline(
+            "روش اندازه‌گیری کلر آزاد در آب چگونه است؟",
+            monkeypatch,
+            local_docs=[self._local_doc("سند-فارسی-قوی.txt", 40.0)],
+            vector_docs=[self._vec_doc("Water Analysis.pdf", 0.45)],
+        )
+        assert p["search_mode"].startswith("hybrid")
+        assert p["related_docs"][0]["file_name"] == "سند-فارسی-قوی.txt"
+        assert any(d["file_name"] == "Water Analysis.pdf" for d in p["related_docs"])
+
+    def test_irrelevant_vector_results_filtered(self, monkeypatch):
+        # کسینوس زیر آستانه (0.30) نباید وارد context شود؛ نمرهٔ نرمال‌شدهٔ 100 گول نزند.
+        p = self._pipeline(
+            "روش اندازه‌گیری کلر آزاد در آب چگونه است؟",
+            monkeypatch,
+            local_docs=[],
+            vector_docs=[self._vec_doc("Unrelated.pdf", 0.12)],
+        )
+        assert all(d["file_name"] != "Unrelated.pdf" for d in p["related_docs"])
+
+    def test_good_vector_match_not_discarded_as_weak(self, monkeypatch):
+        # قبلاً نتیجهٔ معنایی با نمرهٔ کوچک (مقیاس 0-1) به‌عنوان context ضعیف دور ریخته می‌شد.
+        p = self._pipeline(
+            "روش اندازه‌گیری کلر آزاد در آب چگونه است؟",
+            monkeypatch,
+            local_docs=[],
+            vector_docs=[self._vec_doc("Water Analysis.pdf", 0.50)],
+        )
+        assert "ignored_weak_internal_context" not in p["search_mode"]
+        assert p["related_docs"], "نتیجهٔ معنایی خوب نباید حذف شود"
+
+    def test_vector_failure_falls_back_to_local(self, monkeypatch):
+        import routes.chat as chat_module
+        from schemas.models import ChatRequest
+
+        monkeypatch.setattr(
+            chat_module, "local_search_knowledge_base",
+            lambda q, top_k=12: [self._local_doc("سند-فارسی.txt", 30.0)],
+        )
+        def _boom(q, top_k=6):
+            raise RuntimeError("embedding down")
+        monkeypatch.setattr(chat_module, "search_knowledge_base", _boom)
+
+        p = chat_module._build_chat_pipeline(
+            ChatRequest(message="روش اندازه‌گیری کلر آزاد در آب چگونه است؟")
+        )
+        assert p["related_docs"][0]["file_name"] == "سند-فارسی.txt"
+        assert p["search_mode"].startswith("local_fast")
