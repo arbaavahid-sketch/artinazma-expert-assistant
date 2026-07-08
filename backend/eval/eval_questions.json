@@ -178,6 +178,159 @@
       "must_not_include": [],
       "criteria": "باید تفاوت را درست بگوید (کارل فیشر برای مقادیر کم آب دقیق‌تر و حساس‌تر؛ D95 روش تقطیر برای مقادیر بالاتر) و انتخاب را به شرایط وابسته کند.",
       "verified": false
+    },
+
+    {
+      "id": "q17_real_d4294_vs_d5453",
+      "question": "برای اندازه‌گیری گوگرد کل در بنزین و گازوئیل، چه تفاوتی بین روش‌های XRF (مثل ASTM D4294) و UV Fluorescence (مثل ASTM D5453) وجود دارد و در چه شرایطی هرکدام مناسب‌تر است؟",
+      "expected_intent": "method_comparison",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید درست بگوید D4294 روش EDXRF و D5453 روش احتراقی/فلورسانس فرابنفش است؛ D5453 برای گوگرد پایین (سوخت کم‌گوگرد) حساس‌تر و D4294 سریع‌تر و ساده‌تر است؛ انتخاب به محدوده‌ی غلظت و ماتریس وابسته است. ادعای فنی نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q18_real_d3227_titrant",
+      "question": "محلول تیترانت را طبق ASTM D3227 چگونه درست کنم؟",
+      "expected_intent": "standard_explanation",
+      "source": "prod",
+      "must_include": [
+        "تیترانت نیترات نقره (AgNO3) الکلی"
+      ],
+      "must_not_include": [],
+      "criteria": "D3227 تیتراسیون پتانسیومتری گوگرد مرکاپتان است و تیترانت آن محلول استانداردِ نیترات نقره‌ی الکلی است. باید طرز تهیه/استانداردسازی همین تیترانت را بدهد، نه محلول نامرتبط.",
+      "verified": false
+    },
+    {
+      "id": "q19_real_d86_repeatability",
+      "question": "در ASTM D86 نتیجه‌ی نمونه تا چند درجه بالا یا پایین قابل قبول است؟",
+      "expected_intent": "lab_analysis",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید توضیح دهد محدوده‌ی قابل‌قبول با تکرارپذیری (repeatability) و تجدیدپذیری (reproducibility) استاندارد در هر نقطه‌ی بازیافت تعریف می‌شود، نه یک عدد ثابت واحد. نباید یک «±X°C» ساختگی به‌عنوان قانون کلی بدهد.",
+      "verified": false
+    },
+    {
+      "id": "q20_real_mercaptan_titrator",
+      "question": "یک تیتراتور پتانسیومتری برای اندازه‌گیری مرکاپتان می‌خواهم؛ دستگاه، الکترود و استانداردهای موردنیاز را معرفی کن.",
+      "expected_intent": "equipment_recommendation",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید تیتراتور پتانسیومتری مناسب، الکترود نقره/مرجع، و تیترانت نیترات نقره طبق ASTM D3227 را معرفی کند. نباید مدل ساختگی با مشخصات جعلی معرفی کند؛ می‌تواند به برندهای رایج اشاره کند.",
+      "verified": false
+    },
+    {
+      "id": "q21_real_reforming_vs_isomerization",
+      "question": "فرق رفورمینگ با ایزومریزاسیون چیست؟",
+      "expected_intent": "technical_general",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید درست بگوید رفورمینگ عدد اکتان را عمدتاً با تبدیل نفتن‌ها/پارافین‌ها به آروماتیک‌ها بالا می‌برد (تولید آروماتیک و هیدروژن)، ولی ایزومریزاسیون پارافین‌های نرمال سبک را به ایزوپارافین شاخه‌دار تبدیل می‌کند تا اکتان بدون تولید آروماتیک بالا برود.",
+      "verified": false
+    },
+    {
+      "id": "q22_real_gc_fid_vs_tcd",
+      "question": "تفاوت GC-FID و GC-TCD در آنالیز گاز طبیعی چیست؟",
+      "expected_intent": "method_comparison",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید درست بگوید FID فقط هیدروکربن‌ها را حس می‌کند و به گازهای دائمی (N2, CO2, He) پاسخ نمی‌دهد ولی برای هیدروکربن‌ها بسیار حساس است؛ TCD جهانی است و گازهای دائمی/معدنی (N2, CO2, H2) را هم می‌بیند ولی حساسیت کمتری دارد. در آنالیز گاز طبیعی اغلب هر دو به‌کار می‌روند.",
+      "verified": false
+    },
+    {
+      "id": "q23_real_d4294_lod",
+      "question": "حد تشخیص پایین گوگرد در ASTM D4294 چند ppm است؟",
+      "expected_intent": "standard_explanation",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [
+        "یک عدد LOD قطعی که ادعا شود توسط خودِ استاندارد D4294 تعریف شده است"
+      ],
+      "criteria": "پاسخ درست: حد تشخیص عددِ ثابتِ تعریف‌شده در خودِ استاندارد نیست و به طراحی/کارایی آنالایزر EDXRF بستگی دارد؛ به‌طور عملی در دستگاه‌های مدرن حدود ۱ تا ۲ ppm است و برای عدد رسمی باید به دیتاشیت دستگاه مراجعه شود.",
+      "verified": false
+    },
+    {
+      "id": "q24_real_xrf_vs_icp_metals",
+      "question": "چه تفاوت‌های عملی و کاربردی بین روش‌های XRF و ICP-OES برای اندازه‌گیری فلزات در نمونه‌های نفتی و پتروشیمی وجود دارد؟",
+      "expected_intent": "method_comparison",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید درست بگوید XRF سریع، با آماده‌سازی کم و غیرتخریبی است ولی حد تشخیصش بالاتر و وابسته به اثر ماتریس است؛ ICP-OES نیاز به هضم دارد ولی حد تشخیص پایین‌تر (sub-ppm تا ppb)، چندعنصری و برای گزارش رسمی مناسب‌تر است.",
+      "verified": false
+    },
+    {
+      "id": "q25_real_d3227_explain",
+      "question": "در مورد ASTM D3227 برایم توضیح بده.",
+      "expected_intent": "standard_explanation",
+      "source": "prod",
+      "must_include": [
+        "گوگرد مرکاپتان (thiol/mercaptan sulfur)",
+        "تیتراسیون پتانسیومتری"
+      ],
+      "must_not_include": [],
+      "criteria": "D3227 روش تعیین گوگرد مرکاپتان با تیتراسیون پتانسیومتری است. باید همین را درست توضیح دهد و کد را با کد دیگری جایگزین نکند.",
+      "verified": false
+    },
+    {
+      "id": "q26_real_d2887_explain",
+      "question": "در مورد ASTM D2887 برایم توضیح بده.",
+      "expected_intent": "standard_explanation",
+      "source": "prod",
+      "must_include": [
+        "توزیع محدوده‌ی جوش (boiling range distribution)",
+        "با کروماتوگرافی گازی / تقطیر شبیه‌سازی‌شده (SimDist)"
+      ],
+      "must_not_include": [],
+      "criteria": "D2887 تعیین توزیع محدوده‌ی جوش فرآورده‌های نفتی با کروماتوگرافی گازی (تقطیر شبیه‌سازی‌شده) است. باید همین را درست بیاورد.",
+      "verified": false
+    },
+    {
+      "id": "q27_real_density_astm",
+      "question": "در مورد چگالی برایم توضیح بده و استاندارد ASTM آن چند است؟",
+      "expected_intent": "technical_general",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید مفهوم چگالی را درست بگوید و به استاندارد(های) مرتبط ASTM اشاره کند (مثلاً D1298 با هیدرومتر یا D4052 با دستگاه چگالی‌سنج دیجیتال). نباید کد ASTM جعلی/نامرتبط بدهد.",
+      "verified": false
+    },
+    {
+      "id": "q28_real_soil_heavy_metals",
+      "question": "برای آنالیز فلزات سنگین در خاک، یک دستگاه معرفی کن.",
+      "expected_intent": "equipment_recommendation",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید روش/دستگاه مرتبط با فلزات سنگین در خاک را معرفی کند (مثلاً XRF برای غربالگری، یا ICP-OES/ICP-MS پس از هضم برای دقت بالا). نباید مدل ساختگی با مشخصات جعلی بسازد.",
+      "verified": false
+    },
+    {
+      "id": "q29_real_astm_a106_link",
+      "question": "لینک استاندارد ASTM A106 را بده.",
+      "expected_intent": "standard_explanation",
+      "source": "prod",
+      "must_include": [
+        "https://store.astm.org/standards/a106"
+      ],
+      "must_not_include": [],
+      "criteria": "A106 یک استاندارد سری A (لوله‌ی فولادی کربنی) است. لینک رسمی درست https://store.astm.org/standards/a106 است. توجه: سرویس لینک فعلی فقط سری D را پوشش می‌دهد، پس این سؤال احتمالاً شکاف سری A را نشان می‌دهد. نباید URL غلط بسازد.",
+      "verified": true
+    },
+    {
+      "id": "q30_real_identity",
+      "question": "تو کی هستی؟",
+      "expected_intent": "technical_general",
+      "source": "prod",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید خود را «آرتین»، دستیار/مشاور فنی آرتین آزما مهر در حوزه‌ی تجهیزات و مواد آزمایشگاهی و صنعت نفت/گاز/پتروشیمی معرفی کند. نباید خود را یک هوش مصنوعی عمومی/ChatGPT معرفی کند.",
+      "verified": false
     }
   ]
 }
