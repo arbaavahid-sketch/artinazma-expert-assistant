@@ -68,7 +68,18 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8010/health)",
       "Bash(grep -iE \"docker|deploy|fly|render|railway|vercel|procfile|makefile|\\\\.sh$\")",
       "Bash(git push *)",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(TESTING=1 QDRANT_URL='' PYTHONIOENCODING=utf-8 /d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -c ' *)",
+      "Bash(curl -s --max-time 30 \"https://assistant.artinazma.net/api/questions/stats-public\")",
+      "Bash(PYTHONIOENCODING=utf-8 /d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m pytest tests/ -q)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8011 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8011/health)",
+      "Bash(/d/artinazma-expert-assistant/backend/venv/Scripts/python.exe -m uvicorn main:app --port 8012 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8012/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 10 http://127.0.0.1:8012/health)",
+      "Bash(./venv/Scripts/python.exe -m uvicorn main:app --port 8013 --log-level warning)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8013/health)",
+      "Bash(PYTHONIOENCODING=utf-8 ./venv/Scripts/python.exe -m eval.run_eval --base-url http://127.0.0.1:8013 --out eval/reports/baseline_30q.json)"
     ]
   }
 }
