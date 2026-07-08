@@ -22,6 +22,7 @@ from utils.chat_utils import (
 )
 
 from intent_service import detect_question_intent
+from astm_link_service import official_astm_url, build_official_links, seed_valid
 from local_search_service import local_search_knowledge_base, build_local_answer
 from knowledge_service import search_knowledge_base
 from site_resource_service import find_artinazma_resources
@@ -47,6 +48,9 @@ router = APIRouter()
 _response_cache = make_response_cache(maxsize=200, ttl=3600)
 _COMMERCIAL_INTENTS = {"commercial_request"}
 
+# کدهای دیکشنری داخلی را از پیش «معتبر» علامت بزن تا برایشان بررسی شبکه لازم نشود.
+seed_valid(_ASTM_KNOWN_STANDARDS)
+
 
 def _build_chat_pipeline(body: ChatRequest) -> dict:
     """
@@ -69,18 +73,22 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     related_docs: list = []
     search_mode = "unknown"
 
-    # ── استخراج عنوان + لینک رسمی استاندارد ASTM از دیکشنری داخلی ──
+    # ── استخراج عنوان + لینک رسمی استاندارد ASTM ──
     # لینک رسمی ASTM قطعی و از روی کد ساختنی است: store.astm.org/standards/d<شماره>.
     # آن را خودمان تزریق می‌کنیم چون مدل (حتی با وب روشن) URL را با الگوی غلط می‌سازد
     # (مثلاً www.astm.org/d0086 به‌جای store.astm.org/standards/d86).
+    # کدهای دیکشنری داخلی عنوانِ معتبر هم می‌گیرند؛ بقیهٔ کدهای ASTM فقط لینک (با
+    # اعتبارسنجی ۴۰۴) — تا کل استانداردهای ASTM پوشش داده شوند، نه فقط دیکشنری.
     _astm_inject: str = ""
+    _astm_link_inject: str = ""
     if has_astm_code:
         _astm_matches = re.findall(r"\bD\s*(\d{2,5})\b", body.message, flags=re.IGNORECASE)
-        _known_codes = [f"D{n}" for n in _astm_matches if f"D{n}" in _ASTM_KNOWN_STANDARDS]
+        _astm_codes = [f"D{n}" for n in _astm_matches]
+        _known_codes = [c for c in _astm_codes if c in _ASTM_KNOWN_STANDARDS]
         if _known_codes:
             _lines = [
                 f"• {_ASTM_KNOWN_STANDARDS[code]}\n"
-                f"  لینک رسمی (خرید/مشاهده): https://store.astm.org/standards/{code.lower()}"
+                f"  لینک رسمی (خرید/مشاهده): {official_astm_url(code)}"
                 for code in _known_codes
             ]
             _astm_inject = (
@@ -89,6 +97,16 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
                 + "\n⚠️ قانون مطلق: دقیقاً همین استاندارد(ها) را توضیح بده و هرگز کد را با کد دیگری جایگزین نکن."
                 + "\n⚠️ اگر کاربر لینک/آدرس/دانلود استاندارد را خواست، فقط و فقط همین «لینک رسمی» بالا را بده"
                 " و هرگز URL دیگری از خودت نساز یا حدس نزن."
+            )
+        # درخواست لینک برای کدهای خارج از دیکشنری: لینک قطعی با اعتبارسنجی ۴۰۴.
+        _unknown_codes = [c for c in _astm_codes if c not in _ASTM_KNOWN_STANDARDS]
+        _asks_for_source = bool(
+            re.search(r"لینک|link|url|آدرس|دانلود|download|خرید|بخرم|تهیه|بگیرم",
+                      body.message, flags=re.IGNORECASE)
+        )
+        if _asks_for_source and _unknown_codes:
+            _astm_link_inject = build_official_links(
+                _unknown_codes, set(_ASTM_KNOWN_STANDARDS)
             )
 
     if has_astm_code:
@@ -154,6 +172,10 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         except Exception as e:
             logger.warning("ArtinAzma resource search failed: %s", e)
 
+    # لینک رسمی ASTM برای کدهای خارج از دیکشنری (جدا از منطق شرکت تا بازنویسی نشود)
+    if _astm_link_inject:
+        artinazma_context = f"{artinazma_context}\n\n{_astm_link_inject}".strip()
+
     # ── Web search flag ──
     allow_web_search = True
     if body.response_mode == "brief":
@@ -166,8 +188,9 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     # ثابت دارد. در این حالت وب‌سرچ فقط نویز و ناپایداری اضافه می‌کند (پاسخ به یک
     # سؤال یکسان بین اجراها فرق می‌کرد و گاهی از موضوع منحرف می‌شد)، پس خاموشش کن.
     # لینک رسمی هم به‌صورت قطعی تزریق می‌شود (store.astm.org/standards/d<کد>)، پس حتی
-    # برای درخواست لینک هم نیازی به وب نیست — وب فقط URL غلط تولید می‌کرد.
-    if _astm_inject:
+    # برای درخواست لینک هم نیازی به وب نیست — وب فقط URL غلط تولید می‌کرد. این برای
+    # کدهای خارج از دیکشنری هم صدق می‌کند (لینک قطعی + اعتبارسنجی ۴۰۴).
+    if _astm_inject or _astm_link_inject:
         allow_web_search = False
     if question_intent in _COMMERCIAL_INTENTS:
         allow_web_search = False

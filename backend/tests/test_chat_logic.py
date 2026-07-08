@@ -156,3 +156,22 @@ class TestAstmWebSearchFlag:
         p = self._pipeline("لینک ASTM D86 را بده")
         assert "https://store.astm.org/standards/d86" in p["context"]
         assert "d0086" not in p["context"]
+
+    def test_unknown_astm_code_link_is_verified(self, monkeypatch):
+        # کد خارج از دیکشنری (مثلاً D2887) هنگام درخواست لینک باید با اعتبارسنجی
+        # لینک قطعی بگیرد — بدون وب. شبکه را mock می‌کنیم تا تست آفلاین بماند.
+        import astm_link_service
+        astm_link_service._CACHE.pop("d2887", None)
+        monkeypatch.setattr(astm_link_service, "verify_astm_code", lambda code: True)
+        p = self._pipeline("لینک استاندارد ASTM D2887 را بده")
+        assert p["allow_web_search"] is False
+        assert "https://store.astm.org/standards/d2887" in p["context"]
+
+    def test_fake_astm_code_link_is_not_fabricated(self, monkeypatch):
+        # کد جعلی (۴۰۴) نباید لینک بگیرد؛ به‌جایش هشدار «یافت نشد».
+        import astm_link_service
+        astm_link_service._CACHE.pop("d99999", None)
+        monkeypatch.setattr(astm_link_service, "verify_astm_code", lambda code: False)
+        p = self._pipeline("لینک استاندارد ASTM D99999 را بده")
+        assert "https://store.astm.org/standards/d99999" not in p["context"]
+        assert "یافت نشد" in p["context"]
