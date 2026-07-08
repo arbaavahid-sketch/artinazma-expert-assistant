@@ -4,7 +4,7 @@ import logging
 import os
 import threading
 from datetime import datetime, timezone
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from google_drive_service import sync_google_drive_folder
 from repositories.settings_repo import get_setting, set_setting
@@ -12,6 +12,11 @@ from repositories.settings_repo import get_setting, set_setting
 
 logger = logging.getLogger("artin_scheduler")
 _sync_lock = threading.Lock()
+
+# نتیجهٔ کامل آخرین اجرا (شامل ریز نتایج فایل‌ها) برای نمایش در پنل ادمین.
+# در حافظهٔ همین پروسه است؛ خلاصهٔ متنی همچنان در settings ذخیره می‌شود.
+_last_run_result: Optional[Dict[str, Any]] = None
+_last_run_lock = threading.Lock()
 
 
 def _now_iso() -> str:
@@ -35,6 +40,18 @@ def get_gdrive_sync_status() -> str:
     return stored_status or "idle"
 
 
+def get_last_run_result() -> Optional[Dict[str, Any]]:
+    """نتیجهٔ کامل آخرین سینکِ این پروسه (یا None اگر هنوز اجرایی نبوده)."""
+    with _last_run_lock:
+        return _last_run_result
+
+
+def _store_last_run(result: Dict[str, Any]) -> None:
+    global _last_run_result
+    with _last_run_lock:
+        _last_run_result = result
+
+
 def _format_result(result: Dict[str, Any]) -> str:
     added = int(result.get("added_files") or 0)
     unchanged = int(result.get("unchanged_files") or 0)
@@ -49,15 +66,22 @@ def _format_result(result: Dict[str, Any]) -> str:
     )
 
 
-def _sync_worker(trigger: str, folder_id: str) -> None:
+def _sync_worker(
+    trigger: str,
+    folder_id: str,
+    max_files: int,
+    force_resync: bool,
+) -> None:
     try:
         logger.info("Starting %s Google Drive sync", trigger)
 
         result = sync_google_drive_folder(
             root_folder_id=folder_id,
-            max_files=200,
-            force_resync=False,
+            max_files=max_files,
+            force_resync=force_resync,
         )
+
+        _store_last_run(result)
 
         if not result.get("success"):
             raise RuntimeError(
@@ -89,7 +113,11 @@ def _sync_worker(trigger: str, folder_id: str) -> None:
         _sync_lock.release()
 
 
-def start_gdrive_sync(trigger: str = "manual") -> Tuple[bool, str]:
+def start_gdrive_sync(
+    trigger: str = "manual",
+    max_files: int = 200,
+    force_resync: bool = False,
+) -> Tuple[bool, str]:
     folder_id = os.getenv("GOOGLE_DRIVE_ROOT_FOLDER_ID", "").strip()
 
     if not folder_id:
@@ -107,7 +135,7 @@ def start_gdrive_sync(trigger: str = "manual") -> Tuple[bool, str]:
 
         worker = threading.Thread(
             target=_sync_worker,
-            args=(trigger, folder_id),
+            args=(trigger, folder_id, max_files, force_resync),
             name=f"gdrive-sync-{trigger}",
             daemon=True,
         )

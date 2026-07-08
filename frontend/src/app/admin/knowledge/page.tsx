@@ -435,7 +435,9 @@ export default function KnowledgePage() {
     setDriveSyncFilter("all");
 
     try {
-      const res = await fetch(adminUrl("/knowledge/sync-google-drive"), {
+      // سینک در پس‌زمینهٔ سرور اجرا می‌شود تا درخواست طولانی به timeout پروکسی نخورد؛
+      // اینجا فقط شروع می‌کنیم و بعد وضعیت را poll می‌کنیم.
+      const startRes = await fetch(adminUrl("/admin/gdrive-sync-now"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -446,17 +448,71 @@ export default function KnowledgePage() {
         }),
       });
 
-      const data = await res.json();
+      const startData = await startRes.json();
 
-      if (!data.success) {
-        setDriveSyncMessage(data.message || (isEn ? "Google Drive sync failed." : "خطا در همگام‌سازی Google Drive."));
+      if (!startData.success && !startData.already_running) {
+        setDriveSyncMessage(startData.message || (isEn ? "Google Drive sync failed to start." : "خطا در شروع همگام‌سازی Google Drive."));
         return;
       }
 
+      const startedAt = Date.now();
+      const maxWaitMs = 30 * 60 * 1000; // حداکثر ۳۰ دقیقه انتظار
+
+      // polling وضعیت تا پایان سینک
+      let finalStatus = "running";
+      let lastResult: Record<string, unknown> | null = null;
+      let lastResultText = "";
+
+      while (Date.now() - startedAt < maxWaitMs) {
+        const elapsed = Math.round((Date.now() - startedAt) / 1000);
+        setDriveSyncMessage(
+          isEn
+            ? `Syncing in background… (${elapsed}s)`
+            : `در حال همگام‌سازی در پس‌زمینه… (${elapsed} ثانیه)`,
+        );
+
+        await new Promise((r) => setTimeout(r, 4000));
+
+        try {
+          const st = await fetch(adminUrl("/admin/gdrive-sync-result"));
+          const stData = await st.json();
+          finalStatus = stData.sync_status || "running";
+          lastResult = stData.result || null;
+          lastResultText = stData.last_result_text || "";
+          if (finalStatus !== "running") break;
+        } catch {
+          // خطای گذرای شبکه در polling مهم نیست؛ دوباره تلاش می‌کنیم.
+        }
+      }
+
+      if (finalStatus === "running") {
+        setDriveSyncMessage(
+          isEn
+            ? "Sync is still running in the background. Check back in a few minutes."
+            : "همگام‌سازی هنوز در پس‌زمینه ادامه دارد؛ چند دقیقه دیگر همین صفحه را بررسی کنید.",
+        );
+        return;
+      }
+
+      if (finalStatus === "error") {
+        setDriveSyncMessage(lastResultText || (isEn ? "Google Drive sync failed." : "خطا در همگام‌سازی Google Drive."));
+        return;
+      }
+
+      const data = (lastResult || {}) as {
+        processed_files?: number;
+        added_files?: number;
+        unchanged_files?: number;
+        skipped_files?: number;
+        chunks_added?: number;
+        results?: DriveSyncResult[];
+        summary?: DriveSyncSummary;
+      };
+
       setDriveSyncMessage(
         isEn
-          ? `Sync completed. Processed files: ${data.processed_files}, added files: ${data.added_files}, unchanged: ${data.unchanged_files || 0}, skipped files: ${data.skipped_files}, added text chunks: ${data.chunks_added}`
-          : `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files}، فایل‌های اضافه‌شده: ${data.added_files}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files}، بخش‌های متنی اضافه‌شده: ${data.chunks_added}`,
+          ? `Sync completed. Processed files: ${data.processed_files ?? "?"}, added files: ${data.added_files ?? "?"}, unchanged: ${data.unchanged_files || 0}, skipped files: ${data.skipped_files ?? "?"}, added text chunks: ${data.chunks_added ?? "?"}`
+          : `همگام‌سازی انجام شد. فایل‌های پردازش‌شده: ${data.processed_files ?? "؟"}، فایل‌های اضافه‌شده: ${data.added_files ?? "؟"}، بدون تغییر: ${data.unchanged_files || 0}، فایل‌های ردشده: ${data.skipped_files ?? "؟"}، بخش‌های متنی اضافه‌شده: ${data.chunks_added ?? "؟"}`,
       );
 
       const results = data.results || [];

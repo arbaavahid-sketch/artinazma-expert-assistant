@@ -13,6 +13,7 @@ from fastapi.responses import Response
 
 from schemas.models import (
     GDriveSyncScheduleRequest,
+    GoogleDriveSyncRequest,
     EmailSettingsRequest,
     TelegramSettingsRequest,
     CustomerNotifyRequest,
@@ -38,7 +39,7 @@ from db_service import (
     get_customer_by_id,
 )
 from knowledge_service import get_knowledge_stats
-from gdrive_sync_manager import get_gdrive_sync_status, start_gdrive_sync
+from gdrive_sync_manager import get_gdrive_sync_status, start_gdrive_sync, get_last_run_result
 from push_service import send_push_to_customer, is_push_configured
 from ai_service import get_response_cache_stats as _get_ai_cache_stats
 
@@ -213,9 +214,13 @@ def set_gdrive_schedule(body: GDriveSyncScheduleRequest, _=Depends(require_admin
 
 
 @router.post("/admin/gdrive-sync-now")
-def run_gdrive_sync_now(_=Depends(require_admin)):
+def run_gdrive_sync_now(body: GoogleDriveSyncRequest | None = None, _=Depends(require_admin)):
     """Start an immediate Google Drive sync without blocking the request."""
-    started, message = start_gdrive_sync(trigger="manual")
+    started, message = start_gdrive_sync(
+        trigger="manual",
+        max_files=(body.max_files if body else 200),
+        force_resync=(body.force_resync if body else False),
+    )
 
     return {
         "success": started,
@@ -223,6 +228,18 @@ def run_gdrive_sync_now(_=Depends(require_admin)):
         and get_gdrive_sync_status() == "running",
         "message": message,
         "sync_status": get_gdrive_sync_status(),
+    }
+
+
+@router.get("/admin/gdrive-sync-result")
+def gdrive_sync_result(_=Depends(require_admin)):
+    """وضعیت و نتیجهٔ کامل آخرین همگام‌سازی (برای polling پنل ادمین)."""
+    return {
+        "sync_status": get_gdrive_sync_status(),
+        "started_at": get_setting("gdrive_sync_started_at", ""),
+        "finished_at": get_setting("gdrive_sync_finished_at", ""),
+        "last_result_text": get_setting("gdrive_last_sync_result", ""),
+        "result": get_last_run_result(),
     }
 
 
