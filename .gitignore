@@ -274,3 +274,6 @@ frontend/android/app/release/output-metadata.json
 # Android signing secrets
 frontend/android/app/*.jks
 frontend/android/app/keystore.properties
+
+# Claude Code local (per-machine) settings
+.claude/settings.local.json
