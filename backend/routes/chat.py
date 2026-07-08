@@ -31,6 +31,11 @@ from astm_link_service import (
 from local_search_service import local_search_knowledge_base, build_local_answer
 from knowledge_service import search_knowledge_base
 from site_resource_service import find_artinazma_resources
+from web_search_service import (
+    search_web_sources,
+    build_web_context,
+    is_web_search_configured,
+)
 from ai_service import ask_expert_assistant, ask_expert_assistant_stream
 from db_service import (
     save_expert_question,
@@ -222,6 +227,40 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
 
     if body.context:
         context = f"اطلاعات خارجی ارائه‌شده توسط کاربر:\n{body.context}\n\n---\n\n{context}".strip()
+
+    # ── وب‌سرچ واقعی (Tavily) ──
+    # وقتی وب مجاز است، برای سؤال‌های استاندارد (ISO/ASTM/EN/…)، محصول/مدل، یا وقتی
+    # بازیابی داخلی خالی است، منابع زندهٔ وب را می‌آوریم تا مدل به‌جای حدس از حافظه بر
+    # داده تکیه کند. برای سؤال استاندارد، تطبیقِ ضعیفِ داخلی معمولاً گمراه‌کننده است،
+    # پس منبع وب را مبنای اصلی می‌گذاریم. اگر Tavily پیکربندی نشده/خطا داد، بی‌سروصدا
+    # صرف‌نظر می‌شود و رفتار قبلی حفظ می‌ماند (fallback امن).
+    _is_standard_query = bool(
+        re.search(r"\b(ISO|ASTM|EN|IP|DIN|GOST|IEC|API|ISIRI|JIS|BS|EPA|UOP|NACE)\b",
+                  body.message, flags=re.IGNORECASE)
+    )
+    if (
+        allow_web_search
+        and is_web_search_configured()
+        and (_is_standard_query or specific_model_question or not related_docs)
+    ):
+        try:
+            _web_results = search_web_sources(body.message, max_results=5)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("web search failed: %s", e)
+            _web_results = []
+        if _web_results:
+            _web_block = (
+                "=== نتایج جست‌وجوی وب (منابع بیرونیِ زنده و معتبر) ===\n"
+                "پاسخ را دقیقاً بر پایهٔ همین منابع بده؛ اگر با حافظه‌ات تعارض داشت، منابع وب "
+                "ارجح‌اند و از حدسِ حافظه‌ای یا انکار پرهیز کن.\n"
+                f"{build_web_context(_web_results)}"
+            )
+            if _is_standard_query:
+                # برای استاندارد، منبع وب معتبرتر از تطبیقِ ضعیفِ داخلی است.
+                context = (f"{_web_block}\n\n{context}".strip() if context else _web_block)
+            else:
+                context = (f"{context}\n\n{_web_block}".strip() if context else _web_block)
+            search_mode = f"{search_mode}+tavily"
 
     # ── Domain detection ──
     auto_domain = detect_domain(body.message)

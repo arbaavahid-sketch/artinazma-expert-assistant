@@ -3,11 +3,25 @@ import re
 from typing import Any, Dict, List
 
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()  # تضمین بارگذاری .env مستقل از ترتیب ایمپورت
 
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "").strip()
 WEB_SEARCH_ENABLED = os.getenv("WEB_SEARCH_ENABLED", "false").strip().lower() == "true"
+WEB_SEARCH_TIMEOUT = float(os.getenv("WEB_SEARCH_TIMEOUT", "12"))
 
 TAVILY_SEARCH_URL = "https://api.tavily.com/search"
+
+
+def _proxies():
+    """پروکسیِ خروجی برای شبکه‌های محدود (ایران) — همان پروکسی OpenAI را هم می‌پذیرد."""
+    proxy = (
+        os.getenv("WEB_SEARCH_PROXY")
+        or os.getenv("OPENAI_PROXY")
+        or ""
+    ).strip()
+    return {"http": proxy, "https": proxy} if proxy else None
 
 TECHNICAL_QUERY_HINTS = [
     "datasheet",
@@ -102,15 +116,28 @@ def should_use_web_fallback(
     return False
 
 
+_STANDARD_BODIES_RE = re.compile(
+    r"\b(ISO|ASTM|EN|IP|DIN|GOST|IEC|API|ISIRI|JIS|BS|EPA|UOP|NACE)\b", re.IGNORECASE
+)
+
+
 def build_search_query(user_query: str) -> str:
     clean_query = " ".join((user_query or "").split())
 
     if not clean_query:
         return ""
 
-    hint = " ".join(TECHNICAL_QUERY_HINTS)
+    # سؤال استاندارد: هینتِ «standard specification» به‌جای هینت‌های دیتاشیت که
+    # نتیجه را به سمت PDFهای محصول منحرف می‌کردند.
+    if _STANDARD_BODIES_RE.search(clean_query):
+        return f"{clean_query} standard specification scope"
 
-    return f"{clean_query} {hint}"
+    # سؤال محصول/مدل: هینت سبک برای رسیدن به دیتاشیت/مشخصات.
+    if looks_like_specific_model_question(clean_query):
+        return f"{clean_query} datasheet specifications"
+
+    # بقیه: کوئریِ تمیز، بدون هینتِ مزاحم.
+    return clean_query
 
 
 def score_web_result(result: Dict[str, Any]) -> float:
@@ -154,7 +181,8 @@ def search_web_sources(query: str, max_results: int = 5) -> List[Dict[str, Any]]
         res = requests.post(
             TAVILY_SEARCH_URL,
             json=payload,
-            timeout=25,
+            timeout=WEB_SEARCH_TIMEOUT,
+            proxies=_proxies(),
         )
 
         if not res.ok:
