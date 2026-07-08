@@ -23,6 +23,9 @@ _CSRF_COOKIE = "artin_csrf"
 _CSRF_EXEMPT_PATHS = {
     "/chat", "/chat-stream", "/ws/chat",
     "/customers/login", "/customers/register", "/customers/logout",
+    # مثل login/register از جنس «قبل از ورود» هستند (هنوز sessionای نیست که CSRF
+    # برایش معنا داشته باشد) و هر دو rate-limit دارند.
+    "/customers/forgot-password", "/customers/reset-password",
     "/customer-requests",
     "/analyze-image", "/analyze-file", "/transcribe",
     "/tts",
