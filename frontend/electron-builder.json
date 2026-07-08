@@ -15,7 +15,7 @@
   "publish": [
     {
       "provider": "generic",
-      "url": "https://assistant.artinazma.net/desktop/"
+      "url": "https://assistant.artinazma.net/downloads/"
     }
   ],
   "win": {
