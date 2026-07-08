@@ -274,6 +274,56 @@ class TestCustomerAuth:
         data = res.json()
         assert data["success"] is False
 
+    def test_forgot_password_fails_when_email_is_not_configured(self, app_client):
+        # تنظیمات ایمیل را صریحاً خالی کن تا تست مستقل از ترتیب اجرا باشد
+        # (تستِ ارسال موفق، email_settings را در همین DB مشترک تنظیم می‌کند).
+        import json
+        from db_service import set_setting
+
+        set_setting("email_settings", json.dumps({}))
+
+        res = app_client.post("/customers/forgot-password", json={
+            "email": "missing-smtp@example.com",
+        })
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is False
+
+    def test_forgot_password_sends_reset_link_and_token_verifies(self, app_client, test_db, monkeypatch):
+        import json
+        import random
+        import email_service
+        from db_service import set_setting
+        from repositories.customer_repo import create_customer
+
+        email = f"reset_{random.randint(10000, 99999)}@example.com"
+        create_customer(full_name="Reset Test", email=email, password="oldpass123")
+        set_setting("email_settings", json.dumps({
+            "smtp_host": "smtp.example.com",
+            "smtp_port": 587,
+            "smtp_user": "sender@example.com",
+            "smtp_pass": "secret",
+            "from_addr": "sender@example.com",
+        }))
+
+        sent = {}
+
+        def fake_send_password_reset_email(settings, to_addr, full_name, token):
+            sent["to_addr"] = to_addr
+            sent["token"] = token
+            return True, "sent"
+
+        monkeypatch.setattr(email_service, "send_password_reset_email", fake_send_password_reset_email)
+
+        res = app_client.post("/customers/forgot-password", json={"email": email})
+        assert res.status_code == 200
+        assert res.json()["success"] is True
+        assert sent["to_addr"] == email
+
+        verify_res = app_client.get(f"/customers/verify-reset-token?token={sent['token']}")
+        assert verify_res.status_code == 200
+        assert verify_res.json()["valid"] is True
+
     def test_profile_without_token(self, app_client):
         """دسترسی به پروفایل بدون توکن باید 401 برگرداند."""
         res = app_client.get("/customers/1")

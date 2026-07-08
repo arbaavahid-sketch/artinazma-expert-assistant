@@ -24,8 +24,8 @@ function ResetPasswordInner() {
   useEffect(() => {
     if (!token) { setTokenValid(false); return; }
     fetch(apiUrl(`/customers/verify-reset-token?token=${token}`))
-      .then((r) => r.json())
-      .then((data) => setTokenValid(data.valid))
+      .then(async (r) => ({ ok: r.ok, data: await r.json() }))
+      .then(({ ok, data }) => setTokenValid(ok && data.valid))
       .catch(() => setTokenValid(false));
   }, [token]);
 

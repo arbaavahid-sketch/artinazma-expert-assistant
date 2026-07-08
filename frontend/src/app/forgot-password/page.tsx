@@ -30,8 +30,13 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      setSuccess(true);
-      setMessage(data.message || (isEn ? "If the email is valid, a reset link will be sent." : "اگر ایمیل معتبر باشد، لینک بازیابی ارسال می‌شود."));
+      if (res.ok && data.success) {
+        setSuccess(true);
+        setMessage(data.message || (isEn ? "If the email is valid, a reset link will be sent." : "اگر ایمیل معتبر باشد، لینک بازیابی ارسال می‌شود."));
+      } else {
+        setSuccess(false);
+        setMessage(data.message || (isEn ? "Reset email could not be sent." : "ارسال ایمیل بازیابی انجام نشد."));
+      }
     } catch {
       setMessage(isEn ? "Server connection error." : "خطا در اتصال به سرور.");
     } finally {
@@ -94,7 +99,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <div className="mt-6 rounded-2xl bg-emerald-50 p-6 text-center">
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl">
-                ✉️
+                <Mail size={26} />
               </div>
               <p className="leading-8 text-emerald-800">{message}</p>
               <p className="mt-2 text-sm text-emerald-600">

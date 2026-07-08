@@ -15,14 +15,40 @@ const activeColorClass = {
 
 function IranFlag() {
   return (
-    <span
+    <svg
       aria-hidden="true"
+      viewBox="0 0 32 20"
       className="block h-5 w-8 overflow-hidden rounded-[5px] border border-slate-200 shadow-sm"
-      style={{
-        background:
-          "linear-gradient(to bottom, #239f40 0 33.33%, #ffffff 33.33% 66.66%, #da0000 66.66% 100%)",
-      }}
-    />
+    >
+      {/* استایل flat: سبز روشن، سفید، قرمز ملایم + نوارهای کنگره‌ایِ سفید */}
+      <rect width="32" height="20" fill="#f5f5f5" />
+      <rect width="32" height="6.67" fill="#73af00" />
+      <rect y="13.33" width="32" height="6.67" fill="#ff4b55" />
+      {/* نوار کنگره‌ای لبهٔ سبز و لبهٔ قرمز (تکبیر) */}
+      <g fill="#f5f5f5">
+        <path d="M0 5.55 H32 V6.0 H0 Z" />
+        <path d="M0 14.0 H32 V14.45 H0 Z" />
+      </g>
+      <g fill="none" strokeLinecap="butt">
+        <path d="M0 6.35 H32" stroke="#f5f5f5" strokeWidth="0.7" strokeDasharray="0.9 0.6" />
+        <path d="M0 13.65 H32" stroke="#f5f5f5" strokeWidth="0.7" strokeDasharray="0.9 0.6" />
+      </g>
+      {/* نشان الله: شمشیر مرکزی + دو جفت هلال توپُر + تشدید */}
+      <g transform="translate(16 10.05) scale(0.62)" fill="#ff4b55">
+        {/* شمشیر مرکزی */}
+        <path d="M0 -3.4 L0.5 -2.45 L0.5 2.0 L0 3.55 L-0.5 2.0 L-0.5 -2.45 Z" />
+        {/* هلال داخلی و بیرونی سمت راست */}
+        <path d="M0.85 -2.7 C2.95 -1.75 2.95 1.75 0.85 2.7 C2.25 1.5 2.25 -1.5 0.85 -2.7 Z" />
+        <path d="M1.65 -3.05 C4.65 -1.55 4.45 2.55 1.3 3.7 C3.75 2.3 3.95 -1.15 1.65 -3.05 Z" />
+        {/* قرینهٔ سمت چپ */}
+        <g transform="scale(-1 1)">
+          <path d="M0.85 -2.7 C2.95 -1.75 2.95 1.75 0.85 2.7 C2.25 1.5 2.25 -1.5 0.85 -2.7 Z" />
+          <path d="M1.65 -3.05 C4.65 -1.55 4.45 2.55 1.3 3.7 C3.75 2.3 3.95 -1.15 1.65 -3.05 Z" />
+        </g>
+        {/* تشدید بالای نشان */}
+        <path d="M-1.05 -4.02 Q-0.52 -4.75 0 -4.02 Q0.52 -4.75 1.05 -4.02 L1.05 -3.7 Q0.52 -4.32 0 -3.66 Q-0.52 -4.32 -1.05 -3.7 Z" />
+      </g>
+    </svg>
   );
 }
 

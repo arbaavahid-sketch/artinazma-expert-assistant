@@ -310,6 +310,97 @@ def send_new_customer_request_admin_alert(
         return False, str(e)
 
 
+def send_password_reset_email(
+    settings: dict,
+    to_addr: str,
+    full_name: str,
+    token: str,
+) -> tuple[bool, str]:
+    """Send a one-hour password reset link to a customer."""
+
+    import os
+    from html import escape
+
+    smtp_host = settings.get("smtp_host", "").strip()
+    smtp_port = int(settings.get("smtp_port", 587))
+    smtp_user = settings.get("smtp_user", "").strip()
+    smtp_pass = settings.get("smtp_pass", "").strip()
+    from_addr = settings.get("from_addr", smtp_user).strip() or smtp_user
+
+    if not smtp_host:
+        return False, "SMTP is not configured."
+    if not from_addr:
+        return False, "Sender email address is not configured."
+    if not to_addr or not to_addr.strip():
+        return False, "Recipient email address is missing."
+    if not token:
+        return False, "Reset token is missing."
+
+    app_url = os.getenv("PUBLIC_APP_URL", "https://assistant.artinazma.net").rstrip("/")
+    reset_url = f"{app_url}/reset-password?token={token}"
+    safe_name = escape((full_name or "کاربر گرامی").strip())
+
+    html = f"""<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f7f7f8;font-family:Tahoma,Arial,sans-serif;direction:rtl">
+  <div style="max-width:560px;margin:32px auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08)">
+    <div style="background:linear-gradient(135deg,#047857,#1d4ed8);padding:30px 34px">
+      <div style="color:#ffffff;font-size:21px;font-weight:bold">بازیابی رمز عبور آرتین آزما</div>
+      <div style="color:#dbeafe;font-size:13px;margin-top:7px">این لینک تا یک ساعت معتبر است.</div>
+    </div>
+    <div style="padding:30px 34px;color:#374151">
+      <p style="font-size:15px;margin:0 0 18px">{safe_name} عزیز،</p>
+      <p style="font-size:14px;line-height:2;margin:0 0 22px">
+        برای تغییر رمز عبور حساب کاربری خود روی دکمه زیر بزنید.
+        اگر شما این درخواست را ثبت نکرده‌اید، این ایمیل را نادیده بگیرید.
+      </p>
+      <div style="text-align:center;margin:26px 0">
+        <a href="{reset_url}"
+           style="display:inline-block;background:#047857;color:#ffffff;text-decoration:none;border-radius:12px;padding:13px 28px;font-size:14px;font-weight:bold">
+          تغییر رمز عبور
+        </a>
+      </div>
+      <p style="font-size:12px;line-height:1.8;color:#9ca3af;margin:20px 0 0">
+        اگر دکمه باز نشد، این نشانی را در مرورگر وارد کنید:<br/>
+        <span dir="ltr">{reset_url}</span>
+      </p>
+    </div>
+    <div style="background:#f1f5f9;border-top:1px solid #e2e8f0;padding:15px 30px;text-align:center">
+      <div style="font-size:12px;color:#64748b">artinazma.net</div>
+    </div>
+  </div>
+</body>
+</html>"""
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "بازیابی رمز عبور آرتین آزما"
+    msg["From"] = from_addr
+    msg["To"] = to_addr.strip()
+    msg.attach(MIMEText(html, "html", "utf-8"))
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=15)
+            server.ehlo()
+            server.starttls()
+
+        if smtp_user and smtp_pass:
+            server.login(smtp_user, smtp_pass)
+
+        server.sendmail(from_addr, [to_addr.strip()], msg.as_string())
+        server.quit()
+
+        logger.info("Password reset email sent to %s", to_addr)
+        return True, "Password reset email sent."
+
+    except Exception as exc:
+        logger.warning("Password reset email failed for %s: %s", to_addr, exc)
+        return False, str(exc)
+
+
 
 def send_customer_approval_email(
     settings: dict,

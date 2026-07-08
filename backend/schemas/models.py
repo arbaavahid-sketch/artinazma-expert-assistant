@@ -177,6 +177,38 @@ class CustomerChangePasswordRequest(BaseModel):
         return v
 
 
+class CustomerForgotPasswordRequest(BaseModel):
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not _re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", v):
+            raise ValueError("Invalid email address.")
+        return v
+
+
+class CustomerResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 20:
+            raise ValueError("Invalid reset token.")
+        return v
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters.")
+        return v
+
+
 class CustomerSessionCreateRequest(BaseModel):
     customer_id: int
     title: str = "گفتگوی جدید"

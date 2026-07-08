@@ -14,6 +14,8 @@ from schemas.models import (
     CustomerLoginRequest,
     CustomerProfileUpdateRequest,
     CustomerChangePasswordRequest,
+    CustomerForgotPasswordRequest,
+    CustomerResetPasswordRequest,
     CustomerSessionCreateRequest,
     CustomerSessionUpdateRequest,
     CustomerChatMessageCreateRequest,
@@ -41,6 +43,9 @@ from db_service import (
     get_customer_by_contact,
     update_customer_profile,
     change_customer_password,
+    create_password_reset_token,
+    verify_reset_token,
+    reset_password_with_token,
     create_chat_session,
     save_chat_message,
     get_customer_chat_sessions,
@@ -360,6 +365,11 @@ def customer_logout():
     return response
 
 
+@router.get("/customers/verify-reset-token", tags=["Customers"], summary="Verify password reset token")
+def customer_verify_reset_token(token: str):
+    return {"valid": bool(verify_reset_token(token))}
+
+
 @router.get("/customers/{customer_id}", tags=["Customers"], summary="Get customer profile")
 def customer_profile(customer_id: int, current_user: dict = Depends(get_current_customer)):
     require_customer_match(current_user["customer_id"], customer_id)
@@ -396,6 +406,52 @@ def customer_change_password(customer_id: int, request: CustomerChangePasswordRe
         new_password=request.new_password,
     )
     return result
+
+
+@router.post("/customers/forgot-password", tags=["Customers"], summary="Request password reset")
+@limiter.limit("5/minute")
+def customer_forgot_password(body: CustomerForgotPasswordRequest, request: Request):
+    safe_message = "If the email is registered, a password reset link will be sent."
+
+    from email_service import get_email_settings, send_password_reset_email
+
+    settings = get_email_settings(get_setting)
+    smtp_host = (settings.get("smtp_host") or "").strip()
+    from_addr = (settings.get("from_addr") or settings.get("smtp_user") or "").strip()
+    if not smtp_host or not from_addr:
+        logger.warning("Password reset requested but SMTP settings are incomplete.")
+        return {
+            "success": False,
+            "message": "Password recovery email is not configured yet. Please contact support.",
+        }
+
+    customer = get_customer_by_contact(email=body.email)
+    if not customer:
+        return {"success": True, "message": safe_message}
+    if customer.get("is_blocked"):
+        return {"success": True, "message": safe_message}
+
+    token = create_password_reset_token(customer["id"])
+    sent, message = send_password_reset_email(
+        settings=settings,
+        to_addr=customer["email"],
+        full_name=customer.get("full_name", ""),
+        token=token,
+    )
+    if not sent:
+        logger.warning("Password reset email failed for customer %s: %s", customer["id"], message)
+        return {
+            "success": False,
+            "message": "Password recovery email could not be sent. Please try again later or contact support.",
+        }
+
+    return {"success": True, "message": safe_message}
+
+
+@router.post("/customers/reset-password", tags=["Customers"], summary="Reset password with token")
+@limiter.limit("5/minute")
+def customer_reset_password(body: CustomerResetPasswordRequest, request: Request):
+    return reset_password_with_token(token=body.token, new_password=body.new_password)
 
 
 @router.get("/customers/{customer_id}/requests", tags=["Customers"], summary="List customer request history")
