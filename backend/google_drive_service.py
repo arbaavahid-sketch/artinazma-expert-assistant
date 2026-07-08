@@ -87,6 +87,14 @@ CATEGORY_MAP = {
     "application notes": "application-note",
     "application note": "application-note",
     "اپلیکیشن نوت": "application-note",
+    "water analysis": "water-analysis",
+    "water": "water-analysis",
+    "آنالیز آب": "water-analysis",
+    "آب و پساب": "water-analysis",
+    "safety qc": "safety-qc",
+    "safety": "safety-qc",
+    "ایمنی": "safety-qc",
+    "ایمنی و کیفیت": "safety-qc",
 }
 
 

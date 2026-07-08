@@ -8,6 +8,8 @@ export const categoryOptions = [
   { value: "sulfur-analysis", label: "آنالیز سولفور", labelEn: "Sulfur analysis" },
   { value: "troubleshooting", label: "عیب‌یابی", labelEn: "Troubleshooting" },
   { value: "application-note", label: "اپلیکیشن نوت", labelEn: "Application note" },
+  { value: "water-analysis", label: "آنالیز آب و پساب", labelEn: "Water analysis" },
+  { value: "safety-qc", label: "ایمنی و کیفیت", labelEn: "Safety & QC" },
   { value: "expert-faq", label: "FAQ تاییدشده", labelEn: "Approved FAQ" },
 ];
 
