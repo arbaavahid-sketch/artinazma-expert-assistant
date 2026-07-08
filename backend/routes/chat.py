@@ -69,20 +69,26 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     related_docs: list = []
     search_mode = "unknown"
 
-    # ── استخراج عنوان استاندارد ASTM از دیکشنری داخلی ──
+    # ── استخراج عنوان + لینک رسمی استاندارد ASTM از دیکشنری داخلی ──
+    # لینک رسمی ASTM قطعی و از روی کد ساختنی است: store.astm.org/standards/d<شماره>.
+    # آن را خودمان تزریق می‌کنیم چون مدل (حتی با وب روشن) URL را با الگوی غلط می‌سازد
+    # (مثلاً www.astm.org/d0086 به‌جای store.astm.org/standards/d86).
     _astm_inject: str = ""
     if has_astm_code:
         _astm_matches = re.findall(r"\bD\s*(\d{2,5})\b", body.message, flags=re.IGNORECASE)
-        _injected_titles = [
-            _ASTM_KNOWN_STANDARDS[f"D{n}"]
-            for n in _astm_matches
-            if f"D{n}" in _ASTM_KNOWN_STANDARDS
-        ]
-        if _injected_titles:
+        _known_codes = [f"D{n}" for n in _astm_matches if f"D{n}" in _ASTM_KNOWN_STANDARDS]
+        if _known_codes:
+            _lines = [
+                f"• {_ASTM_KNOWN_STANDARDS[code]}\n"
+                f"  لینک رسمی (خرید/مشاهده): https://store.astm.org/standards/{code.lower()}"
+                for code in _known_codes
+            ]
             _astm_inject = (
                 "اطلاعات دقیق استاندارد (از پایگاه دانش داخلی):\n"
-                + "\n".join(f"• {t}" for t in _injected_titles)
-                + "\n⚠️ قانون مطلق: دقیقاً همین استاندارد(ها) را توضیح بده. هرگز کد را با کد دیگری جایگزین نکن."
+                + "\n".join(_lines)
+                + "\n⚠️ قانون مطلق: دقیقاً همین استاندارد(ها) را توضیح بده و هرگز کد را با کد دیگری جایگزین نکن."
+                + "\n⚠️ اگر کاربر لینک/آدرس/دانلود استاندارد را خواست، فقط و فقط همین «لینک رسمی» بالا را بده"
+                " و هرگز URL دیگری از خودت نساز یا حدس نزن."
             )
 
     if has_astm_code:
@@ -159,13 +165,9 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     # وقتی عنوان دقیق استاندارد از دیکشنری داخلی تزریق شده، پاسخ یک لنگر معتبر و
     # ثابت دارد. در این حالت وب‌سرچ فقط نویز و ناپایداری اضافه می‌کند (پاسخ به یک
     # سؤال یکسان بین اجراها فرق می‌کرد و گاهی از موضوع منحرف می‌شد)، پس خاموشش کن.
-    # استثنا: اگر کاربر لینک/دانلود/خرید استاندارد را می‌خواهد، لنگر داخلی کافی نیست
-    # و لینک زندهٔ به‌روز مهم است (بدون وب مدل ممکن است URL حدسی/غلط بسازد)؛ وب روشن بماند.
-    _asks_for_source = bool(
-        re.search(r"لینک|link|url|آدرس|دانلود|download|خرید|بخرم|تهیه|بگیرم",
-                  body.message, flags=re.IGNORECASE)
-    )
-    if _astm_inject and not _asks_for_source:
+    # لینک رسمی هم به‌صورت قطعی تزریق می‌شود (store.astm.org/standards/d<کد>)، پس حتی
+    # برای درخواست لینک هم نیازی به وب نیست — وب فقط URL غلط تولید می‌کرد.
+    if _astm_inject:
         allow_web_search = False
     if question_intent in _COMMERCIAL_INTENTS:
         allow_web_search = False

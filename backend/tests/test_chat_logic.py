@@ -139,17 +139,20 @@ class TestAstmWebSearchFlag:
             assert p["allow_web_search"] is False, code
             assert "gpt_astm_direct" in p["search_mode"], code
 
-    def test_link_request_keeps_web_search_even_for_known_code(self):
-        # درخواست لینک/دانلود/خرید → لنگر داخلی کافی نیست و لینک زندهٔ به‌روز مهم است،
-        # پس وب باید روشن بماند تا مدل URL حدسی نسازد.
+    def test_link_request_injects_correct_official_url(self):
+        # درخواست لینک برای کد شناخته‌شده: وب لازم نیست (مدل با وب هم URL غلط می‌ساخت)؛
+        # لینک رسمی قطعی (store.astm.org/standards/d<کد>) در context تزریق می‌شود.
         for q in [
             "URL رسمی ASTM D445 چیست؟",
             "لینک دانلود استاندارد ASTM D445 را بده",
             "استاندارد ASTM D445 را از کجا بخرم؟",
         ]:
-            assert self._pipeline(q)["allow_web_search"] is True, q
+            p = self._pipeline(q)
+            assert p["allow_web_search"] is False, q
+            assert "https://store.astm.org/standards/d445" in p["context"], q
 
-    def test_usage_question_is_not_treated_as_link_request(self):
-        # «کجا کاربرد دارد» نباید به‌اشتباه درخواست لینک تلقی شود؛ وب خاموش می‌ماند.
-        p = self._pipeline("ASTM D445 کجا کاربرد دارد؟")
-        assert p["allow_web_search"] is False
+    def test_official_url_matches_code_casing_and_form(self):
+        # الگوی لینک باید حروف‌کوچک و بدون صفرِ اضافه باشد (d86 نه d0086).
+        p = self._pipeline("لینک ASTM D86 را بده")
+        assert "https://store.astm.org/standards/d86" in p["context"]
+        assert "d0086" not in p["context"]
