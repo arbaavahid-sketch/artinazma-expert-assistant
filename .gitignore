@@ -277,3 +277,6 @@ frontend/android/app/keystore.properties
 
 # Claude Code local (per-machine) settings
 .claude/settings.local.json
+
+# Runtime upload dirs (test artifacts land here when CWD is repo root)
+uploads/
