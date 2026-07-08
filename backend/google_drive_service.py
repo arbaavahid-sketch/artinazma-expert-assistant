@@ -381,8 +381,6 @@ def walk_drive_folder(
             )
             continue
 
-        state["processed_files"] += 1
-
         file_id = item.get("id", "")
         modified_time = item.get("modifiedTime", "")
         output_info = get_drive_output_info(item)
@@ -424,6 +422,12 @@ def walk_drive_folder(
                 }
             )
             continue
+
+        # فقط فایل‌هایی که واقعاً دانلود/embed می‌شوند سهم سقف را مصرف می‌کنند؛
+        # فایل‌های «بدون تغییر» شمرده نمی‌شوند تا با بزرگ‌شدن کتابخانه، فایل‌های
+        # جدید هرگز پشت سقف نمانند (هر سینک تا max_files فایلِ جدید برمی‌دارد و
+        # سینک بعدی از ادامه شروع می‌کند).
+        state["processed_files"] += 1
 
         if (
             previous

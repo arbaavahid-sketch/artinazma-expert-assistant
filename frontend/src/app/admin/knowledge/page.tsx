@@ -193,7 +193,7 @@ export default function KnowledgePage() {
   );
   const [driveSyncSummary, setDriveSyncSummary] = useState<DriveSyncSummary | null>(null);
   const [driveSyncFilter, setDriveSyncFilter] = useState<"all" | "added" | "unchanged" | "skipped">("all");
-  const [driveMaxFiles, setDriveMaxFiles] = useState(20);
+  const [driveMaxFiles, setDriveMaxFiles] = useState(200);
   const [forceDriveResync, setForceDriveResync] = useState(false);
   const { confirm } = useConfirm();
   const [knowledgeResult, setKnowledgeResult] = useState("");
