@@ -241,7 +241,13 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     if (
         allow_web_search
         and is_web_search_configured()
-        and (_is_standard_query or specific_model_question or not related_docs)
+        and (
+            _is_standard_query
+            or specific_model_question
+            or not related_docs
+            # سند داخلی ضعیف (امتیاز پایین) هم با وب راستی‌آزمایی شود، نه فقط وقتی خالی است.
+            or best_score < _WEAK_CONTEXT_THRESHOLD
+        )
     ):
         try:
             _web_results = search_web_sources(body.message, max_results=5)
