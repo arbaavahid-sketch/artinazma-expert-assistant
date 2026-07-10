@@ -15,6 +15,7 @@ from utils.chat_utils import (
     _MODEL_LOCAL_SCORE_THRESHOLD,
     _WEAK_CONTEXT_THRESHOLD,
     _VECTOR_RELEVANT_THRESHOLD,
+    _VECTOR_STRONG_THRESHOLD,
     _TECHNICAL_INTENTS,
     vector_relevance,
     is_specific_product_or_model_question,
@@ -143,7 +144,7 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         # و سؤال‌ها فارسی. جست‌وجوی معنایی (embedding) بین‌زبانی است، پس همیشه هر دو
         # اجرا و ادغام می‌شوند تا سندِ انگلیسیِ مرتبط پشتِ تطبیقِ کلیدواژه‌ایِ فارسی نماند.
         try:
-            _vector_docs = search_knowledge_base(body.message, top_k=6)
+            _vector_docs = search_knowledge_base(body.message, top_k=10)
         except Exception as e:
             logger.warning("AI vector search failed: %s", e)
             _vector_docs = []
@@ -152,7 +153,8 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             d for d in _vector_docs if vector_relevance(d) >= _VECTOR_RELEVANT_THRESHOLD
         ]
         _vector_best = max((vector_relevance(d) for d in _vector_hits), default=0.0)
-        _local_hits = local_docs[:6] if _local_best >= _LOCAL_SCORE_THRESHOLD else []
+        # سقف ۵ برای کلیدواژه‌ای تا در سقف ۸، جا برای نتایج معنایی/بین‌زبانی بماند.
+        _local_hits = local_docs[:5] if _local_best >= _LOCAL_SCORE_THRESHOLD else []
 
         def _doc_key(d: dict):
             return (d.get("file_name", ""), (d.get("content", "") or "")[:80])
@@ -289,9 +291,13 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             _is_standard_query
             or specific_model_question
             or not related_docs
-            # سند داخلی ضعیف (نه کلیدواژه‌ایِ قوی، نه معناییِ مرتبط) هم با وب
-            # راستی‌آزمایی شود، نه فقط وقتی بازیابی خالی است.
-            or _context_is_weak
+            # سند داخلی که نه کلیدواژه‌ایِ قوی دارد نه تطبیقِ معناییِ «قوی» (≥0.30)
+            # با وب راستی‌آزمایی شود. تطبیق بین‌زبانی (~0.25) وارد context می‌شود
+            # ولی چون به آستانهٔ قوی نمی‌رسد، وب هم کنارش فعال می‌ماند.
+            or (
+                _local_best < _WEAK_CONTEXT_THRESHOLD
+                and _vector_best < _VECTOR_STRONG_THRESHOLD
+            )
         )
     ):
         try:

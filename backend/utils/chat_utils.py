@@ -12,9 +12,14 @@ logger = logging.getLogger("utils.chat_utils")
 _LOCAL_SCORE_THRESHOLD = 10      # local search score >= this → use local
 _MODEL_LOCAL_SCORE_THRESHOLD = 8 # model question: exact local match threshold
 _WEAK_CONTEXT_THRESHOLD = 14     # below this → discard internal context for tech intents
-# حداقل شباهت کسینوسی (0-1) تا یک نتیجهٔ معنایی «مرتبط» شمرده شود؛ برای پیوند
-# بین‌زبانی (سؤال فارسی ↔ سند انگلیسی) استفاده می‌شود.
-_VECTOR_RELEVANT_THRESHOLD = 0.30
+# آستانه‌های شباهت کسینوسی (0-1) برای نتایج معنایی. اندازه‌گیری تجربی با
+# text-embedding-3-small: تطبیق بین‌زبانی (سؤال فارسی ↔ سند انگلیسیِ کاملاً مرتبط)
+# حدود 0.25 است، هم‌زبانِ مرتبط 0.5-0.7، و بی‌ربط زیر 0.13. پس:
+#  - RELEVANT (0.18): حداقلِ ورود به context — تطبیق بین‌زبانی را زنده نگه می‌دارد.
+#  - STRONG (0.30): آن‌قدر قوی که نیاز به راستی‌آزمایی وب را هم بردارد؛ تطبیق‌های
+#    بین‌زبانیِ ~0.25 وارد context می‌شوند ولی وب همچنان روشن می‌ماند.
+_VECTOR_RELEVANT_THRESHOLD = 0.18
+_VECTOR_STRONG_THRESHOLD = 0.30
 
 
 def vector_relevance(doc: dict) -> float:

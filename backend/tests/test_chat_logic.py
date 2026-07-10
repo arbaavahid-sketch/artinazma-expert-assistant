@@ -305,3 +305,16 @@ class TestHybridRetrieval:
         )
         assert p["related_docs"][0]["file_name"] == "سند-فارسی.txt"
         assert p["search_mode"].startswith("local_fast")
+
+    def test_cross_lingual_match_included_with_web_verification(self, monkeypatch):
+        # تطبیق بین‌زبانی واقعی (فارسی→انگلیسی) حدود کسینوس 0.25 است: باید وارد
+        # context شود (آستانهٔ ورود 0.18) ولی چون به آستانهٔ قوی (0.30) نمی‌رسد،
+        # به‌عنوان context قوی حساب نشود (وب کنارش راستی‌آزمایی می‌کند).
+        p = self._pipeline(
+            "روش اندازه‌گیری کلر آزاد در آب چگونه است؟",
+            monkeypatch,
+            local_docs=[self._local_doc("08-آب-در-نفت.txt", 12.0)],
+            vector_docs=[self._vec_doc("Water Analysis.pdf", 0.25)],
+        )
+        assert any(d["file_name"] == "Water Analysis.pdf" for d in p["related_docs"])
+        assert "ignored_weak_internal_context" not in p["search_mode"]
