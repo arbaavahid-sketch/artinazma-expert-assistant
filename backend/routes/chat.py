@@ -148,43 +148,52 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         # جست‌وجوی کلیدواژه‌ای فقط هم‌زبان را خوب پیدا می‌کند؛ بیشترِ اسناد انگلیسی‌اند
         # و سؤال‌ها فارسی. جست‌وجوی معنایی (embedding) بین‌زبانی است، پس همیشه هر دو
         # اجرا و ادغام می‌شوند تا سندِ انگلیسیِ مرتبط پشتِ تطبیقِ کلیدواژه‌ایِ فارسی نماند.
+        def _relevant_sorted(docs: list) -> list:
+            hits = [d for d in docs if vector_relevance(d) >= _VECTOR_RELEVANT_THRESHOLD]
+            return sorted(hits, key=vector_relevance, reverse=True)
+
         try:
-            _vector_docs = search_knowledge_base(body.message, top_k=10)
+            _direct_hits = _relevant_sorted(search_knowledge_base(body.message, top_k=10))
         except Exception as e:
             logger.warning("AI vector search failed: %s", e)
-            _vector_docs = []
+            _direct_hits = []
 
         # سؤال فارسی + اسناد انگلیسی: جست‌وجوی معناییِ مستقیم می‌بازد چون chunkهای
         # فارسیِ هم‌موضوع (کسینوس ~0.5) همیشه بالاتر از تطبیق بین‌زبانی (~0.25)
-        # می‌نشینند. پس یک جست‌وجوی دوم با ترجمهٔ انگلیسیِ سؤال انجام می‌شود تا
-        # اسناد انگلیسی هم‌مقیاس رقابت کنند. خطا/نبود ترجمه → بی‌سروصدا صرف‌نظر.
+        # می‌نشینند. پس جست‌وجوی دوم با ترجمهٔ انگلیسیِ سؤال، اسناد انگلیسی را هم‌مقیاس
+        # می‌کند. این نتایج «جای رزرو» می‌گیرند تا پشتِ سندهای فارسی از سقف نیفتند.
+        # خطا/نبود ترجمه → بی‌سروصدا صرف‌نظر.
+        _xling_hits: list = []
         if detect_user_language(body.message) == "fa":
             _q_en = translate_query_for_search(body.message)
             if _q_en:
                 try:
-                    _vector_docs = _vector_docs + search_knowledge_base(_q_en, top_k=6)
+                    _xling_hits = _relevant_sorted(search_knowledge_base(_q_en, top_k=8))
                 except Exception as e:
                     logger.warning("EN cross-lingual search failed: %s", e)
 
-        _vector_hits = [
-            d for d in _vector_docs if vector_relevance(d) >= _VECTOR_RELEVANT_THRESHOLD
-        ]
-        _vector_best = max((vector_relevance(d) for d in _vector_hits), default=0.0)
-        # سقف ۵ برای کلیدواژه‌ای تا در سقف ۸، جا برای نتایج معنایی/بین‌زبانی بماند.
+        _vector_best = max(
+            (vector_relevance(d) for d in _direct_hits + _xling_hits), default=0.0
+        )
         _local_hits = local_docs[:5] if _local_best >= _LOCAL_SCORE_THRESHOLD else []
 
         def _doc_key(d: dict):
             return (d.get("file_name", ""), (d.get("content", "") or "")[:80])
 
-        # اگر تطبیق کلیدواژه‌ای قوی است اول local، وگرنه نتایج معنایی مقدم‌اند.
-        _first, _second = (
-            (_local_hits, _vector_hits)
-            if _local_best >= _WEAK_CONTEXT_THRESHOLD
-            else (_vector_hits, _local_hits)
+        # ادغام با جای‌گذاری تضمین‌شده: اگر کلیدواژه‌ای قوی است اول همان، بعد ۲ جای
+        # رزرو برای نتایج بین‌زبانی (که هدف اصلی‌اند و به‌سختی به‌دست می‌آیند)، بعد
+        # بقیهٔ معنایی مستقیم، و در آخر باقیمانده‌ها.
+        _kw_first = _local_best >= _WEAK_CONTEXT_THRESHOLD
+        _order = (
+            (_local_hits[:3] if _kw_first else _direct_hits[:3])
+            + _xling_hits[:2]
+            + (_direct_hits if _kw_first else _local_hits)
+            + (_local_hits if _kw_first else _direct_hits)
+            + _xling_hits[2:]
         )
         _seen: set = set()
         related_docs = []
-        for d in _first + _second:
+        for d in _order:
             k = _doc_key(d)
             if k in _seen:
                 continue
@@ -192,10 +201,11 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             related_docs.append(d)
         related_docs = related_docs[:8]
 
-        if _local_hits and _vector_hits:
-            search_mode = "hybrid"
-        elif _vector_hits:
-            search_mode = "ai_vector"
+        _has_vector = bool(_direct_hits or _xling_hits)
+        if _local_hits and _has_vector:
+            search_mode = "hybrid" + ("+xling" if _xling_hits else "")
+        elif _has_vector:
+            search_mode = "ai_vector" + ("+xling" if _xling_hits else "")
         elif _local_hits:
             search_mode = "local_fast"
         else:
