@@ -318,3 +318,49 @@ class TestHybridRetrieval:
         )
         assert any(d["file_name"] == "Water Analysis.pdf" for d in p["related_docs"])
         assert "ignored_weak_internal_context" not in p["search_mode"]
+
+    def test_translated_english_search_brings_english_doc(self, monkeypatch):
+        # سؤال فارسی، سند انگلیسی: جست‌وجوی مستقیم فقط اسناد فارسی می‌آورد؛
+        # جست‌وجوی دوم با ترجمهٔ انگلیسی باید سند انگلیسی را برساند.
+        import routes.chat as chat_module
+        from schemas.models import ChatRequest
+
+        fa_doc = self._vec_doc("21-آنالیز-آب.txt", 0.55, content="متن فارسی درباره آب")
+        en_doc = self._vec_doc("Water Analysis.pdf", 0.52)
+
+        def fake_vector_search(q, top_k=10):
+            # ترجمهٔ انگلیسی → سند انگلیسی؛ سؤال فارسی → سند فارسی
+            if q == "free chlorine DPD method water":
+                return [en_doc]
+            return [fa_doc]
+
+        monkeypatch.setattr(chat_module, "local_search_knowledge_base", lambda q, top_k=12: [])
+        monkeypatch.setattr(chat_module, "search_knowledge_base", fake_vector_search)
+        monkeypatch.setattr(
+            chat_module, "translate_query_for_search",
+            lambda q: "free chlorine DPD method water",
+        )
+
+        p = chat_module._build_chat_pipeline(
+            ChatRequest(message="روش اندازه‌گیری کلر آزاد در آب با DPD چیست؟")
+        )
+        files = [d["file_name"] for d in p["related_docs"]]
+        assert "Water Analysis.pdf" in files, files
+        assert "21-آنالیز-آب.txt" in files, files
+
+    def test_translation_failure_does_not_break_retrieval(self, monkeypatch):
+        import routes.chat as chat_module
+        from schemas.models import ChatRequest
+
+        monkeypatch.setattr(
+            chat_module, "local_search_knowledge_base",
+            lambda q, top_k=12: [self._local_doc("سند.txt", 30.0)],
+        )
+        monkeypatch.setattr(
+            chat_module, "search_knowledge_base",
+            lambda q, top_k=10: [self._vec_doc("Doc.pdf", 0.5)],
+        )
+        monkeypatch.setattr(chat_module, "translate_query_for_search", lambda q: "")
+
+        p = chat_module._build_chat_pipeline(ChatRequest(message="سؤال فارسی تستی"))
+        assert p["related_docs"], "خرابی ترجمه نباید بازیابی را بشکند"

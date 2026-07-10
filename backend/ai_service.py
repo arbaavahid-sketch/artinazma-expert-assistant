@@ -279,6 +279,39 @@ def get_response_cache_stats() -> dict:
 
 
 
+def translate_query_for_search(text: str) -> str:
+    """ترجمهٔ سؤال فارسی به انگلیسی برای جست‌وجوی بین‌زبانی در اسناد انگلیسی.
+
+    بیشترِ اسناد بانک دانش انگلیسی‌اند و سؤال‌ها فارسی؛ تطبیق بین‌زبانی embedding
+    (کسینوس ~0.25) در رقابت با اسناد فارسیِ هم‌موضوع (~0.5+) همیشه می‌بازد. جست‌وجوی
+    دوم با ترجمهٔ انگلیسیِ سؤال، اسناد انگلیسی را هم‌مقیاس می‌کند.
+    خروجی فقط متن ترجمه است؛ در خطا رشتهٔ خالی برمی‌گردد (فراخوان باید صرف‌نظر کند).
+    """
+    if not text or not text.strip():
+        return ""
+    if os.getenv("TESTING") == "1":
+        # در تست‌ها هیچ فراخوانی شبکه‌ای نکن؛ تست‌ها در صورت نیاز monkeypatch می‌کنند.
+        return ""
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Translate the user's laboratory/petroleum-industry technical question "
+                "to concise English keywords suitable for document search. Keep standard "
+                "codes (ASTM, ISO...), units and technical terms exact. Output ONLY the "
+                "English translation, nothing else."
+            ),
+        },
+        {"role": "user", "content": text.strip()},
+    ]
+    try:
+        result = _chat_via_requests(messages=messages, model=MODEL, temperature=0.0)
+        return (result or "").strip()[:300]
+    except Exception as e:  # noqa: BLE001
+        logger.warning("query translation for search failed: %s", e)
+        return ""
+
+
 def detect_user_language(text: str) -> str:
     """
     تشخیص سبک زبان:

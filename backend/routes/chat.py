@@ -39,7 +39,12 @@ from web_search_service import (
     build_web_context,
     is_web_search_configured,
 )
-from ai_service import ask_expert_assistant, ask_expert_assistant_stream
+from ai_service import (
+    ask_expert_assistant,
+    ask_expert_assistant_stream,
+    detect_user_language,
+    translate_query_for_search,
+)
 from db_service import (
     save_expert_question,
     save_user_memory,
@@ -148,6 +153,18 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         except Exception as e:
             logger.warning("AI vector search failed: %s", e)
             _vector_docs = []
+
+        # سؤال فارسی + اسناد انگلیسی: جست‌وجوی معناییِ مستقیم می‌بازد چون chunkهای
+        # فارسیِ هم‌موضوع (کسینوس ~0.5) همیشه بالاتر از تطبیق بین‌زبانی (~0.25)
+        # می‌نشینند. پس یک جست‌وجوی دوم با ترجمهٔ انگلیسیِ سؤال انجام می‌شود تا
+        # اسناد انگلیسی هم‌مقیاس رقابت کنند. خطا/نبود ترجمه → بی‌سروصدا صرف‌نظر.
+        if detect_user_language(body.message) == "fa":
+            _q_en = translate_query_for_search(body.message)
+            if _q_en:
+                try:
+                    _vector_docs = _vector_docs + search_knowledge_base(_q_en, top_k=6)
+                except Exception as e:
+                    logger.warning("EN cross-lingual search failed: %s", e)
 
         _vector_hits = [
             d for d in _vector_docs if vector_relevance(d) >= _VECTOR_RELEVANT_THRESHOLD
