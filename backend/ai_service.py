@@ -219,6 +219,56 @@ def _chat_via_requests(messages: list, model: str, temperature: float) -> str:
     raise last_err
 
 
+def _chat_via_requests_stream(messages: list, model: str, temperature: float):
+    """
+    نسخه‌ی استریمِ واقعی: توکن‌ها را همان‌طور که از OpenAI می‌رسند yield می‌کند تا
+    کاربر به‌جای صبرِ چند ده ثانیه، پاسخ را کلمه‌به‌کلمه ببیند.
+    """
+    key = os.getenv("OPENAI_API_KEY", "")
+    body = {"model": model, "messages": messages, "temperature": temperature, "stream": True}
+    url = f"{OPENAI_API_URL}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+    }
+    timeout = float(os.getenv("OPENAI_TIMEOUT", "120"))
+
+    last_err = None
+    for attempt in range(3):
+        emitted = False
+        try:
+            resp = _session.post(url, headers=headers, json=body, timeout=timeout, stream=True)
+            resp.raise_for_status()
+            for raw in resp.iter_lines(decode_unicode=True):
+                if not raw or not raw.startswith("data:"):
+                    continue
+                data = raw[5:].strip()
+                if data == "[DONE]":
+                    return
+                try:
+                    delta = _json.loads(data)["choices"][0].get("delta", {}).get("content")
+                except Exception:
+                    continue
+                if delta:
+                    emitted = True
+                    yield delta
+            return
+        except (_requests.exceptions.ConnectionError,
+                _requests.exceptions.ChunkedEncodingError) as e:
+            last_err = e
+            if emitted:
+                # بخشی از پاسخ رفته؛ retry آن را از اول می‌فرستد و تکراری می‌شود.
+                raise
+            logger.warning(f"[OPENAI stream] attempt {attempt+1} failed: {e} — retrying…")
+            time.sleep(1.5 * (attempt + 1))
+        except Exception:
+            raise
+
+    if last_err:
+        raise last_err
+
+
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4")
 OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 
@@ -898,23 +948,21 @@ def ask_expert_assistant_stream(
 
     input_messages.append({"role": "user", "content": user_content})
 
-    kwargs: Dict = {
-        "model": MODEL,
-        "messages": input_messages,
-        "temperature": OPENAI_TEMPERATURE,
-        "stream": True,
-    }
+    # استریمِ واقعی از OpenAI: توکن‌ها همان‌طور که تولید می‌شوند به کاربر می‌رسند.
+    _acc = ""
+    for _delta in _chat_via_requests_stream(
+        messages=input_messages,
+        model=MODEL,
+        temperature=OPENAI_TEMPERATURE,
+    ):
+        _acc += _delta
+        yield _delta
 
-    text = _chat_via_requests(
-        messages=kwargs["messages"],
-        model=kwargs["model"],
-        temperature=kwargs["temperature"],
-    )
-    # شبکه‌ی ایمنی: اگر سؤال مقایسه‌ای بود و مدل جدول نساخت، یک جدول قطعی درج کن.
-    text = ensure_comparison_table(message, text)
-    chunk_size = 40
-    for i in range(0, len(text), chunk_size):
-        yield text[i:i + chunk_size]
+    # شبکه‌ی ایمنی: اگر سؤال مقایسه‌ای بود و مدل جدول نساخت، جدول را در انتها ضمیمه کن
+    # (ensure_comparison_table فقط append می‌کند، پس با استریم سازگار است).
+    _final = ensure_comparison_table(message, _acc)
+    if _final != _acc and _final.startswith(_acc):
+        yield _final[len(_acc):]
 
 
 def prepare_image_for_ai(file_path: str) -> Tuple[str, str]:
