@@ -191,12 +191,18 @@ def is_followup_transform_request(message: str) -> bool:
     text = text.replace("ي", "ی").replace("ك", "ک")
     text = text.replace("‌", " ")
     transform_keywords = [
-        "خلاصه تر کن", "خلاصه‌تر کن", "کوتاه تر کن", "کوتاه‌تر کن",
+        "خلاصه تر کن", "خلاصه‌تر کن", "خلاصه کن", "خلاصه اش کن", "خلاصه ش کن",
+        "کوتاه تر کن", "کوتاه‌تر کن", "کوتاهش کن",
         "فنی تر توضیح بده", "فنی‌تر توضیح بده", "تبدیل به جدول",
-        "به جدول تبدیل کن", "جدول کن", "به صورت جدول", "جدولی کن",
-        "مرتب تر کن", "مرتب‌تر کن",
+        "به جدول تبدیل کن", "جدول کن", "جدولی کن", "جدولش کن",
+        "مرتب تر کن", "مرتب‌تر کن", "مرتبش کن",
     ]
-    return any(keyword in text for keyword in transform_keywords)
+    if any(keyword in text for keyword in transform_keywords):
+        return True
+    # «به صورت جدول / به صورت یک جدول / در قالب جدول / در قالب یک جدول»
+    if re.search(r"(به ?صورت|در ?قالب)\s+(یک\s+)?جدول", text):
+        return True
+    return False
 
 
 def remove_company_mentions_if_not_allowed(answer: str) -> str:

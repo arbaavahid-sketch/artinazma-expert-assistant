@@ -364,3 +364,46 @@ class TestHybridRetrieval:
 
         p = chat_module._build_chat_pipeline(ChatRequest(message="سؤال فارسی تستی"))
         assert p["related_docs"], "خرابی ترجمه نباید بازیابی را بشکند"
+
+
+class TestTransformFollowupNoHistory:
+    """درخواست تبدیل («جدول کن») بدون تاریخچه نباید محتوای جدید بسازد."""
+
+    def _pipeline(self, message, history=None):
+        from routes.chat import _build_chat_pipeline
+        from schemas.models import ChatRequest, ChatHistoryMessage
+        kw = {"message": message}
+        if history:
+            kw["history"] = [ChatHistoryMessage(role=r, content=c) for r, c in history]
+        return _build_chat_pipeline(ChatRequest(**kw))
+
+    def test_no_history_asks_for_clarification(self):
+        p = self._pipeline("همین را به صورت یک جدول خلاصه کن")
+        assert p["is_transform_followup"] is True
+        assert p["allow_web_search"] is False
+        # دستور باید «بپرس کدام متن» باشد، نه «از history استفاده کن»
+        assert "کدام متن" in p["context"] or "کدام پاسخ" in p["context"]
+        assert "محتوای جدید نساز" in p["context"]
+
+    def test_with_history_uses_history(self):
+        p = self._pipeline(
+            "این را به جدول تبدیل کن",
+            history=[("user", "سولفور دیزل چیست؟"), ("assistant", "گوگرد دیزل ...")],
+        )
+        assert p["is_transform_followup"] is True
+        assert "از history استفاده کن" in p["context"]
+
+
+class TestTransformDetectionBroadened:
+    def test_summarize_plain(self):
+        assert is_followup_transform_request("همین را خلاصه کن") is True
+
+    def test_table_with_yek(self):
+        assert is_followup_transform_request("همین را به صورت یک جدول خلاصه کن") is True
+
+    def test_qalib_table(self):
+        assert is_followup_transform_request("در قالب جدول بنویس") is True
+
+    def test_normal_brief_question_not_transform(self):
+        # «خلاصه توضیح بده» یک سؤال عادیِ کوتاه است، نه درخواست تبدیل
+        assert is_followup_transform_request("ASTM D86 را خلاصه توضیح بده") is False
