@@ -299,6 +299,21 @@ ${cleanAnswer}`,
     sendMessage(newText, newText);
   }
 
+  // «ثبت استعلام قیمت» از زیر یک پاسخ: سؤالِ کاربرِ همان گفتگو را به‌عنوان موضوع در
+  // فرم درخواست پیش‌پُر می‌کند — از همان مکانیزم query paramِ موجودِ فرم (type + item).
+  function startQuoteRequest(assistantIndex: number) {
+    let subject = "";
+    for (let i = assistantIndex; i >= 0; i--) {
+      if (messages[i]?.role === "user" && messages[i].content.trim()) {
+        subject = messages[i].content.trim().slice(0, 160);
+        break;
+      }
+    }
+    const params = new URLSearchParams({ type: "price-inquiry" });
+    if (subject) params.set("item", subject);
+    router.push(`/customer-request?${params.toString()}`);
+  }
+
   function undoSend() {
     if (abortControllerRef.current) {
       abortIntentRef.current = "undo";
@@ -582,6 +597,7 @@ ${cleanAnswer}`,
                 content: cleanAssistantOutput(accumulatedText),
                 sources: (event.sources as Source[]) || [],
                 detected_domain: event.detected_domain as string,
+                question_intent: event.question_intent as string,
                 resource_links: (event.resource_links as ResourceLink[]) || [],
                 resource_images: (event.resource_images as ResourceImage[]) || [],
               };
@@ -1290,6 +1306,7 @@ ${cleanAnswer}`,
                   loading={loading}
                   onCopy={copyText}
                   onRequest={() => router.push("/customer-request")}
+                  onQuote={() => startQuoteRequest(index)}
                   onQuickAction={sendQuickAction}
                   onFeedback={sendAnswerFeedback}
                   feedbackValue={

@@ -35,6 +35,7 @@ export type ChatMessage = {
   sources?: Source[];
   detected_domain?: string;
   question_id?: number;
+  question_intent?: string;
   relatedDevices?: DeviceAsset[];
   resource_links?: ResourceLink[];
   resource_images?: ResourceImage[];

@@ -17,6 +17,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   MessageSquarePlus,
+  ReceiptText,
   RotateCcw,
   Send,
   Share2,
@@ -36,6 +37,21 @@ import {
   getTextFont,
 } from "@/lib/chat-helpers";
 import type { ChatMessage, ResourceLink, ResourceImage } from "@/lib/chat-types";
+
+// intentهایی که نشان‌دهنده‌ی «قصد خرید/تجهیزات» هستند → CTA استعلام قیمت را نشان بده.
+const QUOTE_INTENTS = new Set([
+  "commercial_request",
+  "equipment_recommendation",
+  "product_or_device",
+  "chemical_or_catalyst",
+]);
+
+/** آیا زیر این پاسخ، دکمه‌ی استعلام قیمت نمایش داده شود؟ */
+function showQuoteCta(item: ChatMessage): boolean {
+  if (QUOTE_INTENTS.has(item.question_intent || "")) return true;
+  // اگر سیستم دستگاه مرتبطی هم پیدا کرده، یعنی موضوع محصولی است.
+  return Boolean(item.relatedDevices && item.relatedDevices.length > 0);
+}
 
 /* ── ArtinazmaResourceCards (فقط اینجا استفاده می‌شود) ── */
 function ArtinazmaResourceCards({
@@ -198,6 +214,7 @@ interface MessageBubbleProps {
   loading: boolean;
   onCopy: (text: string) => void;
   onRequest: () => void;
+  onQuote?: () => void;
   onQuickAction: (
     action: "shorter" | "technical" | "table" | "sources",
     answerText: string,
@@ -221,6 +238,7 @@ function MessageBubble({
   loading,
   onCopy,
   onRequest,
+  onQuote,
   onQuickAction,
   onFeedback,
   feedbackValue,
@@ -588,6 +606,15 @@ function MessageBubble({
             />
           )}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
+          {!isUser && !loading && onQuote && showQuoteCta(item) && (
+            <button
+              onClick={onQuote}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-gradient-to-l from-blue-50 to-emerald-50 px-4 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:border-blue-300 hover:from-blue-100 hover:to-emerald-100 sm:w-auto"
+            >
+              <ReceiptText size={17} aria-hidden="true" />
+              {isEn ? "Request a price quote for this" : "استعلام قیمت / ثبت درخواست برای این مورد"}
+            </button>
+          )}
           {!isUser && !loading && (
             <div
               ref={actionBarRef}
