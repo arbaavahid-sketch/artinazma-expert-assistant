@@ -27,6 +27,8 @@ def analyze_excel_or_csv(file_path: str) -> dict:
 
 
 def read_pdf_text(file_path: str) -> str:
+    from knowledge_service import normalize_persian_text
+
     reader = PdfReader(file_path)
     text = ""
 
@@ -35,4 +37,4 @@ def read_pdf_text(file_path: str) -> str:
         if page_text:
             text += page_text + "\n"
 
-    return text[:12000]
+    return normalize_persian_text(text)[:12000]

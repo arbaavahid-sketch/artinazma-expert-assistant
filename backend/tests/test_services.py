@@ -198,3 +198,14 @@ class TestHelperFunctions:
         text = "آرتین آزما مهر بهترین شرکت است.\nبرای اطلاع بیشتر تماس بگیرید."
         cleaned = remove_company_mentions_if_not_allowed(text)
         assert "آرتین آزما مهر" not in cleaned
+
+
+def test_normalize_persian_text_cleans_pdf_garble():
+    from knowledge_service import normalize_persian_text
+    # کشیده حذف، لاتین از فارسی جدا، عربی→فارسی
+    assert normalize_persian_text("گیــری") == "گیری"
+    assert "SE دستگاه" in normalize_persian_text("SPECTROSCAN SEدستگاه")
+    assert normalize_persian_text("كيفيت") == "کیفیت"
+    # روی انگلیسی بی‌اثر
+    assert normalize_persian_text("SPECTRON SE model") == "SPECTRON SE model"
+    assert normalize_persian_text("") == ""

@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import time
 import logging
@@ -85,6 +86,29 @@ def _vector_store_write_lock():
                     fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
+_TATWEEL = "ـ"  # کشیده‌ی چاپی «ـ» که استخراج PDF فارسی وسط کلمات می‌گذارد
+
+
+def normalize_persian_text(text: str) -> str:
+    """
+    متنِ استخراج‌شده از PDFهای فارسی را برای embedding/جست‌وجو تمیز می‌کند.
+
+    استخراج PDF فارسیِ چاپی معمولاً کیفیت بدی دارد: «کشیده» وسط کلمات
+    (گیــری)، چسبیدنِ لاتین به فارسی (SEدستگاه) و حروف عربی. این تابع آن‌ها را
+    اصلاح می‌کند تا نامِ مدل و کلمات، تمیز و قابل‌بازیابی شوند. روی متنِ انگلیسی
+    بی‌اثر و امن است.
+    """
+    if not text:
+        return ""
+    text = text.replace(_TATWEEL, "")
+    text = text.replace("ي", "ی").replace("ك", "ک")  # عربی → فارسی
+    # فاصله بین لاتین/عدد و فارسی (SEدستگاه → SE دستگاه)
+    text = re.sub(r"([A-Za-z0-9])([؀-ۿ])", r"\1 \2", text)
+    text = re.sub(r"([؀-ۿ])([A-Za-z0-9])", r"\1 \2", text)
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    return text
+
+
 def read_text_from_file(file_path: str) -> str:
     path = Path(file_path)
     ext = path.suffix.lower()
@@ -98,10 +122,10 @@ def read_text_from_file(file_path: str) -> str:
             if page_text:
                 text += page_text + "\n"
 
-        return text
+        return normalize_persian_text(text)
 
     if ext in [".txt", ".md"]:
-        return path.read_text(encoding="utf-8", errors="ignore")
+        return normalize_persian_text(path.read_text(encoding="utf-8", errors="ignore"))
 
     return ""
 
