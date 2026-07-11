@@ -9,10 +9,55 @@ from utils.chat_utils import make_safe_filename, _MAX_UPLOAD_BYTES, _ALLOWED_FIL
 from ai_service import ask_expert_assistant, analyze_image_with_ai
 from ai_service import client as ai_client
 from file_analyzer import analyze_excel_or_csv, read_pdf_text
+from local_search_service import local_search_knowledge_base
+from knowledge_service import search_knowledge_base
 
 logger = logging.getLogger("artin_scheduler")
 
 router = APIRouter()
+
+
+def _analysis_kb_context(query: str, top_k: int = 4) -> str:
+    """
+    زمینه‌ی مرتبط از بانک دانش (استانداردها، روش‌ها، کاتالوگ محصولات) را برای
+    تحلیل فایل/تصویر برمی‌گرداند تا تفسیر «مستند» شود و بتواند استاندارد و
+    محصولِ واقعیِ آرتین آزما را پیشنهاد دهد (به‌جای ساختن). هر خطا → رشته‌ی خالی
+    (تحلیل هرگز به‌خاطر بازیابی متوقف نشود).
+    """
+    query = (query or "").strip()
+    if not query:
+        return ""
+    docs: list = []
+    try:
+        docs = search_knowledge_base(query, top_k=top_k) or []
+    except Exception as e:  # noqa: BLE001
+        logger.info("analysis KB semantic search failed: %s", e)
+    if not docs:
+        try:
+            docs = (local_search_knowledge_base(query, top_k=top_k) or [])[:top_k]
+        except Exception as e:  # noqa: BLE001
+            logger.info("analysis KB local search failed: %s", e)
+    if not docs:
+        return ""
+    parts = []
+    for d in docs:
+        parts.append(
+            f"منبع داخلی:\nعنوان: {d.get('title', '')}\n"
+            f"فایل: {d.get('file_name', '')}\n"
+            f"متن:\n{(d.get('content', '') or '')[:800]}"
+        )
+    return "\n\n".join(parts)
+
+
+# دستورِ خروجیِ مشترک برای گراند‌کردن تحلیل روی بانک دانش (استاندارد + محصول واقعی).
+_ANALYSIS_GROUNDING = (
+    "پس از بخش‌های تحلیل، این دو بخش را هم اضافه کن:\n"
+    "- «استاندارد/روش مرجع مرتبط»: اگر آزمون یا داده به استاندارد مشخصی (ASTM/ISO/…) "
+    "مربوط است، آن را نام ببر و کوتاه توضیح بده.\n"
+    "- «تجهیز یا خدمت پیشنهادی آرتین آزما»: فقط اگر در «منابع داخلی» محصول/دستگاه مرتبطی "
+    "آمده، همان مدلِ واقعی را پیشنهاد بده؛ اگر نبود، مدل نساز و فقط نوعِ دستگاه/خدمت مناسب "
+    "را بگو و کاربر را برای مدل دقیق به ثبت استعلام دعوت کن."
+)
 
 
 @router.post("/analyze-file", tags=["Analysis"], summary="Analyze Excel/CSV/PDF file")
@@ -145,10 +190,13 @@ def analyze_file(
         7. پیشنهاد اقدام بعدی
         8. سوالات تکمیلی که باید از مشتری پرسیده شود
 
+        {_ANALYSIS_GROUNDING}
+
         اگر داده کافی نیست، صریح بگو چه داده‌هایی لازم است.
         """
 
-        ai_answer = ask_expert_assistant(prompt)
+        _kb = _analysis_kb_context(f"{selected_test_type} {user_note} {str(analysis)[:400]}")
+        ai_answer = ask_expert_assistant(prompt, context=_kb, allow_web_search=False)
 
         return {
             "file_type": ext,
@@ -187,9 +235,12 @@ def analyze_file(
         6. علت‌های احتمالی
         7. پیشنهاد اقدام بعدی
         8. سوالات تکمیلی از مشتری
+
+        {_ANALYSIS_GROUNDING}
         """
 
-        ai_answer = ask_expert_assistant(prompt)
+        _kb = _analysis_kb_context(f"{selected_test_type} {user_note} {text[:400]}")
+        ai_answer = ask_expert_assistant(prompt, context=_kb, allow_web_search=False)
 
         return {
             "file_type": ext,
@@ -277,6 +328,14 @@ def analyze_image(
         اگر نمودار تست است، روند، نقاط غیرعادی و تفسیر فنی بده.
         اگر صفحه نرم‌افزار است، پیام‌ها، وضعیت دستگاه و اقدام بعدی را توضیح بده.
         """
+
+        _kb = _analysis_kb_context(f"{selected_image_type} {user_note}")
+        if _kb:
+            combined_note += (
+                "\n\nمنابع داخلی مرتبط (برای مستندسازی تفسیر و پیشنهاد محصول واقعی):\n"
+                f"{_kb}\n"
+            )
+        combined_note += "\n\n" + _ANALYSIS_GROUNDING
 
         ai_answer = analyze_image_with_ai(file_path, user_note=combined_note)
 
