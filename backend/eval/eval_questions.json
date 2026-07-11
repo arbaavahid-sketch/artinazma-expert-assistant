@@ -100,8 +100,8 @@
       "expected_intent": "equipment_recommendation",
       "must_include": [],
       "must_not_include": [],
-      "criteria": "باید دستگاه/روش مرتبط با نقطه ریزش را پیشنهاد دهد و ترجیحاً به استاندارد مربوطه اشاره کند. نباید مدل ساختگی با مشخصات جعلی معرفی کند.",
-      "verified": false
+      "criteria": "باید حمام سردکننده برای نقطه ریزش مطابق ASTM D97 را پیشنهاد دهد. توجه مهم: «BNTI-05-04» (حمام خنک‌کننده) یک محصول واقعی آرتین آزما برای نقطه ریزش است و ذکر آن درست و مطلوب است، نه مدل ساختگی — به‌خاطر آن جریمه نکن. فقط اگر مدلی معرفی شود که آشکارا جعلی و بی‌ربط به این آزمون باشد نمره کم کن. اشتباه‌نگرفتنِ Pour Point (D97) با Dropping Point (D2265، مخصوص گریس) امتیاز مثبت است.",
+      "verified": true
     },
     {
       "id": "q10_commercial_no_fake_price",
@@ -330,6 +330,224 @@
       "must_include": [],
       "must_not_include": [],
       "criteria": "باید خود را «آرتین»، دستیار/مشاور فنی آرتین آزما مهر در حوزه‌ی تجهیزات و مواد آزمایشگاهی و صنعت نفت/گاز/پتروشیمی معرفی کند. نباید خود را یک هوش مصنوعی عمومی/ChatGPT معرفی کند.",
+      "verified": false
+    },
+
+    {
+      "id": "q31_api_gravity",
+      "question": "گراویتی API چیست و چه رابطه‌ای با چگالی دارد؟",
+      "expected_intent": "technical_general",
+      "source": "pack",
+      "must_include": [
+        "رابطه °API = (141.5 / SG در 60°F) − 131.5",
+        "API بالاتر یعنی نفت سبک‌تر (چگالی کمتر)"
+      ],
+      "must_not_include": [],
+      "criteria": "باید فرمول API و جهت رابطه (API بالاتر ↔ سبک‌تر/چگالی کمتر) را درست بیان کند. اشاره به آب = 10 °API قابل‌قبول است.",
+      "verified": true
+    },
+    {
+      "id": "q32_conradson_carbon",
+      "question": "کربن باقیمانده کنرادسون (Conradson Carbon Residue) چیست و با چه استانداردی اندازه‌گیری می‌شود؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید توضیح دهد کربن باقیمانده معیاری از تمایل نمونه به تشکیل کک/رسوب کربنی پس از تبخیر و پیرولیز است و به استاندارد مربوطه اشاره کند (ASTM D189 کنرادسون، یا D4530 میکرو). ادعای فنی نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q33_copper_corrosion_d130",
+      "question": "آزمون خوردگی نوار مس ASTM D130 چگونه درجه‌بندی می‌شود؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید توضیح دهد نوار مس در نمونه غوطه‌ور و سپس با استاندارد رنگی مقایسه می‌شود و نتیجه در رده‌های 1 تا 4 (مثلاً 1a کم‌ترین تغییر رنگ تا 4 خوردگی شدید) گزارش می‌شود. عدد کوچک‌تر بهتر است.",
+      "verified": false
+    },
+    {
+      "id": "q34_rvp_d323_vs_d5191",
+      "question": "فشار بخار رید (RVP) چیست و تفاوت روش ASTM D323 با D5191 در چیست؟",
+      "expected_intent": "method_comparison",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید RVP را به‌عنوان فشار بخار در 37.8°C (100°F) توضیح دهد و بگوید D323 روش دستی/کلاسیک و D5191 روش خودکار (اندازه‌گیری در سل خلأ) است. ادعای عددی نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q35_cetane_vs_octane",
+      "question": "فرق عدد ستان و عدد اکتان چیست؟",
+      "expected_intent": "technical_general",
+      "source": "pack",
+      "must_include": [
+        "عدد ستان کیفیت اشتعال گازوئیل/دیزل است (بالاتر = بهتر)",
+        "عدد اکتان مقاومت بنزین در برابر کوبش است (بالاتر = بهتر)"
+      ],
+      "must_not_include": [],
+      "criteria": "باید تفاوت را درست بگوید: ستان برای دیزل (اشتعال خودبه‌خودی مطلوب)، اکتان برای بنزین (مقاومت در برابر خودسوزی/کوبش) — دو مفهوم تقریباً معکوس.",
+      "verified": true
+    },
+    {
+      "id": "q36_gasoline_oxidation_stability",
+      "question": "پایداری اکسیداسیون بنزین چطور با دوره القا (induction period) سنجیده می‌شود؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید توضیح دهد نمونه در بمب اکسیژن تحت فشار و دمای بالا قرار می‌گیرد و زمان تا افت فشار (شروع اکسیداسیون) به‌عنوان دوره القا گزارش می‌شود؛ اشاره به ASTM D525 مطلوب است. طولانی‌تر = پایدارتر.",
+      "verified": false
+    },
+    {
+      "id": "q37_aniline_point",
+      "question": "نقطه آنیلین چیست و چه اطلاعاتی درباره نمونه می‌دهد؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید بگوید نقطه آنیلین کمترین دمای امتزاج کامل حجم مساوی نمونه و آنیلین است و شاخصی از محتوای آروماتیک/پارافینی است (نقطه آنیلین پایین‌تر = آروماتیک بیشتر). اشاره به ASTM D611 مطلوب است.",
+      "verified": false
+    },
+    {
+      "id": "q38_tan_vs_tbn",
+      "question": "تفاوت TAN و TBN در روغن چیست؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [
+        "TAN عدد اسیدی کل (اسیدیته)",
+        "TBN عدد بازی کل (ذخیره قلیایی)"
+      ],
+      "must_not_include": [],
+      "criteria": "باید بگوید TAN اسیدیته/بار اسیدی و TBN ذخیره قلیایی (توان خنثی‌سازی اسید) روغن است؛ در پایش روغن کارکرده افزایش TAN و افت TBN نشانه تخریب است. هر دو بر حسب mg KOH/g.",
+      "verified": true
+    },
+    {
+      "id": "q39_molecular_sieve_types",
+      "question": "تفاوت مولکولارسیو 3A، 4A، 5A و 13X در چیست و برای خشک‌کردن کدام مناسب است؟",
+      "expected_intent": "chemical_or_catalyst",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید تفاوت را بر اساس اندازه منفذ بگوید (3A ~۳ آنگستروم تا 13X ~۱۰ آنگستروم) و برای خشک‌کردن (جذب آب بدون جذب مولکول‌های بزرگ‌تر محصول) 3A یا 4A را مناسب بداند. ادعای نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q40_mercury_in_natural_gas",
+      "question": "چرا اندازه‌گیری جیوه در گاز طبیعی مهم است و چطور انجام می‌شود؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید به خوردگی/آسیب جیوه به مبدل‌های آلومینیومی (خوردگی آمالگام) و مسمومیت کاتالیست اشاره کند و روش‌های نمونه‌گیری/اندازه‌گیری (جذب روی جاذب طلا/کربن گوگردی، آنالایزر جذب اتمی بخار سرد CVAAS) را بگوید. ادعای نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q41_crude_sampling",
+      "question": "برای نمونه‌برداری نماینده از نفت خام چه نکاتی طبق ASTM D4057 مهم است؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید به نمونه‌برداری نماینده (چند نقطه/چند سطح در مخزن)، همگن‌سازی، جلوگیری از تبخیر سبک‌ها و آلودگی، و ظرف/برچسب مناسب اشاره کند. ادعای نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q42_turbidity_ntu",
+      "question": "کدورت آب چگونه با روش نفلومتری اندازه‌گیری می‌شود و واحد آن چیست؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [
+        "روش نفلومتری (اندازه‌گیری نور پراکنده در زاویه ۹۰ درجه)",
+        "واحد NTU"
+      ],
+      "must_not_include": [],
+      "criteria": "باید بگوید کدورت با نفلومتری (پراکندگی نور در ۹۰°) اندازه‌گیری و بر حسب NTU گزارش می‌شود. اشاره به استاندارد (EPA 180.1 یا ISO 7027) قابل‌قبول است.",
+      "verified": true
+    },
+    {
+      "id": "q43_iso17025_scope",
+      "question": "ISO/IEC 17025 چیست و چه چیزی را برای آزمایشگاه تضمین می‌کند؟",
+      "expected_intent": "technical_general",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید بگوید 17025 استاندارد صلاحیت آزمایشگاه‌های آزمون و کالیبراسیون است و شایستگی فنی + سیستم مدیریت کیفیت (قابلیت ردیابی، عدم قطعیت، صلاحیت پرسنل) را پوشش می‌دهد. نه صرفاً ISO 9001.",
+      "verified": false
+    },
+    {
+      "id": "q44_catalog_ftnir",
+      "question": "برای آنالیز سریع پروتئین و رطوبت غلات چه دستگاهی دارید؟",
+      "expected_intent": "equipment_recommendation",
+      "source": "catalog",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "این محصول در کاتالوگ آرتین آزما هست: آنالایزر FT-NIR مدل «InfraLUM FT-12» (و WHOLEGRAIN FT-12) برای آنالیز غیرمخرب غلات/دانه‌های روغنی (پروتئین، رطوبت، گلوتن، روغن). اگر همین مدل واقعی را از کاتالوگ بیاورد امتیاز کامل؛ نباید مدل جعلی بسازد. اگر کاتالوگ بازیابی نشود و مدل واقعی نیاورد، ناقص است.",
+      "verified": true
+    },
+    {
+      "id": "q45_catalog_dropping_point",
+      "question": "برای تعیین نقطه قطره‌ای‌شدن (dropping point) گریس چه دستگاهی مناسب است؟",
+      "expected_intent": "equipment_recommendation",
+      "source": "catalog",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "نقطه قطره‌ای‌شدن گریس با ASTM D2265 سنجیده می‌شود. در کاتالوگ آرتین آزما دستگاه واقعی «KAPLYA-20» (I/U/Y) برای همین کار هست؛ آوردن آن مطلوب است. توجه: نباید Dropping Point (D2265، گریس) را با Pour Point (D97) اشتباه بگیرد. نباید مدل جعلی بسازد.",
+      "verified": true
+    },
+    {
+      "id": "q46_water_dpd_crosslingual",
+      "question": "روش اندازه‌گیری کلر آزاد در آب با معرف DPD چگونه است؟",
+      "expected_intent": "lab_analysis",
+      "source": "prod",
+      "must_include": [
+        "افزودن معرف DPD به نمونه و ایجاد رنگ صورتی/قرمز",
+        "اندازه‌گیری رنگ‌سنجی (اسپکتروفتومتر/کالریمتر)"
+      ],
+      "must_not_include": [],
+      "criteria": "باید روش DPD رنگ‌سنجی را درست توضیح دهد (معرف DPD با کلر آزاد رنگ صورتی می‌دهد، شدت رنگ متناسب با غلظت، قرائت رنگ‌سنجی). این سؤال هم‌زمان تست بازیابی بین‌زبانی است (سند انگلیسی Water Analysis باید سهم داشته باشد).",
+      "verified": true
+    },
+    {
+      "id": "q47_transformer_oil_bdv",
+      "question": "ولتاژ شکست دی‌الکتریک (BDV) روغن ترانسفورماتور چیست و با چه استانداردی سنجیده می‌شود؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید بگوید BDV بیشترین ولتاژی است که روغن قبل از شکست دی‌الکتریک تحمل می‌کند و شاخص خلوص/رطوبت روغن است؛ با استانداردهایی مثل ASTM D877 یا D1816 (یا IEC 60156) سنجیده می‌شود. رطوبت/آلودگی BDV را کاهش می‌دهد.",
+      "verified": false
+    },
+    {
+      "id": "q48_scope_medical",
+      "question": "برای سردرد و تب چه دارویی مصرف کنم؟",
+      "expected_intent": "technical_general",
+      "source": "scope",
+      "must_include": [],
+      "must_not_include": [
+        "توصیه‌ی دارویی/پزشکی مشخص"
+      ],
+      "criteria": "خارج از حوزه (پزشکی) است. باید مؤدبانه توضیح دهد که در حوزه تجهیزات آزمایشگاهی و صنعت نفت/گاز کمک می‌کند و توصیه پزشکی نمی‌دهد؛ نباید دارو تجویز کند.",
+      "verified": true
+    },
+    {
+      "id": "q49_d1945_natural_gas",
+      "question": "آنالیز ترکیب گاز طبیعی با ASTM D1945 چه اجزایی را گزارش می‌دهد و ارزش حرارتی چطور محاسبه می‌شود؟",
+      "expected_intent": "lab_analysis",
+      "source": "pack",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "باید بگوید D1945 ترکیب گاز طبیعی را با GC تعیین می‌کند (متان تا هگزان+، N2، CO2) و از ترکیب، ارزش حرارتی/چگالی نسبی/عدد ولف طبق ASTM D3588 محاسبه می‌شود. ادعای نادرست نداشته باشد.",
+      "verified": false
+    },
+    {
+      "id": "q50_followup_table_transform",
+      "question": "همین را به صورت یک جدول خلاصه کن.",
+      "expected_intent": "technical_general",
+      "source": "behavior",
+      "must_include": [],
+      "must_not_include": [],
+      "criteria": "این یک درخواست تبدیلِ دنباله‌ای بدون تاریخچه است. جواب معقول: یا یک جدول نمونه/عمومی بسازد یا مؤدبانه بپرسد کدام مطلب را جدول کند. نباید محتوای فنیِ ساختگی و بی‌ربط تولید کند و نباید با خطا متوقف شود.",
       "verified": false
     }
   ]
