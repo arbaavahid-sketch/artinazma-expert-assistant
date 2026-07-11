@@ -28,11 +28,8 @@ export const deviceAssets: DeviceAsset[] = [
     keywords: [
       "جیوه",
       "mercury",
-      "hg",
       "ra-915",
       "ra915",
-      "آب",
-      "خاک",
       "آنالیز جیوه",
     ],
   },
@@ -117,16 +114,29 @@ export const deviceAssets: DeviceAsset[] = [
   },
 ];
 
+// کلیدواژه به‌صورت «کلمه‌ی کامل» تطبیق داده می‌شود، نه زیررشته — وگرنه کلمات کوتاه
+// (مثل «آب» داخل «حساب» یا «hg» داخل واژه‌ها) باعث تطبیق‌های نادرست می‌شوند.
+const _kwRegexCache = new Map<string, RegExp>();
+function _matchesWholeWord(text: string, keyword: string): boolean {
+  let re = _kwRegexCache.get(keyword);
+  if (!re) {
+    const esc = keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // مرز = ابتدا/انتهای رشته یا هر چیزی جز حرف/رقم (پوشش یونیکد برای فارسی).
+    re = new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, "u");
+    _kwRegexCache.set(keyword, re);
+  }
+  return re.test(text);
+}
+
 export function findRelatedDevices(text: string, maxResults = 2) {
   const normalizedText = text.toLowerCase();
 
   return deviceAssets
     .map((device) => {
-      const score = device.keywords.reduce((total, keyword) => {
-        return normalizedText.includes(keyword.toLowerCase())
-          ? total + 1
-          : total;
-      }, 0);
+      const score = device.keywords.reduce(
+        (total, keyword) => (_matchesWholeWord(normalizedText, keyword) ? total + 1 : total),
+        0,
+      );
 
       return {
         ...device,

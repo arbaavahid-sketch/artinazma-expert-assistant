@@ -44,4 +44,19 @@ describe("findRelatedDevices", () => {
     findRelatedDevices("جیوه mercury gc گوگرد");
     expect(deviceAssets).toEqual(before);
   });
+
+  it("does not show the mercury analyzer for an unrelated sulfur answer", () => {
+    // متن سولفور که «خاکستر» و «حساب» دارد — نباید به‌خاطر زیررشته‌ی «خاک»/«آب»
+    // آنالایزر جیوه را نشان دهد (باگ واقعی گزارش‌شده).
+    const sulfurText =
+      "برای آنالیز سولفور در نفت خام، مقدار خاکستر و محاسبه‌ی گوگرد کل با XRF انجام می‌شود.";
+    const results = findRelatedDevices(sulfurText);
+    expect(results.some((d) => d.id === "ra-915m")).toBe(false);
+    expect(results[0]?.id).toBe("sulfur-analyzer");
+  });
+
+  it("matches keywords only as whole words, not substrings", () => {
+    // «آب» نباید داخل «حساب» و «hg» نباید داخل واژه‌های دیگر تطبیق شود.
+    expect(findRelatedDevices("صورتحساب و جواب سؤال")).toEqual([]);
+  });
 });
