@@ -128,10 +128,12 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     _local_best = float(local_docs[0].get("score", 0) or 0) if local_docs else 0.0
     _vector_best = 0.0
 
-    if has_astm_code:
-        related_docs = []
-        search_mode = "gpt_astm_direct"
-    elif specific_model_question:
+    # سؤال دارای کد ASTM هم از مسیر بازیابیِ ترکیبی می‌گذرد تا از متنِ کاملِ استانداردهای
+    # آپلودشده در بانک دانش (Qdrant) استفاده کند، نه فقط عنوانِ یک‌خطیِ دیکشنری. لنگرِ
+    # عنوانِ معتبر (_astm_inject) و خاموش‌بودنِ وب برای کدهای شناخته‌شده دست‌نخورده می‌ماند،
+    # پس کدِ شناخته‌شده هم لنگرِ معتبر می‌گیرد هم متنِ واقعیِ PDF، و پاسخ پایدار می‌ماند
+    # (بازیابیِ KB قطعی است؛ فقط وب نویز اضافه می‌کرد که همچنان خاموش است).
+    if specific_model_question and not has_astm_code:
         exact_local_match = context_has_exact_model_match(body.message, local_docs)
         if (
             exact_local_match

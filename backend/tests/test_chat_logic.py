@@ -133,11 +133,13 @@ class TestAstmWebSearchFlag:
 
     def test_two_digit_astm_code_is_recognized(self):
         # کدهای دو رقمی پرکاربرد (D86/D93/D97/D56) هم باید لنگر بگیرند و قطعی شوند؛
-        # web=False یعنی وارد مسیر ASTM شده و عنوان معتبر تزریق شده است.
+        # web=False یعنی وارد مسیر ASTM شده و عنوان/لینک معتبر تزریق شده است.
+        # (کد ASTM حالا از مسیر بازیابیِ ترکیبی هم می‌گذرد تا از متنِ کاملِ استاندارد در
+        # بانک دانش استفاده کند، ولی لنگرِ معتبر و web=False دست‌نخورده می‌ماند.)
         for code in ["D86", "D93", "D97", "D56"]:
             p = self._pipeline(f"استاندارد ASTM {code} چیست؟")
             assert p["allow_web_search"] is False, code
-            assert "gpt_astm_direct" in p["search_mode"], code
+            assert f"store.astm.org/standards/{code.lower()}" in p["context"], code
 
     def test_link_request_injects_correct_official_url(self):
         # درخواست لینک برای کد شناخته‌شده: وب لازم نیست (مدل با وب هم URL غلط می‌ساخت)؛
