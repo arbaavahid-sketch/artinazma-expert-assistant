@@ -2,6 +2,7 @@ import re
 import json as _json_local
 import logging
 import time as _time
+from contextlib import contextmanager
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -70,6 +71,17 @@ _COMMERCIAL_INTENTS = {"commercial_request"}
 seed_valid(_ASTM_KNOWN_STANDARDS)
 
 
+@contextmanager
+def _stage(timings: dict, label: str):
+    """زمان‌سنجِ سبکِ هر مرحلهٔ پایپ‌لاین (بر حسب میلی‌ثانیه). بدون تغییر رفتار؛
+    فقط برای دیدن اینکه تأخیر واقعاً کجاست (translate، Qdrant، وب، ...)."""
+    _t = _time.perf_counter()
+    try:
+        yield
+    finally:
+        timings[label] = round((_time.perf_counter() - _t) * 1000, 1)
+
+
 def _build_chat_pipeline(body: ChatRequest) -> dict:
     """
     Shared pre-processing pipeline for /chat and /chat/stream.
@@ -81,11 +93,16 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     specific_model_question = is_specific_product_or_model_question(body.message)
     allow_company_reference = is_artinazma_related_question(body.message)
     is_transform_followup = is_followup_transform_request(body.message)
-    intent_data = detect_question_intent(message=body.message, domain=body.domain or "auto")
+    _timings: dict = {}
+    _pipeline_t0 = _time.perf_counter()
+
+    with _stage(_timings, "intent"):
+        intent_data = detect_question_intent(message=body.message, domain=body.domain or "auto")
 
     question_intent: str = intent_data["intent"]
     question_intent_label: str = intent_data["label"]
-    local_docs = local_search_knowledge_base(body.message, top_k=12)
+    with _stage(_timings, "local_search"):
+        local_docs = local_search_knowledge_base(body.message, top_k=12)
 
     best_score = 0.0
     related_docs: list = []
@@ -155,7 +172,8 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             return sorted(hits, key=vector_relevance, reverse=True)
 
         try:
-            _direct_hits = _relevant_sorted(search_knowledge_base(body.message, top_k=10))
+            with _stage(_timings, "vector_direct"):
+                _direct_hits = _relevant_sorted(search_knowledge_base(body.message, top_k=10))
         except Exception as e:
             logger.warning("AI vector search failed: %s", e)
             _direct_hits = []
@@ -167,10 +185,12 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         # خطا/نبود ترجمه → بی‌سروصدا صرف‌نظر.
         _xling_hits: list = []
         if detect_user_language(body.message) == "fa":
-            _q_en = translate_query_for_search(body.message)
+            with _stage(_timings, "translate_query"):
+                _q_en = translate_query_for_search(body.message)
             if _q_en:
                 try:
-                    _xling_hits = _relevant_sorted(search_knowledge_base(_q_en, top_k=8))
+                    with _stage(_timings, "vector_xling"):
+                        _xling_hits = _relevant_sorted(search_knowledge_base(_q_en, top_k=8))
                 except Exception as e:
                     logger.warning("EN cross-lingual search failed: %s", e)
 
@@ -238,7 +258,8 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
 
     if allow_company_reference:
         try:
-            artinazma_resources = find_artinazma_resources(message=body.message, max_results=2)
+            with _stage(_timings, "site_lookup"):
+                artinazma_resources = find_artinazma_resources(message=body.message, max_results=2)
             resource_links = artinazma_resources.get("links", [])
             resource_images = artinazma_resources.get("images", [])
             if resource_links:
@@ -330,7 +351,8 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         )
     ):
         try:
-            _web_results = search_web_sources(body.message, max_results=5)
+            with _stage(_timings, "web_search"):
+                _web_results = search_web_sources(body.message, max_results=5)
         except Exception as e:  # noqa: BLE001
             logger.warning("web search failed: %s", e)
             _web_results = []
@@ -468,9 +490,18 @@ Laboratory answer contract:
         except Exception as _e:
             logger.warning("customer_context load failed: %s", _e)
 
+    _timings["pipeline_total"] = round((_time.perf_counter() - _pipeline_t0) * 1000, 1)
+    logger.info(
+        "chat pipeline timings (ms): %s | mode=%s web=%s",
+        ", ".join(f"{k}={v}" for k, v in _timings.items()),
+        search_mode,
+        allow_web_search,
+    )
+
     return {
         "has_astm_code": has_astm_code,
         "specific_model_question": specific_model_question,
+        "stage_timings_ms": _timings,
         "allow_company_reference": allow_company_reference,
         "is_transform_followup": is_transform_followup,
         "question_intent": question_intent,
@@ -506,6 +537,14 @@ def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_
         metadata["answer_mode"] = answer_mode
     if response_time_ms is not None:
         metadata["response_time_ms"] = response_time_ms
+    _stage_timings = p.get("stage_timings_ms")
+    if _stage_timings:
+        metadata["stage_timings_ms"] = _stage_timings
+        # مجموع کل = پیش‌پردازش (بازیابی) + کالِ پاسخِ مدل.
+        if response_time_ms is not None:
+            metadata["total_time_ms"] = int(
+                _stage_timings.get("pipeline_total", 0) + response_time_ms
+            )
     return metadata
 
 
