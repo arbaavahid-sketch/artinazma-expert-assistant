@@ -59,7 +59,10 @@ logger = logging.getLogger("artin_scheduler")
 
 def _run_gdrive_sync():
     """Start scheduled Google Drive synchronization in the background."""
-    started, message = start_gdrive_sync(trigger="scheduled")
+    # سقف پیش‌فرض سینک شبانه بالا نگه داشته می‌شود تا واردات انبوه (هزاران فایل)
+    # طی چند شب خودکار تکمیل شود؛ با GDRIVE_SYNC_MAX_FILES قابل تنظیم است.
+    max_files = int(os.getenv("GDRIVE_SYNC_MAX_FILES", "5000"))
+    started, message = start_gdrive_sync(trigger="scheduled", max_files=max_files)
 
     if started:
         logger.info(message)

@@ -711,6 +711,11 @@ export default function KnowledgePage() {
                   <option value={50}>{isEn ? "50 files" : "۵۰ فایل"}</option>
                   <option value={100}>{isEn ? "100 files" : "۱۰۰ فایل"}</option>
                   <option value={200}>{isEn ? "200 files" : "۲۰۰ فایل"}</option>
+                  <option value={500}>{isEn ? "500 files" : "۵۰۰ فایل"}</option>
+                  <option value={1000}>{isEn ? "1000 files" : "۱۰۰۰ فایل"}</option>
+                  <option value={2000}>{isEn ? "2000 files" : "۲۰۰۰ فایل"}</option>
+                  <option value={5000}>{isEn ? "5000 files" : "۵۰۰۰ فایل"}</option>
+                  <option value={10000}>{isEn ? "10000 files" : "۱۰۰۰۰ فایل"}</option>
                 </select>
 
                 <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
