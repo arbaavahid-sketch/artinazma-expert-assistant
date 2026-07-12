@@ -953,8 +953,15 @@ def get_knowledge_stats() -> Dict[str, Any]:
     vector_store_updated_at = ""
     vector_store_size_mb = 0.0
     # In Qdrant mode the on-disk store is the lightweight text index, so report
-    # its size/mtime (not the stale legacy embedding JSON).
-    size_source_path = TEXT_INDEX_PATH if _qs.is_enabled() else VECTOR_STORE_PATH
+    # its size/mtime once it exists. Until the first append/migration builds it,
+    # fall back to the legacy embedding JSON so the panel never shows a scary
+    # "no vector store" while the data is safely in Qdrant.
+    if _qs.is_enabled():
+        size_source_path = (
+            TEXT_INDEX_PATH if TEXT_INDEX_PATH.exists() else VECTOR_STORE_PATH
+        )
+    else:
+        size_source_path = VECTOR_STORE_PATH
     if size_source_path.exists():
         try:
             stat = size_source_path.stat()
