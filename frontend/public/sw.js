@@ -1,5 +1,5 @@
-// ArtinAzma PWA Service Worker v5
-const CACHE_VERSION = "artinazma-v5";
+// ArtinAzma PWA Service Worker v6
+const CACHE_VERSION = "artinazma-v6";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -102,9 +102,33 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Code assets (JS/CSS): network-first so a stale bundle is never served.
+  // This is the fix for "the answer appears all at once" — an old pre-streaming
+  // bundle could stick around under cache-first. Falls back to cache only offline.
   if (
     url.pathname.startsWith("/_next/static/") ||
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|webp|avif|ico|woff2?|ttf|eot)$/)
+    url.pathname.match(/\.(js|css)$/)
+  ) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => {
+              cache.put(request, clone);
+              trimCache(DYNAMIC_CACHE, DYNAMIC_CACHE_LIMIT);
+            });
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Media (images, fonts): cache-first is safe and fast.
+  if (
+    url.pathname.match(/\.(png|jpg|jpeg|svg|gif|webp|avif|ico|woff2?|ttf|eot)$/)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
