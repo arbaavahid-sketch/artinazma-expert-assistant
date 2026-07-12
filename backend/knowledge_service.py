@@ -36,6 +36,13 @@ EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 STORAGE_DIR = Path("storage")
 VECTOR_STORE_PATH = STORAGE_DIR / "knowledge_vectors.json"
 
+# Lightweight text-only index used when Qdrant holds the vectors. It stores one
+# JSON line per chunk (title/category/file_name/chunk_index/content, NO
+# embedding), so it stays ~30-50x smaller than the embedding JSON and can be
+# appended to in O(chunks-in-file) instead of rewriting the whole store per
+# file. Local keyword search + stats read from it. See load_vector_store().
+TEXT_INDEX_PATH = STORAGE_DIR / "knowledge_text_index.jsonl"
+
 STORAGE_DIR.mkdir(exist_ok=True)
 
 # ── In-memory cache for knowledge vectors ──────────────────────
@@ -44,8 +51,21 @@ STORAGE_DIR.mkdir(exist_ok=True)
 _vector_cache: Optional[List[Dict[str, Any]]] = None
 _vector_cache_mtime: float = 0.0
 
+# Separate cache for the lightweight text index (Qdrant mode).
+_text_index_cache: Optional[List[Dict[str, Any]]] = None
+_text_index_cache_mtime: float = 0.0
+
 # Prevent concurrent read-modify-write operations inside one process.
 _vector_store_lock = threading.RLock()
+
+
+def _qdrant_enabled() -> bool:
+    """True when Qdrant is configured (vectors live there, not in the JSON)."""
+    try:
+        import qdrant_service as _qs
+        return _qs.is_enabled()
+    except Exception:
+        return False
 
 
 @contextmanager
@@ -168,8 +188,165 @@ def create_embedding(text: str) -> Optional[List[float]]:
         return None
 
 
+# ── Lightweight text index (Qdrant mode) ──────────────────────────────────
+
+def _text_index_row(chunk: Dict[str, Any]) -> Dict[str, Any]:
+    """Project a chunk dict to the text-only shape stored in the JSONL index."""
+    return {
+        "title": chunk.get("title", ""),
+        "category": chunk.get("category", "general"),
+        "file_name": chunk.get("file_name", ""),
+        "chunk_index": chunk.get("chunk_index", 0),
+        "content": chunk.get("content", ""),
+    }
+
+
+def _invalidate_text_index_cache() -> None:
+    global _text_index_cache, _text_index_cache_mtime
+    _text_index_cache = None
+    _text_index_cache_mtime = 0.0
+
+
+def _write_text_index_rows(rows: List[Dict[str, Any]]) -> None:
+    """Atomically (re)write the whole text index. Used for delete/replace and
+    the one-time migration — NOT the per-file add hot path (that appends)."""
+    STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+    fd, temp_name = tempfile.mkstemp(
+        prefix=f".{TEXT_INDEX_PATH.name}.",
+        suffix=".tmp",
+        dir=str(TEXT_INDEX_PATH.parent),
+    )
+    temp_path = Path(temp_name)
+
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as file:
+            for row in rows:
+                file.write(json.dumps(_text_index_row(row), ensure_ascii=False))
+                file.write("\n")
+            file.flush()
+            os.fsync(file.fileno())
+
+        os.replace(temp_path, TEXT_INDEX_PATH)
+    finally:
+        if temp_path.exists():
+            temp_path.unlink(missing_ok=True)
+
+    _invalidate_text_index_cache()
+
+
+def _migrate_text_index_from_legacy() -> List[Dict[str, Any]]:
+    """Build the text index once from the legacy embedding JSON (dropping the
+    vectors), so existing files stay searchable after switching to this path."""
+    rows: List[Dict[str, Any]] = []
+
+    if VECTOR_STORE_PATH.exists():
+        try:
+            with VECTOR_STORE_PATH.open("r", encoding="utf-8") as file:
+                legacy = json.load(file)
+            rows = [_text_index_row(item) for item in legacy]
+            logger.info(
+                "Migrated %d chunks from legacy vector JSON into text index.",
+                len(rows),
+            )
+        except Exception:
+            logger.exception("Text-index migration from legacy JSON failed.")
+            rows = []
+
+    try:
+        _write_text_index_rows(rows)
+    except Exception:
+        logger.exception("Could not persist migrated text index.")
+
+    return rows
+
+
+def _load_text_index() -> List[Dict[str, Any]]:
+    """Load the lightweight text index (Qdrant mode), cached by mtime."""
+    global _text_index_cache, _text_index_cache_mtime
+
+    with _vector_store_lock:
+        if not TEXT_INDEX_PATH.exists():
+            rows = _migrate_text_index_from_legacy()
+            _text_index_cache = rows
+            try:
+                _text_index_cache_mtime = TEXT_INDEX_PATH.stat().st_mtime
+            except OSError:
+                _text_index_cache_mtime = 0.0
+            return rows
+
+        try:
+            current_mtime = TEXT_INDEX_PATH.stat().st_mtime
+        except OSError:
+            current_mtime = 0.0
+
+        if _text_index_cache is not None and current_mtime == _text_index_cache_mtime:
+            return _text_index_cache
+
+        rows: List[Dict[str, Any]] = []
+        try:
+            with TEXT_INDEX_PATH.open("r", encoding="utf-8") as file:
+                for line in file:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rows.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+        except OSError:
+            rows = []
+
+        _text_index_cache = rows
+        _text_index_cache_mtime = current_mtime
+        return rows
+
+
+def _append_text_index_rows(rows: List[Dict[str, Any]]) -> None:
+    """Append chunk rows to the text index without rewriting the whole file.
+    This is what keeps bulk Google-Drive imports O(1) per file."""
+    if not rows:
+        return
+
+    with _vector_store_lock:
+        # Ensure the index exists (migrate legacy data once) so we never append
+        # onto a missing file while old chunks still live only in the JSON.
+        if not TEXT_INDEX_PATH.exists():
+            _migrate_text_index_from_legacy()
+
+        with TEXT_INDEX_PATH.open("a", encoding="utf-8") as file:
+            for row in rows:
+                file.write(json.dumps(_text_index_row(row), ensure_ascii=False))
+                file.write("\n")
+            file.flush()
+            os.fsync(file.fileno())
+
+        _invalidate_text_index_cache()
+
+
+def _remove_file_from_text_index(file_name: str) -> int:
+    """Drop all rows for a file (rewrite-filter). Used for delete/replace only."""
+    with _vector_store_lock:
+        rows = _load_text_index()
+        new_rows = [r for r in rows if r.get("file_name") != file_name]
+        removed = len(rows) - len(new_rows)
+
+        if removed > 0:
+            _write_text_index_rows(new_rows)
+
+        return removed
+
+
 def load_vector_store() -> List[Dict[str, Any]]:
-    """Load the vector store with safe in-memory caching."""
+    """Load the vector store with safe in-memory caching.
+
+    When Qdrant is enabled the embeddings live in Qdrant, so we return the
+    lightweight text index (no vectors) that local keyword search and stats
+    use. When Qdrant is off we fall back to the legacy monolithic JSON store.
+    """
+    if _qdrant_enabled():
+        return _load_text_index()
+
     global _vector_cache, _vector_cache_mtime
 
     with _vector_store_lock:
@@ -263,6 +440,12 @@ def _save_vector_store_unlocked(
     create_backup: bool = True,
 ) -> None:
     """Atomically save data. Caller must hold the write lock."""
+    # Qdrant mode: the on-disk store is the lightweight text index (no vectors),
+    # so persist there instead of rewriting the huge embedding JSON.
+    if _qdrant_enabled():
+        _write_text_index_rows(data)
+        return
+
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
     backup_path = VECTOR_STORE_PATH.with_suffix(
@@ -519,6 +702,32 @@ def add_file_to_knowledge_base(
             "file_name": file_name,
         }
 
+    if _qs.is_enabled():
+        # ── Qdrant mode ─────────────────────────────────────────────────────
+        # Vectors go to Qdrant; the on-disk store is only the lightweight text
+        # index. Brand-new files (removed_old == 0) are a pure append — no
+        # full-store read, rewrite, or .bak copy — so a 6000-file bulk import
+        # stays fast no matter how large the library already is.
+        removed_old = _qs.delete_by_file(file_name)
+        _qs.upsert_chunks(chunk_dicts)
+
+        with _vector_store_write_lock():
+            if removed_old > 0:
+                # Existing file replaced: drop its stale text rows first.
+                _remove_file_from_text_index(file_name)
+            _append_text_index_rows(chunk_dicts)
+
+        return {
+            "success": True,
+            "message": "فایل با موفقیت به بانک دانش اضافه شد.",
+            "file_name": file_name,
+            "chunks_added": len(chunk_dicts),
+            "replaced": replace_existing,
+            "removed_old_chunks": removed_old,
+            "backend": "qdrant",
+        }
+
+    # ── JSON-only mode (no Qdrant): legacy monolithic vector store ──────────
     with _vector_store_write_lock():
         # Reload while holding the transaction lock, because another
         # upload may have completed while embeddings were generated.
@@ -548,12 +757,6 @@ def add_file_to_knowledge_base(
 
         removed_chunks = len(store) - len(new_store)
 
-        if _qs.is_enabled():
-            # Always remove previous Qdrant chunks first. This also
-            # removes stale chunks when the new file is shorter.
-            _qs.delete_by_file(file_name)
-            _qs.upsert_chunks(chunk_dicts)
-
         new_store.extend(chunk_dicts)
         _save_vector_store_unlocked(new_store)
 
@@ -566,11 +769,7 @@ def add_file_to_knowledge_base(
         "chunks_added": len(chunk_dicts),
         "replaced": replace_existing,
         "removed_old_chunks": removed_chunks,
-        "backend": (
-            "qdrant"
-            if _qs.is_enabled()
-            else "json"
-        ),
+        "backend": "json",
     }
 
 
@@ -591,7 +790,10 @@ def search_knowledge_base(
         try:
             return _qs.hybrid_search(query, query_embedding, top_k=top_k, category_filter=category_filter)
         except Exception as e:
-            logger.warning("Qdrant search failed, falling back to JSON: %s", e)
+            # No numpy fallback in Qdrant mode: the on-disk store is the
+            # text index (no vectors). Local keyword search still covers this.
+            logger.warning("Qdrant search failed; skipping vector fallback: %s", e)
+            return []
 
     # ── JSON / numpy fallback ──────────────────────────────────────────────
     store = load_vector_store()
@@ -750,9 +952,12 @@ def get_knowledge_stats() -> Dict[str, Any]:
 
     vector_store_updated_at = ""
     vector_store_size_mb = 0.0
-    if VECTOR_STORE_PATH.exists():
+    # In Qdrant mode the on-disk store is the lightweight text index, so report
+    # its size/mtime (not the stale legacy embedding JSON).
+    size_source_path = TEXT_INDEX_PATH if _qs.is_enabled() else VECTOR_STORE_PATH
+    if size_source_path.exists():
         try:
-            stat = VECTOR_STORE_PATH.stat()
+            stat = size_source_path.stat()
             vector_store_size_mb = round(stat.st_size / 1_048_576, 2)
             vector_store_updated_at = time.strftime(
                 "%Y-%m-%dT%H:%M:%S",
@@ -780,8 +985,8 @@ def get_knowledge_stats() -> Dict[str, Any]:
         "category_breakdown": category_breakdown,
         "backend": backend,
         "embedding_model": EMBEDDING_MODEL,
-        "vector_store_path": str(VECTOR_STORE_PATH),
-        "vector_store_exists": VECTOR_STORE_PATH.exists(),
+        "vector_store_path": str(size_source_path),
+        "vector_store_exists": size_source_path.exists(),
         "vector_store_size_mb": vector_store_size_mb,
         "vector_store_updated_at": vector_store_updated_at,
         "last_sync": last_sync,
