@@ -194,6 +194,53 @@ def search(
     return results
 
 
+def keyword_candidates(terms: List[str], limit: int = 40) -> List[Dict[str, Any]]:
+    """Return chunks whose `content` matches ANY of the given keyword terms.
+
+    Pure full-text lookup via scroll (no embedding needed). Used to guarantee
+    that chunks containing an exact ASTM code / model token are present in the
+    local-scoring candidate set even if dense search ranked them low.
+    """
+    if not terms:
+        return []
+
+    from qdrant_client.models import Filter, FieldCondition, MatchText
+
+    client = _get_client()
+    conditions = [
+        FieldCondition(key="content", match=MatchText(text=t))
+        for t in terms[:10]
+        if t and len(t) >= 2
+    ]
+    if not conditions:
+        return []
+
+    flt = Filter(should=conditions, minimum_should_match=1)
+    try:
+        records, _ = client.scroll(
+            collection_name=COLLECTION,
+            scroll_filter=flt,
+            limit=limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+    except Exception as exc:
+        logger.debug("keyword_candidates scroll failed: %s", exc)
+        return []
+
+    out: List[Dict[str, Any]] = []
+    for r in records:
+        p = r.payload or {}
+        out.append({
+            "title": p.get("title", ""),
+            "category": p.get("category", "general"),
+            "file_name": p.get("file_name", ""),
+            "chunk_index": p.get("chunk_index", 0),
+            "content": p.get("content", ""),
+        })
+    return out
+
+
 def file_exists(file_name: str) -> bool:
     """Check if any chunk for this file exists in Qdrant."""
     from qdrant_client.models import Filter, FieldCondition, MatchValue

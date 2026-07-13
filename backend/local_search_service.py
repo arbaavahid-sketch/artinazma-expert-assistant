@@ -1,7 +1,10 @@
 import re
 import math
+import logging
 from typing import List, Dict, Any, Optional
 from knowledge_service import load_vector_store
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_text(text: str) -> str:
@@ -108,12 +111,62 @@ def bm25_score(index: Dict, doc_idx: int, query_tokens: List[str]) -> float:
 # Hybrid search: BM25 + keyword frequency + ASTM boost
 # ---------------------------------------------------------------------------
 
+def _qdrant_candidate_store(query: str) -> Optional[List[Dict[str, Any]]]:
+    """When Qdrant holds the vectors, fetch a small, relevance-ranked candidate
+    set from Qdrant instead of scanning the whole (170k-chunk) text store.
+
+    Returns None when Qdrant is disabled (caller falls back to the full local
+    store). The returned rows carry exactly the fields the scorer reads
+    (title/category/file_name/chunk_index/content) — no embeddings — and are
+    then re-scored with the SAME hybrid formula, so score scale + thresholds
+    are unchanged. Exact ASTM/model code chunks are force-included so the code
+    boosts still fire even if dense search ranked them low.
+    """
+    try:
+        import qdrant_service as _qs
+        if not _qs.is_enabled():
+            return None
+    except Exception:
+        return None
+
+    from knowledge_service import create_embedding
+
+    cands: List[Dict[str, Any]] = []
+    seen: set = set()
+
+    def _add(rows):
+        for c in rows:
+            k = (c.get("file_name", ""), c.get("chunk_index", 0))
+            if k in seen:
+                continue
+            seen.add(k)
+            cands.append({
+                "title": c.get("title", ""),
+                "category": c.get("category", "general"),
+                "file_name": c.get("file_name", ""),
+                "chunk_index": c.get("chunk_index", 0),
+                "content": c.get("content", ""),
+            })
+
+    try:
+        embedding = create_embedding(query)
+        if embedding is not None:
+            _add(_qs.hybrid_search(query, embedding, top_k=40))
+    except Exception as exc:
+        logger.debug("qdrant candidate hybrid_search failed: %s", exc)
+
+    # Guarantee exact-code chunks are present (dense search may rank them low).
+    codes = extract_astm_codes(query) + extract_exact_codes(query)
+    if codes:
+        try:
+            _add(_qs.keyword_candidates(codes, limit=40))
+        except Exception as exc:
+            logger.debug("qdrant candidate keyword lookup failed: %s", exc)
+
+    return cands
+
+
 def local_search_knowledge_base(query: str, top_k: int = 12) -> List[Dict[str, Any]]:
-    store = load_vector_store()
-
-    if not store:
-        return []
-
     query_tokens = tokenize(query)
     astm_codes   = extract_astm_codes(query)
     exact_codes  = extract_exact_codes(query)
@@ -121,7 +174,18 @@ def local_search_knowledge_base(query: str, top_k: int = 12) -> List[Dict[str, A
     if not query_tokens and not astm_codes and not exact_codes:
         return []
 
-    bm25_index = _get_bm25_index(store)
+    # Qdrant mode: score a bounded Qdrant candidate set (fast, O(candidates)).
+    # JSON mode: score the full in-memory store as before (cached BM25).
+    candidate_store = _qdrant_candidate_store(query)
+    if candidate_store is not None:
+        store = candidate_store
+        bm25_index = _build_bm25_index(store)   # tiny set → no shared cache
+    else:
+        store = load_vector_store()
+        bm25_index = _get_bm25_index(store) if store else None
+
+    if not store:
+        return []
 
     results = []
 
