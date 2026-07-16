@@ -1,8 +1,10 @@
 import re
+import os
 import json as _json_local
 import logging
 import time as _time
 from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -71,6 +73,11 @@ _COMMERCIAL_INTENTS = {"commercial_request"}
 # کدهای دیکشنری داخلی را از پیش «معتبر» علامت بزن تا برایشان بررسی شبکه لازم نشود.
 seed_valid(_ASTM_KNOWN_STANDARDS)
 
+# Executor مشترک برای کارهای پس‌زمینه‌ی پایپلاین (فعلاً فقط ترجمهٔ سؤال). ترجمه یک
+# فراخوانِ LLM ~۲ ثانیه‌ای است؛ اجرای هم‌زمانِ آن با intent/جست‌وجوها «زمان تا اولین
+# کلمه» را کم می‌کند. یک executorِ پروسه‌ای (نه per-request) تا نشتِ ترد نداشته باشیم.
+_bg_executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="chat-bg")
+
 
 @contextmanager
 def _stage(timings: dict, label: str):
@@ -96,6 +103,17 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
     is_transform_followup = is_followup_transform_request(body.message)
     _timings: dict = {}
     _pipeline_t0 = _time.perf_counter()
+
+    # ترجمهٔ سؤال فارسی→انگلیسی (برای جست‌وجوی بین‌زبانی) بزرگ‌ترین سهمِ تأخیرِ «تا اولین
+    # کلمه» است (~۳ ثانیه، یک فراخوانِ LLM). آن را همین‌جا زودهنگام و موازی با intent و
+    # جست‌وجوها کیک می‌زنیم؛ نتیجه در مرحلهٔ vector_xling برداشت می‌شود. شرطِ کیک‌زدن دقیقاً
+    # همان شرطِ ورود به شاخهٔ بازیابیِ ترکیبی است تا فراخوانِ هدررفته نداشته باشیم.
+    _translate_future = None
+    if (
+        not (specific_model_question and not has_astm_code)
+        and detect_user_language(body.message) == "fa"
+    ):
+        _translate_future = _bg_executor.submit(translate_query_for_search, body.message)
 
     with _stage(_timings, "intent"):
         intent_data = detect_question_intent(message=body.message, domain=body.domain or "auto")
@@ -185,9 +203,11 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         # می‌کند. این نتایج «جای رزرو» می‌گیرند تا پشتِ سندهای فارسی از سقف نیفتند.
         # خطا/نبود ترجمه → بی‌سروصدا صرف‌نظر.
         _xling_hits: list = []
-        if detect_user_language(body.message) == "fa":
+        if _translate_future is not None:
+            # ترجمه از قبل (موازی) شروع شده؛ اینجا فقط منتظرِ اتمامش می‌مانیم —
+            # که معمولاً تا این نقطه تمام یا نزدیک‌به‌تمام است.
             with _stage(_timings, "translate_query"):
-                _q_en = translate_query_for_search(body.message)
+                _q_en = _translate_future.result()
             if _q_en:
                 try:
                     with _stage(_timings, "vector_xling"):
@@ -624,6 +644,7 @@ def chat(body: ChatRequest, request: Request):
         "source_count": len(p["sources"]),
         "response_mode": p["response_mode"],
         "answer_mode": answer_mode,
+        "stage_timings_ms": p["stage_timings_ms"],
     }
 
 
@@ -688,6 +709,7 @@ def chat_stream(body: ChatRequest, request: Request):
             "question_intent_label": question_intent_label,
             "best_score": p["best_score"],
             "source_count": len(sources),
+            "stage_timings_ms": p["stage_timings_ms"],
         }
         yield f"data: {_json_local.dumps(meta, ensure_ascii=False)}\n\n"
 

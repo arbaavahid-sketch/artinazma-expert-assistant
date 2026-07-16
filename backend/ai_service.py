@@ -355,7 +355,11 @@ def translate_query_for_search(text: str) -> str:
         {"role": "user", "content": text.strip()},
     ]
     try:
-        result = _chat_via_requests(messages=messages, model=MODEL, temperature=0.0)
+        # ترجمه کارِ ساده‌ای است و به مدلِ پرچم‌دار نیاز ندارد. با OPENAI_TRANSLATE_MODEL
+        # می‌توان یک مدلِ سریع‌تر/ارزان‌تر گذاشت تا «زمان تا اولین کلمه» پایین بیاید؛
+        # پیش‌فرض همان MODEL است (بدون تغییرِ رفتار مگر اینکه env تنظیم شود).
+        _translate_model = os.getenv("OPENAI_TRANSLATE_MODEL", "").strip() or MODEL
+        result = _chat_via_requests(messages=messages, model=_translate_model, temperature=0.0)
         return (result or "").strip()[:300]
     except Exception as e:  # noqa: BLE001
         logger.warning("query translation for search failed: %s", e)
