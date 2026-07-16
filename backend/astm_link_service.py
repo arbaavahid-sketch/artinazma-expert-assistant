@@ -117,6 +117,50 @@ def verify_astm_code(code: str):
     return result
 
 
+_SOURCE_REQUEST_RE = re.compile(
+    r"لینک|link|url|آدرس|دانلود|download|خرید|بخرم|تهیه|بگیرم|کجا",
+    re.IGNORECASE,
+)
+
+
+def astm_link_tail(message: str, answer: str) -> str:
+    """
+    بلوکِ لینکِ رسمیِ ASTM را می‌سازد تا در انتهای پاسخ الحاق شود — فقط وقتی کاربر
+    لینک/منبع/خرید یک استاندارد را خواسته و مدل خودش لینک را نداده باشد.
+
+    چرا: URLِ رسمی ۱۰۰٪ از روی کد قطعی است (store.astm.org/standards/d<کد>)، ولی
+    مدل گاهی دستورِ «این لینک را بده» را نادیده می‌گیرد و به امتناعِ کپی‌رایت
+    برمی‌گردد. پس به‌جای تکیه به مدل، لینک را قطعی الحاق می‌کنیم.
+
+    اگر پاسخ خالی باشد یا لینک قبلاً در آن آمده باشد، چیزی اضافه نمی‌شود.
+    """
+    if not _SOURCE_REQUEST_RE.search(message or ""):
+        return ""
+
+    codes = extract_astm_codes(message)
+    if not codes:
+        return ""
+
+    answer_text = answer or ""
+    lines: list[str] = []
+    for code in codes:
+        # کدِ قطعاً نامعتبر (۴۰۴) را الحاق نکن؛ خطای شبکه/نامشخص را لینک بده.
+        if verify_astm_code(code) is False:
+            continue
+        url = official_astm_url(code)
+        if url in answer_text:
+            continue
+        lines.append(f"- {code}: {url}")
+
+    if not lines:
+        return ""
+
+    return (
+        "\n\nلینک رسمی استاندارد (صفحهٔ خرید/مشاهدهٔ نسخهٔ به‌روز در ASTM):\n"
+        + "\n".join(lines)
+    )
+
+
 def build_official_links(codes: list[str], known_codes: set[str]) -> str:
     """
     یک بلوک متن برای تزریق به context می‌سازد که لینک رسمی هر کد را می‌دهد و به

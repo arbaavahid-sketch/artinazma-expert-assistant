@@ -31,6 +31,7 @@ from astm_link_service import (
     build_official_links,
     seed_valid,
     extract_astm_codes,
+    astm_link_tail,
 )
 from local_search_service import local_search_knowledge_base, build_local_answer
 from knowledge_service import search_knowledge_base
@@ -574,6 +575,10 @@ def chat(body: ChatRequest, request: Request):
         logger.warning("AI answer failed, using local answer: %s %s", type(e).__name__, e)
         answer = build_local_answer(body.message, p["related_docs"])
         answer_mode = "local"
+
+    # لینک رسمی ASTM را قطعی الحاق کن (به مدل تکیه نکن — گاهی نادیده می‌گیرد).
+    answer = f"{answer}{astm_link_tail(body.message, answer)}"
+
     _response_time_ms = int((_time.monotonic() - _t0) * 1000)
     ai_response_duration.observe(_response_time_ms / 1000)
 
@@ -721,6 +726,15 @@ def chat_stream(body: ChatRequest, request: Request):
             err = {"type": "error", "message": _err_msg}
             yield f"data: {_json_local.dumps(err, ensure_ascii=False)}\n\n"
             full_answer = _err_msg
+
+        # لینک رسمی ASTM را قطعی به انتها الحاق کن و به‌صورت یک chunk نهایی بفرست
+        # (فقط اگر کاربر لینک/منبع خواسته و مدل خودش نداده باشد). مدل گاهی این لینک
+        # را نمی‌دهد؛ URL قطعی است پس به مدل تکیه نمی‌کنیم.
+        if answer_mode != "error":
+            _astm_tail = astm_link_tail(body.message, full_answer)
+            if _astm_tail:
+                full_answer += _astm_tail
+                yield f"data: {_json_local.dumps({'type': 'chunk', 'text': _astm_tail}, ensure_ascii=False)}\n\n"
 
         question_id = None
         try:

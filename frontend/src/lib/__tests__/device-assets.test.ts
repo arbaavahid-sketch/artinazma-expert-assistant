@@ -28,8 +28,8 @@ describe("findRelatedDevices", () => {
   it("respects the maxResults limit", () => {
     // A query that hits several devices at once.
     const broad = "gc کروماتوگرافی، گوگرد sulfur، جیوه mercury، کاتالیست catalyst، جذب اتمی aas";
-    expect(findRelatedDevices(broad, 2)).toHaveLength(2);
-    expect(findRelatedDevices(broad, 4)).toHaveLength(4);
+    expect(findRelatedDevices(broad, "", 2)).toHaveLength(2);
+    expect(findRelatedDevices(broad, "", 4)).toHaveLength(4);
   });
 
   it("only returns devices with a positive score", () => {
@@ -52,6 +52,22 @@ describe("findRelatedDevices", () => {
       "برای آنالیز سولفور در نفت خام، مقدار خاکستر و محاسبه‌ی گوگرد کل با XRF انجام می‌شود.";
     const results = findRelatedDevices(sulfurText);
     expect(results.some((d) => d.id === "ra-915m")).toBe(false);
+    expect(results[0]?.id).toBe("sulfur-analyzer");
+  });
+
+  it("does not show an unrelated device from a single incidental answer keyword", () => {
+    // باگ گزارش‌شده: سؤالِ دانسیته‌متر که در پاسخش یک‌بار کلمه‌ی «کاتالیست» آمده،
+    // نباید کارتِ «تست کاتالیست» را نشان دهد. پیام هیچ کلیدواژه‌ای ندارد و پاسخ فقط
+    // یک برخورد دارد → آستانه‌ی ansScore>=2 مانع می‌شود.
+    const message = "برای اندازه‌گیری دانسیته فرآورده نفتی مطابق ASTM D7777 چه دستگاهی لازم دارم؟";
+    const answer = "دانسیته‌متر دیجیتال با لوله U ارتعاشی لازم است؛ این موضوع ربطی به آنالیز کاتالیست ندارد.";
+    expect(findRelatedDevices(message, answer)).toEqual([]);
+  });
+
+  it("shows a device when the answer clearly centers on it (two+ hits)", () => {
+    const message = "این نمونه را تحلیل کن";
+    const answer = "برای اندازه‌گیری گوگرد و مرکاپتان و h2s در lpg به آنالایزر سولفور نیاز است.";
+    const results = findRelatedDevices(message, answer);
     expect(results[0]?.id).toBe("sulfur-analyzer");
   });
 

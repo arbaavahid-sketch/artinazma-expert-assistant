@@ -612,7 +612,7 @@ ${cleanAnswer}`,
             } else if (event.type === "done") {
               const finalContent = cleanAssistantOutput(accumulatedText);
               const relatedDevices = shouldShowRelatedDeviceCards(finalMessage, domain)
-                ? findRelatedDevices(`${finalMessage}\n${finalContent}`, 2)
+                ? findRelatedDevices(finalMessage, finalContent, 2)
                 : [];
               finalAssistantMsg = {
                 ...finalAssistantMsg,
@@ -782,7 +782,8 @@ ${cleanAnswer}`,
         domain,
       )
         ? findRelatedDevices(
-            `${file.name}\n${chatUserNote}\n${data.ai_analysis || data.error || ""}`,
+            `${file.name}\n${chatUserNote}`,
+            data.ai_analysis || data.error || "",
             2,
           )
         : [];
@@ -881,7 +882,8 @@ ${cleanAnswer}`,
         domain,
       )
         ? findRelatedDevices(
-            `${file.name}\n${note}\n${data.ai_analysis || data.error || ""}`,
+            `${file.name}\n${note}`,
+            data.ai_analysis || data.error || "",
             2,
           )
         : [];

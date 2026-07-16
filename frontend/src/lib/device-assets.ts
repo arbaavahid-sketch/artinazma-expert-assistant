@@ -128,19 +128,31 @@ function _matchesWholeWord(text: string, keyword: string): boolean {
   return re.test(text);
 }
 
-export function findRelatedDevices(text: string, maxResults = 2) {
-  const normalizedText = text.toLowerCase();
+export function findRelatedDevices(message: string, answer = "", maxResults = 2) {
+  const msgNorm = (message || "").toLowerCase();
+  const ansNorm = (answer || "").toLowerCase();
 
   return deviceAssets
     .map((device) => {
-      const score = device.keywords.reduce(
-        (total, keyword) => (_matchesWholeWord(normalizedText, keyword) ? total + 1 : total),
+      const msgScore = device.keywords.reduce(
+        (total, keyword) => (_matchesWholeWord(msgNorm, keyword) ? total + 1 : total),
+        0,
+      );
+      const ansScore = device.keywords.reduce(
+        (total, keyword) => (_matchesWholeWord(ansNorm, keyword) ? total + 1 : total),
         0,
       );
 
+      // یک دستگاه فقط وقتی «مرتبط» است که خودِ سؤالِ کاربر به آن اشاره کند
+      // (msgScore ≥ ۱)، یا جوابْ آشکارا حولِ آن باشد (ansScore ≥ ۲). یک کلیدواژهٔ
+      // اتفاقیِ تکی در جوابِ طولانی کافی نیست — همین باعثِ کارت‌های نامرتبط می‌شد
+      // (مثلاً پیشنهادِ آنالایزر گوگرد زیرِ سؤالِ دانسیته‌متر).
+      const relevant = msgScore >= 1 || ansScore >= 2;
+
       return {
         ...device,
-        score,
+        // امتیازِ پیام ۱۰ برابرِ جواب وزن می‌گیرد تا دستگاهِ موردِ اشارهٔ کاربر اول بیاید.
+        score: relevant ? msgScore * 10 + ansScore : 0,
       };
     })
     .filter((device) => device.score > 0)
