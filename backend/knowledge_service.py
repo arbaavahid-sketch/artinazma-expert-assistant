@@ -55,6 +55,13 @@ _vector_cache_mtime: float = 0.0
 _text_index_cache: Optional[List[Dict[str, Any]]] = None
 _text_index_cache_mtime: float = 0.0
 
+# Cached result of the (expensive) knowledge-stats aggregation. Keyed on the
+# on-disk store's (mtime, size) so it recomputes only when the KB actually
+# changes; otherwise the admin dashboard gets it instantly instead of
+# re-parsing the whole index + stat-ing every source file on each load.
+_stats_cache: Optional[Dict[str, Any]] = None
+_stats_cache_key: Optional[tuple] = None
+
 # Prevent concurrent read-modify-write operations inside one process.
 _vector_store_lock = threading.RLock()
 
@@ -203,8 +210,12 @@ def _text_index_row(chunk: Dict[str, Any]) -> Dict[str, Any]:
 
 def _invalidate_text_index_cache() -> None:
     global _text_index_cache, _text_index_cache_mtime
+    global _stats_cache, _stats_cache_key
     _text_index_cache = None
     _text_index_cache_mtime = 0.0
+    # A KB write changes the stats too — drop the cached aggregation.
+    _stats_cache = None
+    _stats_cache_key = None
 
 
 def _write_text_index_rows(rows: List[Dict[str, Any]]) -> None:
@@ -428,10 +439,14 @@ def load_vector_store() -> List[Dict[str, Any]]:
 def invalidate_vector_cache() -> None:
     """Force a reload on the next access."""
     global _vector_cache, _vector_cache_mtime
+    global _stats_cache, _stats_cache_key
 
     with _vector_store_lock:
         _vector_cache = None
         _vector_cache_mtime = 0.0
+        # A KB write changes the stats too — drop the cached aggregation.
+        _stats_cache = None
+        _stats_cache_key = None
 
 
 def _save_vector_store_unlocked(
@@ -847,6 +862,27 @@ def search_knowledge_base(
 
 def get_knowledge_stats() -> Dict[str, Any]:
     import qdrant_service as _qs
+    global _stats_cache, _stats_cache_key
+
+    # Return the cached result unless the on-disk store changed (a KB write
+    # bumps the index mtime AND clears this cache via the invalidators). Turns
+    # repeated dashboard loads into instant hits. Disabled under TESTING so
+    # monkeypatched stores always compute fresh.
+    _use_stats_cache = not os.getenv("TESTING")
+    _store_path = TEXT_INDEX_PATH if _qs.is_enabled() else VECTOR_STORE_PATH
+    try:
+        _st = _store_path.stat()
+        _cache_key = (_st.st_mtime, _st.st_size)
+    except OSError:
+        _cache_key = None
+    if (
+        _use_stats_cache
+        and _stats_cache is not None
+        and _cache_key is not None
+        and _cache_key == _stats_cache_key
+    ):
+        return _stats_cache
+
     backend = "qdrant" if _qs.is_enabled() else "json"
     qdrant_status: Dict[str, Any] = {}
 
@@ -987,7 +1023,7 @@ def get_knowledge_stats() -> Dict[str, Any]:
     except Exception:
         pass
 
-    return {
+    result = {
         "total_chunks": len(store),
         "total_files": len(files),
         "files": files,
@@ -1004,6 +1040,12 @@ def get_knowledge_stats() -> Dict[str, Any]:
         "last_sync_result": last_sync_result,
         "qdrant": qdrant_status,
     }
+
+    if _use_stats_cache and _cache_key is not None:
+        _stats_cache = result
+        _stats_cache_key = _cache_key
+
+    return result
 
 
 def add_text_to_knowledge_base(
