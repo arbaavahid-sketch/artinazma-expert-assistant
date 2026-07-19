@@ -851,13 +851,17 @@ def get_knowledge_stats() -> Dict[str, Any]:
     qdrant_status: Dict[str, Any] = {}
 
     if _qs.is_enabled():
+        # Count from the lightweight in-memory text index (cached), NOT a full
+        # Qdrant scroll of every point. all_payloads() over 180k+ vectors took
+        # 40-60s and made the admin dashboard hang on load. The text index
+        # carries the same per-chunk metadata (file_name/category/title/
+        # chunk_index), so the counts are identical. collection_stats() below
+        # is a single instant call for the authoritative Qdrant point count.
+        store = load_vector_store()
         try:
-            store = _qs.all_payloads()
             qdrant_status = _qs.collection_stats()
         except Exception as exc:
-            logger.warning("Qdrant stats failed, falling back to JSON: %s", exc)
-            store = load_vector_store()
-            backend = "json_fallback"
+            logger.warning("Qdrant collection_stats failed: %s", exc)
             qdrant_status = {"error": str(exc)}
     else:
         store = load_vector_store()
