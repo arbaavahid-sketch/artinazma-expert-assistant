@@ -61,6 +61,10 @@ _text_index_cache_mtime: float = 0.0
 # re-parsing the whole index + stat-ing every source file on each load.
 _stats_cache: Optional[Dict[str, Any]] = None
 _stats_cache_key: Optional[tuple] = None
+# Serializes the stats compute so concurrent dashboard loads don't all run the
+# same 10-15s aggregation at once (thundering herd) — the first computes, the
+# rest wait and get its cached result.
+_stats_compute_lock = threading.Lock()
 
 # Prevent concurrent read-modify-write operations inside one process.
 _vector_store_lock = threading.RLock()
@@ -861,13 +865,18 @@ def search_knowledge_base(
 
 
 def get_knowledge_stats() -> Dict[str, Any]:
+    """Cached, single-flight wrapper around the expensive stats aggregation.
+
+    A KB write bumps the store mtime AND clears the cache via the invalidators,
+    so repeated dashboard loads are instant. The compute lock means concurrent
+    loads don't all recompute at once — the first computes, the rest wait and
+    get its result (that thundering herd, with a 10-15s GIL-heavy compute, was
+    making every HTTP call slow even though the cache itself works). Bypassed
+    under TESTING so monkeypatched stores compute fresh.
+    """
     import qdrant_service as _qs
     global _stats_cache, _stats_cache_key
 
-    # Return the cached result unless the on-disk store changed (a KB write
-    # bumps the index mtime AND clears this cache via the invalidators). Turns
-    # repeated dashboard loads into instant hits. Disabled under TESTING so
-    # monkeypatched stores always compute fresh.
     _use_stats_cache = not os.getenv("TESTING")
     _store_path = TEXT_INDEX_PATH if _qs.is_enabled() else VECTOR_STORE_PATH
     try:
@@ -875,14 +884,34 @@ def get_knowledge_stats() -> Dict[str, Any]:
         _cache_key = (_st.st_mtime, _st.st_size)
     except OSError:
         _cache_key = None
-    if (
-        _use_stats_cache
-        and _stats_cache is not None
-        and _cache_key is not None
-        and _cache_key == _stats_cache_key
-    ):
+
+    def _cache_hit() -> bool:
+        return (
+            _use_stats_cache
+            and _stats_cache is not None
+            and _cache_key is not None
+            and _cache_key == _stats_cache_key
+        )
+
+    if _cache_hit():
         return _stats_cache
 
+    with _stats_compute_lock:
+        # Another request may have finished the compute while we waited.
+        if _cache_hit():
+            return _stats_cache
+
+        result = _compute_knowledge_stats()
+
+        if _use_stats_cache and _cache_key is not None:
+            _stats_cache = result
+            _stats_cache_key = _cache_key
+
+        return result
+
+
+def _compute_knowledge_stats() -> Dict[str, Any]:
+    import qdrant_service as _qs
     backend = "qdrant" if _qs.is_enabled() else "json"
     qdrant_status: Dict[str, Any] = {}
 
@@ -1040,10 +1069,6 @@ def get_knowledge_stats() -> Dict[str, Any]:
         "last_sync_result": last_sync_result,
         "qdrant": qdrant_status,
     }
-
-    if _use_stats_cache and _cache_key is not None:
-        _stats_cache = result
-        _stats_cache_key = _cache_key
 
     return result
 
