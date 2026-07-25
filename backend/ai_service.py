@@ -284,6 +284,8 @@ ENABLE_OPENAI_WEB_SEARCH = os.getenv(
     "ENABLE_OPENAI_WEB_SEARCH", "true"
 ).strip().lower() in ("1", "true", "yes", "on")
 _WEB_SEARCH_TIMEOUT = float(os.getenv("OPENAI_WEB_SEARCH_TIMEOUT", "150"))
+# high = مدل محتوای وبِ بیشتری بازیابی می‌کند → جست‌وجوی عمیق‌تر/پایدارتر و منابعِ بیشتر.
+_WEB_SEARCH_CONTEXT = os.getenv("OPENAI_WEB_SEARCH_CONTEXT", "high").strip().lower()
 
 
 _WEB_SEARCH_DIRECTIVE = (
@@ -292,8 +294,10 @@ _WEB_SEARCH_DIRECTIVE = (
     "(part number) در وب جست‌وجو کن؛ به یک جست‌وجوی کلی اکتفا نکن.\n"
     "- برای هر محصول این‌ها را از منابع پیدا کن: وضعیت فعلی (در حال تولید / منسوخ / "
     "جایگزین‌شده)، مشخصات کلیدی، و در صورت وجود قیمت.\n"
-    "- «اطلاعات موجود نیست» را فقط وقتی بگو که واقعاً کدِ آن محصول را در وب "
-    "جست‌وجو کرده و چیزی نیافته‌ای — نه پیش از جست‌وجو.\n"
+    "- اگر جست‌وجوی کد نتیجه نداد، با «نام محصول + سازنده» بگرد (مثلاً کدهای منطقه‌ای "
+    "فرق دارند: یک کد ممکن است زیرِ نامِ رسمیِ دیگری باشد).\n"
+    "- «اطلاعات موجود نیست» را فقط وقتی بگو که هم با کد و هم با نامِ محصول جست‌وجو "
+    "کرده و واقعاً چیزی نیافته‌ای — نه پیش از جست‌وجو.\n"
     "- در پایان، منابع را با لینک بده."
 )
 
@@ -333,7 +337,7 @@ def _web_search_chat(messages: list) -> str:
     body = {
         "model": OPENAI_WEB_SEARCH_MODEL,
         "messages": messages,
-        "web_search_options": {},
+        "web_search_options": {"search_context_size": _WEB_SEARCH_CONTEXT},
     }
     url = f"{OPENAI_API_URL}/chat/completions"
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
@@ -354,7 +358,7 @@ def _web_search_chat_stream(messages: list):
     body = {
         "model": OPENAI_WEB_SEARCH_MODEL,
         "messages": messages,
-        "web_search_options": {},
+        "web_search_options": {"search_context_size": _WEB_SEARCH_CONTEXT},
         "stream": True,
     }
     url = f"{OPENAI_API_URL}/chat/completions"

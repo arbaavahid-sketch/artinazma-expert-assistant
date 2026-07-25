@@ -48,6 +48,7 @@ from ai_service import (
     ask_expert_assistant_stream,
     detect_user_language,
     translate_query_for_search,
+    ENABLE_OPENAI_WEB_SEARCH,
 )
 from db_service import (
     save_expert_question,
@@ -381,7 +382,12 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             )
         )
     )
-    if _web_eligible and is_web_search_configured():
+    # وقتی مدلِ web-searchِ OpenAI خودش می‌گردد، اسنیپت‌های Tavily را تزریق نکن —
+    # آن‌ها مدل را به «فقط بر پایهٔ همین snippetها» محدود می‌کنند و جلوی جست‌وجوی
+    # عمیقِ خودِ مدل (مثلاً برای محصولِ دوم) را می‌گیرند. Tavily فقط وقتی به‌کار
+    # می‌رود که مدلِ search خاموش باشد (فالبک).
+    _search_model_active = _web_eligible and ENABLE_OPENAI_WEB_SEARCH
+    if _web_eligible and is_web_search_configured() and not _search_model_active:
         try:
             with _stage(_timings, "web_search"):
                 _web_results = search_web_sources(body.message, max_results=5)
