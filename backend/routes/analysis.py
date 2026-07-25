@@ -1,5 +1,8 @@
 import os
+import time
+import uuid
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException
 
@@ -11,10 +14,58 @@ from ai_service import client as ai_client
 from file_analyzer import analyze_excel_or_csv, read_pdf_text
 from local_search_service import local_search_knowledge_base
 from knowledge_service import search_knowledge_base
+from db_service import save_expert_question, save_user_memory
 
 logger = logging.getLogger("artin_scheduler")
 
 router = APIRouter()
+
+
+def _unique_upload_name(safe_filename: str) -> str:
+    """Prefix with a short unique token so two customers uploading the same
+    filename don't overwrite each other (these files are now referenced from
+    the saved question, so they must persist distinctly)."""
+    return f"{int(time.time())}_{uuid.uuid4().hex[:6]}_{safe_filename}"
+
+
+def _resolve_user_id(user_id: str, customer_id: Optional[int]) -> str:
+    """Mirror the /chat rule so analyses link to the same customer identity."""
+    if customer_id and (not user_id or user_id == "anonymous"):
+        return f"customer_{customer_id}"
+    return user_id or "anonymous"
+
+
+def _persist_analysis(
+    *, question: str, answer: str, domain: str, user_id: str,
+    response_time_ms: int, metadata: dict,
+) -> Optional[int]:
+    """Save an analysis interaction so it shows up in the admin questions panel
+    (and, for logged-in customers, in their history) exactly like a chat."""
+    question_id = None
+    try:
+        question_id = save_expert_question(
+            question=question,
+            answer=answer,
+            sources=[],
+            detected_domain=domain,
+            response_time_ms=response_time_ms,
+            metadata=metadata,
+        )
+    except Exception as exc:
+        logger.warning("persist analysis (question) failed: %s", exc)
+    try:
+        if user_id and user_id != "anonymous":
+            save_user_memory(
+                user_id=user_id,
+                question=question,
+                answer=answer,
+                detected_domain=domain,
+                memory_type="analysis",
+                metadata={"question_id": question_id, **metadata},
+            )
+    except Exception as exc:
+        logger.warning("persist analysis (memory) failed: %s", exc)
+    return question_id
 
 
 def _analysis_kb_context(query: str, top_k: int = 4) -> str:
@@ -67,6 +118,8 @@ def analyze_file(
     file: UploadFile = File(...),
     test_type: str = Form("general"),
     user_note: str = Form(""),
+    user_id: str = Form("anonymous"),
+    customer_id: Optional[int] = Form(None),
 ):
     safe_filename = make_safe_filename(file.filename or "upload")
     ext = safe_filename.lower().rsplit(".", 1)[-1]
@@ -80,11 +133,15 @@ def analyze_file(
     if len(content) > _MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="حجم فایل بیش از ۲۰ مگابایت است.")
 
+    _t0 = time.monotonic()
+    resolved_user_id = _resolve_user_id(user_id, customer_id)
+
     upload_dir = "uploads"
     os.makedirs(upload_dir, exist_ok=True)
 
-    file_path = os.path.join(upload_dir, safe_filename)
-    file_url = f"/uploads/{safe_filename}"
+    stored_name = _unique_upload_name(safe_filename)
+    file_path = os.path.join(upload_dir, stored_name)
+    file_url = f"/uploads/{stored_name}"
 
     with open(file_path, "wb") as buffer:
         buffer.write(content)
@@ -198,6 +255,17 @@ def analyze_file(
         _kb = _analysis_kb_context(f"{selected_test_type} {user_note} {str(analysis)[:400]}")
         ai_answer = ask_expert_assistant(prompt, context=_kb, allow_web_search=False)
 
+        question_id = _persist_analysis(
+            question=f"[تحلیل فایل · {selected_test_type}]"
+            + (f" — {user_note.strip()}" if user_note.strip() else f" — {safe_filename}"),
+            answer=ai_answer, domain="file-analysis", user_id=resolved_user_id,
+            response_time_ms=int((time.monotonic() - _t0) * 1000),
+            metadata={
+                "analysis_type": "file", "file_url": file_url, "file_name": safe_filename,
+                "test_type": test_type, "test_type_label": selected_test_type,
+                "user_note": user_note, "customer_id": customer_id,
+            },
+        )
         return {
             "file_type": ext,
             "test_type": test_type,
@@ -206,6 +274,7 @@ def analyze_file(
             "file_url": file_url,
             "file_name": safe_filename,
             "ai_analysis": ai_answer,
+            "question_id": question_id,
         }
 
     if ext == "pdf":
@@ -242,6 +311,17 @@ def analyze_file(
         _kb = _analysis_kb_context(f"{selected_test_type} {user_note} {text[:400]}")
         ai_answer = ask_expert_assistant(prompt, context=_kb, allow_web_search=False)
 
+        question_id = _persist_analysis(
+            question=f"[تحلیل فایل · {selected_test_type}]"
+            + (f" — {user_note.strip()}" if user_note.strip() else f" — {safe_filename}"),
+            answer=ai_answer, domain="file-analysis", user_id=resolved_user_id,
+            response_time_ms=int((time.monotonic() - _t0) * 1000),
+            metadata={
+                "analysis_type": "file", "file_url": file_url, "file_name": safe_filename,
+                "test_type": test_type, "test_type_label": selected_test_type,
+                "user_note": user_note, "customer_id": customer_id,
+            },
+        )
         return {
             "file_type": ext,
             "test_type": test_type,
@@ -250,6 +330,7 @@ def analyze_file(
             "file_url": file_url,
             "file_name": safe_filename,
             "ai_analysis": ai_answer,
+            "question_id": question_id,
         }
 
     return {"error": "فعلاً فقط فایل‌های Excel, CSV و PDF پشتیبانی می‌شوند."}
@@ -282,6 +363,8 @@ def analyze_image(
     file: UploadFile = File(...),
     image_type: str = Form("general"),
     user_note: str = Form(""),
+    user_id: str = Form("anonymous"),
+    customer_id: Optional[int] = Form(None),
 ):
     safe_filename = make_safe_filename(file.filename or "upload")
     ext = safe_filename.lower().rsplit(".", 1)[-1]
@@ -295,12 +378,16 @@ def analyze_image(
     if len(content) > _MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="حجم فایل بیش از ۲۰ مگابایت است.")
 
+    _t0 = time.monotonic()
+    resolved_user_id = _resolve_user_id(user_id, customer_id)
+
     try:
         upload_dir = "uploads"
         os.makedirs(upload_dir, exist_ok=True)
 
-        file_path = os.path.join(upload_dir, safe_filename)
-        file_url = f"/uploads/{safe_filename}"
+        stored_name = _unique_upload_name(safe_filename)
+        file_path = os.path.join(upload_dir, stored_name)
+        file_url = f"/uploads/{stored_name}"
         with open(file_path, "wb") as buffer:
             buffer.write(content)
 
@@ -339,6 +426,28 @@ def analyze_image(
 
         ai_answer = analyze_image_with_ai(file_path, user_note=combined_note)
 
+        _elapsed_ms = int((time.monotonic() - _t0) * 1000)
+        _question_text = (
+            f"[تحلیل تصویر · {selected_image_type}]"
+            + (f" — {user_note.strip()}" if user_note.strip() else "")
+        )
+        question_id = _persist_analysis(
+            question=_question_text,
+            answer=ai_answer,
+            domain="image-analysis",
+            user_id=resolved_user_id,
+            response_time_ms=_elapsed_ms,
+            metadata={
+                "analysis_type": "image",
+                "image_url": file_url,
+                "image_type": image_type,
+                "image_type_label": selected_image_type,
+                "file_name": safe_filename,
+                "user_note": user_note,
+                "customer_id": customer_id,
+            },
+        )
+
         return {
             "file_type": ext,
             "file_name": safe_filename,
@@ -346,6 +455,7 @@ def analyze_image(
             "image_type": image_type,
             "image_type_label": selected_image_type,
             "ai_analysis": ai_answer,
+            "question_id": question_id,
         }
 
     except Exception as e:

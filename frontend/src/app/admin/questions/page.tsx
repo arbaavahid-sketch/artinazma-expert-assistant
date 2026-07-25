@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useToast } from "@/components/Toast";
 import Link from "next/link";
-import { adminUrl } from "@/lib/api";
+import { adminUrl, apiUrl } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import {
   Clock3,
@@ -45,6 +45,13 @@ type QuestionMetadata = {
   source_count?: number;
   answer_mode?: string;
   response_time_ms?: number;
+  // Set for image/file analyses submitted from the assistant (analyze-image / analyze-file).
+  analysis_type?: "image" | "file";
+  image_url?: string;
+  image_type_label?: string;
+  file_url?: string;
+  file_name?: string;
+  test_type_label?: string;
 };
 
 const statusOptions = [
@@ -706,6 +713,36 @@ export default function QuestionsPage() {
                       <div className="line-clamp-2 text-base font-bold leading-8 text-slate-900 group-hover:text-purple-700">
                         {item.question}
                       </div>
+
+                      {item.metadata?.image_url && (
+                        <a
+                          href={apiUrl(item.metadata.image_url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-2 inline-block"
+                          title={isEn ? "Open image" : "مشاهده تصویر ارسالی مشتری"}
+                        >
+                          <img
+                            src={apiUrl(item.metadata.image_url)}
+                            alt={item.metadata.image_type_label || "تصویر"}
+                            loading="lazy"
+                            className="max-h-40 rounded-xl border border-slate-200 object-contain"
+                          />
+                        </a>
+                      )}
+
+                      {item.metadata?.analysis_type === "file" && item.metadata?.file_url && (
+                        <a
+                          href={apiUrl(item.metadata.file_url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700"
+                        >
+                          📄 {item.metadata.file_name || (isEn ? "Attached file" : "فایل ارسالی")}
+                        </a>
+                      )}
 
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-bold">
                         <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">

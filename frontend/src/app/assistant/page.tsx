@@ -764,10 +764,13 @@ ${cleanAnswer}`,
     setMessages([...previousMessages, userMessage]);
     setLoading(true);
 
+    const _fileCustomer = customer || getSavedCustomer();
     const formData = new FormData();
     formData.append("file", file);
     formData.append("test_type", chatTestType);
     formData.append("user_note", chatUserNote);
+    formData.append("user_id", _fileCustomer ? `customer_${_fileCustomer.id}` : getOrCreateUserId());
+    if (_fileCustomer) formData.append("customer_id", String(_fileCustomer.id));
 
     try {
       const res = await backendFetch(apiUrl("/analyze-file"), {
@@ -864,10 +867,13 @@ ${cleanAnswer}`,
     setMessages([...previousMessages, userMessage]);
     setLoading(true);
 
+    const _imgCustomer = customer || getSavedCustomer();
     const formData = new FormData();
     formData.append("file", file);
     formData.append("image_type", imgType);
     formData.append("user_note", note);
+    formData.append("user_id", _imgCustomer ? `customer_${_imgCustomer.id}` : getOrCreateUserId());
+    if (_imgCustomer) formData.append("customer_id", String(_imgCustomer.id));
 
     try {
       const res = await backendFetch(apiUrl("/analyze-image"), {
