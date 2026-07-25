@@ -286,6 +286,27 @@ ENABLE_OPENAI_WEB_SEARCH = os.getenv(
 _WEB_SEARCH_TIMEOUT = float(os.getenv("OPENAI_WEB_SEARCH_TIMEOUT", "150"))
 
 
+_WEB_SEARCH_DIRECTIVE = (
+    "\n\n---\nراهنمای جست‌وجوی وب برای همین پاسخ:\n"
+    "- اگر چند محصول/مدل/کد در سؤال هست، برای هرکدام جداگانه و با کدِ دقیقش "
+    "(part number) در وب جست‌وجو کن؛ به یک جست‌وجوی کلی اکتفا نکن.\n"
+    "- برای هر محصول این‌ها را از منابع پیدا کن: وضعیت فعلی (در حال تولید / منسوخ / "
+    "جایگزین‌شده)، مشخصات کلیدی، و در صورت وجود قیمت.\n"
+    "- «اطلاعات موجود نیست» را فقط وقتی بگو که واقعاً کدِ آن محصول را در وب "
+    "جست‌وجو کرده و چیزی نیافته‌ای — نه پیش از جست‌وجو.\n"
+    "- در پایان، منابع را با لینک بده."
+)
+
+
+def _with_web_directive(messages: list) -> list:
+    """Append the per-product web-search directive to the last user turn."""
+    if not messages:
+        return messages
+    out = [dict(m) for m in messages]
+    out[-1] = {**out[-1], "content": f"{out[-1].get('content', '')}{_WEB_SEARCH_DIRECTIVE}"}
+    return out
+
+
 def _format_citations(annotations) -> str:
     """Build a deduped 'منابع' markdown block from url_citation annotations."""
     seen: set = set()
@@ -1008,7 +1029,7 @@ def ask_expert_assistant(
 
     if use_live_web and ENABLE_OPENAI_WEB_SEARCH:
         try:
-            _answer = _web_search_chat(input_messages).strip()
+            _answer = _web_search_chat(_with_web_directive(input_messages)).strip()
         except Exception as _e:
             logger.warning("[web-search] model failed, falling back to standard: %s", _e)
             _answer = _chat_via_requests(
@@ -1074,7 +1095,7 @@ def ask_expert_assistant_stream(
     if use_live_web and ENABLE_OPENAI_WEB_SEARCH:
         _ws_emitted = False
         try:
-            for _delta in _web_search_chat_stream(input_messages):
+            for _delta in _web_search_chat_stream(_with_web_directive(input_messages)):
                 _ws_emitted = True
                 _acc += _delta
                 yield _delta
