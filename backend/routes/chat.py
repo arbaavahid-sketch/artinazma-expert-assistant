@@ -358,7 +358,14 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         re.search(r"\b(ISO|ASTM|EN|IP|DIN|GOST|IEC|API|ISIRI|JIS|BS|EPA|UOP|NACE)\b",
                   body.message, flags=re.IGNORECASE)
     )
-    # سؤال‌هایی که اطلاعاتِ زندهٔ وب برایشان مهم است (استاندارد، محصول/مدل، بدون
+    # کدِ محصول/پارت‌نامبر/مدل (توکنِ لاتینِ ۵+ کاراکتری که هم حرف و هم عدد دارد،
+    # مثل ZSQ240R0TK، ZR0Q00800، RA-915M، Direct8). وجودِ چنین کدی یعنی سؤالِ
+    # محصولی/بازاری است و اطلاعاتِ زندهٔ وب (اسپک، قیمت، وضعیت منسوخ) واقعاً مهم است.
+    _has_product_code = bool(
+        re.search(r"\b(?=[A-Za-z0-9\-]*[A-Za-z])(?=[A-Za-z0-9\-]*\d)[A-Za-z][A-Za-z0-9\-]{4,}\b",
+                  body.message)
+    )
+    # سؤال‌هایی که اطلاعاتِ زندهٔ وب برایشان مهم است (استاندارد، محصول/مدل/کد، بدون
     # منبعِ داخلی، یا تطبیقِ داخلیِ ضعیف). برای این‌ها مدلِ web-searchِ OpenAI به‌کار
     # می‌رود (use_live_web)؛ Tavily هم اگر پیکربندی شده باشد context تکمیلی می‌دهد.
     _web_eligible = bool(
@@ -366,6 +373,7 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         and (
             _is_standard_query
             or specific_model_question
+            or _has_product_code
             or not related_docs
             or (
                 _local_best < _WEAK_CONTEXT_THRESHOLD
