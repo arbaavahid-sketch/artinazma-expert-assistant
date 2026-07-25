@@ -273,6 +273,106 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4")
 OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 
 # ─────────────────────────────────────────────
+#  Real OpenAI web search (chat-completions search model)
+#  Reuses the same _session (DoH/proxy) so it works from Iran. The search model
+#  browses the live web, reads pages, and returns url_citation annotations — we
+#  append those as a "منابع" section. Only used for web-eligible queries; any
+#  failure falls back to the standard gpt-5.4 path (safe, never breaks chat).
+# ─────────────────────────────────────────────
+OPENAI_WEB_SEARCH_MODEL = os.getenv("OPENAI_WEB_SEARCH_MODEL", "gpt-4o-search-preview")
+ENABLE_OPENAI_WEB_SEARCH = os.getenv(
+    "ENABLE_OPENAI_WEB_SEARCH", "true"
+).strip().lower() in ("1", "true", "yes", "on")
+_WEB_SEARCH_TIMEOUT = float(os.getenv("OPENAI_WEB_SEARCH_TIMEOUT", "150"))
+
+
+def _format_citations(annotations) -> str:
+    """Build a deduped 'منابع' markdown block from url_citation annotations."""
+    seen: set = set()
+    lines: list = []
+    for ann in annotations or []:
+        if (ann or {}).get("type") != "url_citation":
+            continue
+        c = ann.get("url_citation") or {}
+        url = (c.get("url") or "").split("?utm_")[0].strip()
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        title = (c.get("title") or url).strip()
+        lines.append(f"- [{title}]({url})")
+    if not lines:
+        return ""
+    return "\n\n**منابع:**\n" + "\n".join(lines[:6])
+
+
+def _web_search_chat(messages: list) -> str:
+    """Answer via OpenAI's web-search model + appended citations.
+    Raises on any failure so the caller can fall back to the standard model."""
+    key = os.getenv("OPENAI_API_KEY", "")
+    body = {
+        "model": OPENAI_WEB_SEARCH_MODEL,
+        "messages": messages,
+        "web_search_options": {},
+    }
+    url = f"{OPENAI_API_URL}/chat/completions"
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    resp = _session.post(url, headers=headers, json=body, timeout=_WEB_SEARCH_TIMEOUT)
+    resp.raise_for_status()
+    msg = resp.json()["choices"][0]["message"]
+    content = (msg.get("content") or "").strip()
+    if not content:
+        raise RuntimeError("empty web-search answer")
+    return (content + _format_citations(msg.get("annotations"))).strip()
+
+
+def _web_search_chat_stream(messages: list):
+    """Streaming variant: yields content tokens, then a final 'منابع' chunk.
+    Raises before any content is emitted if the call is rejected (→ caller
+    falls back cleanly)."""
+    key = os.getenv("OPENAI_API_KEY", "")
+    body = {
+        "model": OPENAI_WEB_SEARCH_MODEL,
+        "messages": messages,
+        "web_search_options": {},
+        "stream": True,
+    }
+    url = f"{OPENAI_API_URL}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+    }
+    annotations: list = []
+    emitted = False
+    resp = _session.post(url, headers=headers, json=body, timeout=_WEB_SEARCH_TIMEOUT, stream=True)
+    resp.raise_for_status()
+    for raw in resp.iter_lines(decode_unicode=True):
+        if not raw or not raw.startswith("data:"):
+            continue
+        data = raw[5:].strip()
+        if data == "[DONE]":
+            break
+        try:
+            choice = _json.loads(data)["choices"][0]
+        except Exception:
+            continue
+        delta = choice.get("delta", {}) or {}
+        piece = delta.get("content")
+        if piece:
+            emitted = True
+            yield piece
+        for ann in (delta.get("annotations") or []):
+            annotations.append(ann)
+        fin_ann = (choice.get("message") or {}).get("annotations")
+        if fin_ann:
+            annotations.extend(fin_ann)
+    if not emitted:
+        raise RuntimeError("web-search stream produced no content")
+    tail = _format_citations(annotations)
+    if tail:
+        yield tail
+
+# ─────────────────────────────────────────────
 #  Cache پاسخ‌های تکراری (in-memory, TTL 24h)
 # ─────────────────────────────────────────────
 import hashlib as _hashlib
@@ -854,6 +954,7 @@ def ask_expert_assistant(
     domain: str = "auto",
     allow_web_search: bool = False,
     customer_context: str = "",
+    use_live_web: bool = False,
 ) -> str:
     history = history or []
 
@@ -905,11 +1006,21 @@ def ask_expert_assistant(
         "temperature": OPENAI_TEMPERATURE,
     }
 
-    _answer = _chat_via_requests(
-        messages=kwargs["messages"],
-        model=kwargs["model"],
-        temperature=kwargs["temperature"],
-    ).strip()
+    if use_live_web and ENABLE_OPENAI_WEB_SEARCH:
+        try:
+            _answer = _web_search_chat(input_messages).strip()
+        except Exception as _e:
+            logger.warning("[web-search] model failed, falling back to standard: %s", _e)
+            _answer = _chat_via_requests(
+                messages=kwargs["messages"], model=kwargs["model"],
+                temperature=kwargs["temperature"],
+            ).strip()
+    else:
+        _answer = _chat_via_requests(
+            messages=kwargs["messages"],
+            model=kwargs["model"],
+            temperature=kwargs["temperature"],
+        ).strip()
 
     # شبکه‌ی ایمنی: اگر سؤال مقایسه‌ای بود و مدل جدول نساخت، یک جدول قطعی درج کن.
     _answer = ensure_comparison_table(message, _answer)
@@ -927,6 +1038,7 @@ def ask_expert_assistant_stream(
     domain: str = "auto",
     allow_web_search: bool = False,
     customer_context: str = "",
+    use_live_web: bool = False,
 ) -> Generator[str, None, None]:
     history = history or []
 
@@ -956,6 +1068,26 @@ def ask_expert_assistant_stream(
 
     # استریمِ واقعی از OpenAI: توکن‌ها همان‌طور که تولید می‌شوند به کاربر می‌رسند.
     _acc = ""
+
+    # مسیرِ وب‌سرچِ واقعی: مدلِ search خودش می‌گردد، می‌خواند و منابع را می‌آورد.
+    # اگر قبل از اولین توکن خطا داد → فالبک به مسیرِ استاندارد (بدون تکرار).
+    if use_live_web and ENABLE_OPENAI_WEB_SEARCH:
+        _ws_emitted = False
+        try:
+            for _delta in _web_search_chat_stream(input_messages):
+                _ws_emitted = True
+                _acc += _delta
+                yield _delta
+            _final = ensure_comparison_table(message, _acc)
+            if _final != _acc and _final.startswith(_acc):
+                yield _final[len(_acc):]
+            return
+        except Exception as _e:
+            logger.warning("[web-search] stream failed, falling back: %s", _e)
+            if _ws_emitted:
+                return  # part of the answer already streamed — don't duplicate
+            _acc = ""
+
     for _delta in _chat_via_requests_stream(
         messages=input_messages,
         model=MODEL,

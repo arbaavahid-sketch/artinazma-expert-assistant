@@ -358,22 +358,22 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
         re.search(r"\b(ISO|ASTM|EN|IP|DIN|GOST|IEC|API|ISIRI|JIS|BS|EPA|UOP|NACE)\b",
                   body.message, flags=re.IGNORECASE)
     )
-    if (
+    # سؤال‌هایی که اطلاعاتِ زندهٔ وب برایشان مهم است (استاندارد، محصول/مدل، بدون
+    # منبعِ داخلی، یا تطبیقِ داخلیِ ضعیف). برای این‌ها مدلِ web-searchِ OpenAI به‌کار
+    # می‌رود (use_live_web)؛ Tavily هم اگر پیکربندی شده باشد context تکمیلی می‌دهد.
+    _web_eligible = bool(
         allow_web_search
-        and is_web_search_configured()
         and (
             _is_standard_query
             or specific_model_question
             or not related_docs
-            # سند داخلی که نه کلیدواژه‌ایِ قوی دارد نه تطبیقِ معناییِ «قوی» (≥0.30)
-            # با وب راستی‌آزمایی شود. تطبیق بین‌زبانی (~0.25) وارد context می‌شود
-            # ولی چون به آستانهٔ قوی نمی‌رسد، وب هم کنارش فعال می‌ماند.
             or (
                 _local_best < _WEAK_CONTEXT_THRESHOLD
                 and _vector_best < _VECTOR_STRONG_THRESHOLD
             )
         )
-    ):
+    )
+    if _web_eligible and is_web_search_configured():
         try:
             with _stage(_timings, "web_search"):
                 _web_results = search_web_sources(body.message, max_results=5)
@@ -534,6 +534,7 @@ Laboratory answer contract:
         "best_score": best_score,
         "search_mode": search_mode,
         "allow_web_search": allow_web_search,
+        "use_live_web": _web_eligible,
         "context": context,
         "detected_domain": detected_domain,
         "history": history,
@@ -589,6 +590,7 @@ def chat(body: ChatRequest, request: Request):
             domain=p["detected_domain"],
             allow_web_search=p["allow_web_search"],
             customer_context=p["customer_context"],
+            use_live_web=p.get("use_live_web", False),
         )
         answer_mode = "ai"
     except Exception as e:
@@ -727,6 +729,7 @@ def chat_stream(body: ChatRequest, request: Request):
                 domain=detected_domain,
                 allow_web_search=allow_web_search,
                 customer_context=_cust_ctx_stream,
+                use_live_web=p.get("use_live_web", False),
             ):
                 full_answer += chunk
                 payload = {"type": "chunk", "text": chunk}
