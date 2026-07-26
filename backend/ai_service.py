@@ -341,7 +341,8 @@ def _format_citations(annotations) -> str:
 #  STEP 1: exposed for direct verification; not yet wired into the chat path.
 # ─────────────────────────────────────────────
 ENABLE_DEEP_RESEARCH = os.getenv("ENABLE_DEEP_RESEARCH", "true").strip().lower() in ("1", "true", "yes", "on")
-DEEP_RESEARCH_MODEL = os.getenv("DEEP_RESEARCH_MODEL", MODEL)
+# قوی‌ترین مدل برای جست‌وجوی عمیق (مستقل از OPENAI_MODEL چت که ممکن است سبک‌تر باشد).
+DEEP_RESEARCH_MODEL = os.getenv("DEEP_RESEARCH_MODEL", "gpt-5.4")
 DEEP_RESEARCH_TOOL = os.getenv("DEEP_RESEARCH_TOOL", "web_search_preview")
 _DEEP_RESEARCH_TIMEOUT = float(os.getenv("DEEP_RESEARCH_TIMEOUT", "240"))
 
@@ -386,6 +387,68 @@ def _deep_research(messages: list) -> str:
     if not text:
         raise RuntimeError("empty deep-research answer")
     return (text + _format_citations(annotations)).strip()
+
+
+def _deep_research_stream(messages: list):
+    """Streaming agentic research (Responses API SSE). Yields text deltas, then
+    a final citations chunk. Raises before any emit on failure → caller falls
+    back. Web searches run server-side first, so text starts after a short wait."""
+    key = os.getenv("OPENAI_API_KEY", "")
+    instructions = ""
+    input_items = []
+    for m in messages:
+        if m.get("role") == "system" and not instructions:
+            instructions = m.get("content", "")
+        else:
+            input_items.append({"role": m.get("role", "user"), "content": m.get("content", "")})
+    body = {
+        "model": DEEP_RESEARCH_MODEL,
+        "input": input_items,
+        "tools": [{"type": DEEP_RESEARCH_TOOL}],
+        "tool_choice": "auto",
+        "stream": True,
+    }
+    if instructions:
+        body["instructions"] = instructions
+    url = f"{OPENAI_API_URL}/responses"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+    }
+    annotations: list = []
+    emitted = False
+    resp = _session.post(url, headers=headers, json=body, timeout=_DEEP_RESEARCH_TIMEOUT, stream=True)
+    resp.raise_for_status()
+    for raw in resp.iter_lines(decode_unicode=True):
+        if not raw or not raw.startswith("data:"):
+            continue
+        data = raw[5:].strip()
+        if data == "[DONE]":
+            break
+        try:
+            ev = _json.loads(data)
+        except Exception:
+            continue
+        t = ev.get("type", "")
+        if t == "response.output_text.delta":
+            piece = ev.get("delta") or ""
+            if piece:
+                emitted = True
+                yield piece
+        elif t.endswith("annotation.added"):
+            a = ev.get("annotation")
+            if a:
+                annotations.append(a)
+        elif t == "response.completed":
+            for item in ((ev.get("response") or {}).get("output") or []):
+                for c in item.get("content", []) or []:
+                    annotations.extend(c.get("annotations") or [])
+    if not emitted:
+        raise RuntimeError("deep-research stream produced no content")
+    tail = _format_citations(annotations)
+    if tail:
+        yield tail
 
 
 def _web_search_chat(messages: list) -> str:
@@ -1089,21 +1152,32 @@ def ask_expert_assistant(
         "temperature": OPENAI_TEMPERATURE,
     }
 
-    if use_live_web and ENABLE_OPENAI_WEB_SEARCH:
+    def _standard_answer():
+        return _chat_via_requests(
+            messages=kwargs["messages"], model=kwargs["model"],
+            temperature=kwargs["temperature"],
+        ).strip()
+
+    if use_live_web and ENABLE_DEEP_RESEARCH:
+        # مسیرِ اصلی: جست‌وجوی عمیقِ agentic (Responses API). زنجیرهٔ فالبک:
+        # deep-research → search تک‌مرحله‌ای → مدلِ استاندارد.
+        try:
+            _answer = _deep_research(_with_web_directive(input_messages)).strip()
+        except Exception as _e:
+            logger.warning("[deep-research] failed, falling back: %s", _e)
+            try:
+                _answer = _web_search_chat(_with_web_directive(input_messages)).strip()
+            except Exception as _e2:
+                logger.warning("[web-search] also failed, standard: %s", _e2)
+                _answer = _standard_answer()
+    elif use_live_web and ENABLE_OPENAI_WEB_SEARCH:
         try:
             _answer = _web_search_chat(_with_web_directive(input_messages)).strip()
         except Exception as _e:
             logger.warning("[web-search] model failed, falling back to standard: %s", _e)
-            _answer = _chat_via_requests(
-                messages=kwargs["messages"], model=kwargs["model"],
-                temperature=kwargs["temperature"],
-            ).strip()
+            _answer = _standard_answer()
     else:
-        _answer = _chat_via_requests(
-            messages=kwargs["messages"],
-            model=kwargs["model"],
-            temperature=kwargs["temperature"],
-        ).strip()
+        _answer = _standard_answer()
 
     # شبکه‌ی ایمنی: اگر سؤال مقایسه‌ای بود و مدل جدول نساخت، یک جدول قطعی درج کن.
     _answer = ensure_comparison_table(message, _answer)
@@ -1152,8 +1226,34 @@ def ask_expert_assistant_stream(
     # استریمِ واقعی از OpenAI: توکن‌ها همان‌طور که تولید می‌شوند به کاربر می‌رسند.
     _acc = ""
 
-    # مسیرِ وب‌سرچِ واقعی: مدلِ search خودش می‌گردد، می‌خواند و منابع را می‌آورد.
-    # اگر قبل از اولین توکن خطا داد → فالبک به مسیرِ استاندارد (بدون تکرار).
+    # مسیرِ اصلی برای سؤال‌های وب‌محور: جست‌وجوی عمیقِ agentic (Responses API).
+    # زنجیرهٔ فالبک (هرکدام قبل از اولین توکن خطا داد → بعدی؛ بعد از emit → توقف
+    # بدونِ تکرار): deep-research استریم → deep-research غیراستریم (تیکه‌ای) →
+    # search تک‌مرحله‌ای → مدلِ استاندارد.
+    if use_live_web and ENABLE_DEEP_RESEARCH:
+        _dr_emitted = False
+        try:
+            for _delta in _deep_research_stream(_with_web_directive(input_messages)):
+                _dr_emitted = True
+                _acc += _delta
+                yield _delta
+            _final = ensure_comparison_table(message, _acc)
+            if _final != _acc and _final.startswith(_acc):
+                yield _final[len(_acc):]
+            return
+        except Exception as _e:
+            logger.warning("[deep-research] stream failed: %s", _e)
+            if _dr_emitted:
+                return  # partial answer already streamed — don't duplicate
+            try:
+                _full = _deep_research(_with_web_directive(input_messages))
+                for _i in range(0, len(_full), 90):
+                    yield _full[_i:_i + 90]
+                return
+            except Exception as _e2:
+                logger.warning("[deep-research] non-stream also failed: %s", _e2)
+                _acc = ""
+
     if use_live_web and ENABLE_OPENAI_WEB_SEARCH:
         _ws_emitted = False
         try:
