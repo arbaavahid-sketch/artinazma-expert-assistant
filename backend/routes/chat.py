@@ -368,21 +368,27 @@ def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
         re.search(r"\b(?=[A-Za-z0-9\-]*[A-Za-z])(?=[A-Za-z0-9\-]*\d)[A-Za-z][A-Za-z0-9\-]{4,}\b",
                   body.message)
     )
-    # سؤال‌هایی که اطلاعاتِ زندهٔ وب برایشان مهم است (استاندارد، محصول/مدل/کد، بدون
-    # منبعِ داخلی، یا تطبیقِ داخلیِ ضعیف). برای این‌ها مدلِ web-searchِ OpenAI به‌کار
-    # می‌رود (use_live_web)؛ Tavily هم اگر پیکربندی شده باشد context تکمیلی می‌دهد.
-    _web_eligible = bool(
-        allow_web_search
-        and (
-            _is_standard_query
-            or specific_model_question
-            or _has_product_code
-            or not related_docs
-            or (
-                _local_best < _WEAK_CONTEXT_THRESHOLD
-                and _vector_best < _VECTOR_STRONG_THRESHOLD
-            )
+    # سیگنالِ اینکه اطلاعاتِ زندهٔ وب برای سؤال مهم است (استاندارد، محصول/مدل/کد،
+    # بدونِ منبعِ داخلی، یا تطبیقِ داخلیِ ضعیف).
+    _web_signals = bool(
+        _is_standard_query
+        or specific_model_question
+        or _has_product_code
+        or not related_docs
+        or (
+            _local_best < _WEAK_CONTEXT_THRESHOLD
+            and _vector_best < _VECTOR_STRONG_THRESHOLD
         )
+    )
+    # واجدِ شرایطِ deep-research. عمداً به allow_web_search وابسته نیست: سؤال‌های
+    # «تجاری/قیمت» که allow_web را خاموش می‌کردند، دقیقاً همان‌هایی‌اند که به وبِ
+    # زندهٔ عمیق (اسپک، وضعیت تولید، جایگزین) نیاز دارند. فقط در حالت‌هایی که وب
+    # واقعاً بی‌معنی است کنار می‌رود: خلاصه‌سازیِ follow-up، کدِ ASTMِ قطعی، حالت brief.
+    _web_eligible = bool(
+        _web_signals
+        and not is_transform_followup
+        and not (_astm_inject or _astm_link_inject)
+        and body.response_mode != "brief"
     )
     # ── سقفِ هزینه‌ی جست‌وجوی عمیق ──
     # deep-research گران است، پس با سقفِ پلکانی (ناشناس/مشتری) + فیوزِ کلیِ روزانه
@@ -394,6 +400,9 @@ def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
         and allow_deep_search(client_ip=client_ip, customer_id=body.customer_id)
     )
     use_live_web = _deep_allowed
+    if use_live_web:
+        # deep research دارد اجرا می‌شود؛ پرچمِ وب را هم‌راستا کن (متادیتا + پرامپت).
+        allow_web_search = True
 
     # وقتی جست‌وجوی عمیقِ خودِ مدل اجرا می‌شود، اسنیپت‌های Tavily را تزریق نکن —
     # آن‌ها مدل را به «فقط بر پایهٔ همین snippetها» محدود می‌کنند. Tavily فقط وقتی
