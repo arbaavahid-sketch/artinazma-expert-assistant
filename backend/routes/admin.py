@@ -243,6 +243,13 @@ def gdrive_sync_result(_=Depends(require_admin)):
     }
 
 
+@router.get("/admin/deep-search-usage")
+def deep_search_usage(_=Depends(require_admin)):
+    """مصرفِ امروزِ جست‌وجوی عمیق (سقف‌ها + تعداد به‌ازای مشتری/IP)."""
+    from deep_search_limits import usage_snapshot
+    return usage_snapshot()
+
+
 @router.get("/admin/email-settings")
 def get_email_settings_endpoint(_=Depends(require_admin)):
     from email_service import get_email_settings

@@ -49,7 +49,9 @@ from ai_service import (
     detect_user_language,
     translate_query_for_search,
     ENABLE_OPENAI_WEB_SEARCH,
+    ENABLE_DEEP_RESEARCH,
 )
+from deep_search_limits import allow_deep_search
 from db_service import (
     save_expert_question,
     save_user_memory,
@@ -91,7 +93,7 @@ def _stage(timings: dict, label: str):
         timings[label] = round((_time.perf_counter() - _t) * 1000, 1)
 
 
-def _build_chat_pipeline(body: ChatRequest) -> dict:
+def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
     """
     Shared pre-processing pipeline for /chat and /chat/stream.
     Returns a dict with all computed fields needed by both endpoints.
@@ -382,12 +384,22 @@ def _build_chat_pipeline(body: ChatRequest) -> dict:
             )
         )
     )
-    # وقتی مدلِ web-searchِ OpenAI خودش می‌گردد، اسنیپت‌های Tavily را تزریق نکن —
-    # آن‌ها مدل را به «فقط بر پایهٔ همین snippetها» محدود می‌کنند و جلوی جست‌وجوی
-    # عمیقِ خودِ مدل (مثلاً برای محصولِ دوم) را می‌گیرند. Tavily فقط وقتی به‌کار
-    # می‌رود که مدلِ search خاموش باشد (فالبک).
-    _search_model_active = _web_eligible and ENABLE_OPENAI_WEB_SEARCH
-    if _web_eligible and is_web_search_configured() and not _search_model_active:
+    # ── سقفِ هزینه‌ی جست‌وجوی عمیق ──
+    # deep-research گران است، پس با سقفِ پلکانی (ناشناس/مشتری) + فیوزِ کلیِ روزانه
+    # کنترل می‌شود. اگر سؤال واجدِ شرایط باشد ولی سقف پر شده باشد، به مسیرِ ارزان‌تر
+    # (Tavily + مدلِ استاندارد) برمی‌گردد؛ کاربر بازهم جوابِ وب‌محور می‌گیرد.
+    _deep_allowed = bool(
+        _web_eligible
+        and ENABLE_DEEP_RESEARCH
+        and allow_deep_search(client_ip=client_ip, customer_id=body.customer_id)
+    )
+    use_live_web = _deep_allowed
+
+    # وقتی جست‌وجوی عمیقِ خودِ مدل اجرا می‌شود، اسنیپت‌های Tavily را تزریق نکن —
+    # آن‌ها مدل را به «فقط بر پایهٔ همین snippetها» محدود می‌کنند. Tavily فقط وقتی
+    # به‌کار می‌رود که deep-research اجرا نشود (خاموش یا سقف پر شده) — به‌عنوانِ
+    # وبِ ارزانِ فالبک.
+    if _web_eligible and is_web_search_configured() and not use_live_web:
         try:
             with _stage(_timings, "web_search"):
                 _web_results = search_web_sources(body.message, max_results=5)
@@ -548,7 +560,7 @@ Laboratory answer contract:
         "best_score": best_score,
         "search_mode": search_mode,
         "allow_web_search": allow_web_search,
-        "use_live_web": _web_eligible,
+        "use_live_web": use_live_web,
         "context": context,
         "detected_domain": detected_domain,
         "history": history,
@@ -590,7 +602,7 @@ def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_
 @router.post("/chat", tags=["Chat"], summary="Send message and get AI response")
 @limiter.limit("20/minute")
 def chat(body: ChatRequest, request: Request):
-    p = _build_chat_pipeline(body)
+    p = _build_chat_pipeline(body, client_ip=(request.client.host if request.client else ""))
 
     chat_requests_total.inc()
     chat_requests_by_intent.labels(intent=p["question_intent"]).inc()
@@ -671,7 +683,7 @@ def chat(body: ChatRequest, request: Request):
 @limiter.limit("20/minute")
 def chat_stream(body: ChatRequest, request: Request):
     """همان pipeline چت اما با پاسخ streaming (SSE)."""
-    p = _build_chat_pipeline(body)
+    p = _build_chat_pipeline(body, client_ip=(request.client.host if request.client else ""))
     detected_domain = p["detected_domain"]
     allow_company_reference = p["allow_company_reference"]
     is_transform_followup = p["is_transform_followup"]
