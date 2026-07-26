@@ -312,13 +312,16 @@ def _with_web_directive(messages: list) -> list:
 
 
 def _format_citations(annotations) -> str:
-    """Build a deduped 'منابع' markdown block from url_citation annotations."""
+    """Build a deduped 'منابع' markdown block from url_citation annotations.
+    Handles both shapes: chat-completions ({'url_citation':{url,title}}) and the
+    Responses API ({'type':'url_citation','url':..,'title':..})."""
     seen: set = set()
     lines: list = []
     for ann in annotations or []:
-        if (ann or {}).get("type") != "url_citation":
+        a = ann or {}
+        if a.get("type") != "url_citation":
             continue
-        c = ann.get("url_citation") or {}
+        c = a.get("url_citation") or a  # nested (chat) or flat (responses)
         url = (c.get("url") or "").split("?utm_")[0].strip()
         if not url or url in seen:
             continue
@@ -327,7 +330,62 @@ def _format_citations(annotations) -> str:
         lines.append(f"- [{title}]({url})")
     if not lines:
         return ""
-    return "\n\n**منابع:**\n" + "\n".join(lines[:6])
+    return "\n\n**منابع:**\n" + "\n".join(lines[:8])
+
+
+# ─────────────────────────────────────────────
+#  Deep research (agentic) — OpenAI Responses API + built-in web_search tool.
+#  The flagship model (gpt-5.4) itself runs MULTIPLE searches, reads pages and
+#  iterates server-side — closest to ChatGPT/Claude browsing. One /responses
+#  call from our side; reuses _session (DoH/proxy) so it works from Iran.
+#  STEP 1: exposed for direct verification; not yet wired into the chat path.
+# ─────────────────────────────────────────────
+ENABLE_DEEP_RESEARCH = os.getenv("ENABLE_DEEP_RESEARCH", "true").strip().lower() in ("1", "true", "yes", "on")
+DEEP_RESEARCH_MODEL = os.getenv("DEEP_RESEARCH_MODEL", MODEL)
+DEEP_RESEARCH_TOOL = os.getenv("DEEP_RESEARCH_TOOL", "web_search_preview")
+_DEEP_RESEARCH_TIMEOUT = float(os.getenv("DEEP_RESEARCH_TIMEOUT", "240"))
+
+
+def _deep_research(messages: list) -> str:
+    """Agentic web research via the Responses API. Raises on failure so the
+    caller can fall back. Returns answer text + appended citations."""
+    key = os.getenv("OPENAI_API_KEY", "")
+    # Responses API: system turn → instructions; the rest → input items.
+    instructions = ""
+    input_items = []
+    for m in messages:
+        if m.get("role") == "system" and not instructions:
+            instructions = m.get("content", "")
+        else:
+            input_items.append({"role": m.get("role", "user"), "content": m.get("content", "")})
+    body = {
+        "model": DEEP_RESEARCH_MODEL,
+        "input": input_items,
+        "tools": [{"type": DEEP_RESEARCH_TOOL}],
+        "tool_choice": "auto",
+    }
+    if instructions:
+        body["instructions"] = instructions
+    url = f"{OPENAI_API_URL}/responses"
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    resp = _session.post(url, headers=headers, json=body, timeout=_DEEP_RESEARCH_TIMEOUT)
+    resp.raise_for_status()
+    data = resp.json()
+
+    text = (data.get("output_text") or "").strip()
+    annotations: list = []
+    for item in data.get("output", []) or []:
+        if item.get("type") != "message":
+            continue
+        for c in item.get("content", []) or []:
+            if c.get("type") in ("output_text", "text"):
+                if not text:
+                    text += c.get("text", "") or ""
+                annotations.extend(c.get("annotations") or [])
+    text = text.strip()
+    if not text:
+        raise RuntimeError("empty deep-research answer")
+    return (text + _format_citations(annotations)).strip()
 
 
 def _web_search_chat(messages: list) -> str:
