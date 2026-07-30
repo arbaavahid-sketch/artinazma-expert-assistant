@@ -45,6 +45,11 @@ type QuestionMetadata = {
   source_count?: number;
   answer_mode?: string;
   response_time_ms?: number;
+  // Asker identity (set at save time from /chat and /analyze-*).
+  user_id?: string;
+  customer_id?: number | null;
+  customer_name?: string;
+  customer_email?: string;
   // Set for image/file analyses submitted from the assistant (analyze-image / analyze-file).
   analysis_type?: "image" | "file";
   image_url?: string;
@@ -104,6 +109,16 @@ function getDomainLabel(domain: string, locale: "fa" | "en" = "fa") {
   const found = domainOptions.find((d) => d.value === domain);
   if (found && found.value !== "all") return locale === "en" ? found.labelEn : found.label;
   return domain || (locale === "en" ? "Auto detected" : "تشخیص خودکار");
+}
+
+function getAskerLabel(metadata?: QuestionMetadata, locale: "fa" | "en" = "fa") {
+  if (metadata?.customer_name) return metadata.customer_name;
+  if (metadata?.customer_email) return metadata.customer_email;
+  if (metadata?.customer_id) return locale === "en" ? `Customer #${metadata.customer_id}` : `مشتری #${metadata.customer_id}`;
+  const uid = metadata?.user_id || "";
+  if (uid.startsWith("customer_")) return locale === "en" ? `Customer #${uid.slice(9)}` : `مشتری #${uid.slice(9)}`;
+  if (!uid || uid === "anonymous") return locale === "en" ? "Guest" : "مهمان";
+  return uid.length > 14 ? `${uid.slice(0, 12)}…` : uid;
 }
 
 function getIntentLabel(metadata?: QuestionMetadata, locale: "fa" | "en" = "fa") {
@@ -747,6 +762,16 @@ export default function QuestionsPage() {
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-bold">
                         <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
                           intent: {getIntentLabel(item.metadata, locale)}
+                        </span>
+                        <span
+                          className={`rounded-full border px-2.5 py-1 ${
+                            item.metadata?.customer_id || item.metadata?.user_id?.startsWith("customer_")
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-slate-200 bg-slate-50 text-slate-500"
+                          }`}
+                          title={item.metadata?.customer_email || item.metadata?.user_id || ""}
+                        >
+                          {isEn ? "asker" : "پرسنده"}: {getAskerLabel(item.metadata, locale)}
                         </span>
                         <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-blue-700">
                           search: {item.metadata?.search_mode || "-"}

@@ -2,10 +2,19 @@ import json
 import re
 from datetime import datetime, date, timedelta, timezone
 from typing import Any, Dict, List
+from zoneinfo import ZoneInfo
 
 from repositories.base import get_connection
 
 VALID_EXPERT_STATUSES = {"pending", "approved", "needs_edit", "rejected"}
+
+# زمان‌ها به وقتِ تهران ذخیره می‌شوند (کانتینر روی UTC است و ساعتِ خام در پنلِ
+# ادمین ۳.۵ ساعت عقب نمایش داده می‌شد). naive نگه می‌داریم تا فرمتِ قبلی حفظ شود.
+_TEHRAN = ZoneInfo("Asia/Tehran")
+
+
+def _now_local_iso() -> str:
+    return datetime.now(_TEHRAN).replace(tzinfo=None).isoformat(timespec="seconds")
 
 
 def save_expert_question(
@@ -31,7 +40,7 @@ def save_expert_question(
             "pending",
             "",
             "",
-            datetime.now().isoformat(timespec="seconds"),
+            _now_local_iso(),
             None,
             response_time_ms,
         ),
@@ -135,7 +144,7 @@ def get_question_analytics(days: int = 7) -> Dict[str, Any]:
 
     days = max(1, min(int(days), 3650))
     cutoff = (
-        datetime.now(timezone.utc).replace(tzinfo=None)
+        datetime.now(_TEHRAN).replace(tzinfo=None)
         - timedelta(days=days)
     ).isoformat(timespec="seconds")
 
@@ -316,7 +325,7 @@ def update_question_review(
             expert_status,
             expert_note,
             reviewed_answer,
-            datetime.now().isoformat(timespec="seconds"),
+            _now_local_iso(),
             question_id,
         ),
     )
@@ -405,7 +414,7 @@ def save_question_feedback(question_id: int, rating: str, comment: str = "") -> 
             SET user_rating = ?, user_rating_comment = ?, updated_at = ?
             WHERE id = ?
             """,
-            (rating, comment, datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), question_id),
+            (rating, comment, _now_local_iso(), question_id),
         )
         conn.commit()
         return conn.execute("SELECT changes()").fetchone()[0] > 0
@@ -485,7 +494,7 @@ def get_knowledge_gap_report(
     days = max(1, min(int(days), 365))
     limit = max(1, min(int(limit), 500))
     cutoff = (
-        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+        datetime.now(_TEHRAN).replace(tzinfo=None) - timedelta(days=days)
     ).strftime("%Y-%m-%d")
 
     conn = get_connection()
@@ -585,7 +594,7 @@ def get_response_time_stats(days: int = 30) -> dict:
     """آمار زمان پاسخ‌دهی AI."""
     conn = get_connection()
     try:
-        cutoff = (datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)).strftime("%Y-%m-%d")
+        cutoff = (datetime.now(_TEHRAN).replace(tzinfo=None) - timedelta(days=days)).strftime("%Y-%m-%d")
         row = conn.execute(
             """SELECT
                 AVG(response_time_ms) as avg_ms,

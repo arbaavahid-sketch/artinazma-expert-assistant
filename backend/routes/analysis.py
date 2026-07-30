@@ -41,6 +41,17 @@ def _persist_analysis(
 ) -> Optional[int]:
     """Save an analysis interaction so it shows up in the admin questions panel
     (and, for logged-in customers, in their history) exactly like a chat."""
+    # هویتِ پرسنده برای پنلِ ادمین (همان الگوی /chat).
+    metadata.setdefault("user_id", user_id)
+    if metadata.get("customer_id"):
+        try:
+            from db_service import get_customer_by_id
+            _cust = get_customer_by_id(metadata["customer_id"])
+            if _cust:
+                metadata.setdefault("customer_name", _cust.get("full_name") or "")
+                metadata.setdefault("customer_email", _cust.get("email") or "")
+        except Exception as exc:
+            logger.warning("customer lookup for analysis metadata failed: %s", exc)
     question_id = None
     try:
         question_id = save_expert_question(

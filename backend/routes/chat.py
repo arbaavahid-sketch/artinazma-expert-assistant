@@ -57,6 +57,7 @@ from db_service import (
     save_user_memory,
     detect_domain,
     get_customer_cross_session_context,
+    get_customer_by_id,
 )
 from metrics_service import (
     chat_requests_total,
@@ -541,6 +542,8 @@ Laboratory answer contract:
 
     # ── Customer cross-session context ──
     customer_context = ""
+    customer_name = ""
+    customer_email = ""
     if body.customer_id:
         try:
             customer_context = get_customer_cross_session_context(body.customer_id)
@@ -548,6 +551,14 @@ Laboratory answer contract:
                 body.user_id = f"customer_{body.customer_id}"
         except Exception as _e:
             logger.warning("customer_context load failed: %s", _e)
+        # نام/ایمیلِ مشتری برای نمایشِ «پرسنده» در پنلِ سوالاتِ ادمین (snapshot).
+        try:
+            _cust = get_customer_by_id(body.customer_id)
+            if _cust:
+                customer_name = _cust.get("full_name") or ""
+                customer_email = _cust.get("email") or ""
+        except Exception as _e:
+            logger.warning("customer lookup for metadata failed: %s", _e)
 
     _timings["pipeline_total"] = round((_time.perf_counter() - _pipeline_t0) * 1000, 1)
     logger.info(
@@ -577,6 +588,10 @@ Laboratory answer contract:
         "resource_links": resource_links,
         "resource_images": resource_images,
         "customer_context": customer_context,
+        "user_id": body.user_id or "anonymous",
+        "customer_id": body.customer_id,
+        "customer_name": customer_name,
+        "customer_email": customer_email,
         "response_mode": body.response_mode or "auto",
     }
 
@@ -592,6 +607,11 @@ def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_
         "resource_link_count": len(p["resource_links"]),
         "resource_image_count": len(p["resource_images"]),
         "response_mode": p["response_mode"],
+        # هویتِ پرسنده — برای نمایش در پنلِ سوالاتِ ادمین.
+        "user_id": p.get("user_id", "anonymous"),
+        "customer_id": p.get("customer_id"),
+        "customer_name": p.get("customer_name", ""),
+        "customer_email": p.get("customer_email", ""),
     }
     if answer_mode:
         metadata["answer_mode"] = answer_mode
