@@ -167,6 +167,12 @@ export default function QuestionsPage() {
   const isEn = locale === "en";
   const { toast } = useToast();
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
+  // شمارنده‌های سراسری از /questions/stats — لیست سقفِ ۲۰۰ دارد و برای کارت‌ها کافی نیست.
+  const [globalStats, setGlobalStats] = useState<{
+    total_questions?: number;
+    status_counts?: Record<string, number>;
+    rating_counts?: Record<string, number>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -198,11 +204,17 @@ export default function QuestionsPage() {
       if (dateFrom) params.set("date_from", dateFrom);
       if (dateTo) params.set("date_to", dateTo);
 
-      const res = await fetch(adminUrl(`/questions?${params.toString()}`), {
-        cache: "no-store",
-      });
+      const [res, statsRes] = await Promise.all([
+        fetch(adminUrl(`/questions?${params.toString()}`), { cache: "no-store" }),
+        fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
+      ]);
       const data = await res.json();
       setQuestions(data.questions || []);
+      try {
+        setGlobalStats(await statsRes.json());
+      } catch {
+        setGlobalStats(null);
+      }
     } catch {
       setQuestions([]);
     } finally {
@@ -428,7 +440,7 @@ export default function QuestionsPage() {
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-sm font-bold text-slate-500">{isEn ? "Total questions" : "کل سوالات"}</div>
             <div className="mt-2 text-3xl font-black text-slate-900">
-              {questions.length}
+              {globalStats?.total_questions ?? questions.length}
             </div>
           </div>
 
@@ -437,14 +449,14 @@ export default function QuestionsPage() {
               {isEn ? "Pending review" : "در انتظار بررسی"}
             </div>
             <div className="mt-2 text-3xl font-black text-slate-700">
-              {pendingCount}
+              {globalStats?.status_counts?.pending ?? pendingCount}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
             <div className="text-sm font-bold text-emerald-700">{isEn ? "Approved" : "تایید شده"}</div>
             <div className="mt-2 text-3xl font-black text-emerald-700">
-              {approvedCount}
+              {globalStats?.status_counts?.approved ?? approvedCount}
             </div>
           </div>
 
@@ -453,7 +465,7 @@ export default function QuestionsPage() {
               {isEn ? "Needs edit" : "نیازمند اصلاح"}
             </div>
             <div className="mt-2 text-3xl font-black text-amber-700">
-              {needsEditCount}
+              {globalStats?.status_counts?.needs_edit ?? needsEditCount}
             </div>
           </div>
 
@@ -462,12 +474,12 @@ export default function QuestionsPage() {
             <div className="mt-2 flex items-center gap-3">
               <span className="flex items-center gap-1 text-lg font-black text-emerald-600">
                 <ThumbsUp size={16} />
-                {upCount}
+                {globalStats?.rating_counts?.up ?? upCount}
               </span>
               <span className="text-slate-300">|</span>
               <span className="flex items-center gap-1 text-lg font-black text-red-500">
                 <ThumbsDown size={16} />
-                {downCount}
+                {globalStats?.rating_counts?.down ?? downCount}
               </span>
             </div>
           </div>

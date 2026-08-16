@@ -101,6 +101,27 @@ def get_question_stats() -> Dict[str, Any]:
     cursor.execute("SELECT COUNT(*) AS total FROM expert_questions")
     total_questions = cursor.fetchone()["total"]
 
+    # شمارش سراسری به تفکیک وضعیت بررسی و امتیاز کاربر — کارت‌های پنل از این‌ها
+    # پر می‌شوند، نه از طولِ لیستِ ۲۰۰تاییِ لودشده.
+    cursor.execute(
+        """
+        SELECT COALESCE(NULLIF(expert_status, ''), 'pending') AS s, COUNT(*) AS count
+        FROM expert_questions
+        GROUP BY s
+        """
+    )
+    status_counts = {row["s"]: row["count"] for row in cursor.fetchall()}
+
+    cursor.execute(
+        """
+        SELECT user_rating, COUNT(*) AS count
+        FROM expert_questions
+        WHERE user_rating IN ('up', 'down')
+        GROUP BY user_rating
+        """
+    )
+    rating_counts = {row["user_rating"]: row["count"] for row in cursor.fetchall()}
+
     cursor.execute("""
         SELECT detected_domain, COUNT(*) AS count
         FROM expert_questions
@@ -123,6 +144,8 @@ def get_question_stats() -> Dict[str, Any]:
 
     return {
         "total_questions": total_questions,
+        "status_counts": status_counts,
+        "rating_counts": rating_counts,
         "domains": [
             {"domain": row["detected_domain"] or "general", "count": row["count"]}
             for row in domain_rows
