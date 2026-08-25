@@ -209,3 +209,17 @@ def export_questions_csv(_=Depends(require_admin)):
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=questions.csv"},
     )
+
+
+@router.get("/admin/questions/export-pdf")
+def export_questions_pdf(limit: int = 5000, _=Depends(require_admin)):
+    """خروجی PDF گزارشی از سوالات کاربران (فارسی، راست‌به‌چپ) برای دانلود."""
+    from pdf_export_service import build_questions_pdf
+
+    questions = get_questions_for_export(limit=limit)
+    pdf_bytes = build_questions_pdf(questions)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=questions.pdf"},
+    )

@@ -195,6 +195,14 @@ export default function QuestionsPage() {
     a.click();
   }
 
+  function downloadPdf() {
+    const url = adminUrl("/admin/questions/export-pdf");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "questions.pdf";
+    a.click();
+  }
+
   async function loadQuestions() {
     setLoading(true);
     try {
@@ -417,6 +425,15 @@ export default function QuestionsPage() {
                 >
                   <Download size={18} />
                   {isEn ? "Download CSV" : "دانلود CSV"}
+                </button>
+
+                <button
+                  onClick={downloadPdf}
+                  disabled={questions.length === 0}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-bold text-rose-700 shadow-sm transition hover:bg-rose-100 disabled:opacity-40"
+                >
+                  <Download size={18} />
+                  {isEn ? "Download PDF" : "دانلود PDF"}
                 </button>
 
                 <button
