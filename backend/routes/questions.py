@@ -14,6 +14,7 @@ from db_service import (
     get_question_by_id,
     update_question_review,
     get_all_questions,
+    get_questions_for_export,
     save_question_feedback,
     get_feedback_stats,
     log_knowledge_action,
@@ -175,20 +176,32 @@ def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
 
 @router.get("/admin/questions/export-csv")
 def export_questions_csv(_=Depends(require_admin)):
-    """خروجی CSV از همه سوالات برای دانلود Excel."""
+    """خروجی CSV کامل از همه سوالات (متن پاسخ، پرسنده، امتیاز، بازبینی) برای Excel."""
     import csv
     import io
-    questions = get_all_questions(limit=5000)
+    questions = get_questions_for_export(limit=5000)
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["شناسه", "سوال", "حوزه", "وضعیت بررسی", "تاریخ ثبت"])
+    writer.writerow([
+        "شناسه", "تاریخ ثبت", "پرسنده", "سوال", "پاسخ", "حوزه", "نوع سوال",
+        "وضعیت بررسی", "یادداشت کارشناس", "پاسخ اصلاح‌شده",
+        "امتیاز کاربر", "نظر کاربر", "زمان پاسخ (ms)",
+    ])
     for q in questions:
         writer.writerow([
             q.get("id", ""),
-            q.get("question", ""),
-            q.get("detected_domain", ""),
-            q.get("expert_status", "pending"),
             q.get("created_at", ""),
+            q.get("customer_name", ""),
+            q.get("question", ""),
+            q.get("answer", ""),
+            q.get("detected_domain", ""),
+            q.get("question_intent", ""),
+            q.get("expert_status", "pending"),
+            q.get("expert_note", ""),
+            q.get("reviewed_answer", ""),
+            q.get("user_rating", ""),
+            q.get("user_rating_comment", ""),
+            q.get("response_time_ms", ""),
         ])
     csv_bytes = output.getvalue().encode("utf-8-sig")
     return Response(

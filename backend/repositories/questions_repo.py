@@ -425,6 +425,47 @@ def get_all_questions(
     ]
 
 
+def get_questions_for_export(limit: int = 5000) -> List[Dict[str, Any]]:
+    """همه ستون‌های لازم برای خروجی کامل CSV (شامل متن پاسخ و نام پرسنده)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, question, answer, detected_domain, metadata_json,
+               expert_status, expert_note, reviewed_answer,
+               user_rating, user_rating_comment, response_time_ms, created_at
+        FROM expert_questions
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    results = []
+    for row in rows:
+        metadata = json.loads(row["metadata_json"] or "{}")
+        results.append(
+            {
+                "id": row["id"],
+                "question": row["question"],
+                "answer": row["answer"] or "",
+                "detected_domain": row["detected_domain"],
+                "customer_name": metadata.get("customer_name") or "",
+                "question_intent": metadata.get("question_intent") or "",
+                "expert_status": row["expert_status"] or "pending",
+                "expert_note": row["expert_note"] or "",
+                "reviewed_answer": row["reviewed_answer"] or "",
+                "user_rating": row["user_rating"] or "",
+                "user_rating_comment": row["user_rating_comment"] or "",
+                "response_time_ms": row["response_time_ms"],
+                "created_at": row["created_at"],
+            }
+        )
+    return results
+
+
 def save_question_feedback(question_id: int, rating: str, comment: str = "") -> bool:
     """Save user rating ('up' or 'down') for a question. Returns True if saved."""
     if rating not in ("up", "down"):
