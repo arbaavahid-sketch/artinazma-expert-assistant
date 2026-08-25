@@ -5,6 +5,7 @@ PDF Export Service — گزارش PDF فارسی از سوالات کاربرا�
 شکل‌دهی و راست‌به‌چپ چیده شوند. فونت Vazirmatn (لایسنس OFL) در backend/fonts.
 """
 
+import logging
 import os
 import re
 from datetime import datetime
@@ -12,6 +13,50 @@ from typing import Any, Dict, List
 
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
+
+# fontTools هنگام subset کردن فونت ده‌ها خط INFO می‌نویسد و لاگ را پر می‌کند.
+logging.getLogger("fontTools").setLevel(logging.WARNING)
+
+
+# ── بهینه‌سازی سرعت: کشِ عرضِ متنِ shape‌شده ────────────────────────────────
+# الگوریتمِ شکستنِ خط در fpdf2 برای پیدا کردن نقطهٔ شکست، عرضِ پیشوندهای متن را
+# بارها می‌سنجد و هر بار HarfBuzz را دوباره صدا می‌زند (برای ۵۰ سوال ≈ ۸۸۰هزار بار).
+# چون نتیجه برای (فونت، متن، اندازه، پارامترها) قطعی است، آن را کش می‌کنیم.
+# خروجی PDF تغییری نمی‌کند؛ فقط محاسبهٔ تکراری حذف می‌شود.
+_SHAPED_WIDTH_CACHE: Dict[tuple, Any] = {}
+
+
+def _install_shaping_cache() -> None:
+    from fpdf.fonts import TTFFont
+
+    if getattr(TTFFont.shaped_text_width, "_artin_cached", False):
+        return
+
+    original = TTFFont.shaped_text_width
+
+    def shaped_text_width_cached(self, text, font_size_pt, text_shaping_params):
+        params = text_shaping_params or {}
+        key = (
+            self.fontkey,
+            text,
+            font_size_pt,
+            params.get("fragment_direction"),
+            params.get("script"),
+            params.get("language"),
+            tuple(sorted((params.get("features") or {}).items())),
+        )
+        cached = _SHAPED_WIDTH_CACHE.get(key)
+        if cached is None:
+            cached = _SHAPED_WIDTH_CACHE[key] = original(
+                self, text, font_size_pt, text_shaping_params
+            )
+        return cached
+
+    shaped_text_width_cached._artin_cached = True
+    TTFFont.shaped_text_width = shaped_text_width_cached
+
+
+_install_shaping_cache()
 
 _FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
 
@@ -25,9 +70,17 @@ _STATUS_LABELS = {
 _RATING_LABELS = {"up": "رضایت", "down": "نارضایتی"}
 
 
+# فونت Vazirmatn گلیفِ زیرنویس/بالانویس ندارد و این کاراکترها در PDF حذف
+# می‌شدند (مثلاً «N₂, CO₂, H₂S» می‌شد «N, CO, HS»). به رقم عادی تبدیل می‌کنیم.
+_SUB_SUP_MAP = str.maketrans(
+    "₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻",
+    "01234567890123456789+-",
+)
+
+
 def _strip_markdown(text: str) -> str:
     """مارک‌داون را برای متن ساده PDF تمیز می‌کند (بدون تغییر محتوا)."""
-    text = text or ""
+    text = (text or "").translate(_SUB_SUP_MAP)
     text = re.sub(r"```[a-zA-Z]*\n?", "", text)
     text = text.replace("`", "")
     text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
@@ -124,4 +177,7 @@ def build_questions_pdf(questions: List[Dict[str, Any]]) -> bytes:
 
         pdf.ln(4)
 
-    return bytes(pdf.output())
+    try:
+        return bytes(pdf.output())
+    finally:
+        _SHAPED_WIDTH_CACHE.clear()  # حافظه بین درخواست‌ها انباشته نشود

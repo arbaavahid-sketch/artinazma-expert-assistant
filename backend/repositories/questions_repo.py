@@ -425,20 +425,66 @@ def get_all_questions(
     ]
 
 
-def get_questions_for_export(limit: int = 5000) -> List[Dict[str, Any]]:
-    """همه ستون‌های لازم برای خروجی کامل CSV (شامل متن پاسخ و نام پرسنده)."""
+def get_questions_for_export(
+    limit: int = 5000,
+    domain: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    rating: str | None = None,
+    status: str | None = None,
+    ids: List[int] | None = None,
+) -> List[Dict[str, Any]]:
+    """همه ستون‌های لازم برای خروجی کامل CSV/PDF (شامل متن پاسخ و نام پرسنده).
+
+    با همان فیلترهای لیست ادمین: حوزه، بازه تاریخ، امتیاز، وضعیت بررسی —
+    یا فهرست مشخصی از شناسه‌ها (ids) برای خروجی سوالات انتخاب‌شده.
+    """
     conn = get_connection()
     cursor = conn.cursor()
+
+    conditions: List[str] = []
+    params: List[Any] = []
+
+    if ids:
+        placeholders = ",".join("?" for _ in ids)
+        conditions.append(f"id IN ({placeholders})")
+        params.extend(int(i) for i in ids)
+    if domain:
+        conditions.append("detected_domain = ?")
+        params.append(domain)
+    if date_from:
+        conditions.append("date(created_at) >= date(?)")
+        params.append(date_from)
+    if date_to:
+        conditions.append("date(created_at) <= date(?)")
+        params.append(date_to)
+    if rating == "up":
+        conditions.append("user_rating = 'up'")
+    elif rating == "down":
+        conditions.append("user_rating = 'down'")
+    elif rating == "unrated":
+        conditions.append("(user_rating IS NULL OR user_rating = '')")
+    if status in VALID_EXPERT_STATUSES:
+        if status == "pending":
+            conditions.append("(expert_status IS NULL OR expert_status = '' OR expert_status = 'pending')")
+        else:
+            conditions.append("expert_status = ?")
+            params.append(status)
+
+    where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    params.append(limit)
+
     cursor.execute(
-        """
+        f"""
         SELECT id, question, answer, detected_domain, metadata_json,
                expert_status, expert_note, reviewed_answer,
                user_rating, user_rating_comment, response_time_ms, created_at
         FROM expert_questions
+        {where_clause}
         ORDER BY id DESC
         LIMIT ?
         """,
-        (limit,),
+        params,
     )
     rows = cursor.fetchall()
     conn.close()

@@ -174,12 +174,36 @@ def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
     return result
 
 
+# سقفِ تعداد سوال در یک PDF — بالاتر از این، ساخت سند از تایم‌اوت پروکسی رد می‌شود.
+PDF_MAX_QUESTIONS = 500
+
+
+def _parse_ids(ids: Optional[str]) -> Optional[list[int]]:
+    """رشته «1,2,3» را به لیست شناسه تبدیل می‌کند؛ مقادیر نامعتبر نادیده گرفته می‌شوند."""
+    if not ids:
+        return None
+    parsed = [int(part) for part in ids.split(",") if part.strip().isdigit()]
+    return parsed or None
+
+
 @router.get("/admin/questions/export-csv")
-def export_questions_csv(_=Depends(require_admin)):
-    """خروجی CSV کامل از همه سوالات (متن پاسخ، پرسنده، امتیاز، بازبینی) برای Excel."""
+def export_questions_csv(
+    limit: int = 5000,
+    domain: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    rating: Optional[str] = None,
+    status: Optional[str] = None,
+    ids: Optional[str] = None,
+    _=Depends(require_admin),
+):
+    """خروجی CSV کامل از سوالات (با فیلتر حوزه/تاریخ/امتیاز/وضعیت یا شناسه‌های انتخابی)."""
     import csv
     import io
-    questions = get_questions_for_export(limit=5000)
+    questions = get_questions_for_export(
+        limit=limit, domain=domain, date_from=date_from, date_to=date_to,
+        rating=rating, status=status, ids=_parse_ids(ids),
+    )
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow([
@@ -212,11 +236,28 @@ def export_questions_csv(_=Depends(require_admin)):
 
 
 @router.get("/admin/questions/export-pdf")
-def export_questions_pdf(limit: int = 5000, _=Depends(require_admin)):
-    """خروجی PDF گزارشی از سوالات کاربران (فارسی، راست‌به‌چپ) برای دانلود."""
+def export_questions_pdf(
+    limit: int = 5000,
+    domain: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    rating: Optional[str] = None,
+    status: Optional[str] = None,
+    ids: Optional[str] = None,
+    _=Depends(require_admin),
+):
+    """خروجی PDF گزارشی از سوالات (با فیلتر حوزه/تاریخ/امتیاز/وضعیت یا شناسه‌های انتخابی).
+
+    ساخت PDF فارسی پرهزینه است (هر ~۵۰ سوال حدود ۱۰ ثانیه)، بنابراین حداکثر
+    PDF_MAX_QUESTIONS سوالِ اخیر خروجی می‌گیرد؛ برای بازه‌های بزرگ‌تر از فیلترها
+    (تاریخ/حوزه) یا خروجی CSV استفاده شود.
+    """
     from pdf_export_service import build_questions_pdf
 
-    questions = get_questions_for_export(limit=limit)
+    questions = get_questions_for_export(
+        limit=min(limit, PDF_MAX_QUESTIONS), domain=domain, date_from=date_from,
+        date_to=date_to, rating=rating, status=status, ids=_parse_ids(ids),
+    )
     pdf_bytes = build_questions_pdf(questions)
     return Response(
         content=pdf_bytes,

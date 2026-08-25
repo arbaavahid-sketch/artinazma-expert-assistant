@@ -187,8 +187,24 @@ export default function QuestionsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkProcessing, setBulkProcessing] = useState(false);
 
+  function exportQuery(): string {
+    // سوالات تیک‌خورده اولویت دارند؛ وگرنه فیلترهای فعال صفحه اعمال می‌شوند.
+    const params = new URLSearchParams();
+    if (selectedIds.size > 0) {
+      params.set("ids", Array.from(selectedIds).join(","));
+    } else {
+      if (domainFilter !== "all") params.set("domain", domainFilter);
+      if (ratingFilter !== "all") params.set("rating", ratingFilter);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (dateFrom) params.set("date_from", dateFrom);
+      if (dateTo) params.set("date_to", dateTo);
+    }
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }
+
   function downloadCsv() {
-    const url = adminUrl("/admin/questions/export-csv");
+    const url = adminUrl(`/admin/questions/export-csv${exportQuery()}`);
     const a = document.createElement("a");
     a.href = url;
     a.download = "questions.csv";
@@ -196,7 +212,7 @@ export default function QuestionsPage() {
   }
 
   function downloadPdf() {
-    const url = adminUrl("/admin/questions/export-pdf");
+    const url = adminUrl(`/admin/questions/export-pdf${exportQuery()}`);
     const a = document.createElement("a");
     a.href = url;
     a.download = "questions.pdf";
@@ -425,6 +441,7 @@ export default function QuestionsPage() {
                 >
                   <Download size={18} />
                   {isEn ? "Download CSV" : "دانلود CSV"}
+                  {selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
                 </button>
 
                 <button
@@ -434,6 +451,7 @@ export default function QuestionsPage() {
                 >
                   <Download size={18} />
                   {isEn ? "Download PDF" : "دانلود PDF"}
+                  {selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
                 </button>
 
                 <button
