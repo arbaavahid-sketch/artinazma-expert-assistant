@@ -174,8 +174,10 @@ def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
     return result
 
 
-# سقفِ تعداد سوال در یک PDF — بالاتر از این، ساخت سند از تایم‌اوت پروکسی رد می‌شود.
-PDF_MAX_QUESTIONS = 500
+# سقفِ تعداد سوال در یک PDF. ساخت PDF فارسی حدود ۰.۴ ثانیه به‌ازای هر سوال طول
+# می‌کشد و مسیر دانلود یک سقف سخت ۱۰۰ ثانیه‌ای دارد؛ ۲۰۰ سوال (~۸۰ ثانیه) با
+# حاشیهٔ امن زیر آن می‌ماند. برای مجموعه‌های بزرگ‌تر از فیلترها یا CSV استفاده شود.
+PDF_MAX_QUESTIONS = 200
 
 
 def _parse_ids(ids: Optional[str]) -> Optional[list[int]]:
@@ -254,11 +256,20 @@ def export_questions_pdf(
     """
     from pdf_export_service import build_questions_pdf
 
+    capped = min(limit, PDF_MAX_QUESTIONS)
     questions = get_questions_for_export(
-        limit=min(limit, PDF_MAX_QUESTIONS), domain=domain, date_from=date_from,
+        limit=capped, domain=domain, date_from=date_from,
         date_to=date_to, rating=rating, status=status, ids=_parse_ids(ids),
     )
-    pdf_bytes = build_questions_pdf(questions)
+    # اگر دقیقاً به سقف خوردیم، احتمالاً سوال‌های قدیمی‌تری هم بوده‌اند؛ در خودِ
+    # سند بگو تا خروجیِ ناقص به‌اشتباه «کامل» تلقی نشود.
+    note = (
+        f"این خروجی به {capped} سوال اخیر محدود شده است. برای سوال‌های قدیمی‌تر"
+        " از فیلتر تاریخ استفاده کنید یا خروجی CSV بگیرید."
+        if len(questions) == capped
+        else ""
+    )
+    pdf_bytes = build_questions_pdf(questions, note=note)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

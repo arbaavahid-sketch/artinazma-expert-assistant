@@ -126,8 +126,12 @@ class _QuestionsPDF(FPDF):
         self.multi_cell(0, h, text, align="R", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 
-def build_questions_pdf(questions: List[Dict[str, Any]]) -> bytes:
-    """از لیست سوالات (خروجی get_questions_for_export) گزارش PDF می‌سازد."""
+def build_questions_pdf(questions: List[Dict[str, Any]], note: str = "") -> bytes:
+    """از لیست سوالات (خروجی get_questions_for_export) گزارش PDF می‌سازد.
+
+    ``note`` اگر داده شود زیر سربرگ می‌آید — مثلاً وقتی خروجی به سقف خورده و
+    ناقص است، تا خواننده آن را «همهٔ سوالات» فرض نکند.
+    """
     pdf = _QuestionsPDF()
     pdf.add_page()
 
@@ -137,6 +141,10 @@ def build_questions_pdf(questions: List[Dict[str, Any]]) -> bytes:
     pdf.set_text_color(90, 90, 90)
     pdf.rtl_line(f"تعداد سوالات: {len(questions)}    |    تاریخ تهیه گزارش: {now}", size=9.5)
     pdf.set_text_color(0, 0, 0)
+    if note:
+        pdf.set_text_color(150, 80, 0)
+        pdf.rtl_line(note, size=9)
+        pdf.set_text_color(0, 0, 0)
     pdf.ln(3)
 
     for q in questions:
