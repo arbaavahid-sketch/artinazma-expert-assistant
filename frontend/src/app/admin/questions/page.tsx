@@ -185,6 +185,7 @@ export default function QuestionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 20;
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
   const [bulkProcessing, setBulkProcessing] = useState(false);
 
   function exportQuery(): string {
@@ -203,20 +204,48 @@ export default function QuestionsPage() {
     return qs ? `?${qs}` : "";
   }
 
-  function downloadCsv() {
-    const url = adminUrl(`/admin/questions/export-csv${exportQuery()}`);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "questions.csv";
-    a.click();
-  }
-
-  function downloadPdf() {
-    const url = adminUrl(`/admin/questions/export-pdf${exportQuery()}`);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "questions.pdf";
-    a.click();
+  /**
+   * خروجی را با fetch می‌گیریم (نه لینک مستقیم) تا وضعیت خطا واقعاً دیده شود؛
+   * با لینک ساده، خطای سرور به شکل «دانلود ناموفق» مبهم در مرورگر ظاهر می‌شد.
+   */
+  async function downloadExport(kind: "csv" | "pdf") {
+    const url = adminUrl(`/admin/questions/export-${kind}${exportQuery()}`);
+    setExporting(kind);
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) {
+        let detail = "";
+        try {
+          detail = (await res.json())?.detail || "";
+        } catch {
+          /* پاسخ JSON نبود */
+        }
+        toast(
+          detail ||
+            (isEn
+              ? "Export failed. Please try again."
+              : "خطا در تهیه خروجی — دوباره تلاش کنید"),
+          "error",
+        );
+        return;
+      }
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = `questions.${kind}`;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      toast(
+        isEn
+          ? "Export failed — check your connection."
+          : "خطا در تهیه خروجی — اتصال را بررسی کنید",
+        "error",
+      );
+    } finally {
+      setExporting(null);
+    }
   }
 
   async function loadQuestions() {
@@ -435,23 +464,29 @@ export default function QuestionsPage() {
 
               <div className="flex gap-3">
                 <button
-                  onClick={downloadCsv}
-                  disabled={questions.length === 0}
+                  onClick={() => downloadExport("csv")}
+                  disabled={questions.length === 0 || exporting !== null}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
                 >
                   <Download size={18} />
-                  {isEn ? "Download CSV" : "دانلود CSV"}
-                  {selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+                  {exporting === "csv"
+                    ? isEn
+                      ? "Preparing…"
+                      : "در حال تهیه…"
+                    : `${isEn ? "Download CSV" : "دانلود CSV"}${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}`}
                 </button>
 
                 <button
-                  onClick={downloadPdf}
-                  disabled={questions.length === 0}
+                  onClick={() => downloadExport("pdf")}
+                  disabled={questions.length === 0 || exporting !== null}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-bold text-rose-700 shadow-sm transition hover:bg-rose-100 disabled:opacity-40"
                 >
                   <Download size={18} />
-                  {isEn ? "Download PDF" : "دانلود PDF"}
-                  {selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+                  {exporting === "pdf"
+                    ? isEn
+                      ? "Building PDF…"
+                      : "در حال ساخت PDF…"
+                    : `${isEn ? "Download PDF" : "دانلود PDF"}${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}`}
                 </button>
 
                 <button

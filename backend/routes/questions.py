@@ -1,4 +1,6 @@
 import logging
+import threading
+import time
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -175,9 +177,15 @@ def question_add_to_knowledge(question_id: int, _=Depends(require_admin)):
 
 
 # سقفِ تعداد سوال در یک PDF. ساخت PDF فارسی حدود ۰.۴ ثانیه به‌ازای هر سوال طول
-# می‌کشد و مسیر دانلود یک سقف سخت ۱۰۰ ثانیه‌ای دارد؛ ۲۰۰ سوال (~۸۰ ثانیه) با
+# می‌کشد و مسیر دانلود یک سقف سخت ۱۰۰ ثانیه‌ای دارد؛ ۱۰۰ سوال (~۴۰ ثانیه) با
 # حاشیهٔ امن زیر آن می‌ماند. برای مجموعه‌های بزرگ‌تر از فیلترها یا CSV استفاده شود.
-PDF_MAX_QUESTIONS = 200
+PDF_MAX_QUESTIONS = 100
+
+# ساخت PDF کاملاً CPU-محور است و اگر مرورگر دانلود را نیمه‌کاره رها کند، کار روی
+# سرور ادامه پیدا می‌کند. بدون این قفل، هر تلاشِ دوبارهٔ کاربر یک کارِ رهاشدهٔ
+# دیگر روی قبلی‌ها انباشته می‌کرد و سرور را کندتر و کندتر می‌کرد (میانگین واقعی
+# روی پروداکشن: ۴۰۳ ثانیه برای هر درخواست). فقط یک ساختِ هم‌زمان اجازه داریم.
+_PDF_BUILD_LOCK = threading.Lock()
 
 
 def _parse_ids(ids: Optional[str]) -> Optional[list[int]]:
@@ -269,7 +277,21 @@ def export_questions_pdf(
         if len(questions) == capped
         else ""
     )
-    pdf_bytes = build_questions_pdf(questions, note=note)
+    if not _PDF_BUILD_LOCK.acquire(timeout=2):
+        raise HTTPException(
+            status_code=429,
+            detail="یک خروجی PDF در حال ساخت است. چند لحظه صبر کنید و دوباره تلاش کنید.",
+        )
+    try:
+        _t0 = time.monotonic()
+        pdf_bytes = build_questions_pdf(questions, note=note)
+        logger.info(
+            "PDF export: %d questions, %d KB, %.1fs",
+            len(questions), len(pdf_bytes) // 1024, time.monotonic() - _t0,
+        )
+    finally:
+        _PDF_BUILD_LOCK.release()
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
