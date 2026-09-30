@@ -1,8 +1,20 @@
 import type { NextConfig } from "next";
 
+/**
+ * Served on its own (web, Android and desktop builds), or as a zone of the
+ * Artin Azma holding hub, where every path carries a prefix — set
+ * ZONE_BASE_PATH=/ai there and nowhere else.
+ */
+const basePath = process.env.ZONE_BASE_PATH?.trim().replace(/\/$/, "") ?? "";
+
 const nextConfig: NextConfig = {
   // Enable standalone output for optimised Docker production images
   output: "standalone",
+
+  // The browser needs the same value: fetch() and plain asset paths do not
+  // inherit basePath.
+  env: { NEXT_PUBLIC_ZONE_BASE_PATH: basePath },
+  ...(basePath ? { basePath } : {}),
 
   // Compress responses with gzip
   compress: true,

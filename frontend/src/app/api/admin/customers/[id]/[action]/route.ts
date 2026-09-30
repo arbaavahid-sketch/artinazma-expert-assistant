@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { isAdminRequest } from "@/lib/admin-auth";
+
 function getRuntimeConfig() {
   const adminApiKey = process.env.ADMIN_API_KEY;
   const sessionToken = process.env.ADMIN_SESSION_TOKEN;
@@ -16,12 +18,8 @@ function getRuntimeConfig() {
   };
 }
 
-function isAdminAuthed(
-  request: NextRequest,
-  sessionToken: string,
-): boolean {
-  const cookie = request.cookies.get("artin_admin");
-  return cookie?.value === sessionToken;
+async function isAdminAuthed(request: NextRequest): Promise<boolean> {
+  return isAdminRequest(request);
 }
 
 export async function POST(
@@ -37,7 +35,7 @@ export async function POST(
     );
   }
 
-  if (!isAdminAuthed(request, config.sessionToken)) {
+  if (!(await isAdminAuthed(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

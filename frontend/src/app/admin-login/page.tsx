@@ -1,5 +1,6 @@
 "use client";
 
+import { withBasePath } from "@/lib/base-path";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -42,7 +43,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin-login", {
+      const res = await fetch(withBasePath("/api/admin-login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -48,6 +48,7 @@ import DropOverlay from "@/app/assistant/DropOverlay";
 import ScrollToBottomButton from "@/app/assistant/ScrollToBottomButton";
 import ChatComposer from "@/app/assistant/ChatComposer";
 import HeroComposer from "@/app/assistant/HeroComposer";
+import { withBasePath } from "@/lib/base-path";
 
 type AnalysisResponse = Record<string, unknown> & {
   ai_analysis?: string;
@@ -1117,7 +1118,7 @@ ${cleanAnswer}`,
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
           <div className="flex items-center gap-2.5">
             <img
-              src="/images/artin-avatar.png"
+              src={withBasePath("/images/artin-avatar.png")}
               alt={isEn ? "Artin" : "آرتین"}
               className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover shadow-sm sm:h-8 sm:w-8"
               onError={(e) => {
@@ -1374,7 +1375,7 @@ ${cleanAnswer}`,
                   <div className="flex max-w-[82%] flex-row-reverse items-center gap-2 rounded-2xl border border-[--border-soft] bg-[--surface] px-3.5 py-2.5 text-slate-600 shadow-sm dark:text-slate-300 sm:gap-3 sm:rounded-[28px] sm:px-5 sm:py-4">
                     <div className="relative shrink-0">
                       <img
-                        src="/images/artin-avatar.png"
+                        src={withBasePath("/images/artin-avatar.png")}
                         alt={isEn ? "Artin" : "آرتین"}
                         className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 object-cover sm:h-9 sm:w-9"
                       />

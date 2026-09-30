@@ -45,6 +45,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { withBasePath } from "@/lib/base-path";
 
 type SidebarItem = {
   href: string;
@@ -215,7 +216,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         await refreshCustomerSessions();
 
         if (activeSessionId === String(sessionId)) {
-          window.location.href = "/assistant";
+          window.location.href = withBasePath("/assistant");
         }
       }
     } catch {}
@@ -230,7 +231,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
     // Clear httpOnly session cookies via server-side API route
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 1500);
-    await fetch("/api/customer-session", {
+    await fetch(withBasePath("/api/customer-session"), {
       method: "DELETE",
       signal: controller.signal,
     }).catch(() => {}).finally(() => window.clearTimeout(timeout));
@@ -250,7 +251,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   useEffect(() => {
     async function checkAdminStatus() {
       try {
-        const res = await fetch("/api/admin-status", { cache: "no-store" });
+        const res = await fetch(withBasePath("/api/admin-status"), { cache: "no-store" });
         const data = await res.json();
         setIsAdmin(Boolean(data.is_admin));
       } catch {
@@ -398,7 +399,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 <Link href="/" className="block">
                   <div className="mx-auto w-[78%]">
                     <img
-                      src="/images/artinazma-logo.png"
+                      src={withBasePath("/images/artinazma-logo.png")}
                       alt={isRtl ? "آرتین آزما" : "ArtinAzma"}
                       className="mx-auto h-auto max-h-14 w-full object-contain"
                     />
@@ -424,7 +425,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 title={isRtl ? "آرتین آزما" : "ArtinAzma"}
               >
                 <img
-                  src="/images/artinazma-logo.png"
+                  src={withBasePath("/images/artinazma-logo.png")}
                   alt={isRtl ? "آرتین آزما" : "ArtinAzma"}
                   className="h-10 w-10 object-contain"
                 />

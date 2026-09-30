@@ -1,5 +1,6 @@
 "use client";
 
+import { withBasePath } from "@/lib/base-path";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -154,7 +155,7 @@ export default function CustomerRequestDetailPage() {
   useEffect(() => {
     const raw = localStorage.getItem("artin_customer");
     if (!raw) {
-      window.location.href = "/customer-login";
+      window.location.href = withBasePath("/customer-login");
       return;
     }
 

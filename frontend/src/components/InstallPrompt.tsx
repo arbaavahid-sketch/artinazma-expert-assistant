@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Download, Sparkles, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { withBasePath } from "@/lib/base-path";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -53,7 +54,7 @@ export default function InstallPrompt() {
     <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md animate-slideUp" dir={dir}>
       <div className="flex items-center gap-3 rounded-[24px] border border-blue-100 bg-white/95 p-3 shadow-2xl shadow-slate-900/10 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
         <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-blue-700 text-white shadow-lg shadow-blue-700/20">
-          <img src="/icons/pwa-96.png" alt="" className="h-full w-full object-cover" aria-hidden="true" />
+          <img src={withBasePath("/icons/pwa-96.png")} alt="" className="h-full w-full object-cover" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 text-sm font-black text-slate-900 dark:text-slate-100">

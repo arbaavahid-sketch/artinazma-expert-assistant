@@ -1,5 +1,6 @@
 "use client";
 
+import { withBasePath } from "@/lib/base-path";
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
@@ -135,7 +136,7 @@ export default function Home() {
 
               <div className="w-full text-center">
                 <div className="mx-auto mb-5 mt-8 flex h-40 w-40 items-center justify-center overflow-hidden rounded-[30px] bg-blue-50 shadow-lg shadow-slate-200/70 sm:mt-0 sm:h-44 sm:w-44 sm:rounded-[34px]">
-                  <Image src="/images/artin-avatar-hero.png" alt={isEn ? "Artin" : "آرتین"} width={220} height={220} priority className="h-full w-full object-cover" />
+                  <Image src={withBasePath("/images/artin-avatar-hero.png")} alt={isEn ? "Artin" : "آرتین"} width={220} height={220} priority className="h-full w-full object-cover" />
                 </div>
 
                 <h2 className="text-2xl font-black text-slate-950">{isEn ? "I'm Artin" : "من آرتین هستم"}</h2>

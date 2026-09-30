@@ -1,5 +1,6 @@
 "use client";
 
+import { withBasePath } from "@/lib/base-path";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
@@ -256,7 +257,7 @@ export default function CustomerDashboardPage() {
     const raw = localStorage.getItem("artin_customer");
 
     if (!raw) {
-      window.location.href = "/customer-login";
+      window.location.href = withBasePath("/customer-login");
       return;
     }
 
@@ -464,10 +465,10 @@ export default function CustomerDashboardPage() {
     // Clear JWT cookie (backend) and session cookie (Next.js) simultaneously
     await Promise.allSettled([
       customerFetch(apiUrl("/customers/logout"), { method: "POST" }),
-      fetch("/api/customer-session", { method: "DELETE" }),
+      fetch(withBasePath("/api/customer-session"), { method: "DELETE" }),
     ]);
 
-    window.location.href = "/customer-login";
+    window.location.href = withBasePath("/customer-login");
   }
 
   if (!customer) {

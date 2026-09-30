@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
+import { withBasePath } from "@/lib/base-path";
 /** Read the CSRF cookie set by the backend. */
 function getCsrfToken(): string {
   if (typeof document === "undefined") return "";
@@ -12,7 +14,7 @@ function getCsrfToken(): string {
 async function fetchWsTicket(): Promise<string | null> {
   try {
     const csrf = getCsrfToken();
-    const res = await fetch("/api/backend/customers/ws-ticket", {
+    const res = await fetch(withBasePath("/api/backend/customers/ws-ticket"), {
       method: "POST",
       credentials: "include",
       headers: csrf ? { "X-CSRF-Token": csrf } : {},

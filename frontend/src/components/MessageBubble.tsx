@@ -37,6 +37,7 @@ import {
   getTextFont,
 } from "@/lib/chat-helpers";
 import type { ChatMessage, ResourceLink, ResourceImage } from "@/lib/chat-types";
+import { withBasePath } from "@/lib/base-path";
 
 // intentهایی که نشان‌دهنده‌ی «قصد خرید/تجهیزات» هستند → CTA استعلام قیمت را نشان بده.
 const QUOTE_INTENTS = new Set([
@@ -403,7 +404,7 @@ function MessageBubble({
       >
         {!isUser && (
           <img
-            src="/images/artin-avatar.png"
+            src={withBasePath("/images/artin-avatar.png")}
             alt={isEn ? "Artin" : "آرتین"}
             className="mt-1 hidden h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover p-1 shadow-sm sm:block"
           />

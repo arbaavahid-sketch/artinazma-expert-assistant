@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export function proxy(request: NextRequest) {
+import { HUB_COOKIE, hubManagerSession } from "@/lib/hub-session";
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
@@ -18,6 +20,12 @@ export function proxy(request: NextRequest) {
   if (isAdminRoute) {
     const adminCookie = request.cookies.get("artin_admin")?.value;
     const sessionToken = process.env.ADMIN_SESSION_TOKEN;
+
+    // A manager already signed in at the holding hub is an admin here. Checked
+    // first, so the hub works whether or not this app has its own admin token.
+    if (await hubManagerSession(request.cookies.get(HUB_COOKIE)?.value)) {
+      return NextResponse.next();
+    }
 
     if (!sessionToken) {
       // Fail closed: if env is missing, block all admin access rather than falling back to a known value

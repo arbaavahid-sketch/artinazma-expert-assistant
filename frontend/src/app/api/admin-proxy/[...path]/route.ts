@@ -8,23 +8,25 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { isAdminRequest } from "@/lib/admin-auth";
+
 // Use BACKEND_INTERNAL_URL (server-side only, absolute) — never the public-facing
 // NEXT_PUBLIC_API_BASE_URL which may be a relative path like /api/backend in dev.
 const BACKEND_URL =
   process.env.BACKEND_INTERNAL_URL || "http://127.0.0.1:8000";
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
-const SESSION_TOKEN = process.env.ADMIN_SESSION_TOKEN || "";
 
-function isAdminAuthed(request: NextRequest): boolean {
-  if (!SESSION_TOKEN || !ADMIN_API_KEY) return false;
-  return request.cookies.get("artin_admin")?.value === SESSION_TOKEN;
+async function isAdminAuthed(request: NextRequest): Promise<boolean> {
+  // The backend key is what makes the forwarded call work at all.
+  if (!ADMIN_API_KEY) return false;
+  return isAdminRequest(request);
 }
 
 async function proxy(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
-  if (!isAdminAuthed(request)) {
+  if (!(await isAdminAuthed(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

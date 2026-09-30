@@ -1,12 +1,15 @@
+import { withBasePath } from "./base-path";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
 export function apiUrl(path: string) {
-  if (!path.startsWith("/")) {
-    return `${API_BASE_URL}/${path}`;
-  }
-
-  return `${API_BASE_URL}${path}`;
+  const url = path.startsWith("/")
+    ? `${API_BASE_URL}${path}`
+    : `${API_BASE_URL}/${path}`;
+  // A relative base (the dev default, /api/backend) is a path on this app, so
+  // it needs the zone prefix; an absolute backend URL is left alone.
+  return url.startsWith("/") ? withBasePath(url) : url;
 }
 
 
@@ -17,7 +20,7 @@ export function apiUrl(path: string) {
  */
 export function adminUrl(path: string) {
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `/api/admin-proxy${p}`;
+  return withBasePath(`/api/admin-proxy${p}`);
 }
 
 /**
@@ -38,7 +41,7 @@ function toProxyUrl(url: string): string {
     API_BASE_URL.startsWith("http://127") ||
     API_BASE_URL.startsWith("http://localhost");
   if (isDev && url.startsWith(API_BASE_URL)) {
-    return `/api/backend${url.slice(API_BASE_URL.length)}`;
+    return withBasePath(`/api/backend${url.slice(API_BASE_URL.length)}`);
   }
   return url;
 }
@@ -68,12 +71,12 @@ export async function customerFetch(url: string, options: RequestInit = {}): Pro
       localStorage.removeItem("artin_customer");
       try {
         // Clear Next.js session cookie and backend JWT cookie
-        await fetch("/api/customer-session", { method: "DELETE" });
+        await fetch(withBasePath("/api/customer-session"), { method: "DELETE" });
         await fetch(toProxyUrl(`${API_BASE_URL}/customers/logout`), { method: "POST", credentials: "include" });
       } catch {
         // ignore — still redirect
       }
-      window.location.href = "/customer-login";
+      window.location.href = withBasePath("/customer-login");
     }
   }
 

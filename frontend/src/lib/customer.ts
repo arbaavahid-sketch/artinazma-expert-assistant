@@ -3,6 +3,7 @@
  * استخراج‌شده از assistant/page.tsx برای قابل‌تست و قابل‌استفاده‌مجدد شدن.
  */
 
+import { withBasePath } from "@/lib/base-path";
 import type { Customer } from "@/lib/chat-types";
 
 export const CUSTOMER_STORAGE_KEY = "artin_customer";
@@ -41,7 +42,7 @@ export function clearSavedCustomer(): void {
 }
 
 export async function createCustomerSession(customerId: number): Promise<void> {
-  const res = await fetch("/api/customer-session", {
+  const res = await fetch(withBasePath("/api/customer-session"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ customer_id: customerId }),

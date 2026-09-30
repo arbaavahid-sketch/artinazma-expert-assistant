@@ -2,11 +2,12 @@
 
 import { useEffect } from "react";
 import { Loader2, LogOut, ShieldCheck } from "lucide-react";
+import { withBasePath } from "@/lib/base-path";
 
 export default function AdminLogoutPage() {
   useEffect(() => {
     async function logout() {
-      await fetch("/api/admin-logout", {
+      await fetch(withBasePath("/api/admin-logout"), {
         method: "POST",
       });
 
