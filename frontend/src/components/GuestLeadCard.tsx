@@ -19,10 +19,23 @@ interface Props {
   /** The question that triggered the gate, recorded so sales has context. */
   question: string;
   isEn?: boolean;
+  /**
+   * "commercial" — they asked for a price or a datasheet; the chat carries on
+   * either way. "quota" — the free questions are spent and the composer is
+   * blocked until this is filled in.
+   */
+  reason?: "commercial" | "quota";
+  freeQuestions?: number;
   onDone?: () => void;
 }
 
-export default function GuestLeadCard({ question, isEn = false, onDone }: Props) {
+export default function GuestLeadCard({
+  question,
+  isEn = false,
+  reason = "commercial",
+  freeQuestions = 5,
+  onDone,
+}: Props) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
@@ -47,7 +60,14 @@ export default function GuestLeadCard({ question, isEn = false, onDone }: Props)
           company: company.trim(),
           request_type: "price-inquiry",
           subject: isEn ? "Inquiry from Artin chat" : "استعلام از گفت‌وگو با آرتین",
-          message: question.trim().slice(0, 1500),
+          // The question gives sales the context. It can be empty when the
+          // card is shown on an empty conversation (a returning guest whose
+          // allowance ran out), and the endpoint requires a message.
+          message:
+            question.trim().slice(0, 1500) ||
+            (isEn
+              ? "Contact requested from the Artin assistant."
+              : "درخواست تماس از طریق دستیار آرتین."),
         }),
       });
 
@@ -73,9 +93,13 @@ export default function GuestLeadCard({ question, isEn = false, onDone }: Props)
           {isEn ? "Thank you — we have your details." : "ممنون — اطلاعات شما ثبت شد."}
         </div>
         <div className="mt-2 text-sm leading-7 text-emerald-700">
-          {isEn
-            ? "One of our specialists will contact you shortly. You can keep asking technical questions here in the meantime."
-            : "کارشناسان ما به‌زودی با شما تماس می‌گیرند. تا آن موقع می‌توانید همین‌جا سؤال‌های فنی‌تان را بپرسید."}
+          {reason === "quota"
+            ? isEn
+              ? "You can carry on asking. A specialist will also get in touch."
+              : "می‌توانید به پرسیدن ادامه بدهید. کارشناس ما هم با شما تماس می‌گیرد."
+            : isEn
+              ? "One of our specialists will contact you shortly. You can keep asking technical questions here in the meantime."
+              : "کارشناسان ما به‌زودی با شما تماس می‌گیرند. تا آن موقع می‌توانید همین‌جا سؤال‌های فنی‌تان را بپرسید."}
         </div>
       </div>
     );
@@ -84,14 +108,22 @@ export default function GuestLeadCard({ question, isEn = false, onDone }: Props)
   return (
     <div className="ui-card mt-3 rounded-[20px] border border-sky-200 bg-sky-50 p-5">
       <div className="text-sm font-bold text-slate-900">
-        {isEn
-          ? "For price, availability or a datasheet"
-          : "برای قیمت، موجودی یا دریافت دیتاشیت"}
+        {reason === "quota"
+          ? isEn
+            ? "Let's keep going"
+            : "برای ادامه گفت‌وگو"
+          : isEn
+            ? "For price, availability or a datasheet"
+            : "برای قیمت، موجودی یا دریافت دیتاشیت"}
       </div>
       <div className="mt-2 text-sm leading-7 text-slate-600">
-        {isEn
-          ? "Leave your name and phone number and a specialist will get back to you. No account needed."
-          : "نام و شماره تماس خود را بگذارید تا کارشناس ما با شما تماس بگیرد. نیازی به ساخت حساب کاربری نیست."}
+        {reason === "quota"
+          ? isEn
+            ? `You have used your ${freeQuestions} free questions. Leave your name and phone number to carry on — no account or password needed.`
+            : `${freeQuestions} سؤال رایگان شما تمام شد. برای ادامه، نام و شماره تماس خود را بگذارید — نیازی به ساخت حساب و رمز عبور نیست.`
+          : isEn
+            ? "Leave your name and phone number and a specialist will get back to you. No account needed."
+            : "نام و شماره تماس خود را بگذارید تا کارشناس ما با شما تماس بگیرد. نیازی به ساخت حساب کاربری نیست."}
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">

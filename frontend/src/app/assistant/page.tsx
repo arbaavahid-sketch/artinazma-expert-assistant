@@ -7,6 +7,13 @@ import { apiUrl, backendFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import { getSavedCustomer } from "@/lib/customer";
 import {
+  GUEST_FREE_QUESTIONS,
+  bumpGuestQuestionCount,
+  guestQuestionCount,
+  isGuestCaptured,
+  markGuestCaptured,
+} from "@/lib/guest-gate";
+import {
   Plus,
   Download,
   SlidersHorizontal,
@@ -135,6 +142,9 @@ function AssistantPageInner() {
   // question. Holds the message count at the moment it was submitted, so the
   // card can stay on screen to show its thank-you and then retire for good.
   const [leadCapturedAt, setLeadCapturedAt] = useState<number | null>(null);
+  // Free-question allowance for a visitor without an account.
+  const [guestUsed, setGuestUsed] = useState(0);
+  const [guestCaptured, setGuestCaptured] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const [rateLimitTotal, setRateLimitTotal] = useState(60);
@@ -389,6 +399,10 @@ ${cleanAnswer}`,
     // commercial gate below is what asks for contact details.
     if (savedCustomer) {
       setCustomer(savedCustomer);
+    } else {
+      // Restore the guest's allowance from a previous visit.
+      setGuestUsed(guestQuestionCount());
+      setGuestCaptured(isGuestCaptured());
     }
     setCheckingCustomerLogin(false);
 
@@ -410,14 +424,24 @@ ${cleanAnswer}`,
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
   const lastUserQuestion =
     [...messages].reverse().find((m) => m.role === "user")?.content || "";
+  const askedSomethingCommercial =
+    !!lastAssistant?.question_intent &&
+    COMMERCIAL_INTENTS.includes(lastAssistant.question_intent);
+
+  // The second trigger: the free questions are used up. Unlike the commercial
+  // card this one also blocks the composer, so it stays until it is filled in.
+  const guestOutOfQuestions =
+    !customer && !guestCaptured && guestUsed >= GUEST_FREE_QUESTIONS;
+
   const showLeadCard =
     !customer &&
-    !loading &&
-    !!lastAssistant?.question_intent &&
-    COMMERCIAL_INTENTS.includes(lastAssistant.question_intent) &&
-    // Before submitting: show it. Right after: keep it up for the thank-you.
-    // Once the conversation moves on, it is done and never returns.
-    (leadCapturedAt === null || leadCapturedAt === messages.length);
+    !guestCaptured &&
+    (guestOutOfQuestions ||
+      (!loading &&
+        askedSomethingCommercial &&
+        // Before submitting: show it. Right after: keep it up for the
+        // thank-you. Once the conversation moves on, it retires for good.
+        (leadCapturedAt === null || leadCapturedAt === messages.length)));
 
   // Rate limit countdown timer
   useEffect(() => {
@@ -501,6 +525,17 @@ ${cleanAnswer}`,
     const visibleMessage = displayMessage || finalMessage;
 
     if (!finalMessage.trim()) return;
+
+    // A guest who has used up the free questions is stopped here until the
+    // contact card below is filled in. Counted only for guests — a signed-in
+    // customer never touches this.
+    if (!customer && !guestCaptured) {
+      if (guestQuestionCount() >= GUEST_FREE_QUESTIONS) {
+        setGuestUsed(GUEST_FREE_QUESTIONS);
+        return;
+      }
+      setGuestUsed(bumpGuestQuestionCount());
+    }
 
     const previousMessages = historyOverride || messages;
     const userId = getOrCreateUserId();
@@ -1295,6 +1330,23 @@ ${cleanAnswer}`,
 
               <RateLimitBanner countdown={rateLimitCountdown} total={rateLimitTotal} isEn={isEn} />
 
+              {/* A guest who spent their allowance on a previous visit lands
+                  here with an empty conversation — show the card, not a
+                  composer that would swallow whatever they type. */}
+              {guestOutOfQuestions ? (
+                <div className="w-full max-w-xl">
+                  <GuestLeadCard
+                    question=""
+                    isEn={isEn}
+                    reason="quota"
+                    freeQuestions={GUEST_FREE_QUESTIONS}
+                    onDone={() => {
+                      markGuestCaptured();
+                      setGuestCaptured(true);
+                    }}
+                  />
+                </div>
+              ) : (
               <HeroComposer
                 showTools={showTools}
                 onToggleTools={() => setShowTools((prev) => !prev)}
@@ -1311,6 +1363,7 @@ ${cleanAnswer}`,
                 onSend={() => sendMessage()}
                 rateLimitActive={rateLimitCountdown > 0}
               />
+              )}
 
               <AssistantQuickActions
                 isEn={isEn}
@@ -1318,8 +1371,10 @@ ${cleanAnswer}`,
                 onRequest={() => handleToolClick("customer-request")}
               />
 
-              {/* سوال‌های پیشنهادی آماده */}
-              <StarterQuestions onSelect={(q) => sendMessage(q, q)} />
+              {/* سوال‌های پیشنهادی آماده — وقتی سهمیه تمام شده بی‌اثرند */}
+              {!guestOutOfQuestions && (
+                <StarterQuestions onSelect={(q) => sendMessage(q, q)} />
+              )}
             </div>
           ) : (
             <div
@@ -1353,12 +1408,19 @@ ${cleanAnswer}`,
                 />
               ))}
 
-              {/* دروازه تجاری: فقط برای مهمان، و فقط وقتی سؤال به قیمت/خرید رسیده */}
+              {/* دروازه مهمان: یا سؤال تجاری پرسیده، یا سهمیه رایگانش تمام شده */}
               {showLeadCard && (
                 <GuestLeadCard
                   question={lastUserQuestion}
                   isEn={isEn}
-                  onDone={() => setLeadCapturedAt(messages.length)}
+                  reason={guestOutOfQuestions ? "quota" : "commercial"}
+                  freeQuestions={GUEST_FREE_QUESTIONS}
+                  onDone={() => {
+                    setLeadCapturedAt(messages.length);
+                    // Remember across reloads, so the gate is asked once only.
+                    markGuestCaptured();
+                    setGuestCaptured(true);
+                  }}
                 />
               )}
 
@@ -1442,7 +1504,10 @@ ${cleanAnswer}`,
         isEn={isEn}
       />
 
-      {messages.length > 0 && (
+      {/* Out of free questions: hide the composer rather than leave a box that
+          silently swallows what the visitor types. The contact card above is
+          the way forward, and it comes back the moment they fill it in. */}
+      {messages.length > 0 && !guestOutOfQuestions && (
         <ChatComposer
           isEn={isEn}
           showTools={showTools}
