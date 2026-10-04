@@ -23,6 +23,7 @@ import {
   getImageTypeLabel,
 } from "@/lib/chat-helpers";
 const MessageBubble = dynamic(() => import("@/components/MessageBubble"), { ssr: false });
+const GuestLeadCard = dynamic(() => import("@/components/GuestLeadCard"), { ssr: false });
 const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: false });
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTTS } from "@/hooks/useTTS";
@@ -130,6 +131,10 @@ function AssistantPageInner() {
   const [chatImageType, setChatImageType] = useState("general");
   const [chatImageNote, setChatImageNote] = useState("");
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
+  // Guest lead capture: asked once, after the visitor's first commercial
+  // question. Holds the message count at the moment it was submitted, so the
+  // card can stay on screen to show its thank-you and then retire for good.
+  const [leadCapturedAt, setLeadCapturedAt] = useState<number | null>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const [rateLimitTotal, setRateLimitTotal] = useState(60);
@@ -379,15 +384,16 @@ ${cleanAnswer}`,
   useEffect(() => {
     const savedCustomer = getSavedCustomer();
 
-    if (!savedCustomer) {
-      router.replace("/customer-login");
-      return;
+    // A visitor without an account is allowed in — they chat as a guest. Their
+    // questions still reach the backend (as an anonymous user_id), and the
+    // commercial gate below is what asks for contact details.
+    if (savedCustomer) {
+      setCustomer(savedCustomer);
     }
-
-    setCustomer(savedCustomer);
     setCheckingCustomerLogin(false);
 
-    if (sessionIdParam) {
+    // Saved sessions belong to an account; a guest has none to restore.
+    if (sessionIdParam && savedCustomer) {
       const sessionId = Number(sessionIdParam);
 
       if (!Number.isNaN(sessionId)) {
@@ -395,6 +401,23 @@ ${cleanAnswer}`,
       }
     }
   }, [loadSavedChatSession, router, sessionIdParam]);
+
+  // ── دروازه تجاری برای کاربر مهمان ──────────────────────────────────────────
+  // Artin never quotes a price; for a signed-in customer that ends in "contact
+  // our specialists", which for a guest is a dead end. When the backend
+  // classifies the question as commercial, ask for a name and phone instead.
+  const COMMERCIAL_INTENTS = ["commercial_request", "sales", "price_inquiry"];
+  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  const lastUserQuestion =
+    [...messages].reverse().find((m) => m.role === "user")?.content || "";
+  const showLeadCard =
+    !customer &&
+    !loading &&
+    !!lastAssistant?.question_intent &&
+    COMMERCIAL_INTENTS.includes(lastAssistant.question_intent) &&
+    // Before submitting: show it. Right after: keep it up for the thank-you.
+    // Once the conversation moves on, it is done and never returns.
+    (leadCapturedAt === null || leadCapturedAt === messages.length);
 
   // Rate limit countdown timer
   useEffect(() => {
@@ -1329,6 +1352,15 @@ ${cleanAnswer}`,
                   canRegenerate={!loading && item.role === "assistant" && index === messages.length - 1}
                 />
               ))}
+
+              {/* دروازه تجاری: فقط برای مهمان، و فقط وقتی سؤال به قیمت/خرید رسیده */}
+              {showLeadCard && (
+                <GuestLeadCard
+                  question={lastUserQuestion}
+                  isEn={isEn}
+                  onDone={() => setLeadCapturedAt(messages.length)}
+                />
+              )}
 
               {/* راهنمای نصب صدای TTS */}
               {ttsNote && (

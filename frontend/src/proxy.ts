@@ -5,9 +5,12 @@ export function proxy(request: NextRequest) {
 
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
 
+  // /assistant is deliberately open. A visitor arriving from the website can
+  // ask technical questions without an account; the gate moved to the moment
+  // they want something commercial (price, datasheet, stock), where the chat
+  // asks for a name and phone instead. Everything that needs a real account —
+  // the dashboard, saved requests, file analysis — stays protected.
   const isCustomerProtectedRoute =
-    pathname === "/assistant" ||
-    pathname.startsWith("/assistant/") ||
     pathname === "/customer-dashboard" ||
     pathname.startsWith("/customer-dashboard/") ||
     pathname === "/customer-request" ||
@@ -58,7 +61,6 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/assistant/:path*",
     "/customer-dashboard/:path*",
     "/customer-request/:path*",
     "/analyze/:path*",
