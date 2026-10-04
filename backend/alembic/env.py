@@ -25,6 +25,19 @@ if config.config_file_name is not None:
 # Read DATABASE_URL from environment (overrides alembic.ini sqlalchemy.url)
 database_url = os.getenv("DATABASE_URL", "").strip()
 if database_url:
+    # Name the driver explicitly. A bare "postgresql://" lets SQLAlchemy pick
+    # the default DBAPI, and newer releases moved that default from psycopg2 to
+    # psycopg (v3) — which this image does not install, so a rebuild suddenly
+    # failed every migration with ModuleNotFoundError and took the backend down.
+    #
+    # Only the URL handed to SQLAlchemy is rewritten. DATABASE_URL itself is
+    # left alone on purpose: repositories/base.py decides Postgres-vs-SQLite by
+    # testing for the "postgresql://" prefix, and would quietly fall back to an
+    # empty SQLite file if that prefix changed.
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    elif database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
     config.set_main_option("sqlalchemy.url", database_url)
 else:
     raise RuntimeError(

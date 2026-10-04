@@ -82,6 +82,10 @@ pytest==9.0.3
 pywebpush>=2.0.0
 psycopg2-binary>=2.9.9
 alembic>=1.13.0
+# Pulled in by alembic. Pinned below 2.1 because 2.1 changes the default
+# PostgreSQL driver to psycopg (v3), which this image does not install —
+# an unpinned rebuild broke every migration and took the backend down.
+sqlalchemy>=2.0,<2.1
 redis>=5.0.0
 prometheus-fastapi-instrumentator==8.0.0
 prometheus-client==0.25.0
