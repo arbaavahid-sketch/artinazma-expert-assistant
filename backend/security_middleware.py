@@ -27,6 +27,10 @@ _CSRF_EXEMPT_PATHS = {
     # برایش معنا داشته باشد) و هر دو rate-limit دارند.
     "/customers/forgot-password", "/customers/reset-password",
     "/customer-requests",
+    # Same "before there is a session" case: a guest names the questions they
+    # already asked, right after the contact card. Rate-limited, and it can
+    # only write onto rows carrying the caller's own anonymous user_id.
+    "/questions/attach-identity",
     "/analyze-image", "/analyze-file", "/transcribe",
     "/tts",
 }

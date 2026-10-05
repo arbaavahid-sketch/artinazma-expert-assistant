@@ -2,7 +2,6 @@ import os
 import threading
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime as _dt, timezone
 
 from logging_config import setup_logging
 setup_logging()
@@ -13,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
-from db_service import init_db, get_setting, set_setting
+from db_service import init_db, get_setting
 from ws_chat import router as ws_router
 from security_middleware import CSRFMiddleware, SmartRateLimitMiddleware
 from gdrive_sync_manager import start_gdrive_sync

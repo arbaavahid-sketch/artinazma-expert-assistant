@@ -1,5 +1,4 @@
 import re
-import os
 import json as _json_local
 import logging
 import time as _time
@@ -48,7 +47,6 @@ from ai_service import (
     ask_expert_assistant_stream,
     detect_user_language,
     translate_query_for_search,
-    ENABLE_OPENAI_WEB_SEARCH,
     ENABLE_DEEP_RESEARCH,
 )
 from deep_search_limits import allow_deep_search
@@ -559,6 +557,12 @@ Laboratory answer contract:
                 customer_email = _cust.get("email") or ""
         except Exception as _e:
             logger.warning("customer lookup for metadata failed: %s", _e)
+
+    # A guest who filled in the contact card keeps sending their name, so the
+    # questions they ask from then on are attributed too — not just the earlier
+    # ones back-filled by /questions/attach-identity. A real customer wins.
+    if not customer_name and getattr(body, "guest_name", None):
+        customer_name = (body.guest_name or "").strip()[:120]
 
     _timings["pipeline_total"] = round((_time.perf_counter() - _pipeline_t0) * 1000, 1)
     logger.info(

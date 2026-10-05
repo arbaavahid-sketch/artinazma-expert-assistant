@@ -1,6 +1,6 @@
 import json
 import re
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date, timedelta
 from typing import Any, Dict, List
 from zoneinfo import ZoneInfo
 
@@ -510,6 +510,69 @@ def get_questions_for_export(
             }
         )
     return results
+
+
+def attach_guest_identity(
+    user_id: str, full_name: str, phone: str = "", email: str = "", limit: int = 50
+) -> int:
+    """نام و شماره یک بازدیدکننده را به سوال‌هایی که قبلاً گمنام پرسیده وصل می‌کند.
+
+    A guest asks a few questions before leaving contact details, so those first
+    questions land in the admin panel under an opaque id like "user_muu40lv"
+    and are useless to whoever follows the lead up. Once the contact card is
+    filled in, stamp the same identity onto the questions already asked under
+    that id. Returns how many were updated.
+    """
+    user_id = (user_id or "").strip()
+    full_name = (full_name or "").strip()
+    if not user_id or not full_name:
+        return 0
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, metadata_json FROM expert_questions
+        ORDER BY id DESC LIMIT ?
+        """,
+        (max(limit, 1) * 4,),  # scan a wider window, then filter by user_id
+    )
+    rows = cursor.fetchall()
+
+    updated = 0
+    now = _now_local_iso()
+    for row in rows:
+        if updated >= limit:
+            break
+        try:
+            metadata = json.loads(row["metadata_json"] or "{}")
+        except (TypeError, ValueError):
+            continue
+        if metadata.get("user_id") != user_id:
+            continue
+        # Never overwrite a real signed-in customer's own details.
+        if metadata.get("customer_id"):
+            continue
+        if metadata.get("customer_name") == full_name:
+            continue
+
+        metadata["customer_name"] = full_name
+        if phone:
+            metadata["guest_phone"] = phone.strip()
+        if email:
+            metadata["customer_email"] = email.strip()
+        metadata["identified_later"] = True
+
+        conn.execute(
+            "UPDATE expert_questions SET metadata_json = ?, updated_at = ? WHERE id = ?",
+            (json.dumps(metadata, ensure_ascii=False), now, row["id"]),
+        )
+        updated += 1
+
+    if updated:
+        conn.commit()
+    conn.close()
+    return updated
 
 
 def save_question_feedback(question_id: int, rating: str, comment: str = "") -> bool:

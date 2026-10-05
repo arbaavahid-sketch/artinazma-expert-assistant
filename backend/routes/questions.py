@@ -3,11 +3,11 @@ import threading
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 
-from schemas.models import QuestionReviewRequest, FeedbackRequest
-from utils.deps import require_admin
+from schemas.models import QuestionReviewRequest, FeedbackRequest, GuestIdentityRequest
+from utils.deps import require_admin, limiter
 
 from db_service import (
     get_recent_questions,
@@ -17,6 +17,7 @@ from db_service import (
     update_question_review,
     get_all_questions,
     get_questions_for_export,
+    attach_guest_identity,
     save_question_feedback,
     get_feedback_stats,
     log_knowledge_action,
@@ -52,6 +53,25 @@ def review_question_put(question_id: int, request: QuestionReviewRequest, _=Depe
 @router.patch("/questions/{question_id}/review")
 def review_question_patch(question_id: int, request: QuestionReviewRequest, _=Depends(require_admin)):
     return save_question_review(question_id, request)
+
+
+@router.post("/questions/attach-identity", tags=["Chat"], summary="Name a guest's earlier questions")
+@limiter.limit("6/minute")
+def attach_identity(request: Request, body: GuestIdentityRequest):
+    """وقتی بازدیدکننده نام و شماره‌اش را می‌دهد، سوال‌های قبلی‌اش را به نامش ثبت می‌کند.
+
+    Public on purpose: it is called right after the guest fills in the contact
+    card, before any account exists. It only writes a name onto rows that carry
+    the caller's own anonymous user_id and belong to no customer, so the worst
+    a bad actor achieves is mislabelling their own questions.
+    """
+    updated = attach_guest_identity(
+        user_id=body.user_id,
+        full_name=body.full_name,
+        phone=body.phone,
+        email=body.email,
+    )
+    return {"success": True, "updated": updated}
 
 
 @router.post("/questions/{question_id}/feedback")

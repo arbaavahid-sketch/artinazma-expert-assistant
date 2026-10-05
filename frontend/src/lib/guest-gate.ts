@@ -8,9 +8,10 @@
  */
 const COUNT_KEY = "artin_guest_questions";
 const CAPTURED_KEY = "artin_guest_captured";
+const NAME_KEY = "artin_guest_name";
 
 /** Questions a guest may ask before the contact card blocks the composer. */
-export const GUEST_FREE_QUESTIONS = 5;
+export const GUEST_FREE_QUESTIONS = 2;
 
 function read(key: string): string | null {
   try {
@@ -47,4 +48,16 @@ export function isGuestCaptured(): boolean {
 
 export function markGuestCaptured(): void {
   write(CAPTURED_KEY, "1");
+}
+
+/**
+ * The name a guest gave on the contact card, sent with later questions so the
+ * admin panel shows who asked instead of an opaque "user_muu40lv".
+ */
+export function guestName(): string {
+  return read(NAME_KEY) || "";
+}
+
+export function setGuestName(name: string): void {
+  if (name.trim()) write(NAME_KEY, name.trim());
 }

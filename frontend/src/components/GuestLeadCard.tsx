@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { apiUrl } from "@/lib/api";
+import { getOrCreateUserId } from "@/lib/user";
 
 /**
  * Shown inline in the chat when a guest asks something commercial — a price, a
@@ -26,7 +27,7 @@ interface Props {
    */
   reason?: "commercial" | "quota";
   freeQuestions?: number;
-  onDone?: () => void;
+  onDone?: (fullName: string, phone: string) => void;
 }
 
 export default function GuestLeadCard({
@@ -73,8 +74,26 @@ export default function GuestLeadCard({
 
       if (!res.ok) throw new Error(String(res.status));
 
+      // Name the questions this visitor already asked. Until now they sat in
+      // the admin panel under an opaque id like "user_muu40lv", which told
+      // whoever followed the lead up nothing. Best-effort: the lead itself is
+      // already saved, so a failure here must not look like a failed submit.
+      try {
+        await fetch(apiUrl("/questions/attach-identity"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: getOrCreateUserId(),
+            full_name: fullName.trim(),
+            phone: phone.trim(),
+          }),
+        });
+      } catch {
+        // Nothing to show the visitor — their details are stored either way.
+      }
+
       setSent(true);
-      onDone?.();
+      onDone?.(fullName.trim(), phone.trim());
     } catch {
       setError(
         isEn

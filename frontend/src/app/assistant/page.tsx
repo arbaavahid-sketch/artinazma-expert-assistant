@@ -9,9 +9,11 @@ import { getSavedCustomer } from "@/lib/customer";
 import {
   GUEST_FREE_QUESTIONS,
   bumpGuestQuestionCount,
+  guestName,
   guestQuestionCount,
   isGuestCaptured,
   markGuestCaptured,
+  setGuestName,
 } from "@/lib/guest-gate";
 import {
   Plus,
@@ -590,6 +592,8 @@ ${cleanAnswer}`,
       response_mode: responseMode,
       user_id: activeCustomer ? `customer_${activeCustomer.id}` : userId,
       customer_id: activeCustomer ? activeCustomer.id : undefined,
+      // Guests who left a name on the contact card stay identified from here on.
+      guest_name: activeCustomer ? undefined : guestName() || undefined,
       history: previousMessages.map((item) => {
         let content = item.content;
         if (item.attachment) {
@@ -1340,8 +1344,9 @@ ${cleanAnswer}`,
                     isEn={isEn}
                     reason="quota"
                     freeQuestions={GUEST_FREE_QUESTIONS}
-                    onDone={() => {
+                    onDone={(name) => {
                       markGuestCaptured();
+                      setGuestName(name);
                       setGuestCaptured(true);
                     }}
                   />
@@ -1415,10 +1420,11 @@ ${cleanAnswer}`,
                   isEn={isEn}
                   reason={guestOutOfQuestions ? "quota" : "commercial"}
                   freeQuestions={GUEST_FREE_QUESTIONS}
-                  onDone={() => {
+                  onDone={(name) => {
                     setLeadCapturedAt(messages.length);
                     // Remember across reloads, so the gate is asked once only.
                     markGuestCaptured();
+                    setGuestName(name);
                     setGuestCaptured(true);
                   }}
                 />
