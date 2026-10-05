@@ -579,7 +579,7 @@ class TestCustomerRequest:
         assert data["summary"]["overdue_follow_ups"] >= 1
         assert data["next_action"]["tone"] == "urgent"
 
-    def test_customer_can_view_own_request_history(self, app_client):
+    def test_customer_can_view_own_request_history(self, app_client, admin_headers):
         import random
 
         email = f"request-history-{random.randint(10000, 99999)}@example.com"
@@ -594,7 +594,7 @@ class TestCustomerRequest:
         customer_id = data["customer"]["id"]
         approve_res = app_client.post(
             f"/admin/customers/{customer_id}/approve",
-            headers={"X-Admin-Key": "test-admin-key-12345"},
+            headers=admin_headers,
         )
         assert approve_res.status_code == 200
         login_res = app_client.post("/customers/login", json={
@@ -651,7 +651,7 @@ class TestCustomerRequest:
         assert len(updated_detail["updates"]) >= 1
         assert updated_detail["updates"][-1]["file_name"] == "sample.txt"
 
-        admin_list_res = app_client.get("/customer-requests?limit=20", headers={"X-Admin-Key": "test-admin-key-12345"})
+        admin_list_res = app_client.get("/customer-requests?limit=20", headers=admin_headers)
         admin_request = next(item for item in admin_list_res.json()["requests"] if item["id"] == request_id)
         assert admin_request["updates"][-1]["message"] == "Additional sample details are attached."
 
