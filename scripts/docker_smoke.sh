@@ -41,23 +41,28 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Asks compose for the container, rather than guessing its name: only some
+# services set container_name, so backend and frontend get compose's own
+# "<project>-<service>-1" and a hardcoded "artin_backend" never matches.
 wait_for_health() {
-  local container="$1"
-  local label="$2"
-  local attempts="${3:-60}"
+  local service="$1"
+  local attempts="${2:-60}"
 
   for _ in $(seq 1 "$attempts"); do
-    status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)"
-    if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
-      echo "$label is $status"
-      return 0
+    container="$(docker compose ps -q "$service" 2>/dev/null | head -n 1)"
+    if [ -n "$container" ]; then
+      status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)"
+      if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
+        echo "$service is $status"
+        return 0
+      fi
     fi
     sleep 3
   done
 
-  echo "$label did not become healthy in time." >&2
+  echo "$service did not become healthy in time." >&2
   docker compose ps
-  docker compose logs --tail=120 "$label" || true
+  docker compose logs --tail=120 "$service" || true
   return 1
 }
 
@@ -70,11 +75,11 @@ docker compose build backend frontend
 echo "Starting core services..."
 docker compose up -d postgres redis qdrant backend frontend
 
-wait_for_health artin_postgres postgres
-wait_for_health artin_redis redis
-wait_for_health artin_qdrant qdrant
-wait_for_health artin_backend backend
-wait_for_health artin_frontend frontend
+wait_for_health postgres
+wait_for_health redis
+wait_for_health qdrant
+wait_for_health backend
+wait_for_health frontend
 
 echo "Checking backend health endpoint..."
 docker compose exec -T backend curl -fsS http://localhost:8000/health >/dev/null
