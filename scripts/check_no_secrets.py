@@ -32,7 +32,11 @@ SECRET_CONTENT_RE = re.compile(
     r'"type"\s*:\s*"service_account"|'
     r'"private_key"\s*:|'
     r"OPENAI_API_KEY\s*=\s*sk-(?!your-|test-|docker-smoke-placeholder\b)[A-Za-z0-9_-]+|"
-    r"ADMIN_API_KEY\s*=\s*(?!process\.env\b|os\.environ\b|change-me|test-|your-|example|docker-smoke-|<)[^\s#]+"
+    # A placeholder is not a secret. "${VAR}" and "$VAR" cover the shell and
+    # docker-compose forms — docker-compose.yml passes the key through as
+    # ADMIN_API_KEY=${ADMIN_API_KEY:?...}, which this used to report as a leak
+    # and so failed CI on every commit.
+    r"ADMIN_API_KEY\s*=\s*(?!process\.env\b|os\.environ\b|\$\{|\$[A-Za-z_]|change-me|test-|your-|example|docker-smoke-|<)[^\s#]+"
     r")",
     re.IGNORECASE,
 )

@@ -12,3 +12,16 @@
 #
 # Example:
 #   GHSA-xxxx-xxxx-xxxx   # accepted 2026-06-09: transitive, no fix, not exploitable here
+
+# ── accepted 2026-10-05 ───────────────────────────────────────────────────
+# All five below arrive through eslint-config-next, which only ever runs
+# during `npm run lint` — it is not imported by the app and ships nothing to
+# a browser. npm's proposed fix is a DOWNGRADE to eslint-config-next@14.2.35,
+# three majors behind the Next 16 this project builds on; taking it would
+# break linting without closing any path an attacker could reach.
+# Revisit when eslint-config-next publishes a patched release on the 16 line.
+eslint-config-next      # dev-only lint tooling; "fix" is a breaking downgrade
+@next/eslint-plugin-next  # same tree as eslint-config-next
+braces                  # via eslint-config-next; ReDoS in lint-time glob parsing
+micromatch              # via eslint-config-next; same lint-time path
+fast-glob               # via eslint-config-next; same lint-time path
