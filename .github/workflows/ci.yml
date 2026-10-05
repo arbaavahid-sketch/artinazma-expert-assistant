@@ -155,3 +155,10 @@ jobs:
           POSTGRES_PASSWORD: artinazma_ci_smoke_password
           DOMAIN: localhost
           CERTBOT_EMAIL: admin@example.com
+          # docker-compose.yml demands these before it will even validate.
+          # The smoke test only configures, builds and boots, so throwaway
+          # values are enough — nothing here reaches a real deployment.
+          ADMIN_API_KEY: ci-smoke-admin-key
+          ADMIN_PASSWORD: ci-smoke-admin-password
+          ADMIN_SESSION_TOKEN: ci-smoke-admin-session-token-0123456789abcdef
+          CUSTOMER_SESSION_SECRET: ci-smoke-customer-session-secret-0123456789abcdef
