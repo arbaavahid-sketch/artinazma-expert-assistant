@@ -82,7 +82,7 @@ wait_for_health backend
 wait_for_health frontend
 
 echo "Checking backend health endpoint..."
-docker compose exec -T backend curl -fsS http://localhost:8000/health >/dev/null
+docker compose exec -T backend python -c "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=10).status == 200 else 1)"
 
 echo "Checking frontend HTTP response..."
 docker compose exec -T frontend node -e "fetch('http://localhost:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
