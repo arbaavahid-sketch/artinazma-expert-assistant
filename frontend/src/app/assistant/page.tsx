@@ -6,15 +6,7 @@ import dynamic from "next/dynamic";
 import { apiUrl, backendFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import { getSavedCustomer } from "@/lib/customer";
-import {
-  GUEST_FREE_QUESTIONS,
-  bumpGuestQuestionCount,
-  guestName,
-  guestQuestionCount,
-  isGuestCaptured,
-  markGuestCaptured,
-  setGuestName,
-} from "@/lib/guest-gate";
+import { GUEST_FREE_QUESTIONS } from "@/lib/guest-gate";
 import {
   Plus,
   Download,
@@ -32,7 +24,7 @@ import {
   getImageTypeLabel,
 } from "@/lib/chat-helpers";
 const MessageBubble = dynamic(() => import("@/components/MessageBubble"), { ssr: false });
-const GuestLeadCard = dynamic(() => import("@/components/GuestLeadCard"), { ssr: false });
+import GuestRegistrationCard from "@/components/GuestRegistrationCard";
 const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: false });
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTTS } from "@/hooks/useTTS";
@@ -140,13 +132,8 @@ function AssistantPageInner() {
   const [chatImageType, setChatImageType] = useState("general");
   const [chatImageNote, setChatImageNote] = useState("");
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
-  // Guest lead capture: asked once, after the visitor's first commercial
-  // question. Holds the message count at the moment it was submitted, so the
-  // card can stay on screen to show its thank-you and then retire for good.
-  const [leadCapturedAt, setLeadCapturedAt] = useState<number | null>(null);
-  // Free-question allowance for a visitor without an account.
+  const [accessCheckFailed, setAccessCheckFailed] = useState(false);
   const [guestUsed, setGuestUsed] = useState(0);
-  const [guestCaptured, setGuestCaptured] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const [rateLimitTotal, setRateLimitTotal] = useState(60);
@@ -394,56 +381,32 @@ ${cleanAnswer}`,
   }
 
   useEffect(() => {
-    const savedCustomer = getSavedCustomer();
-
-    // A visitor without an account is allowed in — they chat as a guest. Their
-    // questions still reach the backend (as an anonymous user_id), and the
-    // commercial gate below is what asks for contact details.
-    if (savedCustomer) {
-      setCustomer(savedCustomer);
-    } else {
-      // Restore the guest's allowance from a previous visit.
-      setGuestUsed(guestQuestionCount());
-      setGuestCaptured(isGuestCaptured());
-    }
-    setCheckingCustomerLogin(false);
-
-    // Saved sessions belong to an account; a guest has none to restore.
-    if (sessionIdParam && savedCustomer) {
-      const sessionId = Number(sessionIdParam);
-
-      if (!Number.isNaN(sessionId)) {
-        loadSavedChatSession(savedCustomer.id, sessionId);
+    let cancelled = false;
+    async function checkAccess() {
+      try {
+        const res = await backendFetch(apiUrl("/chat/access"), { cache: "no-store" });
+        if (!res.ok) throw new Error("Access check failed");
+        const access = await res.json();
+        if (cancelled) return;
+        const savedCustomer = getSavedCustomer();
+        const verifiedCustomer = savedCustomer?.id === access.customer_id ? savedCustomer : null;
+        setCustomer(verifiedCustomer);
+        setGuestUsed(access.used);
+        if (sessionIdParam && verifiedCustomer) {
+          const sessionId = Number(sessionIdParam);
+          if (!Number.isNaN(sessionId)) loadSavedChatSession(verifiedCustomer.id, sessionId);
+        }
+      } catch {
+        if (!cancelled) setAccessCheckFailed(true);
+      } finally {
+        if (!cancelled) setCheckingCustomerLogin(false);
       }
     }
-  }, [loadSavedChatSession, router, sessionIdParam]);
+    void checkAccess();
+    return () => { cancelled = true; };
+  }, [loadSavedChatSession, sessionIdParam]);
 
-  // ── دروازه تجاری برای کاربر مهمان ──────────────────────────────────────────
-  // Artin never quotes a price; for a signed-in customer that ends in "contact
-  // our specialists", which for a guest is a dead end. When the backend
-  // classifies the question as commercial, ask for a name and phone instead.
-  const COMMERCIAL_INTENTS = ["commercial_request", "sales", "price_inquiry"];
-  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
-  const lastUserQuestion =
-    [...messages].reverse().find((m) => m.role === "user")?.content || "";
-  const askedSomethingCommercial =
-    !!lastAssistant?.question_intent &&
-    COMMERCIAL_INTENTS.includes(lastAssistant.question_intent);
-
-  // The second trigger: the free questions are used up. Unlike the commercial
-  // card this one also blocks the composer, so it stays until it is filled in.
-  const guestOutOfQuestions =
-    !customer && !guestCaptured && guestUsed >= GUEST_FREE_QUESTIONS;
-
-  const showLeadCard =
-    !customer &&
-    !guestCaptured &&
-    (guestOutOfQuestions ||
-      (!loading &&
-        askedSomethingCommercial &&
-        // Before submitting: show it. Right after: keep it up for the
-        // thank-you. Once the conversation moves on, it retires for good.
-        (leadCapturedAt === null || leadCapturedAt === messages.length)));
+  const guestOutOfQuestions = !customer && guestUsed >= GUEST_FREE_QUESTIONS;
 
   // Rate limit countdown timer
   useEffect(() => {
@@ -528,16 +491,7 @@ ${cleanAnswer}`,
 
     if (!finalMessage.trim()) return;
 
-    // A guest who has used up the free questions is stopped here until the
-    // contact card below is filled in. Counted only for guests — a signed-in
-    // customer never touches this.
-    if (!customer && !guestCaptured) {
-      if (guestQuestionCount() >= GUEST_FREE_QUESTIONS) {
-        setGuestUsed(GUEST_FREE_QUESTIONS);
-        return;
-      }
-      setGuestUsed(bumpGuestQuestionCount());
-    }
+    if (!customer && guestUsed >= GUEST_FREE_QUESTIONS) return;
 
     const previousMessages = historyOverride || messages;
     const userId = getOrCreateUserId();
@@ -584,7 +538,7 @@ ${cleanAnswer}`,
       return;
     }
 
-    const activeCustomer = customer || getSavedCustomer();
+    const activeCustomer = customer;
 
     const bodyPayload = {
       message: finalMessage,
@@ -592,8 +546,6 @@ ${cleanAnswer}`,
       response_mode: responseMode,
       user_id: activeCustomer ? `customer_${activeCustomer.id}` : userId,
       customer_id: activeCustomer ? activeCustomer.id : undefined,
-      // Guests who left a name on the contact card stay identified from here on.
-      guest_name: activeCustomer ? undefined : guestName() || undefined,
       history: previousMessages.map((item) => {
         let content = item.content;
         if (item.attachment) {
@@ -614,6 +566,12 @@ ${cleanAnswer}`,
         signal: abortControllerRef.current?.signal,
       });
 
+      if (res.status === 401 || res.status === 403) {
+        setCustomer(null);
+        setGuestUsed(GUEST_FREE_QUESTIONS);
+        setMessages(previousMessages);
+        return;
+      }
       if (res.status === 429) {
         const retryAfter = parseInt(res.headers.get("Retry-After") || "60", 10);
         const totalSecs = isNaN(retryAfter) ? 60 : retryAfter;
@@ -634,6 +592,7 @@ ${cleanAnswer}`,
         throw new Error("خطا در دریافت پاسخ از سرور.");
       }
 
+      if (!customer) setGuestUsed((used) => used + 1);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -715,8 +674,8 @@ ${cleanAnswer}`,
 
       // پیشنهاد سوالات مرتبط (non-blocking)
       const finalCleanAnswer = cleanAssistantOutput(accumulatedText);
-      if (finalCleanAnswer.length > 100) {
-        fetch(apiUrl("/chat/suggest-questions"), {
+      if (customer && finalCleanAnswer.length > 100) {
+        backendFetch(apiUrl("/chat/suggest-questions"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -796,6 +755,7 @@ ${cleanAnswer}`,
   }
 
   async function uploadAndAnalyzeFile(file: File) {
+    if (!customer) { router.push("/customer-register"); return; }
     setShowTools(false);
 
     const userMessage: ChatMessage = {
@@ -894,6 +854,7 @@ ${cleanAnswer}`,
   }
 
   async function uploadAndAnalyzeImage(file: File, noteOverride?: string, typeOverride?: string) {
+    if (!customer) { router.push("/customer-register"); return; }
     setShowTools(false);
 
     const note = noteOverride !== undefined ? noteOverride : chatImageNote;
@@ -997,6 +958,7 @@ ${cleanAnswer}`,
   }
 
   function handleUploadChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!customer) { router.push("/customer-register"); return; }
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -1049,6 +1011,7 @@ ${cleanAnswer}`,
   }
 
   function handleToolClick(action: ToolAction) {
+    if (!customer) { router.push("/customer-register"); return; }
     setShowTools(false);
     if (action === "upload") {
       uploadInputRef.current?.click();
@@ -1105,12 +1068,22 @@ ${cleanAnswer}`,
       </section>
     );
   }
+  if (accessCheckFailed) {
+    return (
+      <section className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+        <p>{isEn ? "Could not check your access. Please try again." : "بررسی دسترسی انجام نشد. لطفاً دوباره تلاش کنید."}</p>
+        <button onClick={() => window.location.reload()} className="rounded-xl bg-blue-600 px-4 py-2 text-white">
+          {isEn ? "Try again" : "تلاش دوباره"}
+        </button>
+      </section>
+    );
+  }
   return (
     <section
       className={`relative flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff] transition-colors ${isDragOver ? "ring-2 ring-inset ring-blue-400 bg-blue-50/30" : ""}`}
-      onDragOver={handleDragOver}
+      onDragOver={(e) => { e.preventDefault(); if (customer) handleDragOver(e); }}
       onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDrop={(e) => { e.preventDefault(); if (customer) handleDrop(e); }}
     >
       <DropOverlay show={isDragOver} isEn={isEn} />
       <input
@@ -1195,6 +1168,7 @@ ${cleanAnswer}`,
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             {/* Domain + mode — visible on desktop, hidden on mobile */}
             <select
+              disabled={!customer}
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
               className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
@@ -1209,6 +1183,7 @@ ${cleanAnswer}`,
               <option value="analysis">{domainLabels.analysis}</option>
             </select>
             <select
+              disabled={!customer}
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
               className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
@@ -1220,6 +1195,7 @@ ${cleanAnswer}`,
             </select>
             {/* Mobile settings toggle — only on mobile */}
             <button
+              disabled={!customer}
               onClick={() => setShowMobileSettings((v) => !v)}
               title={isEn ? "Settings" : "تنظیمات"}
               className={`flex h-8 w-8 items-center justify-center rounded-xl border transition md:hidden ${
@@ -1230,7 +1206,7 @@ ${cleanAnswer}`,
             >
               <SlidersHorizontal size={15} />
             </button>
-            {messages.length > 0 && (
+            {customer && messages.length > 0 && (
               <div className="relative">
                 <button
                   onClick={() => setShowExportMenu((v) => !v)}
@@ -1289,6 +1265,7 @@ ${cleanAnswer}`,
           <div className="flex flex-wrap items-center gap-2">
             <label className="text-xs font-bold text-slate-500">{isEn ? "Domain:" : "حوزه:"}</label>
             <select
+              disabled={!customer}
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
               className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -1304,6 +1281,7 @@ ${cleanAnswer}`,
             </select>
             <label className="text-xs font-bold text-slate-500">{isEn ? "Answer:" : "پاسخ:"}</label>
             <select
+              disabled={!customer}
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
               className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
@@ -1339,20 +1317,11 @@ ${cleanAnswer}`,
                   composer that would swallow whatever they type. */}
               {guestOutOfQuestions ? (
                 <div className="w-full max-w-xl">
-                  <GuestLeadCard
-                    question=""
-                    isEn={isEn}
-                    reason="quota"
-                    freeQuestions={GUEST_FREE_QUESTIONS}
-                    onDone={(name) => {
-                      markGuestCaptured();
-                      setGuestName(name);
-                      setGuestCaptured(true);
-                    }}
-                  />
+                  <GuestRegistrationCard isEn={isEn} />
                 </div>
               ) : (
               <HeroComposer
+                toolsEnabled={!!customer}
                 showTools={showTools}
                 onToggleTools={() => setShowTools((prev) => !prev)}
                 onToolSelect={handleToolClick}
@@ -1360,7 +1329,7 @@ ${cleanAnswer}`,
                 message={message}
                 onMessageChange={handleComposerMessageChange}
                 onKeyDown={handleKeyDown}
-                isVoiceSupported={isVoiceSupported}
+                isVoiceSupported={!!customer && isVoiceSupported}
                 onToggleVoice={toggleVoice}
                 voiceState={voiceState}
                 loading={loading}
@@ -1370,11 +1339,11 @@ ${cleanAnswer}`,
               />
               )}
 
-              <AssistantQuickActions
+              {customer && <AssistantQuickActions
                 isEn={isEn}
                 onUpload={() => handleToolClick("upload")}
                 onRequest={() => handleToolClick("customer-request")}
-              />
+              />}
 
               {/* سوال‌های پیشنهادی آماده — وقتی سهمیه تمام شده بی‌اثرند */}
               {!guestOutOfQuestions && (
@@ -1391,6 +1360,7 @@ ${cleanAnswer}`,
             >
               {messages.map((item, index) => (
                 <MessageBubble
+                  toolsEnabled={!!customer}
                   key={index}
                   item={item}
                   index={index}
@@ -1414,20 +1384,8 @@ ${cleanAnswer}`,
               ))}
 
               {/* دروازه مهمان: یا سؤال تجاری پرسیده، یا سهمیه رایگانش تمام شده */}
-              {showLeadCard && (
-                <GuestLeadCard
-                  question={lastUserQuestion}
-                  isEn={isEn}
-                  reason={guestOutOfQuestions ? "quota" : "commercial"}
-                  freeQuestions={GUEST_FREE_QUESTIONS}
-                  onDone={(name) => {
-                    setLeadCapturedAt(messages.length);
-                    // Remember across reloads, so the gate is asked once only.
-                    markGuestCaptured();
-                    setGuestName(name);
-                    setGuestCaptured(true);
-                  }}
-                />
+              {guestOutOfQuestions && (
+                <GuestRegistrationCard isEn={isEn} />
               )}
 
               {/* راهنمای نصب صدای TTS */}
@@ -1515,6 +1473,7 @@ ${cleanAnswer}`,
           the way forward, and it comes back the moment they fill it in. */}
       {messages.length > 0 && !guestOutOfQuestions && (
         <ChatComposer
+          toolsEnabled={!!customer}
           isEn={isEn}
           showTools={showTools}
           onToggleTools={() => setShowTools((prev) => !prev)}
@@ -1523,13 +1482,13 @@ ${cleanAnswer}`,
           stagedImage={stagedImage}
           stagedImageUrl={stagedImageUrl}
           onClearStagedImage={clearStagedImage}
-          onStageImage={stageImageFile}
+          onStageImage={(file) => { if (customer) stageImageFile(file); }}
           chatInputRef={chatInputRef}
           message={message}
           onMessageChange={handleComposerMessageChange}
           onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          isVoiceSupported={isVoiceSupported}
+          onPaste={(e) => { if (customer) handlePaste(e); else if (e.clipboardData.files.length) e.preventDefault(); }}
+          isVoiceSupported={!!customer && isVoiceSupported}
           onToggleVoice={toggleVoice}
           voiceState={voiceState}
           loading={loading}

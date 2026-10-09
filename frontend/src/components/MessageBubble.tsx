@@ -209,6 +209,7 @@ const FEEDBACK_REASONS = {
 };
 
 interface MessageBubbleProps {
+  toolsEnabled?: boolean;
   item: ChatMessage;
   index: number;
   loading: boolean;
@@ -233,6 +234,7 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({
+  toolsEnabled = true,
   item,
   index,
   loading,
@@ -606,7 +608,7 @@ function MessageBubble({
             />
           )}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
-          {!isUser && !loading && onQuote && showQuoteCta(item) && (
+          {toolsEnabled && !isUser && !loading && onQuote && showQuoteCta(item) && (
             <button
               onClick={onQuote}
               className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-gradient-to-l from-blue-50 to-emerald-50 px-4 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:border-blue-300 hover:from-blue-100 hover:to-emerald-100 sm:w-auto"
@@ -615,7 +617,7 @@ function MessageBubble({
               {isEn ? "Request a price quote for this" : "استعلام قیمت / ثبت درخواست برای این مورد"}
             </button>
           )}
-          {!isUser && !loading && (
+          {toolsEnabled && !isUser && !loading && (
             <div
               ref={actionBarRef}
               className="mt-1 flex flex-wrap items-center gap-0.5 opacity-100 transition-opacity sm:mt-2 sm:gap-1"

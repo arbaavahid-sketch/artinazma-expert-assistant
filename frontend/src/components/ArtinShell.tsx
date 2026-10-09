@@ -439,7 +439,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
               </div>
             )}
 
-            {navItems.map((item) => {
+            {navItems.filter((item) => customer || isAdmin || item.href === "/assistant").map((item) => {
               const isActive =
                 item.href === "/"
                   ? pathname === "/"

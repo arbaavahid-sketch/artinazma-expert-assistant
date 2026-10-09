@@ -22,6 +22,7 @@ import ComposerTextarea from "@/app/assistant/ComposerTextarea";
  * assistant page and passed in as props, keeping this purely about layout.
  */
 type ChatComposerProps = {
+  toolsEnabled?: boolean;
   isEn: boolean;
   showTools: boolean;
   onToggleTools: () => void;
@@ -45,6 +46,7 @@ type ChatComposerProps = {
 };
 
 export default function ChatComposer({
+  toolsEnabled = true,
   isEn,
   showTools,
   onToggleTools,
@@ -70,7 +72,7 @@ export default function ChatComposer({
     <footer className="shrink-0 border-t border-slate-100 bg-white/95 pb-1.5 pt-2 backdrop-blur sm:pb-2 sm:pt-3">
       <div className="mx-auto w-full max-w-3xl px-3 sm:px-4">
         <div className="relative">
-          {showTools && (
+          {toolsEnabled && showTools && (
             <div className={`absolute bottom-full z-50 mb-2 ${isEn ? "left-0 right-auto" : "left-auto right-0"}`}>
               <ToolMenu onSelect={onToolSelect} />
             </div>
@@ -86,6 +88,7 @@ export default function ChatComposer({
             />
             <div className="flex items-end gap-1.5 p-1.5 sm:gap-2 sm:p-2.5">
               <button
+                disabled={!toolsEnabled}
                 onClick={onToggleTools}
                 aria-label={isEn ? "Tools and attachments" : "ابزارها و پیوست‌ها"}
                 aria-haspopup="menu"
@@ -97,6 +100,7 @@ export default function ChatComposer({
 
               {/* Quick image button */}
               <button
+                disabled={!toolsEnabled}
                 onClick={() => {
                   const inp = document.createElement("input");
                   inp.type = "file";
@@ -129,7 +133,7 @@ export default function ChatComposer({
                 onPaste={onPaste}
               />
 
-              {isVoiceSupported && (
+              {toolsEnabled && isVoiceSupported && (
                 <button
                   onClick={onToggleVoice}
                   title={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : (isEn ? "Voice input" : "ورودی صوتی")}

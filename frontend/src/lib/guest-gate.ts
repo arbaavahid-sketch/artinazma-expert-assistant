@@ -1,17 +1,10 @@
-/**
- * How much a visitor without an account may ask before we ask who they are.
- *
- * The count lives in the browser, so clearing site data or opening a private
- * window resets it. That is accepted: this is a nudge toward leaving a phone
- * number, not an abuse control. Counting server-side would have to key on IP,
- * which punishes a whole lab sharing one connection.
- */
+/** UI helpers only. The server cookie and database enforce the guest allowance. */
 const COUNT_KEY = "artin_guest_questions";
 const CAPTURED_KEY = "artin_guest_captured";
 const NAME_KEY = "artin_guest_name";
 
 /** Questions a guest may ask before the contact card blocks the composer. */
-export const GUEST_FREE_QUESTIONS = 2;
+export const GUEST_FREE_QUESTIONS = 4;
 
 function read(key: string): string | null {
   try {

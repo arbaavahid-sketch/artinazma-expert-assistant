@@ -112,7 +112,8 @@ REQUEST_STATUS_LABELS = {
 # -- Memory endpoints ---------------------------------------------------------
 
 @router.post("/memory/search")
-def memory_search(request: MemorySearchRequest):
+def memory_search(request: MemorySearchRequest, current_user: dict = Depends(get_current_customer)):
+    request.user_id = f"customer_{current_user['customer_id']}"
     return {
         "memories": search_user_memories(
             user_id=request.user_id, query=request.query, limit=request.limit
@@ -121,14 +122,16 @@ def memory_search(request: MemorySearchRequest):
 
 
 @router.get("/memory/stats/{user_id}")
-def memory_stats(user_id: str):
+def memory_stats(user_id: str, current_user: dict = Depends(get_current_customer)):
+    if user_id != f"customer_{current_user['customer_id']}":
+        raise HTTPException(403, detail="Access denied.")
     return get_user_memory_stats(user_id)
 
 
 # -- Customer Requests --------------------------------------------------------
 
 @router.post("/customer-requests", tags=["Customers"], summary="Submit inquiry/request")
-def create_customer_request(request: CustomerRequestCreate):
+def create_customer_request(request: CustomerRequestCreate, _=Depends(get_current_customer)):
     request_id = save_customer_request(
         full_name=request.full_name,
         company=request.company,

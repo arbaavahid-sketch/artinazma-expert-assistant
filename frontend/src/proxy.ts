@@ -3,19 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/") ||
+    ["/knowledge", "/questions"].some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
-  // /assistant is deliberately open. A visitor arriving from the website can
-  // ask technical questions without an account; the gate moved to the moment
-  // they want something commercial (price, datasheet, stock), where the chat
-  // asks for a name and phone instead. Everything that needs a real account —
-  // the dashboard, saved requests, file analysis — stays protected.
+  // Guests may use /assistant for four text questions. Backend authentication
+  // and a persistent allowance enforce access independently of this UI redirect.
   const isCustomerProtectedRoute =
     pathname === "/customer-dashboard" ||
     pathname.startsWith("/customer-dashboard/") ||
     pathname === "/customer-request" ||
     pathname.startsWith("/customer-request/") ||
     pathname === "/analyze" ||
+    pathname === "/memory" ||
+    pathname.startsWith("/memory/") ||
+    pathname === "/products" ||
+    pathname.startsWith("/products/") ||
     pathname.startsWith("/analyze/");
 
   if (isAdminRoute) {
@@ -64,5 +66,9 @@ export const config = {
     "/customer-dashboard/:path*",
     "/customer-request/:path*",
     "/analyze/:path*",
+    "/memory/:path*",
+    "/knowledge/:path*",
+    "/questions/:path*",
+    "/products/:path*",
   ],
 };

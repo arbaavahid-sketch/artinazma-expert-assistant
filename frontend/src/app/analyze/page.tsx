@@ -308,6 +308,7 @@ export default function AnalyzePage() {
       const data = await new Promise<Record<string, unknown>>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", backendRequestUrl(apiUrl(endpoint)));
+        xhr.withCredentials = true;
         const csrfToken = getCsrfToken();
         if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken);
         xhr.upload.onprogress = (e) => {
@@ -317,6 +318,11 @@ export default function AnalyzePage() {
         };
         xhr.onload = () => {
           setUploadPercent(100);
+          if (xhr.status === 401 || xhr.status === 403) {
+            window.location.href = "/customer-login?next=/analyze";
+            reject(new Error("Please sign in to analyze files."));
+            return;
+          }
           try { resolve(JSON.parse(xhr.responseText)); }
           catch { reject(new Error("Invalid JSON")); }
         };

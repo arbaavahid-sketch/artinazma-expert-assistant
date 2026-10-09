@@ -13,6 +13,7 @@ import ComposerTextarea from "@/app/assistant/ComposerTextarea";
  * behaviour are owned by the parent and passed in as props.
  */
 type HeroComposerProps = {
+  toolsEnabled?: boolean;
   showTools: boolean;
   onToggleTools: () => void;
   onToolSelect: (action: ToolAction) => void;
@@ -31,6 +32,7 @@ type HeroComposerProps = {
 };
 
 export default function HeroComposer({
+  toolsEnabled = true,
   showTools,
   onToggleTools,
   onToolSelect,
@@ -51,7 +53,7 @@ export default function HeroComposer({
 
   return (
     <div className="relative mt-5 w-full max-w-3xl px-1 md:mt-8 md:px-0">
-      {showTools && (
+      {toolsEnabled && showTools && (
         <div className={`absolute top-full z-50 mt-2 ${isEn ? "left-0" : "right-0"}`}>
           <ToolMenu onSelect={onToolSelect} />
         </div>
@@ -60,6 +62,7 @@ export default function HeroComposer({
       <div className="chat-composer-box">
         <div className="flex items-end gap-1.5 p-1.5 sm:gap-3 sm:p-3">
           <button
+            disabled={!toolsEnabled}
             onClick={onToggleTools}
             aria-label={isEn ? "Tools and attachments" : "ابزارها و پیوست‌ها"}
             aria-haspopup="menu"
@@ -78,7 +81,7 @@ export default function HeroComposer({
             onKeyDown={onKeyDown}
           />
 
-          {isVoiceSupported && (
+          {toolsEnabled && isVoiceSupported && (
             <button
               onClick={onToggleVoice}
               title={voiceState === "listening" ? (isEn ? "Stop recording" : "توقف ضبط") : t("assistant.voiceInput")}

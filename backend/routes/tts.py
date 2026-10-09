@@ -9,7 +9,8 @@ import io
 import re
 import logging
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
+from auth_service import get_current_customer
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -18,7 +19,7 @@ from utils.deps import limiter
 
 logger = logging.getLogger("artin.tts")
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_customer)])
 
 # Voices supported by gpt-4o-mini-tts
 _ALLOWED_VOICES = {"alloy", "ash", "ballad", "coral", "echo", "fable",

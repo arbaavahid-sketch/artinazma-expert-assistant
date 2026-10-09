@@ -4,7 +4,8 @@ import uuid
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException, Depends
+from auth_service import get_current_customer
 
 from utils.deps import limiter
 from utils.chat_utils import make_safe_filename, _MAX_UPLOAD_BYTES, _ALLOWED_FILE_EXTS, _ALLOWED_IMAGE_EXTS
@@ -18,7 +19,7 @@ from db_service import save_expert_question, save_user_memory
 
 logger = logging.getLogger("artin_scheduler")
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_customer)])
 
 
 def _unique_upload_name(safe_filename: str) -> str:
@@ -131,7 +132,10 @@ def analyze_file(
     user_note: str = Form(""),
     user_id: str = Form("anonymous"),
     customer_id: Optional[int] = Form(None),
+    current_customer: dict = Depends(get_current_customer),
 ):
+    customer_id = current_customer["customer_id"]
+    user_id = f"customer_{customer_id}"
     safe_filename = make_safe_filename(file.filename or "upload")
     ext = safe_filename.lower().rsplit(".", 1)[-1]
     if ext not in _ALLOWED_FILE_EXTS:
@@ -376,7 +380,10 @@ def analyze_image(
     user_note: str = Form(""),
     user_id: str = Form("anonymous"),
     customer_id: Optional[int] = Form(None),
+    current_customer: dict = Depends(get_current_customer),
 ):
+    customer_id = current_customer["customer_id"]
+    user_id = f"customer_{customer_id}"
     safe_filename = make_safe_filename(file.filename or "upload")
     ext = safe_filename.lower().rsplit(".", 1)[-1]
     if ext not in _ALLOWED_IMAGE_EXTS:

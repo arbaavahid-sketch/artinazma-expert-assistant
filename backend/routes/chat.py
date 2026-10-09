@@ -5,7 +5,9 @@ import time as _time
 from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response, Depends
+from auth_service import get_current_customer, get_optional_customer
+from guest_access import authorize_chat, guest_access
 from fastapi.responses import StreamingResponse
 
 from schemas.models import ChatRequest, SuggestQuestionsRequest
@@ -634,7 +636,7 @@ def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_
 
 @router.post("/chat", tags=["Chat"], summary="Send message and get AI response")
 @limiter.limit("20/minute")
-def chat(body: ChatRequest, request: Request):
+def chat(request: Request, body: ChatRequest = Depends(authorize_chat)):
     p = _build_chat_pipeline(body, client_ip=(request.client.host if request.client else ""))
 
     chat_requests_total.inc()
@@ -714,7 +716,7 @@ def chat(body: ChatRequest, request: Request):
 
 @router.post("/chat/stream", tags=["Chat"], summary="Streaming chat (SSE)")
 @limiter.limit("20/minute")
-def chat_stream(body: ChatRequest, request: Request):
+def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
     """همان pipeline چت اما با پاسخ streaming (SSE)."""
     p = _build_chat_pipeline(body, client_ip=(request.client.host if request.client else ""))
     detected_domain = p["detected_domain"]
@@ -876,7 +878,7 @@ def chat_stream(body: ChatRequest, request: Request):
 
 
 @router.post("/chat/suggest-questions")
-def suggest_questions(body: SuggestQuestionsRequest):
+def suggest_questions(body: SuggestQuestionsRequest, _=Depends(get_current_customer)):
     """سه سوال پیشنهادی مرتبط بر اساس سوال و پاسخ قبلی."""
     prompt = f"""بر اساس سوال و پاسخ زیر، دقیقاً ۳ سوال کوتاه و مرتبط فنی/تخصصی در حوزه آزمایشگاه، صنعت نفت، پتروشیمی، کاتالیست یا تجهیزات پیشنهاد بده.
 
@@ -904,3 +906,8 @@ def suggest_questions(body: SuggestQuestionsRequest):
         return {"questions": []}
     except Exception:
         return {"questions": []}
+
+
+@router.get("/chat/access")
+def chat_access(request: Request, response: Response, customer=Depends(get_optional_customer)):
+    return guest_access(request, response, customer)

@@ -82,6 +82,14 @@ async def websocket_chat(
 
     customer = await _authenticate_ws(ws, ticket, token)
     customer_id = str(customer.get("sub", customer.get("customer_id", ""))) if customer else None
+    if not customer_id:
+        await ws.close(code=1008, reason="Please log in.")
+        return
+    from db_service import get_customer_by_id
+    account = get_customer_by_id(int(customer_id))
+    if not account or account.get("is_blocked") or account.get("approval_status", "approved") != "approved":
+        await ws.close(code=1008, reason="Account is unavailable.")
+        return
     conn_id = f"ws_{id(ws)}"
 
     _active_connections[conn_id] = ws

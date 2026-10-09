@@ -127,7 +127,7 @@ def knowledge_stats():
 
 
 @router.post("/knowledge/search", tags=["Knowledge"], summary="Search knowledge base")
-def knowledge_search(request: KnowledgeSearchRequest):
+def knowledge_search(request: KnowledgeSearchRequest, _=Depends(require_admin)):
     query = request.message
     top_k = max(1, min(request.top_k or 10, 30))
 
@@ -368,7 +368,7 @@ def export_knowledge_csv(_=Depends(require_admin)):
 
 
 @router.post("/knowledge/index-artinazma-site")
-def index_artinazma_site(force: bool = False):
+def index_artinazma_site(force: bool = False, _=Depends(require_admin)):
     return rebuild_artinazma_index(force=force)
 
 

@@ -98,7 +98,7 @@ export async function backendFetch(url: string, options: RequestInit = {}): Prom
     }
   }
 
-  return fetch(toProxyUrl(url), { ...options, headers });
+  return fetch(toProxyUrl(url), { ...options, headers, credentials: "include" });
 }
 
 export function backendRequestUrl(url: string): string {

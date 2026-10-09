@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef, useCallback } from "react";
+import { apiUrl, backendFetch } from "@/lib/api";
 
 type VoiceState = "idle" | "listening" | "processing" | "unsupported";
 
@@ -61,8 +62,8 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
           const ext = mimeType.includes("ogg") ? "ogg" : "webm";
           const formData = new FormData();
           formData.append("file", blob, `recording.${ext}`);
-          const res = await fetch(
-            (process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000") + "/transcribe",
+          const res = await backendFetch(
+            apiUrl("/transcribe"),
             { method: "POST", body: formData }
           );
           if (res.ok) {
