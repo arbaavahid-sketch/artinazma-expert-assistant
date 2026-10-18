@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/") ||
     ["/knowledge", "/questions"].some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
-  // Guests may use /assistant for four text questions. Backend authentication
+  // Guests may use /assistant for two text questions. Backend authentication
   // and a persistent allowance enforce access independently of this UI redirect.
   const isCustomerProtectedRoute =
     pathname === "/customer-dashboard" ||

@@ -4,7 +4,7 @@ export default function GuestRegistrationCard({ isEn = false }: { isEn?: boolean
   return (
     <div className="mx-auto mt-4 w-full max-w-xl rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
       <p className="font-semibold text-slate-900">
-        {isEn ? "Your 4 free questions have been used." : "۴ سؤال رایگان شما استفاده شده است."}
+        {isEn ? "Your 2 free questions have been used." : "۲ سؤال رایگان شما استفاده شده است."}
       </p>
       <p className="mt-2 text-sm text-slate-600">
         {isEn ? "Register and sign in to continue chatting and use file and image analysis."

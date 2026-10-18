@@ -12,7 +12,7 @@ from auth_service import get_optional_customer, _cookie_secure
 from repositories.base import get_connection
 from schemas.models import ChatRequest
 
-GUEST_LIMIT = 4
+GUEST_LIMIT = 2
 COOKIE_NAME = "artin_guest"
 
 

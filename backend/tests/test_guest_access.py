@@ -57,21 +57,21 @@ def test_guest_tools_require_login(client, path, body):
     assert client.post(path, json=body).status_code == 401
 
 
-def test_four_questions_persist_and_ids_do_not_grant_access(client):
+def test_two_questions_persist_and_ids_do_not_grant_access(client):
     res = client.get("/chat/access")
     assert res.json()["used"] == 0
     assert "httponly" in res.headers["set-cookie"].lower()
-    for i in range(4):
+    for i in range(2):
         response = client.post("/probe", json={"message": "hello", "customer_id": 123,
             "user_id": f"customer_{i}", "context": "private analysis", "domain": "analysis"})
         assert response.status_code == 200
         assert response.json()["customer_id"] is None
         assert response.json()["user_id"].startswith("guest_")
         assert response.json()["context"] is None
-    assert client.get("/chat/access").json()["used"] == 4
+    assert client.get("/chat/access").json()["used"] == 2
     # Both actual chat routes must block before running their AI pipelines.
     for path in ("/chat", "/chat/stream", "/probe"):
-        res = client.post(path, json={"message": "fifth", "customer_id": 123, "guest_name": "Lead"})
+        res = client.post(path, json={"message": "third", "customer_id": 123, "guest_name": "Lead"})
         assert res.status_code == 403
         assert res.json()["detail"] == "registration_required"
 
@@ -87,8 +87,8 @@ def test_parallel_requests_cannot_exceed_quota(client):
     client.get("/chat/access")
     with ThreadPoolExecutor(max_workers=8) as pool:
         statuses = list(pool.map(lambda _: client.post("/probe", json={"message": "test"}).status_code, range(8)))
-    assert statuses.count(200) == 4
-    assert statuses.count(403) == 4
+    assert statuses.count(200) == 2
+    assert statuses.count(403) == 6
 
 
 def test_signed_in_customer_can_analyze_and_identity_is_server_owned(client, monkeypatch, tmp_path):

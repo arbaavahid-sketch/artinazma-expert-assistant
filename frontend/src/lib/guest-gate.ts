@@ -4,7 +4,7 @@ const CAPTURED_KEY = "artin_guest_captured";
 const NAME_KEY = "artin_guest_name";
 
 /** Questions a guest may ask before the contact card blocks the composer. */
-export const GUEST_FREE_QUESTIONS = 4;
+export const GUEST_FREE_QUESTIONS = 2;
 
 function read(key: string): string | null {
   try {

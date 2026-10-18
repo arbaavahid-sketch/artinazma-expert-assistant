@@ -1,6 +1,6 @@
 # Guest access
 
-- Anonymous visitors get four accepted text requests across `/chat` and `/chat/stream`.
+- Anonymous visitors get two accepted text requests across `/chat` and `/chat/stream`.
 - `/chat/access` initializes an opaque httpOnly visitor cookie and reports the stored count. The frontend calls it before enabling chat. Quota increments are atomic in the shared database, including simultaneous requests from multiple tabs.
 - Reloading, clearing localStorage, creating a new chat, providing contact details, or submitting a customer ID does not reset the allowance or authenticate a visitor.
 - Anonymous identity is per browser cookie, not a verified person. Deleting all cookies or switching browsers starts a new allowance. This does not unlock uploads or any account-only endpoint.
