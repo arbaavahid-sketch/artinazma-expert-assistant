@@ -291,6 +291,12 @@ def customer_register(body: CustomerRegisterRequest, request: Request):
     if not result.get("success"):
         return result
 
+    from guest_access import identity_for_token, COOKIE_NAME, _key
+    from db_service import attach_guest_identity
+    token = request.cookies.get(COOKIE_NAME, "")
+    identity = identity_for_token(token)
+    if identity:
+        attach_guest_identity(user_id=f"guest_{_key(token)}", full_name=body.full_name, phone=body.phone or identity["phone"], email=body.email)
     customer = get_customer_by_id(result["customer_id"])
     notify_new_customer(
         full_name=body.full_name,

@@ -499,6 +499,8 @@ def get_questions_for_export(
                 "answer": row["answer"] or "",
                 "detected_domain": row["detected_domain"],
                 "customer_name": metadata.get("customer_name") or "",
+                "customer_phone": metadata.get("customer_phone") or metadata.get("guest_phone") or "",
+                "user_id": metadata.get("user_id") or "",
                 "question_intent": metadata.get("question_intent") or "",
                 "expert_status": row["expert_status"] or "pending",
                 "expert_note": row["expert_note"] or "",
@@ -552,8 +554,6 @@ def attach_guest_identity(
             continue
         # Never overwrite a real signed-in customer's own details.
         if metadata.get("customer_id"):
-            continue
-        if metadata.get("customer_name") == full_name:
             continue
 
         metadata["customer_name"] = full_name

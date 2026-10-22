@@ -61,6 +61,11 @@ def test_two_questions_persist_and_ids_do_not_grant_access(client):
     res = client.get("/chat/access")
     assert res.json()["used"] == 0
     assert "httponly" in res.headers["set-cookie"].lower()
+    assert client.post("/probe", json={"message": "first"}).status_code == 200
+    assert client.post("/probe", json={"message": "second", "guest_name": "spoof"}).status_code == 403
+    from guest_access import _connection, _key
+    with _connection() as conn:
+        conn.execute("INSERT INTO guest_identities VALUES (?, ?, ?)", (_key(client.cookies.get(COOKIE_NAME)), "Test", "09123456789"))
     for i in range(2):
         response = client.post("/probe", json={"message": "hello", "customer_id": 123,
             "user_id": f"customer_{i}", "context": "private analysis", "domain": "analysis"})
@@ -68,12 +73,12 @@ def test_two_questions_persist_and_ids_do_not_grant_access(client):
         assert response.json()["customer_id"] is None
         assert response.json()["user_id"].startswith("guest_")
         assert response.json()["context"] is None
-    assert client.get("/chat/access").json()["used"] == 2
+    assert client.get("/chat/access").json()["used"] == 3
     # Both actual chat routes must block before running their AI pipelines.
     for path in ("/chat", "/chat/stream", "/probe"):
         res = client.post(path, json={"message": "third", "customer_id": 123, "guest_name": "Lead"})
         assert res.status_code == 403
-        assert res.json()["detail"] == "registration_required"
+        assert res.json()["detail"] == "contact_or_registration_required"
 
 
 def test_missing_or_fabricated_guest_session_cannot_chat(client):
@@ -87,8 +92,8 @@ def test_parallel_requests_cannot_exceed_quota(client):
     client.get("/chat/access")
     with ThreadPoolExecutor(max_workers=8) as pool:
         statuses = list(pool.map(lambda _: client.post("/probe", json={"message": "test"}).status_code, range(8)))
-    assert statuses.count(200) == 2
-    assert statuses.count(403) == 6
+    assert statuses.count(200) == 1
+    assert statuses.count(403) == 7
 
 
 def test_signed_in_customer_can_analyze_and_identity_is_server_owned(client, monkeypatch, tmp_path):
@@ -144,3 +149,23 @@ def test_real_chat_pipeline_receives_sanitized_identity(client, monkeypatch, pat
     monkeypatch.setattr(chat, "_build_chat_pipeline", pipeline)
     response = client.post(path, json={"message": "test", "customer_id": 7, "user_id": "customer_7"})
     assert response.status_code == 418
+
+
+def test_contact_capture_is_cookie_bound(client, monkeypatch):
+    from routes import questions
+    captured = []
+    monkeypatch.setattr(questions, "attach_guest_identity", lambda **kw: captured.append(kw) or 1)
+    client.app.include_router(questions.router)
+    payload = {"user_id": "someone_else", "full_name": "Test Visitor", "phone": "۰۹۱۲۳۴۵۶۷۸۹"}
+    assert client.post("/questions/attach-identity", json=payload).status_code == 401
+    client.get("/chat/access")
+    assert client.post("/probe", json={"message": "one"}).status_code == 200
+    assert client.post("/questions/attach-identity", json=payload).status_code == 200
+    assert captured[0]["user_id"].startswith("guest_")
+    assert captured[0]["phone"] == "09123456789"
+    assert client.get("/chat/access").json()["identified"] is True
+    for _ in range(2):
+        result = client.post("/probe", json={"message": "next", "guest_name": "forged"})
+        assert result.status_code == 200
+        assert result.json()["guest_name"] == "Test Visitor"
+    assert client.post("/probe", json={"message": "four"}).status_code == 403

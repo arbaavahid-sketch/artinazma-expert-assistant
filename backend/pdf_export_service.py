@@ -156,6 +156,10 @@ def build_questions_pdf(questions: List[Dict[str, Any]], note: str = "") -> byte
         header_bits = [f"سوال #{q.get('id', '')}"]
         if q.get("created_at"):
             header_bits.append(str(q["created_at"]).replace("T", " ")[:16])
+        if q.get("customer_phone"):
+            header_bits.append(f"موبایل: {q['customer_phone']}")
+        if not q.get("customer_name"):
+            header_bits.append("کاربر مهمان " + (q.get("user_id") or "")[-8:])
         if q.get("customer_name"):
             header_bits.append(f"پرسنده: {q['customer_name']}")
         header_bits.append(_STATUS_LABELS.get(q.get("expert_status", "pending"), q.get("expert_status", "")))

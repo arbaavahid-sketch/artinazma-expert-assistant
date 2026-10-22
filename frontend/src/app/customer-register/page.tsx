@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { apiUrl, customerFetch } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -26,6 +26,7 @@ export default function CustomerRegisterPage() {
   const inputPadding = isEn ? "pl-11 pr-4" : "pl-4 pr-11";
 
   const [fullName, setFullName] = useState("");
+  useEffect(() => { setFullName(localStorage.getItem("artin_guest_name") || ""); setPhone(localStorage.getItem("artin_guest_phone") || ""); }, []);
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");

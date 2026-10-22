@@ -24,6 +24,7 @@ import {
   getImageTypeLabel,
 } from "@/lib/chat-helpers";
 const MessageBubble = dynamic(() => import("@/components/MessageBubble"), { ssr: false });
+import GuestContactCard from "@/components/GuestContactCard";
 import GuestRegistrationCard from "@/components/GuestRegistrationCard";
 const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: false });
 import { useVoiceInput } from "@/hooks/useVoiceInput";
@@ -134,6 +135,7 @@ function AssistantPageInner() {
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const [accessCheckFailed, setAccessCheckFailed] = useState(false);
   const [guestUsed, setGuestUsed] = useState(0);
+  const [guestIdentified, setGuestIdentified] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const [rateLimitTotal, setRateLimitTotal] = useState(60);
@@ -392,6 +394,7 @@ ${cleanAnswer}`,
         const verifiedCustomer = savedCustomer?.id === access.customer_id ? savedCustomer : null;
         setCustomer(verifiedCustomer);
         setGuestUsed(access.used);
+        setGuestIdentified(!!access.identified);
         if (sessionIdParam && verifiedCustomer) {
           const sessionId = Number(sessionIdParam);
           if (!Number.isNaN(sessionId)) loadSavedChatSession(verifiedCustomer.id, sessionId);
@@ -406,7 +409,8 @@ ${cleanAnswer}`,
     return () => { cancelled = true; };
   }, [loadSavedChatSession, sessionIdParam]);
 
-  const guestOutOfQuestions = !customer && guestUsed >= GUEST_FREE_QUESTIONS;
+  const needsContact = !customer && guestUsed >= 1 && !guestIdentified;
+  const guestOutOfQuestions = !customer && (guestUsed >= GUEST_FREE_QUESTIONS || needsContact);
 
   // Rate limit countdown timer
   useEffect(() => {
@@ -491,7 +495,7 @@ ${cleanAnswer}`,
 
     if (!finalMessage.trim()) return;
 
-    if (!customer && guestUsed >= GUEST_FREE_QUESTIONS) return;
+    if (guestOutOfQuestions) return;
 
     const previousMessages = historyOverride || messages;
     const userId = getOrCreateUserId();
@@ -1317,7 +1321,7 @@ ${cleanAnswer}`,
                   composer that would swallow whatever they type. */}
               {guestOutOfQuestions ? (
                 <div className="w-full max-w-xl">
-                  <GuestRegistrationCard isEn={isEn} />
+                  {needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} />}
                 </div>
               ) : (
               <HeroComposer
@@ -1385,7 +1389,7 @@ ${cleanAnswer}`,
 
               {/* دروازه مهمان: یا سؤال تجاری پرسیده، یا سهمیه رایگانش تمام شده */}
               {guestOutOfQuestions && (
-                <GuestRegistrationCard isEn={isEn} />
+                needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} />
               )}
 
               {/* راهنمای نصب صدای TTS */}

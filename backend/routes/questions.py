@@ -65,13 +65,25 @@ def attach_identity(request: Request, body: GuestIdentityRequest):
     the caller's own anonymous user_id and belong to no customer, so the worst
     a bad actor achieves is mislabelling their own questions.
     """
-    updated = attach_guest_identity(
-        user_id=body.user_id,
-        full_name=body.full_name,
-        phone=body.phone,
-        email=body.email,
-    )
+    from guest_access import COOKIE_NAME, _key, _connection
+    import re
+    token = request.cookies.get(COOKIE_NAME, "")
+    if not token:
+        raise HTTPException(401, detail="guest_session_required")
+    phone = body.phone.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789"))
+    phone = re.sub(r"[\s()-]", "", phone)
+    if phone.startswith("+98"):
+        phone = "0" + phone[3:]
+    if len(body.full_name.strip()) < 2 or not re.fullmatch(r"09[0-9]{9}", phone):
+        raise HTTPException(422, detail="نام و شماره موبایل معتبر وارد کنید.")
+    key = _key(token)
+    with _connection() as conn:
+        if not conn.execute("SELECT 1 FROM guest_allowances WHERE visitor_key = ?", (key,)).fetchone():
+            raise HTTPException(401, detail="guest_session_required")
+        conn.execute("INSERT INTO guest_identities (visitor_key, full_name, phone) VALUES (?, ?, ?) ON CONFLICT(visitor_key) DO UPDATE SET full_name = excluded.full_name, phone = excluded.phone", (key, body.full_name.strip()[:120], phone))
+    updated = attach_guest_identity(user_id=f"guest_{key}", full_name=body.full_name.strip()[:120], phone=phone)
     return {"success": True, "updated": updated}
+
 
 
 @router.post("/questions/{question_id}/feedback")

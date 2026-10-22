@@ -542,6 +542,7 @@ Laboratory answer contract:
 
     # ── Customer cross-session context ──
     customer_context = ""
+    _cust = None
     customer_name = ""
     customer_email = ""
     if body.customer_id:
@@ -565,6 +566,15 @@ Laboratory answer contract:
     # ones back-filled by /questions/attach-identity. A real customer wins.
     if not customer_name and getattr(body, "guest_name", None):
         customer_name = (body.guest_name or "").strip()[:120]
+
+    customer_phone = ""
+    if body.customer_id:
+        customer_phone = (_cust or {}).get("phone", "")
+    elif (body.user_id or "").startswith("guest_"):
+        from guest_access import _connection
+        with _connection() as conn:
+            identity = conn.execute("SELECT phone FROM guest_identities WHERE visitor_key = ?", (body.user_id[6:],)).fetchone()
+            customer_phone = identity["phone"] if identity else ""
 
     _timings["pipeline_total"] = round((_time.perf_counter() - _pipeline_t0) * 1000, 1)
     logger.info(
@@ -598,6 +608,7 @@ Laboratory answer contract:
         "customer_id": body.customer_id,
         "customer_name": customer_name,
         "customer_email": customer_email,
+        "customer_phone": customer_phone,
         "response_mode": body.response_mode or "auto",
     }
 
@@ -615,6 +626,7 @@ def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_
         "response_mode": p["response_mode"],
         # هویتِ پرسنده — برای نمایش در پنلِ سوالاتِ ادمین.
         "user_id": p.get("user_id", "anonymous"),
+        "customer_phone": p.get("customer_phone", ""),
         "customer_id": p.get("customer_id"),
         "customer_name": p.get("customer_name", ""),
         "customer_email": p.get("customer_email", ""),
