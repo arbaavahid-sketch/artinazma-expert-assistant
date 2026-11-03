@@ -152,9 +152,10 @@ export default function Home() {
         </div>
 
         <SectionBlock kicker={isEn ? "Fast start" : "شروع سریع"} icon={<Bot size={15} />}>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <QuickCard href="/assistant" icon={<Bot size={24} strokeWidth={1.8} />} color="bg-blue-50 text-blue-700" title={isEn ? "Chat with Artin" : "گفتگو با آرتین"} desc={isEn ? "Ask a technical question and get a focused answer." : "سوال تخصصی بپرسید و پاسخ فنی و متمرکز دریافت کنید."} cta={isEn ? "Open chat" : "ورود به گفتگو"} />
             <QuickCard href="/analyze" icon={<Beaker size={24} strokeWidth={1.8} />} color="bg-emerald-50 text-emerald-700" title={isEn ? "Analyze a test file" : "تحلیل فایل تست"} desc={isEn ? "Review Excel, CSV, PDF, and lab reports." : "فایل Excel، CSV، PDF و گزارش آزمایشگاهی را بررسی کنید."} cta={isEn ? "Start analysis" : "شروع تحلیل"} />
+            <QuickCard href="/calculators" icon={<Beaker size={24} strokeWidth={1.8} />} color="bg-cyan-50 text-cyan-700" title={isEn ? "Laboratory calculators" : "محاسبات آزمایشگاهی"} desc={isEn ? "Calculate dilution, ppm, and RSD, or convert units." : "رقیق‌سازی، ppm، RSD و تبدیل واحد را محاسبه کنید."} cta={isEn ? "Open calculators" : "ورود به محاسبات"} />
             <QuickCard href="/customer-request" icon={<Settings2 size={24} strokeWidth={1.8} />} color="bg-amber-50 text-amber-700" title={isEn ? "Request consultation" : "درخواست مشاوره"} desc={isEn ? "Send a technical review or price inquiry." : "درخواست بررسی فنی یا استعلام قیمت ثبت کنید."} cta={isEn ? "Submit request" : "ثبت درخواست"} />
           </div>
         </SectionBlock>
