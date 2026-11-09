@@ -27,6 +27,7 @@ from routes.customers import router as customers_router
 from routes.admin import router as admin_router, set_response_cache, set_schedule_gdrive
 from routes.tts import router as tts_router
 from routes.uncertainty import router as uncertainty_router
+from routes.laboratory_chat import router as laboratory_chat_router
 
 import time as _time
 
@@ -214,5 +215,6 @@ app.include_router(customers_router)
 app.include_router(admin_router)
 app.include_router(tts_router)
 app.include_router(uncertainty_router)
+app.include_router(laboratory_chat_router)
 from routes.chemicals import router as chemicals_router
 app.include_router(chemicals_router)

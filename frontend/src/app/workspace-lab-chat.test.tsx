@@ -1,0 +1,22 @@
+import React from 'react';
+import {beforeEach,expect,it,vi} from 'vitest';
+import {fireEvent,render,screen,within,waitFor} from '@testing-library/react';
+const {save,backend}=vi.hoisted(()=>({save:vi.fn(),backend:vi.fn()}));
+vi.mock('@/lib/i18n',()=>({useI18n:()=>({locale:'en'})}));
+vi.mock('@/lib/save-project-file',()=>({saveProjectJSON:save,ProjectExportUnavailable:class extends Error{}}));
+vi.mock('@/lib/api',()=>({apiUrl:(p:string)=>p,backendFetch:backend,customerFetch:vi.fn()}));
+vi.mock('next/navigation',()=>({useRouter:()=>({push:vi.fn()})}));
+import Workspace from './calculators/page';
+beforeEach(()=>{sessionStorage.clear();save.mockReset().mockResolvedValue('download-started');backend.mockReset();Object.defineProperty(HTMLDialogElement.prototype,'showModal',{configurable:true,value:function(this:HTMLDialogElement){this.open=true;}});});
+it('applies a confirmed chat proposal to the actual workspace and saves the changed project',async()=>{
+ render(<Workspace/>);fireEvent.click(within(screen.getByRole('navigation',{name:'Laboratory sections'})).getByRole('button',{name:'Test project'}));
+ fireEvent.change(screen.getByLabelText('Project title'),{target:{value:'Synthetic integration project'}});
+ fireEvent.change(screen.getByLabelText('Sample ID'),{target:{value:'QA-1'}});
+ fireEvent.click(screen.getByRole('button',{name:'Calculate with Artin'}));
+ backend.mockResolvedValueOnce(new Response('{}')).mockResolvedValueOnce(new Response(JSON.stringify({answer:'Proposed as requested',calculations:[],revision:'r1',proposals:[{id:'p1',revision:'r1',changes:[{path:'identity.sample',value:'QA-2',previous:'QA-1',reason:'Explicit request'}]}]})));
+ fireEvent.change(screen.getByLabelText('Message Artin'),{target:{value:'Change my sample ID to QA-2'}});fireEvent.click(screen.getByRole('button',{name:'Send to Artin'}));await screen.findByText('Proposed as requested');
+ expect(screen.getByLabelText('Sample ID')).toHaveValue('QA-1');
+ fireEvent.click(screen.getByRole('button',{name:'Confirm and apply these changes'}));fireEvent.click(screen.getByRole('button',{name:'Close'}));
+ expect(screen.getByLabelText('Sample ID')).toHaveValue('QA-2');expect(screen.getByLabelText('Project title')).toHaveValue('Synthetic integration project');
+ fireEvent.click(screen.getByRole('button',{name:'Save project file'}));await waitFor(()=>expect(save).toHaveBeenCalledOnce());expect(JSON.parse(save.mock.calls[0][0]).identity.sample).toBe('QA-2');
+});

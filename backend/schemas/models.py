@@ -1,6 +1,7 @@
 import re as _re
 from typing import Optional, List
 from pydantic import BaseModel, field_validator
+from laboratory_chat import LaboratorySnapshot
 
 
 class ChatHistoryMessage(BaseModel):
@@ -16,6 +17,7 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = "anonymous"
     customer_id: Optional[int] = None
     context: Optional[str] = None  # External context (e.g. from analyze page)
+    laboratory: Optional[LaboratorySnapshot] = None
     # نام بازدیدکننده‌ای که حساب ندارد ولی در کارت تماس نامش را داده —
     # تا در پنل ادمین «پرسنده» معلوم باشد، نه یک شناسهٔ گمنام.
     guest_name: Optional[str] = None

@@ -15,7 +15,7 @@ import type {BiasStudy} from './bias-study';
 import {emptyPrecisionStudy,type PrecisionStudy} from './precision-study';
 import {type Reagent} from './reagents';
 
-import { useMemo, useRef, useState,type ComponentProps } from 'react';
+import { useEffect, useMemo, useRef, useState,type ComponentProps } from 'react';
 import {deferredSection} from './deferred-section';
 import {useTextExport} from './use-text-export';
 import {saveProjectJSON,ProjectExportUnavailable} from '@/lib/save-project-file';
@@ -26,6 +26,8 @@ import type {PhysicalRun} from './physical-run';
 import {emptyDensity} from './density';
 import {emptyWeighing} from './weighing';
 import LabWorkbench from './LabWorkbench';
+import LabChatLauncher from './LabAssistant';
+import {captureLabContext,contextKey,takeLabReturn} from './lab-chat-bridge';
 import s from './preview.module.css';
 import { MAX_PROJECT_BYTES, parseProjectFile, serializeLabProject, type LabProject, type ProjectIdentity } from './project-file';
 import { readGumProject } from '../gum-project';
@@ -144,14 +146,25 @@ export default function LabWorkspace() {
   const legacyTitle = legacyProject ? family ? text(family.fa,family.en) : (legacyNames[legacyProject.template]?.[en?1:0] ?? legacyProject.template) : '';
   const workflowTitle = workflow==='density'?text('چگالی از جرم و حجم','Density from mass and volume'):workflow==='weighing'?text('توزین مستقیم','Direct weighing'):workflow==='method-study'&&methodStudy?methodName(methodBank.find(m=>m.id===methodStudy.methodId)!,en):legacyProject ? legacyTitle : text('GC-FID · کالیبراسیون خارجی و استخراج','GC-FID · External calibration and extraction');
 
+  function currentProject():LabProject{
+    projectId.current ??= crypto.randomUUID();
+    return {format:'artin-lab-project',version:1,id:projectId.current,savedAt:new Date().toISOString(),
+        ...(methodStudy?{methodStudy:methodRef.current?.snapshot()??methodStudy}:{}),...(decisionStudy?{decisionStudy}:{}),...(monteCarloStudy?{monteCarloStudy}:{}),...(topDownStudy?{topDownStudy}:{}),...(validationTransfer?{validationTransfer}:{}),...(controlStudy?{controlStudy}:{}),...(calibrationStudy?{calibrationStudy}:{}),...(intermediateStudy?{intermediateStudy}:{}),...(biasStudy?{biasStudy}:{}),...(precisionStudy?{precisionStudy}:{}),...(solutionDraft?{solution:solutionDraft}:{}),...(reagents.length?{reagents}:{}),...(physicalRun&&(workflow==='density'||workflow==='weighing')?{physicalRun}:{}),workflow:legacy?'legacy-gum':workflow,identity:draft,evidence,standards,stage,...(legacy?{legacy}:workflow==='density'?{density}:workflow==='weighing'?{weighing}:workflow==='method-study'?{}:{gc:{data:gcData,...(gcRun?{run:gcRun}:{})}})};
+  }
+  function labContext(){return hasDraft?captureLabContext(currentProject(),methodRef.current?.request?.()??null):null;}
+  function applyArtinProject(project:LabProject,sourceKey:string){
+    if(contextKey(labContext())!==sourceKey)throw Error('stale-project');
+    openProjectData(project,'opened');
+  }
+  useEffect(()=>{try{const returned=takeLabReturn();if(returned){setPending(returned);setPendingAction('open');setView('project');}}catch{setFileMessage('failed');}},[]);
+
   const textExport=useTextExport(en);
   async function saveProject():Promise<boolean|null> {
     if(saving.current)return null;
     saving.current=true;setFileBusy(true);setFileMessage('');
     try {
       projectId.current ??= crypto.randomUUID();
-      const project: LabProject = {format:'artin-lab-project',version:1,id:projectId.current,savedAt:new Date().toISOString(),
-        ...(methodStudy?{methodStudy:methodRef.current?.snapshot()??methodStudy}:{}),...(decisionStudy?{decisionStudy}:{}),...(monteCarloStudy?{monteCarloStudy}:{}),...(topDownStudy?{topDownStudy}:{}),...(validationTransfer?{validationTransfer}:{}),...(controlStudy?{controlStudy}:{}),...(calibrationStudy?{calibrationStudy}:{}),...(intermediateStudy?{intermediateStudy}:{}),...(biasStudy?{biasStudy}:{}),...(precisionStudy?{precisionStudy}:{}),...(solutionDraft?{solution:solutionDraft}:{}),...(reagents.length?{reagents}:{}),...(physicalRun&&(workflow==='density'||workflow==='weighing')?{physicalRun}:{}),workflow:legacy?'legacy-gum':workflow,identity:draft,evidence,standards,stage,...(legacy?{legacy}:workflow==='density'?{density}:workflow==='weighing'?{weighing}:workflow==='method-study'?{}:{gc:{data:gcData,...(gcRun?{run:gcRun}:{})}})};
+      const project=currentProject();
       const result=await saveProjectJSON(serializeLabProject(project),`artin-lab-${project.id}.json`);
       setFileMessage(result==='saved'?'native-saved':result==='cancelled'?'cancelled':'saved');return result==='cancelled'?null:true;
     } catch(error) { setFileMessage(error instanceof ProjectExportUnavailable?'unsupported':'failed');return false; }
@@ -185,7 +198,7 @@ export default function LabWorkspace() {
   const headings = [text('شناسنامهٔ آزمون','Test identity'),text('عددها را از کجا بردارم؟','Where do the values come from?'),text('استانداردهای کالیبراسیون','Calibration standards'),text('از داده تا بودجهٔ عدم‌قطعیت','From data to an uncertainty budget'),text('پرونده در یک نگاه','Project at a glance')];
 
   return <div className={s.page} dir={en?'ltr':'rtl'}>
-    <header className={s.topline}><div className={s.workspaceBrand}><span className={s.brandIcon}><FlaskConical size={22} aria-hidden="true"/></span><div><strong>{text('محیط آزمایشگاه','Laboratory workspace')}</strong><span>{text('پرونده‌ها، محاسبات و منابع علمی','Projects, calculations & scientific references')}</span></div></div><div className={s.topActions}><button type="button" className={s.secondary} onClick={()=>setGuideOpen(true)} aria-label={text('راهنمای استفاده','User guide')} aria-haspopup="dialog"><BookOpen size={16} aria-hidden="true"/>{text('راهنما','Guide')}</button></div></header>
+    <header className={s.topline}><div className={s.workspaceBrand}><span className={s.brandIcon}><FlaskConical size={22} aria-hidden="true"/></span><div><strong>{text('محیط آزمایشگاه','Laboratory workspace')}</strong><span>{text('پرونده‌ها، محاسبات و منابع علمی','Projects, calculations & scientific references')}</span></div></div><div className={s.topActions}><LabChatLauncher en={en} getContext={labContext} onApply={applyArtinProject}/><button type="button" className={s.secondary} onClick={()=>setGuideOpen(true)} aria-label={text('راهنمای استفاده','User guide')} aria-haspopup="dialog"><BookOpen size={16} aria-hidden="true"/>{text('راهنما','Guide')}</button></div></header>
     {guideOpen&&<WorkspaceGuide en={en} onClose={()=>setGuideOpen(false)}/>}
     <nav className={s.navigation} aria-label={text('بخش‌های آزمایشگاه','Laboratory sections')}>
       {([['home',FolderOpen,'میز کار','Workbench'],['project',ClipboardList,'پروندهٔ آزمون','Test project'],['materials',Atom,'مواد و عناصر','Chemicals & elements'],['validation',ListChecks,'صحه‌گذاری و QC','Validation & QC'],['advanced',Gauge,'عدم‌قطعیت پیشرفته','Advanced uncertainty'],['quick',Gauge,'محاسبات سریع','Quick calculations']] as const).map(([key,Icon,fa,english]) => <button key={key} type="button" aria-current={view===key?'page':undefined} onClick={()=>key==='quick'?openQuick():setView(key)}><Icon size={17} aria-hidden="true"/>{text(fa,english)}</button>)}

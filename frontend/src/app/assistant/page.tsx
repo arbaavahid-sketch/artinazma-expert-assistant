@@ -51,6 +51,7 @@ import DropOverlay from "@/app/assistant/DropOverlay";
 import ScrollToBottomButton from "@/app/assistant/ScrollToBottomButton";
 import ChatComposer from "@/app/assistant/ChatComposer";
 import HeroComposer from "@/app/assistant/HeroComposer";
+const LabChatLauncher = dynamic(() => import("@/app/calculators/workspace/LabAssistant"), { ssr: false });
 
 type AnalysisResponse = Record<string, unknown> & {
   ai_analysis?: string;
@@ -1089,6 +1090,7 @@ ${cleanAnswer}`,
       onDragLeave={handleDragLeave}
       onDrop={(e) => { e.preventDefault(); if (customer) handleDrop(e); }}
     >
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-slate-100 px-3 py-2"><LabChatLauncher en={isEn}/></div>
       <DropOverlay show={isDragOver} isEn={isEn} />
       <input
         ref={uploadInputRef}

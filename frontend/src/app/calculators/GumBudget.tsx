@@ -26,7 +26,7 @@ type Row = BudgetRow;
 const emptyRow = (): Row => ({ name: "", source: "", unit: "", u: "", c: "1", kind: "standard", divisor: "2" });
 const controls = "ui-input min-w-0";
 
-export type GumBudgetHandle={snapshot:()=>GumProject|undefined; result:()=>{measured:number;standard:number;expanded:number;coverage:number;unit:string;engine:string;engineVersion:string;rows:{name:string;source:string;unit:string;u:number;c:number}[]}|undefined};
+export type GumBudgetHandle={snapshot:()=>GumProject|undefined;request:()=>Record<string,unknown>|null; result:()=>{measured:number;standard:number;expanded:number;coverage:number;unit:string;engine:string;engineVersion:string;rows:{name:string;source:string;unit:string;u:number;c:number}[]}|undefined};
 
 export default function GumBudget({ en, parseNumber, onCalculated,initialProject,lockedMethodId,projectRef }: {
   initialProject?:GumProject;lockedMethodId?:number;projectRef?:Ref<GumBudgetHandle>;
@@ -291,7 +291,20 @@ export default function GumBudget({ en, parseNumber, onCalculated,initialProject
       gcData, familyData, correlations, graphs,
     } as GumProject;
   }
-  useImperativeHandle(projectRef,()=>({snapshot:()=>template==='choose'?undefined:snapshotProject(),result:()=>submitted&&serverResult&&valid?{measured:y,standard:serverResult.standard_uncertainty,expanded:serverResult.expanded_uncertainty,coverage:k,unit,engine:serverResult.engine,engineVersion:serverResult.engine_version,rows:effectiveRows.map((r,i)=>({name:r.name,source:r.source,unit:r.unit,u:standardValues[i],c:parseNumber(r.c)}))}:undefined}));
+  function buildRequest(){return {
+          measured: y, coverage: requestedCoverage,coverage_mode:coverageMode,coverage_probability:Number(coverageProbability),
+          ...(registeredModel?{measurement_model:registeredModel}:{}),
+          ...(simulate ? { simulation: { samples: parseNumber(simulationSamples), seed: parseNumber(simulationSeed),
+            probability: Number(simulationProbability) } } : {}),
+          correlations: correlations.map(pair => ({ ...pair, coefficient: parseNumber(pair.coefficient) })),
+          components: effectiveRows.map(row => ({
+            name: row.name.trim(), value: parseNumber(row.u), sensitivity: parseNumber(row.c),
+            kind: row.kind, certificate_k: row.kind === "certificate" ? parseNumber(row.divisor) : 2,
+            repetitions: row.kind === "repeatability" ? parseNumber(row.divisor) : 1,
+            ...(coverageMode==='automatic'?row.dfMode==='finite'?{degrees_of_freedom:parseNumber(row.dfValue??'')}:row.dfMode==='infinite'?{infinite_degrees:true}:row.dfMode==='study'?{study_count:parseNumber(row.dfValue??'')}:{ }:{}),
+          })),
+        };}
+  useImperativeHandle(projectRef,()=>({request:()=>valid?buildRequest():null,snapshot:()=>template==='choose'?undefined:snapshotProject(),result:()=>submitted&&serverResult&&valid?{measured:y,standard:serverResult.standard_uncertainty,expanded:serverResult.expanded_uncertainty,coverage:k,unit,engine:serverResult.engine,engineVersion:serverResult.engine_version,rows:effectiveRows.map((r,i)=>({name:r.name,source:r.source,unit:r.unit,u:standardValues[i],c:parseNumber(r.c)}))}:undefined}));
   // Restore once before paint; later parent edits must not overwrite a live budget.
   useLayoutEffect(()=>{if(initialProject)applyProject(readGumProject(initialProject));},[]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -364,19 +377,7 @@ export default function GumBudget({ en, parseNumber, onCalculated,initialProject
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: AbortSignal.timeout(15000),
-        body: JSON.stringify({
-          measured: y, coverage: requestedCoverage,coverage_mode:coverageMode,coverage_probability:Number(coverageProbability),
-          ...(registeredModel?{measurement_model:registeredModel}:{}),
-          ...(simulate ? { simulation: { samples: parseNumber(simulationSamples), seed: parseNumber(simulationSeed),
-            probability: Number(simulationProbability) } } : {}),
-          correlations: correlations.map(pair => ({ ...pair, coefficient: parseNumber(pair.coefficient) })),
-          components: effectiveRows.map(row => ({
-            name: row.name.trim(), value: parseNumber(row.u), sensitivity: parseNumber(row.c),
-            kind: row.kind, certificate_k: row.kind === "certificate" ? parseNumber(row.divisor) : 2,
-            repetitions: row.kind === "repeatability" ? parseNumber(row.divisor) : 1,
-            ...(coverageMode==='automatic'?row.dfMode==='finite'?{degrees_of_freedom:parseNumber(row.dfValue??'')}:row.dfMode==='infinite'?{infinite_degrees:true}:row.dfMode==='study'?{study_count:parseNumber(row.dfValue??'')}:{ }:{}),
-          })),
-        }),
+        body: JSON.stringify(buildRequest()),
       });
       if (response.status === 422) {
         const error = await response.json();

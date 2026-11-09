@@ -11,12 +11,12 @@ import {type MethodStudy} from './method-study';
 import type {ProjectIdentity} from './project-file';
 import {useTextExport} from './use-text-export';
 import s from './preview.module.css';
-export type MethodStudyHandle={snapshot:()=>MethodStudy};
+export type MethodStudyHandle={snapshot:()=>MethodStudy;request:()=>Record<string,unknown>|null};
 const escape=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export default function MethodStudyForm({value,onChange,identity,onIdentity,en,projectRef}:{value:MethodStudy;onChange:(v:MethodStudy)=>void;identity:ProjectIdentity;onIdentity:(v:ProjectIdentity)=>void;en:boolean;projectRef?:Ref<MethodStudyHandle>}){
  const method=bank.find(m=>m.id===value.methodId)!,profile=methodProfile(method,en),gum=useRef<GumBudgetHandle>(null),exporter=useTextExport(en);
  const t=(fa:string,e:string)=>en?e:fa;
- useImperativeHandle(projectRef,()=>({snapshot:()=>({...value,budget:gum.current?.snapshot()})}));
+ useImperativeHandle(projectRef,()=>({snapshot:()=>({...value,budget:gum.current?.snapshot()}),request:()=>gum.current?.request?.()??null}));
  async function report(){
   const result=gum.current?.result(),budget=gum.current?.snapshot();
   const family=budget?.template.startsWith('family:')?familyModels[budget.template.slice(7)]:undefined;

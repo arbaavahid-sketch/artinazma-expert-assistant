@@ -1,0 +1,3107 @@
+{
+  "version": 1,
+  "models": {
+    "hthsTbs": {
+      "fa": "HTHS با کالیبراسیون TBS",
+      "en": "HTHS using TBS calibration",
+      "unit": "mPa·s",
+      "formula": "η = a × torque + b + δT + δshear",
+      "inputs": [
+        {
+          "fa": "سیگنال گشتاور نمونه",
+          "en": "Sample torque signal",
+          "unit": "signal"
+        },
+        {
+          "fa": "شیب خط کالیبراسیون گشتاور–ویسکوزیته",
+          "en": "Torque-to-viscosity calibration slope",
+          "unit": "mPa·s/signal"
+        },
+        {
+          "fa": "عرض از مبدأ همان کالیبراسیون",
+          "en": "Intercept of the same calibration",
+          "unit": "mPa·s"
+        },
+        {
+          "fa": "تصحیح اثر دما در واحد ویسکوزیته",
+          "en": "Temperature-effect correction in viscosity units",
+          "unit": "mPa·s"
+        },
+        {
+          "fa": "تصحیح اثر نرخ برش یا موقعیت روتور",
+          "en": "Shear-rate / rotor-position correction",
+          "unit": "mPa·s"
+        }
+      ]
+    },
+    "heatGross": {
+      "fa": "گرمای احتراق ناخالص تخمینی",
+      "en": "Estimated gross heat of combustion",
+      "unit": "MJ/kg",
+      "formula": "Qg = (51.916 − 8.792×10⁻⁶ρ²)(1−x−y−s)+9.420s",
+      "inputs": [
+        {
+          "fa": "چگالی در ۱۵°C",
+          "en": "Density at 15°C",
+          "unit": "kg/m³"
+        },
+        {
+          "fa": "آب، درصد جرمی",
+          "en": "Water mass percentage",
+          "unit": "% mass"
+        },
+        {
+          "fa": "خاکستر، درصد جرمی",
+          "en": "Ash mass percentage",
+          "unit": "% mass"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "heatNet": {
+      "fa": "گرمای احتراق خالص تخمینی",
+      "en": "Estimated net heat of combustion",
+      "unit": "MJ/kg",
+      "formula": "Qn = (46.423−8.792×10⁻⁶ρ²+0.003170ρ)(1−x−y−s)+9.420s−2.449x",
+      "inputs": [
+        {
+          "fa": "چگالی در ۱۵°C",
+          "en": "Density at 15°C",
+          "unit": "kg/m³"
+        },
+        {
+          "fa": "آب، درصد جرمی",
+          "en": "Water mass percentage",
+          "unit": "% mass"
+        },
+        {
+          "fa": "خاکستر، درصد جرمی",
+          "en": "Ash mass percentage",
+          "unit": "% mass"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "mercaptanSulfur": {
+      "fa": "گوگرد مرکاپتانی با AgNO₃",
+      "en": "Mercaptan sulfur using AgNO₃",
+      "unit": "mg/kg",
+      "formula": "S(mg/kg) = 1000 × 32.06 × (V−Vb) × cAg / m",
+      "inputs": [
+        {
+          "fa": "حجم تیترانت",
+          "en": "Titrant volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم بلانک",
+          "en": "Blank volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "غلظت واقعی تیترانت",
+          "en": "Actual titrant concentration",
+          "unit": "mol/L"
+        },
+        {
+          "fa": "جرم نمونه",
+          "en": "Sample mass",
+          "unit": "g"
+        }
+      ]
+    },
+    "freeAcid": {
+      "fa": "اسید آزاد با هویت و استوکیومتری مشخص",
+      "en": "Free acid with defined identity and stoichiometry",
+      "unit": "% mass",
+      "formula": "w(%) = 0.1 × (V−Vb) × c × M × z / m",
+      "inputs": [
+        {
+          "fa": "حجم تیترانت",
+          "en": "Titrant volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم بلانک",
+          "en": "Blank volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "غلظت واقعی تیترانت",
+          "en": "Actual titrant concentration",
+          "unit": "mol/L"
+        },
+        {
+          "fa": "جرم نمونه",
+          "en": "Sample mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم مولی اسید مورد گزارش",
+          "en": "Molar mass of the reported acid",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "نسبت مول اسید به مول تیترانت",
+          "en": "Moles of acid per mole of titrant",
+          "unit": "1"
+        }
+      ]
+    },
+    "coolantWater": {
+      "fa": "آب کولانت با KF حجمی، درصد جرمی",
+      "en": "Coolant water by volumetric KF, mass percent",
+      "unit": "% mass",
+      "formula": "w(%) = (V−Vb) × t / (10m)",
+      "inputs": [
+        {
+          "fa": "حجم تیترانت",
+          "en": "Titrant volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم بلانک",
+          "en": "Blank volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "تیتر واقعی آب در معرف KF",
+          "en": "Actual water titer of KF reagent",
+          "unit": "mg/mL"
+        },
+        {
+          "fa": "جرم نمونه",
+          "en": "Sample mass",
+          "unit": "g"
+        }
+      ]
+    },
+    "cetaneA": {
+      "fa": "شاخص ستان چهارمتغیره، رویهٔ A",
+      "en": "Four-variable cetane index, procedure A",
+      "unit": "Cetane index",
+      "formula": "CCI = 45.2 + 0.0892T10N + (0.131+0.901B)T50N + (0.0523−0.420B)T90N + 0.00049(T10N²−T90N²) + 107B + 60B²",
+      "inputs": [
+        {
+          "fa": "چگالی در ۱۵°C",
+          "en": "Density at 15°C",
+          "unit": "g/mL"
+        },
+        {
+          "fa": "دمای بازیافت ۱۰٪ در فشار مرجع",
+          "en": "10% recovery temperature at reference pressure",
+          "unit": "°C"
+        },
+        {
+          "fa": "دمای بازیافت ۵۰٪",
+          "en": "50% recovery temperature",
+          "unit": "°C"
+        },
+        {
+          "fa": "دمای بازیافت ۹۰٪",
+          "en": "90% recovery temperature",
+          "unit": "°C"
+        }
+      ]
+    },
+    "trueVaporRefined": {
+      "fa": "فشار بخار واقعی فرآوردهٔ پالایش‌شده، EPA",
+      "en": "Refined-stock true vapor pressure, EPA",
+      "unit": "kPa abs",
+      "formula": "P(kPa abs) = 6.894757293168 × exp[A − B/(T°F+459.67)]",
+      "inputs": [
+        {
+          "fa": "فشار بخار رید مطلق",
+          "en": "Absolute Reid vapor pressure",
+          "unit": "psia"
+        },
+        {
+          "fa": "شیب D86 در ۱۰٪ تبخیر",
+          "en": "D86 slope at 10% evaporated",
+          "unit": "°F/vol%"
+        },
+        {
+          "fa": "دمای سطح مایع",
+          "en": "Liquid surface temperature",
+          "unit": "°F"
+        }
+      ]
+    },
+    "ndmCA": {
+      "fa": "n-d-M · درصد کربن آروماتیکی",
+      "en": "n-d-M · Aromatic carbon percentage",
+      "unit": "% carbon",
+      "formula": "v=2.51(n−1.475)−(d−0.851); w=(d−0.851)−1.11(n−1.475); CA = (v≥0 ? 430v : 670v) + 3660/M",
+      "inputs": [
+        {
+          "fa": "ضریب شکست nD در ۲۰°C",
+          "en": "Refractive index nD at 20°C",
+          "unit": "1"
+        },
+        {
+          "fa": "چگالی d4 در ۲۰°C",
+          "en": "Density d4 at 20°C",
+          "unit": "g/mL"
+        },
+        {
+          "fa": "جرم مولی میانگین",
+          "en": "Mean molar mass",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "ndmCN": {
+      "fa": "n-d-M · درصد کربن نفتنیکی",
+      "en": "n-d-M · Naphthenic carbon percentage",
+      "unit": "% carbon",
+      "formula": "v=2.51(n−1.475)−(d−0.851); w=(d−0.851)−1.11(n−1.475); CN = CR − CA; CR=(w≥0 ? 820w+10000/M : 1440w+10600/M)−3S; CA=(v≥0 ? 430v : 670v)+3660/M",
+      "inputs": [
+        {
+          "fa": "ضریب شکست nD در ۲۰°C",
+          "en": "Refractive index nD at 20°C",
+          "unit": "1"
+        },
+        {
+          "fa": "چگالی d4 در ۲۰°C",
+          "en": "Density d4 at 20°C",
+          "unit": "g/mL"
+        },
+        {
+          "fa": "جرم مولی میانگین",
+          "en": "Mean molar mass",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "ndmCP": {
+      "fa": "n-d-M · درصد کربن پارافینی",
+      "en": "n-d-M · Paraffinic carbon percentage",
+      "unit": "% carbon",
+      "formula": "v=2.51(n−1.475)−(d−0.851); w=(d−0.851)−1.11(n−1.475); CP = 100 − CR; CR=(w≥0 ? 820w+10000/M : 1440w+10600/M)−3S",
+      "inputs": [
+        {
+          "fa": "ضریب شکست nD در ۲۰°C",
+          "en": "Refractive index nD at 20°C",
+          "unit": "1"
+        },
+        {
+          "fa": "چگالی d4 در ۲۰°C",
+          "en": "Density d4 at 20°C",
+          "unit": "g/mL"
+        },
+        {
+          "fa": "جرم مولی میانگین",
+          "en": "Mean molar mass",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "ndmRA": {
+      "fa": "n-d-M · تعداد حلقه‌های آروماتیکی",
+      "en": "n-d-M · Aromatic ring count",
+      "unit": "rings/molecule",
+      "formula": "v=2.51(n−1.475)−(d−0.851); w=(d−0.851)−1.11(n−1.475); RA = 0.44 + (v≥0 ? 0.055 : 0.080)Mv",
+      "inputs": [
+        {
+          "fa": "ضریب شکست nD در ۲۰°C",
+          "en": "Refractive index nD at 20°C",
+          "unit": "1"
+        },
+        {
+          "fa": "چگالی d4 در ۲۰°C",
+          "en": "Density d4 at 20°C",
+          "unit": "g/mL"
+        },
+        {
+          "fa": "جرم مولی میانگین",
+          "en": "Mean molar mass",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "ndmRN": {
+      "fa": "n-d-M · تعداد حلقه‌های نفتنیکی",
+      "en": "n-d-M · Naphthenic ring count",
+      "unit": "rings/molecule",
+      "formula": "v=2.51(n−1.475)−(d−0.851); w=(d−0.851)−1.11(n−1.475); RN = RT−RA; RT=1.33+(w≥0 ? 0.146 : 0.180)M(w−0.005S); RA=0.44+(v≥0 ? 0.055 : 0.080)Mv",
+      "inputs": [
+        {
+          "fa": "ضریب شکست nD در ۲۰°C",
+          "en": "Refractive index nD at 20°C",
+          "unit": "1"
+        },
+        {
+          "fa": "چگالی d4 در ۲۰°C",
+          "en": "Density d4 at 20°C",
+          "unit": "g/mL"
+        },
+        {
+          "fa": "جرم مولی میانگین",
+          "en": "Mean molar mass",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "ndmRT": {
+      "fa": "n-d-M · تعداد کل حلقه‌ها",
+      "en": "n-d-M · Total ring count",
+      "unit": "rings/molecule",
+      "formula": "v=2.51(n−1.475)−(d−0.851); w=(d−0.851)−1.11(n−1.475); RT = 1.33 + (w≥0 ? 0.146 : 0.180)M(w−0.005S)",
+      "inputs": [
+        {
+          "fa": "ضریب شکست nD در ۲۰°C",
+          "en": "Refractive index nD at 20°C",
+          "unit": "1"
+        },
+        {
+          "fa": "چگالی d4 در ۲۰°C",
+          "en": "Density d4 at 20°C",
+          "unit": "g/mL"
+        },
+        {
+          "fa": "جرم مولی میانگین",
+          "en": "Mean molar mass",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "گوگرد، درصد جرمی",
+          "en": "Sulfur mass percentage",
+          "unit": "% mass"
+        }
+      ]
+    },
+    "viscosityIndex": {
+      "fa": "شاخص گرانروی با جدول L/H خودکار",
+      "en": "Viscosity index with automatic L/H reference",
+      "unit": "VI",
+      "formula": "VI = 100(L−U)/(L−H) if U≥H; otherwise VI=100+(10^[ln(H/U)/ln(Y)]−1)/0.00715",
+      "inputs": [
+        {
+          "fa": "گرانروی کینماتیکی در ۴۰°C",
+          "en": "Kinematic viscosity at 40°C",
+          "unit": "mm²/s"
+        },
+        {
+          "fa": "گرانروی کینماتیکی در ۱۰۰°C",
+          "en": "Kinematic viscosity at 100°C",
+          "unit": "mm²/s"
+        }
+      ]
+    },
+    "acidBaseNumber": {
+      "fa": "عدد اسیدی یا قلیایی بر مبنای KOH",
+      "en": "Acid/base number as KOH",
+      "unit": "mg KOH/g",
+      "formula": "N = (V − Vb) × c_eq × M_KOH / m",
+      "inputs": [
+        {
+          "fa": "حجم مصرفی تیترانت از گزارش دستگاه",
+          "en": "Titrant volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم بلانک همان روش",
+          "en": "Blank volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "غلظت اکی‌والانی واقعی تیترانت پس از استانداردسازی",
+          "en": "Actual equivalent concentration",
+          "unit": "eq/L"
+        },
+        {
+          "fa": "جرم نمونه از اختلاف دو توزین",
+          "en": "Net sample mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم اکی‌والانی KOH طبق روش؛ معمولاً ۵۶٫۱",
+          "en": "KOH equivalent mass",
+          "unit": "g/eq"
+        }
+      ]
+    },
+    "pycnometer": {
+      "fa": "چگالی با پیکنومتر و آب مرجع",
+      "en": "Pycnometer density against water",
+      "unit": "kg/m³",
+      "formula": "ρs = (ms − m0) / (mw − m0) × ρw",
+      "inputs": [
+        {
+          "fa": "جرم پیکنومتر خالی و خشک",
+          "en": "Empty pycnometer mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم پیکنومتر پر از نمونه",
+          "en": "Sample-filled mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم پیکنومتر پر از آب مرجع",
+          "en": "Water-filled mass",
+          "unit": "g"
+        },
+        {
+          "fa": "چگالی آب مرجع در دمای اندازه‌گیری",
+          "en": "Reference water density at measurement temperature",
+          "unit": "kg/m³"
+        }
+      ]
+    },
+    "volumePercent": {
+      "fa": "درصد حجمی جزء",
+      "en": "Volume fraction percentage",
+      "unit": "% vol",
+      "formula": "φ = 100 × Vcomponent / Vsample",
+      "inputs": [
+        {
+          "fa": "حجم جزء جداشده با تصحیح بلانک",
+          "en": "Corrected component volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم کل نمونه در همان مبنای دما",
+          "en": "Total sample volume on the same temperature basis",
+          "unit": "mL"
+        }
+      ]
+    },
+    "ratioPercent": {
+      "fa": "نسبت نتیجهٔ پس از آزمون به پیش از آزمون",
+      "en": "Retained result percentage",
+      "unit": "%",
+      "formula": "R = 100 × after / before",
+      "inputs": [
+        {
+          "fa": "نتیجهٔ پس از عملیات",
+          "en": "Result after treatment",
+          "unit": "same unit"
+        },
+        {
+          "fa": "نتیجهٔ پیش از عملیات",
+          "en": "Result before treatment",
+          "unit": "same unit"
+        }
+      ]
+    },
+    "solubility": {
+      "fa": "درصد حلالیت از باقیماندهٔ نامحلول",
+      "en": "Solubility from insoluble residue",
+      "unit": "% mass",
+      "formula": "S = 100 × (1 − m_insoluble / m_sample)",
+      "inputs": [
+        {
+          "fa": "جرم خالص باقیماندهٔ نامحلول پس از تصحیح بلانک",
+          "en": "Net insoluble residue",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم اولیهٔ نمونه",
+          "en": "Initial sample mass",
+          "unit": "g"
+        }
+      ]
+    },
+    "transmission": {
+      "fa": "درصد عبور نوری از شدت نور",
+      "en": "Optical transmittance",
+      "unit": "% T",
+      "formula": "T = 100 × I / I0",
+      "inputs": [
+        {
+          "fa": "شدت نور نمونه پس از تصحیح تاریک",
+          "en": "Dark-corrected sample intensity",
+          "unit": "signal"
+        },
+        {
+          "fa": "شدت نور مرجع پس از تصحیح تاریک",
+          "en": "Dark-corrected reference intensity",
+          "unit": "signal"
+        }
+      ]
+    },
+    "absorbance": {
+      "fa": "جذب نوری از درصد عبور",
+      "en": "Absorbance from transmittance",
+      "unit": "1",
+      "formula": "A = −log10(T / 100)",
+      "inputs": [
+        {
+          "fa": "درصد عبور نوری در طول موج انتخاب‌شده",
+          "en": "Transmittance percentage at selected wavelength",
+          "unit": "% T"
+        }
+      ]
+    },
+    "apiGravity": {
+      "fa": "گراویتی API از چگالی نسبی در ۶۰°F",
+      "en": "API gravity from SG at 60°F",
+      "unit": "°API",
+      "formula": "API = 141.5 / SG(60°F/60°F) − 131.5",
+      "inputs": [
+        {
+          "fa": "چگالی نسبی تصحیح‌شده به ۶۰°F/۶۰°F",
+          "en": "Specific gravity corrected to 60°F/60°F",
+          "unit": "1"
+        }
+      ]
+    },
+    "kfCoulometric": {
+      "fa": "آب با کارل فیشر کولومتری",
+      "en": "Coulometric Karl Fischer water",
+      "unit": "mg/kg",
+      "formula": "w = (q_water − q_blank) / m",
+      "inputs": [
+        {
+          "fa": "جرم آب دستگاه پس از تصحیح رانش طبق روش",
+          "en": "Instrument water mass after method drift correction",
+          "unit": "µg"
+        },
+        {
+          "fa": "آب بلانک؛ اگر قبلاً کسر شده با دلیل صفر",
+          "en": "Water blank, zero only if already subtracted",
+          "unit": "µg"
+        },
+        {
+          "fa": "جرم نمونهٔ تزریق‌شده از اختلاف توزین",
+          "en": "Injected sample mass by difference",
+          "unit": "g"
+        }
+      ]
+    },
+    "kfVolumetric": {
+      "fa": "آب با کارل فیشر حجمی",
+      "en": "Volumetric Karl Fischer water",
+      "unit": "mg/kg",
+      "formula": "w = 1000 × (V − Vb) × t / m",
+      "inputs": [
+        {
+          "fa": "حجم تیترانت مصرفی با تصحیح رانش طبق روش",
+          "en": "Method drift-corrected titrant volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم بلانک که هنوز کسر نشده",
+          "en": "Unsubtracted blank volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "تیتر واقعی آب از استانداردسازی روزانه",
+          "en": "Actual standardized water titer",
+          "unit": "mg/mL"
+        },
+        {
+          "fa": "جرم نمونهٔ تزریق‌شده",
+          "en": "Injected sample mass",
+          "unit": "g"
+        }
+      ]
+    },
+    "gcNormalization": {
+      "fa": "درصد جزء با نرمال‌سازی پاسخ تصحیح‌شده",
+      "en": "Response-corrected component normalization",
+      "unit": "% corrected response",
+      "formula": "p = 100 × (Ai × Fi) / (Ai × Fi + S_other)",
+      "inputs": [
+        {
+          "fa": "مساحت پیک جزء موردنظر",
+          "en": "Component peak area",
+          "unit": "area"
+        },
+        {
+          "fa": "ضریب ضربی پاسخ این جزء طبق تعریف کالیبراسیون",
+          "en": "Multiplicative response correction factor",
+          "unit": "1"
+        },
+        {
+          "fa": "مجموع مساحت × ضریب سایر اجزا؛ بدون جزء موردنظر",
+          "en": "Sum of corrected other components, excluding this component",
+          "unit": "corrected area"
+        }
+      ]
+    },
+    "indicationError": {
+      "fa": "خطای نشان‌دهی نسبت به مرجع",
+      "en": "Indication error",
+      "unit": "",
+      "formula": "E = I − R",
+      "inputs": [
+        {
+          "fa": "قرائت دستگاه",
+          "en": "Instrument indication",
+          "unit": ""
+        },
+        {
+          "fa": "مقدار تصحیح‌شدهٔ مرجع",
+          "en": "Corrected reference value",
+          "unit": ""
+        }
+      ]
+    },
+    "relativeError": {
+      "fa": "خطای نسبی نسبت به مرجع",
+      "en": "Relative indication error",
+      "unit": "%",
+      "formula": "E = 100 × (I − R) / R",
+      "inputs": [
+        {
+          "fa": "قرائت دستگاه",
+          "en": "Instrument indication",
+          "unit": "same unit"
+        },
+        {
+          "fa": "مقدار مرجع",
+          "en": "Reference value",
+          "unit": "same unit"
+        }
+      ]
+    },
+    "inverseCalibration": {
+      "fa": "غلظت از خط کالیبراسیون و رقیق‌سازی",
+      "en": "Inverse linear calibration with dilution",
+      "unit": "",
+      "formula": "C = (signal − intercept) / slope × D",
+      "inputs": [
+        {
+          "fa": "پاسخ نمونه در واحد محور عمودی",
+          "en": "Sample signal",
+          "unit": "signal"
+        },
+        {
+          "fa": "عرض از مبدأ همان خط",
+          "en": "Calibration intercept",
+          "unit": "signal"
+        },
+        {
+          "fa": "شیب؛ پاسخ بر واحد غلظت",
+          "en": "Calibration slope",
+          "unit": "signal/concentration"
+        },
+        {
+          "fa": "ضریب رقیق‌سازی اعمال‌نشده",
+          "en": "Unapplied dilution factor",
+          "unit": "1"
+        }
+      ]
+    },
+    "moistureWet": {
+      "fa": "رطوبت بر مبنای تر با جرم ظرف",
+      "en": "Wet-basis moisture including tare",
+      "unit": "% mass",
+      "formula": "W = 100 × (m_wet − m_dry) / (m_wet − m_tare)",
+      "inputs": [
+        {
+          "fa": "جرم ظرف خالی",
+          "en": "Tare mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم ظرف و نمونهٔ تر",
+          "en": "Wet sample plus tare",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم ظرف و نمونهٔ خشک",
+          "en": "Dry sample plus tare",
+          "unit": "g"
+        }
+      ]
+    },
+    "moistureDry": {
+      "fa": "رطوبت بر مبنای خشک با جرم ظرف",
+      "en": "Dry-basis moisture including tare",
+      "unit": "% dry mass",
+      "formula": "W = 100 × (m_wet − m_dry) / (m_dry − m_tare)",
+      "inputs": [
+        {
+          "fa": "جرم ظرف خالی",
+          "en": "Tare mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم ظرف و نمونهٔ تر",
+          "en": "Wet sample plus tare",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم ظرف و نمونهٔ خشک",
+          "en": "Dry sample plus tare",
+          "unit": "g"
+        }
+      ]
+    },
+    "spikeRecovery": {
+      "fa": "بازیابی نمونهٔ افزوده با عدم‌قطعیت",
+      "en": "Spike recovery uncertainty",
+      "unit": "%",
+      "formula": "R = 100 × (C_spiked − C_unspiked) / C_added",
+      "inputs": [
+        {
+          "fa": "غلظت نمونهٔ اسپایک‌شده پس از اعمال رقیق‌سازی",
+          "en": "Spiked concentration",
+          "unit": "same unit"
+        },
+        {
+          "fa": "غلظت نمونهٔ اولیه در همان مبنا",
+          "en": "Unspiked concentration",
+          "unit": "same unit"
+        },
+        {
+          "fa": "غلظت افزوده‌شده در حجم نهایی",
+          "en": "Added concentration on final-volume basis",
+          "unit": "same unit"
+        }
+      ]
+    },
+    "massConcentrationTitration": {
+      "fa": "غلظت جرمی از تیتراسیون؛ سختی یا کلرید",
+      "en": "Mass concentration from titration",
+      "unit": "mg/L",
+      "formula": "C = 1000 × (V − Vb) × Ct × M × z / Vs",
+      "inputs": [
+        {
+          "fa": "حجم تیترانت",
+          "en": "Titrant volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم بلانک",
+          "en": "Blank volume",
+          "unit": "mL"
+        },
+        {
+          "fa": "غلظت مولار واقعی تیترانت",
+          "en": "Actual titrant molarity",
+          "unit": "mol/L"
+        },
+        {
+          "fa": "جرم مولی گونهٔ گزارش؛ مثلاً CaCO₃ یا Cl",
+          "en": "Molar mass of reporting species",
+          "unit": "g/mol"
+        },
+        {
+          "fa": "نسبت مول گونهٔ گزارش به تیترانت از واکنش",
+          "en": "Stoichiometric reporting factor",
+          "unit": "1"
+        },
+        {
+          "fa": "حجم نمونه",
+          "en": "Sample volume",
+          "unit": "mL"
+        }
+      ]
+    },
+    "forceArea": {
+      "fa": "تنش کششی یا مقاومت فشاری اسمی",
+      "en": "Nominal tensile/compressive stress",
+      "unit": "MPa",
+      "formula": "σ = F / A",
+      "inputs": [
+        {
+          "fa": "نیروی شکست/بیشینه از گزارش دستگاه",
+          "en": "Failure or maximum force",
+          "unit": "N"
+        },
+        {
+          "fa": "سطح مقطع اولیهٔ محاسبه‌شده از ابعاد",
+          "en": "Initial cross-sectional area",
+          "unit": "mm²"
+        }
+      ]
+    },
+    "electricalResistance": {
+      "fa": "مقاومت الکتریکی از ولتاژ و جریان",
+      "en": "Resistance from voltage and current",
+      "unit": "Ω",
+      "formula": "R = V / I",
+      "inputs": [
+        {
+          "fa": "ولتاژ تصحیح‌شده روی مقاومت",
+          "en": "Corrected voltage",
+          "unit": "V"
+        },
+        {
+          "fa": "جریان تصحیح‌شده عبوری",
+          "en": "Corrected current",
+          "unit": "A"
+        }
+      ]
+    },
+    "porosity": {
+      "fa": "تخلخل از چگالی ظاهری و حقیقی",
+      "en": "Porosity from bulk and true densities",
+      "unit": "%",
+      "formula": "P = 100 × (1 − ρbulk / ρtrue)",
+      "inputs": [
+        {
+          "fa": "چگالی ظاهری در مبنای تعریف‌شده",
+          "en": "Bulk density",
+          "unit": "kg/m³"
+        },
+        {
+          "fa": "چگالی حقیقی در همان مبنا",
+          "en": "True density",
+          "unit": "kg/m³"
+        }
+      ]
+    },
+    "linearExpansion": {
+      "fa": "انبساط طولی حرارتی",
+      "en": "Linear thermal expansion",
+      "unit": "mm",
+      "formula": "ΔL = α × L0 × ΔT",
+      "inputs": [
+        {
+          "fa": "ضریب انبساط خطی در بازهٔ دمایی روش",
+          "en": "Linear expansion coefficient",
+          "unit": "1/°C"
+        },
+        {
+          "fa": "طول اولیه",
+          "en": "Initial length",
+          "unit": "mm"
+        },
+        {
+          "fa": "اختلاف دما؛ نه دمای نهایی",
+          "en": "Temperature difference",
+          "unit": "°C"
+        }
+      ]
+    },
+    "volumetricTitration": {
+      "fa": "تیتراسیون حجمی با بلانک",
+      "en": "Blank-corrected volumetric titration",
+      "unit": "mol/L",
+      "formula": "C = (Vt − Vb) × Ct × z / Vs",
+      "inputs": [
+        {
+          "fa": "حجم تیترانت Vt",
+          "en": "Titrant volume Vt",
+          "unit": "mL"
+        },
+        {
+          "fa": "حجم بلانک Vb",
+          "en": "Blank volume Vb",
+          "unit": "mL"
+        },
+        {
+          "fa": "غلظت تیترانت Ct",
+          "en": "Titrant concentration Ct",
+          "unit": "mol/L"
+        },
+        {
+          "fa": "ضریب استوکیومتری z",
+          "en": "Stoichiometric factor z",
+          "unit": "1"
+        },
+        {
+          "fa": "حجم نمونه Vs",
+          "en": "Sample volume Vs",
+          "unit": "mL"
+        }
+      ]
+    },
+    "relativeDensity": {
+      "fa": "چگالی نسبی از چگالی نمونه و مرجع",
+      "en": "Relative density from sample and reference densities",
+      "unit": "1",
+      "formula": "d = ρ_sample(Ts) / ρ_reference(Tr)",
+      "inputs": [
+        {
+          "fa": "چگالی نمونه در دمای تعریف‌شده",
+          "en": "Sample density at its stated temperature",
+          "unit": "kg/m³"
+        },
+        {
+          "fa": "چگالی مرجع در دمای مرجع تعریف‌شده",
+          "en": "Reference density at its stated reference temperature",
+          "unit": "kg/m³"
+        }
+      ]
+    },
+    "kinematicFromDynamic": {
+      "fa": "گرانروی کینماتیکی از دینامیکی و چگالی",
+      "en": "Kinematic viscosity from dynamic viscosity and density",
+      "unit": "mm²/s",
+      "formula": "ν = 1000 × η / ρ",
+      "inputs": [
+        {
+          "fa": "گرانروی دینامیکی",
+          "en": "Dynamic viscosity",
+          "unit": "mPa·s"
+        },
+        {
+          "fa": "چگالی در همان دما",
+          "en": "Density at the same temperature",
+          "unit": "kg/m³"
+        }
+      ]
+    },
+    "viscosity": {
+      "fa": "گرانروی کینماتیکی از ثابت و زمان",
+      "en": "Kinematic viscosity from constant and time",
+      "unit": "mm²/s",
+      "formula": "ν = C × t",
+      "inputs": [
+        {
+          "fa": "ثابت ویسکومتر C",
+          "en": "Viscometer constant C",
+          "unit": "mm²/s²"
+        },
+        {
+          "fa": "زمان جریان t",
+          "en": "Flow time t",
+          "unit": "s"
+        }
+      ]
+    },
+    "residue": {
+      "fa": "درصد جرمی باقیمانده",
+      "en": "Residue mass percentage",
+      "unit": "% mass",
+      "formula": "w = 100 × m_res / m_sample",
+      "inputs": [
+        {
+          "fa": "جرم خالص باقیمانده",
+          "en": "Net residue mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم نمونه",
+          "en": "Sample mass",
+          "unit": "g"
+        }
+      ]
+    },
+    "loss": {
+      "fa": "درصد افت جرم",
+      "en": "Mass loss percentage",
+      "unit": "% mass",
+      "formula": "w = 100 × (m_initial − m_final) / m_initial",
+      "inputs": [
+        {
+          "fa": "جرم اولیه",
+          "en": "Initial mass",
+          "unit": "g"
+        },
+        {
+          "fa": "جرم نهایی",
+          "en": "Final mass",
+          "unit": "g"
+        }
+      ]
+    },
+    "corrected": {
+      "fa": "قرائت تصحیح‌شده",
+      "en": "Corrected reading",
+      "unit": "",
+      "formula": "y = I + correction",
+      "inputs": [
+        {
+          "fa": "قرائت دستگاه",
+          "en": "Instrument reading",
+          "unit": ""
+        },
+        {
+          "fa": "تصحیح با علامت",
+          "en": "Signed correction",
+          "unit": ""
+        }
+      ]
+    },
+    "diluted": {
+      "fa": "غلظت پس از کسر بلانک و رقیق‌سازی",
+      "en": "Blank-corrected diluted concentration",
+      "unit": "",
+      "formula": "C = (C_read − C_blank) × D",
+      "inputs": [
+        {
+          "fa": "غلظت خوانده‌شده",
+          "en": "Read concentration",
+          "unit": ""
+        },
+        {
+          "fa": "غلظت بلانک در همان واحد",
+          "en": "Blank in the same unit",
+          "unit": ""
+        },
+        {
+          "fa": "ضریب رقیق‌سازی",
+          "en": "Dilution factor",
+          "unit": "1"
+        }
+      ]
+    },
+    "dynamic": {
+      "fa": "گرانروی دینامیکی از چگالی و گرانروی کینماتیکی",
+      "en": "Dynamic viscosity from density and kinematic viscosity",
+      "unit": "mPa·s",
+      "formula": "η = ν × ρ / 1000",
+      "inputs": [
+        {
+          "fa": "گرانروی کینماتیکی",
+          "en": "Kinematic viscosity",
+          "unit": "mm²/s"
+        },
+        {
+          "fa": "چگالی در همان دما",
+          "en": "Density at the same temperature",
+          "unit": "kg/m³"
+        }
+      ]
+    },
+    "density": {
+      "fa": "چگالی از جرم و حجم",
+      "en": "Density from mass and volume",
+      "unit": "g/mL",
+      "formula": "mass / volume",
+      "inputs": [
+        {
+          "fa": "جرم",
+          "en": "Mass",
+          "unit": "g"
+        },
+        {
+          "fa": "حجم",
+          "en": "Volume",
+          "unit": "mL"
+        }
+      ]
+    },
+    "gcExtraction": {
+      "fa": "GC-FID با استخراج و کالیبراسیون خارجی",
+      "en": "GC-FID extraction and external calibration",
+      "unit": "mg/kg",
+      "formula": "(A-b)/a × V × D / (m × R/100)",
+      "inputs": [
+        {
+          "fa": "مساحت پیک نمونه A",
+          "en": "Sample peak area A",
+          "unit": "area"
+        },
+        {
+          "fa": "شیب a برای غلظت بر حسب mg/L",
+          "en": "Slope a for concentration in mg/L",
+          "unit": "area/(mg/L)"
+        },
+        {
+          "fa": "عرض از مبدأ b",
+          "en": "Intercept b",
+          "unit": "area"
+        },
+        {
+          "fa": "حجم نهایی محلول (mL)",
+          "en": "Final solution volume (mL)",
+          "unit": "mL"
+        },
+        {
+          "fa": "ضریب رقیق‌سازی بعد از استخراج",
+          "en": "Post-extraction dilution factor",
+          "unit": "1"
+        },
+        {
+          "fa": "جرم نمونه (g)",
+          "en": "Sample mass (g)",
+          "unit": "g"
+        },
+        {
+          "fa": "بازیابی برای تصحیح (%)",
+          "en": "Recovery correction (%)",
+          "unit": "%"
+        }
+      ]
+    }
+  },
+  "methods": [
+    {
+      "id": 1,
+      "fa": "کربن باقیمانده رمزباتوم (ASTM D524)",
+      "en": "Ramsbottom carbon residue",
+      "references": [
+        "ASTM D524"
+      ],
+      "kind": "numeric",
+      "models": [
+        "residue"
+      ],
+      "effects": [
+        "Net residue mass (g)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 2,
+      "fa": "کشش‌پذیری پسماند پس از TFOT",
+      "en": "Ductility of TFOT residue",
+      "references": [
+        "ASTM D1754/D1754M",
+        "ASTM D113"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 3,
+      "fa": "کشش‌پذیری قیر (داکتیلیتی، D113)",
+      "en": "Bitumen ductility",
+      "references": [
+        "ASTM D113"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 4,
+      "fa": "کلر کل (ISO 15597)",
+      "en": "Total chlorine, ISO 15597",
+      "references": [
+        "ISO 15597"
+      ],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 5,
+      "fa": "گرانروی در 40 درجه سانتی گراد (ASTM D445)",
+      "en": "Kinematic viscosity at 40°C",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 6,
+      "fa": "گرانروی کینماتیک در دمای 100 درجه سانتی گراد و با سرعت برش کم (ASTM D445)",
+      "en": "Low-shear kinematic viscosity at 100°C",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 7,
+      "fa": "گرانروی دینامیکی در ۱۵۰°C و برش زیاد (HTHS؛ روش وابسته به دستگاه)",
+      "en": "HTHS dynamic viscosity at 150°C",
+      "references": [
+        "ASTM D4683"
+      ],
+      "kind": "numeric",
+      "models": [
+        "hthsTbs"
+      ],
+      "effects": [
+        "Sample torque signal (signal)",
+        "Torque-to-viscosity calibration slope (mPa·s/signal)",
+        "Intercept of the same calibration (mPa·s)",
+        "Temperature-effect correction in viscosity units (mPa·s)",
+        "Shear-rate / rotor-position correction (mPa·s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Manufacturer's linear TBS calibration, not a universal HTHS equation. Use slope, intercept and their correlation from the same calibration. Temperature, shear rate and reference oils must match the actual method."
+    },
+    {
+      "id": 8,
+      "fa": "گرانروی کینماتیک در دمای 50 درجه سانتی گراد (ASTM D445)",
+      "en": "Kinematic viscosity at 50°C",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 9,
+      "fa": "گرانروی کینماتیک مایعات در دمای 100 درجه سانتی گراد (ASTM D445)",
+      "en": "Kinematic viscosity at 100°C",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 10,
+      "fa": "تخمین گرمای احتراق خالص و کل",
+      "en": "Estimated net and gross heat of combustion",
+      "references": [
+        "ASTM D4868"
+      ],
+      "kind": "numeric",
+      "models": [
+        "heatNet",
+        "heatGross"
+      ],
+      "effects": [
+        "Density at 15°C (kg/m³)",
+        "Water mass percentage (% mass)",
+        "Ash mass percentage (% mass)",
+        "Sulfur mass percentage (% mass)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "x, y and s are mass fractions; input percentages are divided by 100. This is an empirical estimate for conventional hydrocarbon fuels at 750–1000 kg/m³, not biodiesel/alcohol blends or pure compounds. Include model-discrepancy uncertainty from validation."
+    },
+    {
+      "id": 11,
+      "fa": "تشخیص خوردگی تیغه مسی (ASTM D130)",
+      "en": "Copper-strip corrosion classification",
+      "references": [
+        "ASTM D130"
+      ],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 12,
+      "fa": "تعیین ترکیبات هیدروکربنی در سوخت (بنزینی) به روش کروماتوگرافی گازی به صورت جزء به جزء",
+      "en": "Detailed gasoline hydrocarbon composition by GC",
+      "references": [
+        "ASTM D6730",
+        "ASTM D6729"
+      ],
+      "kind": "numeric",
+      "models": [
+        "gcNormalization"
+      ],
+      "effects": [
+        "Component peak area (area)",
+        "Multiplicative response correction factor (1)",
+        "Sum of corrected other components, excluding this component (corrected area)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Corrected GC response percent is not automatically mass or volume percent. Response factors and reporting basis must match the actual method."
+    },
+    {
+      "id": 13,
+      "fa": "تعیین دانسیته یا دانسیته نسبی - روش های پیکنومتر با درپوش مویین دار",
+      "en": "Density or relative density by capillary-stopper pycnometer",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "pycnometer"
+      ],
+      "effects": [
+        "Empty pycnometer mass (g)",
+        "Sample-filled mass (g)",
+        "Water-filled mass (g)",
+        "Reference water density at measurement temperature (kg/m³)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 14,
+      "fa": "تعیین ذرات سخت",
+      "en": "Hard-particle content",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "residue"
+      ],
+      "effects": [
+        "Net residue mass (g)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 15,
+      "fa": "تعیین آروماتیک، اولفین و اشباع (پونا) به روش FIA",
+      "en": "Aromatics, olefins and saturates by FIA",
+      "references": [
+        "ASTM D1319"
+      ],
+      "kind": "numeric",
+      "models": [
+        "volumePercent"
+      ],
+      "effects": [
+        "Corrected component volume (mL)",
+        "Total sample volume on the same temperature basis (mL)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "In FIA, zone length may be related to volume fraction by the method. Verify conversion and corrections before using a ratio model."
+    },
+    {
+      "id": 16,
+      "fa": "تعیین مقدار pH اولیه",
+      "en": "Initial pH",
+      "references": [
+        "ASTM D7946"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 17,
+      "fa": "تعیین مقدار افزودنی های بازدارنده",
+      "en": "Inhibitor additive content",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 18,
+      "fa": "تعیین مقدار گوگرد به روش طیف سنجى فلورسانس یرتو ایکس با پاشندگى انرژی (ASTM D4294)",
+      "en": "Sulfur by energy-dispersive XRF",
+      "references": [
+        "ASTM D4294"
+      ],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 19,
+      "fa": "تعیین نقطه جوش",
+      "en": "Boiling point",
+      "references": [
+        "ASTM D1120"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 20,
+      "fa": "تعیین نقطه اشتعال - روش کاپ بسته پنسکی - مارتین (ASTM D93)",
+      "en": "Pensky–Martens closed-cup flash point",
+      "references": [
+        "ASTM D93"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 21,
+      "fa": "تعیین نقطه ابری شدن (ASTM D2500)",
+      "en": "Cloud point",
+      "references": [
+        "ASTM D2500"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 22,
+      "fa": "تعیین ویسکوزیته سینماتیک (ASTM D445)",
+      "en": "Kinematic viscosity",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 23,
+      "fa": "حلالیت قیر در تری‌کلرواتیلن (ASTM D2042)",
+      "en": "Bitumen solubility in trichloroethylene",
+      "references": [
+        "ASTM D2042"
+      ],
+      "kind": "numeric",
+      "models": [
+        "solubility"
+      ],
+      "effects": [
+        "Net insoluble residue (g)",
+        "Initial sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 24,
+      "fa": "خوردگی نوار مس در دمای 100 درجه سانتی گراد و 3 ساعت (ASTM D130)",
+      "en": "Copper-strip corrosion at 100°C for 3 h",
+      "references": [
+        "ASTM D130"
+      ],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 25,
+      "fa": "دانسیته در 15.5°C",
+      "en": "Density at 15.5°C",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 26,
+      "fa": "درجه نفوذ قیر در ۲۵°C (100g,5s) (ASTM D5)",
+      "en": "Bitumen penetration at 25°C, 100 g, 5 s",
+      "references": [
+        "ASTM D5"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 27,
+      "fa": "پایداری برشی (گرانروی کینماتیک در دمای 100درجه سانتی گراد پس از انجام آزمون)",
+      "en": "Shear stability: post-test kinematic viscosity at 100°C",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 28,
+      "fa": "اندازه گیری عدد قلیائى کل",
+      "en": "Total base number",
+      "references": [
+        "ASTM D2896",
+        "ASTM D4739"
+      ],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 29,
+      "fa": "اندازه گیری اسید آزاد",
+      "en": "Free acid content",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "freeAcid"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual titrant concentration (mol/L)",
+        "Sample mass (g)",
+        "Molar mass of the reported acid (g/mol)",
+        "Moles of acid per mole of titrant (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Free acid has no universal analyte-independent equation. This model titrates a specified acid; identity, titratable protons, solvent and endpoint must be defined in the SOP. The hypothetical example uses acetic acid."
+    },
+    {
+      "id": 30,
+      "fa": "اندازه گیری قلیایی آزاد",
+      "en": "Free alkalinity",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 31,
+      "fa": "اندازه گیری درصد عبور UV از گلایکول",
+      "en": "UV transmittance of glycol",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "transmission",
+        "corrected"
+      ],
+      "effects": [
+        "Dark-corrected sample intensity (signal)",
+        "Dark-corrected reference intensity (signal)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 32,
+      "fa": "اندازه گیری مقدار کلراید",
+      "en": "Chloride content",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 33,
+      "fa": "اندازه گیری ویسکوزیته سیال",
+      "en": "Fluid viscosity",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 34,
+      "fa": "اندازه گیری مقدار آلدهید",
+      "en": "Aldehyde content",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 35,
+      "fa": "اندازه گیری مقدار آهن",
+      "en": "Iron content",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 36,
+      "fa": "اندازه گیری ویسکوزیته کینماتیک مایعات شفاف و کدر با هولیون ویسکومتر",
+      "en": "Kinematic viscosity using a Houillon viscometer",
+      "references": [
+        "ASTM D7279"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 37,
+      "fa": "اندازه گیری روغن",
+      "en": "Oil content",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "residue"
+      ],
+      "effects": [
+        "Net residue mass (g)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 38,
+      "fa": "اندازه‌گیری آب؛ انتخاب کارل فیشر یا تقطیر الزامی",
+      "en": "Water: select Karl Fischer or distillation",
+      "references": [
+        "ASTM D6304",
+        "ASTM D95"
+      ],
+      "kind": "numeric",
+      "models": [
+        "kfCoulometric",
+        "kfVolumetric",
+        "volumePercent"
+      ],
+      "effects": [
+        "Instrument water mass after method drift correction (µg)",
+        "Water blank, zero only if already subtracted (µg)",
+        "Injected sample mass by difference (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Karl Fischer and distillation are different methods. Select the actual procedure, reporting basis and blank/drift correction."
+    },
+    {
+      "id": 39,
+      "fa": "اندازه گیری عدد اکتان بنزین به روش موتور",
+      "en": "Motor octane number",
+      "references": [
+        "ASTM D2700"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 40,
+      "fa": "اندازه گیری دانسیته",
+      "en": "Density",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 41,
+      "fa": "اندازه گیری مقدار اسیدیته",
+      "en": "Acidity",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 42,
+      "fa": "اندازه گیرى عدد اسیدى",
+      "en": "Acid number",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 43,
+      "fa": "اندازه گیری رسوب به روش استخراج",
+      "en": "Sediment by extraction",
+      "references": [
+        "ASTM D473"
+      ],
+      "kind": "numeric",
+      "models": [
+        "residue"
+      ],
+      "effects": [
+        "Net residue mass (g)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 44,
+      "fa": "اندازه گیری چگالی",
+      "en": "Density measurement",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 45,
+      "fa": "اندازه گیری آب به روش تقطیر (ASTM D95)",
+      "en": "Water by distillation",
+      "references": [
+        "ASTM D95"
+      ],
+      "kind": "numeric",
+      "models": [
+        "volumePercent"
+      ],
+      "effects": [
+        "Corrected component volume (mL)",
+        "Total sample volume on the same temperature basis (mL)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 46,
+      "fa": "اندازه گیری رنگ سیبلت (ASTM D156)",
+      "en": "Saybolt color",
+      "references": [
+        "ASTM D156"
+      ],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 47,
+      "fa": "اندازه گیری فشار بخار (روش رید) (ASTM D323)",
+      "en": "Reid vapor pressure",
+      "references": [
+        "ASTM D323"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 48,
+      "fa": "اندازه گیری گرانروی و کینماتیک مایعات شفاف و تیره (و محاسبه گرانروی دینامیک) (ASTM D445)",
+      "en": "Kinematic viscosity of transparent/opaque liquids and derived dynamic viscosity",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 49,
+      "fa": "اندازه گیری گرانروی کینماتیک (ASTM D445)",
+      "en": "Kinematic viscosity measurement",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosity"
+      ],
+      "effects": [
+        "Viscometer constant C (mm²/s²)",
+        "Flow time t (s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 50,
+      "fa": "اندازه گیری میزان خاکستر برحسب درصد وزنی (ASTM D482)",
+      "en": "Ash mass fraction",
+      "references": [
+        "ASTM D482"
+      ],
+      "kind": "numeric",
+      "models": [
+        "residue"
+      ],
+      "effects": [
+        "Net residue mass (g)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 51,
+      "fa": "اندازه گیری عدد اسیدی (ASTM D664)",
+      "en": "Acid number by potentiometric titration",
+      "references": [
+        "ASTM D664"
+      ],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 52,
+      "fa": "چگالی، چگالی نسبی یا API با هیدرومتر (ASTM D1298)",
+      "en": "Density, relative density or API by hydrometer",
+      "references": [
+        "ASTM D1298"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected",
+        "relativeDensity",
+        "apiGravity"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Choose density, relative density or API. These base models do not perform hydrometer temperature-correction tables."
+    },
+    {
+      "id": 53,
+      "fa": "اندازه گیری رنگ (ASTM D1500)",
+      "en": "ASTM color",
+      "references": [
+        "ASTM D1500"
+      ],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 54,
+      "fa": "اندازه گیری مرکاپتان (ASTM D3227)",
+      "en": "Mercaptan sulfur",
+      "references": [
+        "ASTM D3227"
+      ],
+      "kind": "numeric",
+      "models": [
+        "mercaptanSulfur"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual titrant concentration (mol/L)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Reports mercaptan sulfur mass, not whole mercaptan molecular mass. AgNO₃ reacts 1:1 with thiol groups. Assess endpoint, blank, side reactions and recovery."
+    },
+    {
+      "id": 55,
+      "fa": "اندازه گیری آب و رسوبات به روش سانتریفیوژ (ASTM D4007)",
+      "en": "Water and sediment by centrifuge",
+      "references": [
+        "ASTM D4007"
+      ],
+      "kind": "numeric",
+      "models": [
+        "volumePercent"
+      ],
+      "effects": [
+        "Corrected component volume (mL)",
+        "Total sample volume on the same temperature basis (mL)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 56,
+      "fa": "اندازه گیری چگالی با استفاده از چگالی سنج با نمایشگر عددی (ASTM D4052)",
+      "en": "Density by digital density meter",
+      "references": [
+        "ASTM D4052"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 57,
+      "fa": "اندازه گیری چگالی نسبی با استفاده از چگالی سنج با نمایشگر عددی (ASTM D4052)",
+      "en": "Relative density by digital density meter",
+      "references": [
+        "ASTM D4052"
+      ],
+      "kind": "numeric",
+      "models": [
+        "relativeDensity",
+        "corrected"
+      ],
+      "effects": [
+        "Sample density at its stated temperature (kg/m³)",
+        "Reference density at its stated reference temperature (kg/m³)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 58,
+      "fa": "اندازه گیری گراویتی API با استفاده از چگالی سنج با نمایشگر عددی (ASTM D4052)",
+      "en": "API gravity by digital density meter",
+      "references": [
+        "ASTM D4052"
+      ],
+      "kind": "numeric",
+      "models": [
+        "apiGravity"
+      ],
+      "effects": [
+        "Specific gravity corrected to 60°F/60°F (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "SG must already be on the 60°F/60°F basis. This model does not perform temperature or pressure correction tables."
+    },
+    {
+      "id": 59,
+      "fa": "اندازه گیری گرانروی و چگالی مایعات بوسیله گرانروی سنج استابینگر ( و محاسبه گرانروی کینماتیک) (ASTM D7042)",
+      "en": "Viscosity/density by Stabinger viscometer and derived kinematic viscosity",
+      "references": [
+        "ASTM D7042"
+      ],
+      "kind": "numeric",
+      "models": [
+        "kinematicFromDynamic",
+        "dynamic",
+        "corrected"
+      ],
+      "effects": [
+        "Dynamic viscosity (mPa·s)",
+        "Density at the same temperature (kg/m³)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Choose the direct instrument result or the derived viscosity relation. Input budgets must cover temperature and instrument calibration."
+    },
+    {
+      "id": 60,
+      "fa": "اندازه‌گیری کلر در ضدیخ",
+      "en": "Chloride in antifreeze",
+      "references": [
+        "ASTM D3634"
+      ],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 61,
+      "fa": "اندازه‌گیری آب به روش کارل فیشر",
+      "en": "Water by Karl Fischer",
+      "references": [
+        "ASTM D6304"
+      ],
+      "kind": "numeric",
+      "models": [
+        "kfCoulometric",
+        "kfVolumetric"
+      ],
+      "effects": [
+        "Instrument water mass after method drift correction (µg)",
+        "Water blank, zero only if already subtracted (µg)",
+        "Injected sample mass by difference (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "D6304 is coulometric. A volumetric model is only for a separate volumetric SOP and must not be labelled D6304."
+    },
+    {
+      "id": 62,
+      "fa": "اندازه‌گیری عدد خنثی سازی - روش تیتراسیون پتانسیومتری",
+      "en": "Neutralization number by potentiometric titration",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 63,
+      "fa": "اندازه‌گیری تقطیر در فشار اتمسفر (ASTM D86)",
+      "en": "Atmospheric distillation",
+      "references": [
+        "ASTM D86"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Record a separate temperature and budget at each recovery point. One number does not represent the full distillation curve."
+    },
+    {
+      "id": 64,
+      "fa": "اندازه‌گیری نقطه ریزش (ASTM D97)",
+      "en": "Pour point",
+      "references": [
+        "ASTM D97"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 65,
+      "fa": "اندزاه گیری مقدار Specific Gravity در گلایکول",
+      "en": "Specific gravity of glycol",
+      "references": [
+        "ASTM D1122"
+      ],
+      "kind": "numeric",
+      "models": [
+        "relativeDensity",
+        "corrected"
+      ],
+      "effects": [
+        "Sample density at its stated temperature (kg/m³)",
+        "Reference density at its stated reference temperature (kg/m³)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 66,
+      "fa": "آزمون تعیین عدد اکتان",
+      "en": "Octane number: select RON/MON",
+      "references": [
+        "ASTM D2699",
+        "ASTM D2700"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 67,
+      "fa": "آزمون خوردگی در دمای 121 درجه سانتی گراد",
+      "en": "Corrosion classification at 121°C",
+      "references": [],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 68,
+      "fa": "آزمون خوردگی در دمای 135 درجه سانتی گراد",
+      "en": "Corrosion classification at 135°C",
+      "references": [],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 69,
+      "fa": "آزمون دکتر (ASTM D4952)",
+      "en": "Doctor test",
+      "references": [
+        "ASTM D4952"
+      ],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 70,
+      "fa": "آزمون قابلیت جدا شدن آب از روغن و سیال های سنتزی (ASTM D1401)",
+      "en": "Water separability of oils and synthetic fluids",
+      "references": [
+        "ASTM D1401"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 71,
+      "fa": "آزمون لکه مواد قیری",
+      "en": "Bituminous-material spot test",
+      "references": [],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 72,
+      "fa": "شاخص گرانروی (ASTM D2270)",
+      "en": "Viscosity index",
+      "references": [
+        "ASTM D2270"
+      ],
+      "kind": "numeric",
+      "models": [
+        "viscosityIndex"
+      ],
+      "effects": [
+        "Kinematic viscosity at 40°C (mm²/s)",
+        "Kinematic viscosity at 100°C (mm²/s)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "For Y=2–70, L/H use linearly interpolated reference data; above 70, quadratic equations apply. Monte Carlo re-evaluates lookup and the VI branch for every draw. Propagation uses unrounded VI; record the reference dataset and method edition."
+    },
+    {
+      "id": 73,
+      "fa": "طیف گیری از نمونه-ها درناحیه مادون قرمز توسط دستگاه FT-IR",
+      "en": "FT-IR spectrum / selected-wavenumber response",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "absorbance",
+        "corrected"
+      ],
+      "effects": [
+        "Transmittance percentage at selected wavelength (% T)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Define the FT-IR wavenumber or quantitative feature. The absorbance model covers one numerical output, not uncertainty of an entire spectrum."
+    },
+    {
+      "id": 74,
+      "fa": "عدد خنثی شدن کل",
+      "en": "Total neutralization number",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 75,
+      "fa": "عدد قلیایی کل TBN (ASTM D2896)",
+      "en": "Total base number by D2896",
+      "references": [
+        "ASTM D2896"
+      ],
+      "kind": "numeric",
+      "models": [
+        "acidBaseNumber"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual equivalent concentration (eq/L)",
+        "Net sample mass (g)",
+        "KOH equivalent mass (g/eq)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 76,
+      "fa": "فراریت",
+      "en": "Evaporation loss",
+      "references": [
+        "ASTM D5800"
+      ],
+      "kind": "numeric",
+      "models": [
+        "loss"
+      ],
+      "effects": [
+        "Initial mass (g)",
+        "Final mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 77,
+      "fa": "محاسبه توزیع کربن و تجزیه و تحلیل گروه ساختاری به روش n-d-M",
+      "en": "Carbon distribution and ring analysis by n-d-M",
+      "references": [
+        "ASTM D3238"
+      ],
+      "kind": "numeric",
+      "models": [
+        "ndmCA",
+        "ndmCN",
+        "ndmCP",
+        "ndmRA",
+        "ndmRN",
+        "ndmRT"
+      ],
+      "effects": [
+        "Refractive index nD at 20°C (1)",
+        "Density d4 at 20°C (g/mL)",
+        "Mean molar mass (g/mol)",
+        "Sulfur mass percentage (% mass)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "For olefin-free petroleum oils within the method composition range. The v/w branches are re-evaluated for every Monte Carlo draw. Carbon distribution and ring counts are separate outputs; carbon percentages are structural, not compound mass percentages."
+    },
+    {
+      "id": 78,
+      "fa": "محاسبه شاخص ستان به روش معادله چهار متغیره",
+      "en": "Calculated four-variable cetane index",
+      "references": [
+        "ASTM D4737"
+      ],
+      "kind": "numeric",
+      "models": [
+        "cetaneA"
+      ],
+      "effects": [
+        "Density at 15°C (g/mL)",
+        "10% recovery temperature at reference pressure (°C)",
+        "50% recovery temperature (°C)",
+        "90% recovery temperature (°C)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "B=exp[−3.5(ρ−0.85)]−1; normalized temperatures are T10−215, T50−260 and T90−310. Procedure A estimates petroleum-fuel cetane index, not measured cetane number; do not apply it to cetane-improver/biodiesel blends. Assess model discrepancy separately."
+    },
+    {
+      "id": 79,
+      "fa": "محاسبه فشار بخار واقعی",
+      "en": "True vapor pressure estimation",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "trueVaporRefined"
+      ],
+      "effects": [
+        "Absolute Reid vapor pressure (psia)",
+        "D86 slope at 10% evaporated (°F/vol%)",
+        "Liquid surface temperature (°F)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A=15.64−1.854√S−(0.8742−0.3280√S)ln(RVP); B=8742−1042√S−(1049−179.4√S)ln(RVP). EPA correlation for applicable light refined stocks, not crude oil or arbitrary mixtures. Include empirical-correlation discrepancy in the budget."
+    },
+    {
+      "id": 80,
+      "fa": "محاسبه ویسکوزیته دینامیک",
+      "en": "Calculated dynamic viscosity",
+      "references": [
+        "ASTM D445"
+      ],
+      "kind": "numeric",
+      "models": [
+        "dynamic"
+      ],
+      "effects": [
+        "Kinematic viscosity (mm²/s)",
+        "Density at the same temperature (kg/m³)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 81,
+      "fa": "مقدار آب ضدیخ (ASTM D1123)",
+      "en": "Water in coolant concentrate",
+      "references": [
+        "ASTM D1123"
+      ],
+      "kind": "numeric",
+      "models": [
+        "coolantWater"
+      ],
+      "effects": [
+        "Titrant volume (mL)",
+        "Blank volume (mL)",
+        "Actual water titer of KF reagent (mg/mL)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "Volumetric KF for coolant concentrate, reported as mass percent. Do not subtract blank or drift twice. Include water release, matrix interference and titer standardization. This is not volume-percent water."
+    },
+    {
+      "id": 82,
+      "fa": "مواد نامحلول در پنتان",
+      "en": "Pentane insolubles",
+      "references": [
+        "ASTM D893"
+      ],
+      "kind": "numeric",
+      "models": [
+        "residue"
+      ],
+      "effects": [
+        "Net residue mass (g)",
+        "Sample mass (g)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 83,
+      "fa": "آنالیز عناصر فلزی به روش طیف‌سنجی نشری پلاسمای جفت‌شده القایی (ICP-OES) — ASTM D5185",
+      "en": "Metal elements by ICP-OES",
+      "references": [
+        "ASTM D5185"
+      ],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 84,
+      "fa": "آنالیز عنصری روغن به روش نشر اتمی (RDE-OES)",
+      "en": "Oil elements by RDE-OES",
+      "references": [
+        "ASTM D6595"
+      ],
+      "kind": "numeric",
+      "models": [
+        "diluted"
+      ],
+      "effects": [
+        "Read concentration (reporting unit)",
+        "Blank in the same unit (reporting unit)",
+        "Dilution factor (1)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 85,
+      "fa": "نسبت نفوذ باقیمانده پس از TFOT",
+      "en": "Retained penetration after TFOT",
+      "references": [
+        "ASTM D1754/D1754M",
+        "ASTM D5"
+      ],
+      "kind": "numeric",
+      "models": [
+        "ratioPercent"
+      ],
+      "effects": [
+        "Result after treatment (same unit)",
+        "Result before treatment (same unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 86,
+      "fa": "نفوذپذیری کارکرده در 25°C",
+      "en": "Worked penetration at 25°C",
+      "references": [
+        "ASTM D217"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 87,
+      "fa": "نقطه جوش خالص",
+      "en": "Boiling point of neat coolant",
+      "references": [
+        "ASTM D1120"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 88,
+      "fa": "نقطه جوش محلول 50%",
+      "en": "Boiling point of 50% solution",
+      "references": [
+        "ASTM D1120"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 89,
+      "fa": "نقطه اشتعال قیر (کلیولند، D92)",
+      "en": "Cleveland open-cup flash point of bitumen",
+      "references": [
+        "ASTM D92"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 90,
+      "fa": "نقطه اشتعال باز (کلیولند، ASTM D92)",
+      "en": "Cleveland open-cup flash point",
+      "references": [
+        "ASTM D92"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 91,
+      "fa": "نقطه انجماد محلول 33% (ASTM D1177)",
+      "en": "Freezing point of 33% solution",
+      "references": [
+        "ASTM D1177"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 92,
+      "fa": "نقطه انجماد محلول 50% (ASTM D1177)",
+      "en": "Freezing point of 50% solution",
+      "references": [
+        "ASTM D1177"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 93,
+      "fa": "نقطه قطره‌ای شدن",
+      "en": "Dropping point",
+      "references": [
+        "ASTM D2265"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 94,
+      "fa": "نمونه برداری دستی",
+      "en": "Manual sampling",
+      "references": [
+        "ASTM D4057"
+      ],
+      "kind": "sampling",
+      "models": [],
+      "effects": [
+        "Sampling design, location and lot heterogeneity",
+        "Independent duplicate samples and study design",
+        "Storage, transport, stability and contamination",
+        "Separate sampling variance from analytical variance"
+      ],
+      "scope": "Sampling is a separate stage; an instrument budget alone does not cover how well a sample represents the lot."
+    },
+    {
+      "id": 95,
+      "fa": "وجود آب در روش کراکل",
+      "en": "Water presence by crackle test",
+      "references": [],
+      "kind": "qualitative",
+      "models": [],
+      "effects": [
+        "Visual reference and positive/negative controls",
+        "Assessor agreement and repeat tests",
+        "Misclassification probability and category boundaries",
+        "Method conditions and documented decision rule"
+      ],
+      "scope": "This result is qualitative or ordinal. Do not apply U=k×u directly to a category name; assess method validity and decision error separately."
+    },
+    {
+      "id": 96,
+      "fa": "وزن مخصوص قیر",
+      "en": "Specific gravity of bitumen",
+      "references": [
+        "ASTM D70/D70M"
+      ],
+      "kind": "numeric",
+      "models": [
+        "relativeDensity",
+        "pycnometer"
+      ],
+      "effects": [
+        "Sample density at its stated temperature (kg/m³)",
+        "Reference density at its stated reference temperature (kg/m³)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 97,
+      "fa": "چگالی در 15 درجه سانتی گراد",
+      "en": "Density at 15°C",
+      "references": [],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    },
+    {
+      "id": 98,
+      "fa": "pH محلول 50%",
+      "en": "pH of 50% solution",
+      "references": [
+        "ASTM D1287"
+      ],
+      "kind": "numeric",
+      "models": [
+        "corrected"
+      ],
+      "effects": [
+        "Instrument reading (reporting unit)",
+        "Signed correction (reporting unit)",
+        "Reference and instrument calibration uncertainty",
+        "Method precision, drift, recovery and model discrepancy without double counting",
+        "Correlations between shared inputs"
+      ],
+      "scope": "A base equation and sensitivities are available. Match inputs and applicability to the actual SOP and instrument; this is not certification of complete ASTM implementation."
+    }
+  ]
+}
