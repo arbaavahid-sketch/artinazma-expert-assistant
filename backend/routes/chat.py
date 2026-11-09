@@ -345,6 +345,23 @@ def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
             f"متن:\n{doc.get('content', '')}"
         )
     context = "\n\n".join(context_parts)
+    # Explicit ChEBI identifiers only; transform follow-ups stay history-only.
+    chebi_reference = None
+    if not is_transform_followup and re.search(r"\bCHEBI:[1-9][0-9]{0,9}\b", body.message, re.I):
+        from chebi_service import chebi_chat_context
+        chebi_context, chebi_reference = chebi_chat_context(body.message)
+        if chebi_context:
+            context = f"{context}\n\n{chebi_context}".strip()
+            search_mode += "+chebi"
+
+
+    occupational_reference = None
+    if not is_transform_followup and re.search(r"\b(?:NIOSH|OSHA|NPG|IDLH|REL|PEL)\b", body.message, re.I):
+        from occupational_reference import occupational_chat_context
+        occupational_context, occupational_reference = occupational_chat_context(body.message)
+        if occupational_context:
+            context = f"{context}\n\n{occupational_context}".strip()
+            search_mode += "+niosh_snapshot"
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
@@ -522,6 +539,11 @@ Laboratory answer contract:
                 "excerpt": content[:260],
             }
         )
+    if occupational_reference:
+        record = occupational_reference['record']
+        sources.append({"citation_id": f"S{len(sources)+1}", "title": f"NIOSH NPG {record['id']} · {record['en']}", "file_name": record['sourceUrl'], "url": record['sourceUrl'], "category": "occupational_reference", "chunk_index": 0, "score": 1.0, "score_reason": "Reviewed selected US reference snapshot, not current regulatory verification", "excerpt": " | ".join(f"{x['agency']} {x['kind']}: {x['raw']}" for x in record['limits']), "checkedOn": record['checkedOn'], "snapshotVersion": occupational_reference['version']})
+    if chebi_reference:
+        sources.append({"citation_id": f"S{len(sources)+1}", "title": f"{chebi_reference['id']} · {chebi_reference['name']}", "file_name": chebi_reference['sourceUrl'], "url": chebi_reference['sourceUrl'], "category": "chemical_reference", "chunk_index": 0, "score": 1.0, "score_reason": "Explicit ChEBI identifier; reference data, not product certification.", "excerpt": chebi_reference['definition'][:260], "fetchedAt": chebi_reference['fetchedAt'], "sourceUpdatedAt": chebi_reference['sourceUpdatedAt'], "license": "CC BY 4.0"})
     if allow_company_reference:
         sources.append(
             {

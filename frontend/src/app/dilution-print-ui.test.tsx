@@ -1,0 +1,6 @@
+import React from 'react';
+import {it,expect,vi} from 'vitest';
+import {render,screen,fireEvent} from '@testing-library/react';
+import DilutionPrint from './calculators/workspace/DilutionPrint';
+import {emptyDilutionLabel,type DilutionPlan} from './calculators/workspace/dilution-plan';
+it('requires calculation after editing numeric inputs but not label-only edits',()=>{const p:DilutionPlan={stock:'1000',unit:'mg/L',source:'example',steps:[{target:'100',unit:'mg/L',volume:'100',volumeUnit:'mL'}],label:{...emptyDilutionLabel(),solutionId:'S'}};const change=vi.fn(),material={name:'Methanol',formula:'CH3OH',cid:887};const view=render(<DilutionPrint ready en plan={p} material={material} onChange={change}/>);expect(screen.getByRole('button',{name:'Download instructions and labels for printing (HTML)'})).not.toBeDisabled();expect(screen.getByText('S-D1')).toBeVisible();fireEvent.change(screen.getByLabelText('Prepared by'),{target:{value:'Example'}});expect(change.mock.calls[0][0].label.preparedBy).toBe('Example');view.rerender(<DilutionPrint ready={false} en plan={p} material={material} onChange={change}/>);expect(screen.getByRole('button',{name:'Download instructions and labels for printing (HTML)'})).toBeDisabled();expect(screen.queryByText('S-D1')).toBeNull();});

@@ -1,0 +1,2 @@
+# Optional engine. Review GPL-3.0 distribution requirements before packaging.
+suncal==1.7.1

@@ -409,8 +409,8 @@ class TestInputValidation:
 class TestCustomerRequest:
     """تست‌های درخواست مشاوره مشتری."""
 
-    def test_create_customer_request(self, app_client):
-        res = app_client.post("/customer-requests", json={
+    def test_create_customer_request(self, authenticated_client):
+        res = authenticated_client.post("/customer-requests", json={
             "full_name": "احمد تست",
             "phone": "09121234567",
             "message": "سلام، نیاز به مشاوره برای خرید دستگاه GC دارم.",
@@ -421,8 +421,8 @@ class TestCustomerRequest:
         assert data["success"] is True
         assert "request_id" in data
 
-    def test_customer_request_workflow_statuses(self, app_client, admin_headers):
-        create_res = app_client.post("/customer-requests", json={
+    def test_customer_request_workflow_statuses(self, authenticated_client, admin_headers):
+        create_res = authenticated_client.post("/customer-requests", json={
             "full_name": "Workflow Test",
             "phone": "09120000000",
             "message": "Please follow this request through the sales workflow.",
@@ -432,7 +432,7 @@ class TestCustomerRequest:
         request_id = create_res.json()["request_id"]
 
         for status in ["reviewing", "pricing", "sent", "closed"]:
-            res = app_client.patch(
+            res = authenticated_client.patch(
                 f"/customer-requests/{request_id}/status",
                 headers=admin_headers,
                 json={"status": status},
@@ -440,14 +440,14 @@ class TestCustomerRequest:
             assert res.status_code == 200
             assert res.json()["success"] is True
 
-            list_res = app_client.get("/customer-requests?limit=10", headers=admin_headers)
+            list_res = authenticated_client.get("/customer-requests?limit=10", headers=admin_headers)
             assert list_res.status_code == 200
             requests = list_res.json()["requests"]
             saved = next(item for item in requests if item["id"] == request_id)
             assert saved["status"] == status
 
-    def test_customer_request_crm_fields(self, app_client, admin_headers):
-        create_res = app_client.post("/customer-requests", json={
+    def test_customer_request_crm_fields(self, authenticated_client, admin_headers):
+        create_res = authenticated_client.post("/customer-requests", json={
             "full_name": "CRM Test",
             "phone": "09120000000",
             "message": "Please prioritize this customer request.",
@@ -456,7 +456,7 @@ class TestCustomerRequest:
         assert create_res.status_code == 200
         request_id = create_res.json()["request_id"]
 
-        update_res = app_client.patch(
+        update_res = authenticated_client.patch(
             f"/customer-requests/{request_id}/crm",
             headers=admin_headers,
             json={
@@ -469,7 +469,7 @@ class TestCustomerRequest:
         assert update_res.status_code == 200
         assert update_res.json()["success"] is True
 
-        list_res = app_client.get("/customer-requests?limit=10", headers=admin_headers)
+        list_res = authenticated_client.get("/customer-requests?limit=10", headers=admin_headers)
         assert list_res.status_code == 200
         saved = next(item for item in list_res.json()["requests"] if item["id"] == request_id)
         assert saved["priority"] == "urgent"
@@ -477,8 +477,8 @@ class TestCustomerRequest:
         assert saved["assigned_to"] == "Sales Team"
         assert saved["follow_up_at"] == "2026-06-12"
 
-    def test_customer_request_invalid_priority_falls_back_to_normal(self, app_client, admin_headers):
-        create_res = app_client.post("/customer-requests", json={
+    def test_customer_request_invalid_priority_falls_back_to_normal(self, authenticated_client, admin_headers):
+        create_res = authenticated_client.post("/customer-requests", json={
             "full_name": "Priority Test",
             "phone": "09120000000",
             "message": "Please normalize invalid priority.",
@@ -486,27 +486,27 @@ class TestCustomerRequest:
         })
         request_id = create_res.json()["request_id"]
 
-        app_client.patch(
+        authenticated_client.patch(
             f"/customer-requests/{request_id}/crm",
             headers=admin_headers,
             json={"priority": "impossible", "internal_note": "ok"},
         )
 
-        list_res = app_client.get("/customer-requests?limit=10", headers=admin_headers)
+        list_res = authenticated_client.get("/customer-requests?limit=10", headers=admin_headers)
         saved = next(item for item in list_res.json()["requests"] if item["id"] == request_id)
         assert saved["priority"] == "normal"
 
-    def test_customer_request_stats_include_follow_up_reminders(self, app_client, admin_headers):
+    def test_customer_request_stats_include_follow_up_reminders(self, authenticated_client, admin_headers):
         yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
         today = datetime.now().date().isoformat()
 
-        overdue_res = app_client.post("/customer-requests", json={
+        overdue_res = authenticated_client.post("/customer-requests", json={
             "full_name": "Overdue Customer",
             "phone": "09120000000",
             "message": "This request needs overdue follow-up.",
             "subject": "Overdue follow up",
         })
-        due_today_res = app_client.post("/customer-requests", json={
+        due_today_res = authenticated_client.post("/customer-requests", json={
             "full_name": "Today Customer",
             "phone": "09120000001",
             "message": "This request needs follow-up today.",
@@ -518,18 +518,18 @@ class TestCustomerRequest:
         overdue_id = overdue_res.json()["request_id"]
         due_today_id = due_today_res.json()["request_id"]
 
-        app_client.patch(
+        authenticated_client.patch(
             f"/customer-requests/{overdue_id}/crm",
             headers=admin_headers,
             json={"priority": "high", "assigned_to": "Sales", "follow_up_at": yesterday},
         )
-        app_client.patch(
+        authenticated_client.patch(
             f"/customer-requests/{due_today_id}/crm",
             headers=admin_headers,
             json={"priority": "urgent", "assigned_to": "Support", "follow_up_at": today},
         )
 
-        stats_res = app_client.get("/customer-requests/stats", headers=admin_headers)
+        stats_res = authenticated_client.get("/customer-requests/stats", headers=admin_headers)
         assert stats_res.status_code == 200
         data = stats_res.json()
         reminder_summary = data["reminder_summary"]
@@ -538,12 +538,12 @@ class TestCustomerRequest:
         assert reminder_summary["due_today"] >= 1
         assert reminder_summary["total_attention"] >= 2
 
-    def test_customer_summary_recommends_overdue_follow_up(self, app_client, admin_headers):
+    def test_customer_summary_recommends_overdue_follow_up(self, authenticated_client, admin_headers):
         import random
 
         yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
         email = f"summary-customer-{random.randint(10000, 99999)}@example.com"
-        register_res = app_client.post("/customers/register", json={
+        register_res = authenticated_client.post("/customers/register", json={
             "full_name": "Summary Customer",
             "email": email,
             "phone": "09120000002",
@@ -553,7 +553,7 @@ class TestCustomerRequest:
         assert register_res.json()["success"] is True
         customer_id = register_res.json()["customer"]["id"]
 
-        request_res = app_client.post("/customer-requests", json={
+        request_res = authenticated_client.post("/customer-requests", json={
             "full_name": "Summary Customer",
             "email": email,
             "phone": "09120000002",
@@ -561,13 +561,13 @@ class TestCustomerRequest:
             "subject": "Summary overdue",
         })
         request_id = request_res.json()["request_id"]
-        app_client.patch(
+        authenticated_client.patch(
             f"/customer-requests/{request_id}/crm",
             headers=admin_headers,
             json={"priority": "urgent", "assigned_to": "Sales", "follow_up_at": yesterday},
         )
 
-        summary_res = app_client.get(
+        summary_res = authenticated_client.get(
             f"/admin/customers/{customer_id}/summary",
             headers=admin_headers,
         )
@@ -579,11 +579,11 @@ class TestCustomerRequest:
         assert data["summary"]["overdue_follow_ups"] >= 1
         assert data["next_action"]["tone"] == "urgent"
 
-    def test_customer_can_view_own_request_history(self, app_client, admin_headers):
+    def test_customer_can_view_own_request_history(self, authenticated_client, admin_headers):
         import random
 
         email = f"request-history-{random.randint(10000, 99999)}@example.com"
-        register_res = app_client.post("/customers/register", json={
+        register_res = authenticated_client.post("/customers/register", json={
             "full_name": "Request History Customer",
             "email": email,
             "phone": "09120000003",
@@ -592,18 +592,18 @@ class TestCustomerRequest:
         assert register_res.status_code == 200
         data = register_res.json()
         customer_id = data["customer"]["id"]
-        approve_res = app_client.post(
+        approve_res = authenticated_client.post(
             f"/admin/customers/{customer_id}/approve",
             headers=admin_headers,
         )
         assert approve_res.status_code == 200
-        login_res = app_client.post("/customers/login", json={
+        login_res = authenticated_client.post("/customers/login", json={
             "email": email,
             "password": "StrongPass123",
         })
         token = login_res.json()["access_token"]
 
-        request_res = app_client.post("/customer-requests", json={
+        request_res = authenticated_client.post("/customer-requests", json={
             "full_name": "Request History Customer",
             "email": email,
             "phone": "09120000003",
@@ -612,7 +612,7 @@ class TestCustomerRequest:
         })
         request_id = request_res.json()["request_id"]
 
-        history_res = app_client.get(
+        history_res = authenticated_client.get(
             f"/customers/{customer_id}/requests",
             headers={"Authorization": f"Bearer {token}"},
         )
@@ -623,7 +623,7 @@ class TestCustomerRequest:
         assert history_data["success"] is True
         assert request_id in request_ids
 
-        detail_res = app_client.get(
+        detail_res = authenticated_client.get(
             f"/customers/{customer_id}/requests/{request_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
@@ -634,7 +634,7 @@ class TestCustomerRequest:
         assert detail_data["request"]["id"] == request_id
         assert detail_data["timeline"][0]["key"] == "created"
 
-        update_res = app_client.post(
+        update_res = authenticated_client.post(
             f"/customers/{customer_id}/requests/{request_id}/updates",
             headers={"Authorization": f"Bearer {token}"},
             data={"message": "Additional sample details are attached."},
@@ -643,7 +643,7 @@ class TestCustomerRequest:
         assert update_res.status_code == 200
         assert update_res.json()["success"] is True
 
-        updated_detail_res = app_client.get(
+        updated_detail_res = authenticated_client.get(
             f"/customers/{customer_id}/requests/{request_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
@@ -651,15 +651,15 @@ class TestCustomerRequest:
         assert len(updated_detail["updates"]) >= 1
         assert updated_detail["updates"][-1]["file_name"] == "sample.txt"
 
-        admin_list_res = app_client.get("/customer-requests?limit=20", headers=admin_headers)
+        admin_list_res = authenticated_client.get("/customer-requests?limit=20", headers=admin_headers)
         admin_request = next(item for item in admin_list_res.json()["requests"] if item["id"] == request_id)
         assert admin_request["updates"][-1]["message"] == "Additional sample details are attached."
 
-    def test_status_update_creates_customer_notification(self, app_client, admin_headers):
+    def test_status_update_creates_customer_notification(self, authenticated_client, admin_headers):
         import random
 
         email = f"status-notify-{random.randint(10000, 99999)}@example.com"
-        register_res = app_client.post("/customers/register", json={
+        register_res = authenticated_client.post("/customers/register", json={
             "full_name": "Status Notify Customer",
             "email": email,
             "phone": "09120000004",
@@ -668,18 +668,18 @@ class TestCustomerRequest:
         assert register_res.status_code == 200
         data = register_res.json()
         customer_id = data["customer"]["id"]
-        approve_res = app_client.post(
+        approve_res = authenticated_client.post(
             f"/admin/customers/{customer_id}/approve",
             headers=admin_headers,
         )
         assert approve_res.status_code == 200
-        login_res = app_client.post("/customers/login", json={
+        login_res = authenticated_client.post("/customers/login", json={
             "email": email,
             "password": "StrongPass123",
         })
         token = login_res.json()["access_token"]
 
-        request_res = app_client.post("/customer-requests", json={
+        request_res = authenticated_client.post("/customer-requests", json={
             "full_name": "Status Notify Customer",
             "email": email,
             "phone": "09120000004",
@@ -688,7 +688,7 @@ class TestCustomerRequest:
         })
         request_id = request_res.json()["request_id"]
 
-        update_res = app_client.patch(
+        update_res = authenticated_client.patch(
             f"/customer-requests/{request_id}/status",
             headers=admin_headers,
             json={"status": "reviewing"},
@@ -696,7 +696,7 @@ class TestCustomerRequest:
         assert update_res.status_code == 200
         assert update_res.json()["success"] is True
 
-        notifications_res = app_client.get(
+        notifications_res = authenticated_client.get(
             f"/customers/{customer_id}/notifications",
             headers={"Authorization": f"Bearer {token}"},
         )
@@ -706,10 +706,21 @@ class TestCustomerRequest:
         assert notifications["unread_count"] >= 1
         assert any("Status notification" in item["message"] for item in notifications["notifications"])
 
-    def test_create_request_short_message(self, app_client):
-        res = app_client.post("/customer-requests", json={
+    def test_create_request_short_message(self, authenticated_client):
+        res = authenticated_client.post("/customer-requests", json={
             "full_name": "تست",
             "phone": "09121234567",
             "message": "سلام",
         })
         assert res.status_code == 422
+
+
+def test_release_protected_routes_still_reject_anonymous(app_client):
+    """Updating authenticated fixtures must not weaken production access checks."""
+    app_client.cookies.clear()
+    for path, body in [
+        ("/chat", {"message": "Synthetic access check"}),
+        ("/customer-requests", {"full_name": "Test", "phone": "09120000000", "message": "Synthetic request access check"}),
+        ("/knowledge/search", {"message": "Synthetic search", "top_k": 1}),
+    ]:
+        assert app_client.post(path, json=body).status_code == 401

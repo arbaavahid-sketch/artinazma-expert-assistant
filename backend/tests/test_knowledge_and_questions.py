@@ -8,9 +8,10 @@ import io
 class TestKnowledgeSearch:
     """تست جستجوی پایگاه دانش."""
 
-    def test_search_returns_list(self, app_client):
+    def test_search_returns_list(self, app_client, admin_headers):
         res = app_client.post(
             "/knowledge/search",
+            headers=admin_headers,
             json={"message": "کروماتوگرافی گازی", "top_k": 3},
         )
         assert res.status_code == 200
@@ -18,17 +19,19 @@ class TestKnowledgeSearch:
         assert "results" in data
         assert isinstance(data["results"], list)
 
-    def test_search_empty_query(self, app_client):
+    def test_search_empty_query(self, app_client, admin_headers):
         res = app_client.post(
             "/knowledge/search",
+            headers=admin_headers,
             json={"message": "", "top_k": 5},
         )
         # either 200 with empty results or 422 — both acceptable
         assert res.status_code in (200, 422)
 
-    def test_search_top_k_limit(self, app_client):
+    def test_search_top_k_limit(self, app_client, admin_headers):
         res = app_client.post(
             "/knowledge/search",
+            headers=admin_headers,
             json={"message": "catalyst", "top_k": 2},
         )
         assert res.status_code == 200

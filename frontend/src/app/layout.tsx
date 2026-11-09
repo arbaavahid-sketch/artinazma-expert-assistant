@@ -45,7 +45,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl">
+    // The pre-paint theme script intentionally changes only root attributes.
+    <html lang="fa" dir="rtl" suppressHydrationWarning>
       <head>
         {/* theme-color is declared first so the pre-paint script below can update
             it before the browser chrome renders. */}

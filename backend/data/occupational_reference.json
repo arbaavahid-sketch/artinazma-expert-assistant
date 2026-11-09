@@ -1,0 +1,647 @@
+{
+  "version": "artin-niosh-selected-2026-11-07-v2",
+  "checkedOn": "2026-11-07",
+  "source": "CDC / NIOSH Pocket Guide to Chemical Hazards",
+  "sourceUrl": "https://www.cdc.gov/niosh/npg/default.html",
+  "delivery": "reviewed_snapshot",
+  "sourceVersion": null,
+  "fetchedAt": null,
+  "coverage": "Twelve selected occupational reference records; not a complete NPG index.",
+  "changes": "Selected identity and exposure fields transcribed from official sources; line breaks normalized to semicolons; notes and references retained. No automatic conversion or compliance decision.",
+  "records": [
+    {
+      "id": "0397",
+      "en": "Methyl alcohol",
+      "fa": "متانول",
+      "cas": "67-56-1",
+      "formula": "CH3OH",
+      "aliases": [
+        "Methanol",
+        "Methyl alcohol",
+        "متیل الکل"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": "2019-10-30",
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 200 ppm (260 mg/m³); ST 250 ppm (325 mg/m³) [skin]",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 200 ppm (260 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "6000 ppm",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0004",
+      "en": "Acetone",
+      "fa": "استون",
+      "cas": "67-64-1",
+      "formula": "(CH3)2CO",
+      "aliases": [
+        "Dimethyl ketone",
+        "2-Propanone",
+        "پروپانون"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0004.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 250 ppm (590 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0004.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 1000 ppm (2400 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0004.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "2500 ppm [10%LEL]",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0004.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0049",
+      "en": "Benzene",
+      "fa": "بنزن",
+      "cas": "71-43-2",
+      "formula": "C6H6",
+      "aliases": [
+        "Benzol",
+        "Phenyl hydride"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0049.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "Ca; TWA 0.1 ppm; ST 1 ppm; See Appendix A",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0049.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "[1910.1028] TWA 1 ppm; ST 5 ppm; See Appendix F",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0049.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1028"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "Ca [500 ppm]",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0049.html"
+        }
+      ],
+      "notes": [
+        {
+          "fa": "حد OSHA ذکرشده به دامنهٔ 29 CFR 1910.1028 وابسته است؛ استثناهای کاربرد و Appendix F را بررسی کنید.",
+          "en": "The reported OSHA values depend on the scope of 29 CFR 1910.1028; check its exemptions and NPG Appendix F."
+        }
+      ],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix F",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxf.html"
+        },
+        {
+          "title": "NPG Appendix A",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxa.html"
+        }
+      ]
+    },
+    {
+      "id": "0619",
+      "en": "Toluene",
+      "fa": "تولوئن",
+      "cas": "108-88-3",
+      "formula": "C6H5CH3",
+      "aliases": [
+        "Methyl benzene",
+        "Toluol",
+        "تولوین"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0619.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 100 ppm (375 mg/m³); ST 150 ppm (560 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0619.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 200 ppm; C 300 ppm; 500 ppm (10-minute maximum peak)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0619.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "500 ppm",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0619.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0322",
+      "en": "n-Hexane",
+      "fa": "نرمال هگزان",
+      "cas": "110-54-3",
+      "formula": "CH3[CH2]4CH3",
+      "aliases": [
+        "Hexane",
+        "normal-Hexane",
+        "Hexyl hydride",
+        "هگزان",
+        "ان هگزان"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0322.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": "2019-10-30",
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 50 ppm (180 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0322.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 500 ppm (1800 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0322.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "1100 ppm [10%LEL]",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0322.html"
+        }
+      ],
+      "notes": [
+        {
+          "fa": "این رکورد برای n-hexane است؛ مخلوط هگزان و دیگر ایزومرها یکی فرض نمی‌شوند.",
+          "en": "This entry is for n-hexane; hexane mixtures and other isomers are not assumed identical."
+        }
+      ],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0028",
+      "en": "Ammonia",
+      "fa": "آمونیاک",
+      "cas": "7664-41-7",
+      "formula": "NH3",
+      "aliases": [
+        "Anhydrous ammonia",
+        "آمونیاک بی آب"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0028.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 25 ppm (18 mg/m³); ST 35 ppm (27 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0028.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 50 ppm (35 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0028.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "300 ppm",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0028.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0337",
+      "en": "Hydrogen sulfide",
+      "fa": "سولفید هیدروژن",
+      "cas": "7783-06-4",
+      "formula": "H2S",
+      "aliases": [
+        "Hydrosulfuric acid",
+        "Sewer gas",
+        "هیدروژن سولفید"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0337.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "C 10 ppm (15 mg/m³) [10-minute]",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0337.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "C 20 ppm; 50 ppm [10-minute maximum peak]",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0337.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "100 ppm",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0337.html"
+        }
+      ],
+      "notes": [
+        {
+          "fa": "حد NIOSH سقفی با بازهٔ ۱۰ دقیقه است؛ آن را با TWA هشت‌ساعته جایگزین نکنید. شرط peak در مقررهٔ OSHA جدا بررسی شود.",
+          "en": "The NIOSH value is a 10-minute ceiling, not an 8-hour TWA. Check the separate OSHA peak provisions."
+        }
+      ],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0577",
+      "en": "Sulfuric acid",
+      "fa": "اسید سولفوریک",
+      "cas": "7664-93-9",
+      "formula": "H2SO4",
+      "aliases": [
+        "Battery acid",
+        "Hydrogen sulfate",
+        "Oil of vitriol",
+        "سولفوریک اسید"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0577.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 1 mg/m³",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0577.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 1 mg/m³",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0577.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "15 mg/m³",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0577.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        }
+      ]
+    },
+    {
+      "id": "0262",
+      "en": "Ethyl alcohol",
+      "fa": "اتانول",
+      "cas": "64-17-5",
+      "formula": "CH3CH2OH",
+      "aliases": [
+        "Ethanol",
+        "EtOH",
+        "اتیل الکل"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0262.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 1000 ppm (1900 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0262.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 1000 ppm (1900 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0262.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "3300 ppm [10%LEL]",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0262.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0002",
+      "en": "Acetic acid",
+      "fa": "اسید استیک",
+      "cas": "64-19-7",
+      "formula": "CH3COOH",
+      "aliases": [
+        "Ethanoic acid",
+        "Glacial acetic acid",
+        "استیک اسید"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0002.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": "2019-10-30",
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 10 ppm (25 mg/m³); ST 15 ppm (37 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0002.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 10 ppm (25 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0002.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "50 ppm",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0002.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0447",
+      "en": "Nitric acid",
+      "fa": "اسید نیتریک",
+      "cas": "7697-37-2",
+      "formula": "HNO3",
+      "aliases": [
+        "Hydrogen nitrate",
+        "نیتریک اسید"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0447.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": null,
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "TWA 2 ppm (5 mg/m³); ST 4 ppm (10 mg/m³)",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0447.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 2 ppm (5 mg/m³); See Appendix G",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0447.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "25 ppm",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0447.html"
+        }
+      ],
+      "notes": [],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    },
+    {
+      "id": "0565",
+      "en": "Sodium hydroxide",
+      "fa": "سدیم هیدروکسید",
+      "cas": "1310-73-2",
+      "formula": "NaOH",
+      "aliases": [
+        "Caustic soda",
+        "Soda lye",
+        "سود سوزآور",
+        "هیدروکسید سدیم"
+      ],
+      "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0565.html",
+      "checkedOn": "2026-11-07",
+      "sourceReviewedOn": "2019-10-30",
+      "fetchedAt": null,
+      "limits": [
+        {
+          "agency": "NIOSH",
+          "kind": "REL",
+          "status": "recommendation",
+          "raw": "C 2 mg/m³",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0565.html"
+        },
+        {
+          "agency": "OSHA",
+          "kind": "PEL",
+          "status": "reported_by_NPG",
+          "raw": "TWA 2 mg/m³; See Appendix G",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0565.html",
+          "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+        },
+        {
+          "agency": "NIOSH",
+          "kind": "IDLH",
+          "status": "acute_reference",
+          "raw": "10 mg/m³",
+          "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0565.html"
+        }
+      ],
+      "notes": [
+        {
+          "fa": "حد NIOSH سقفی (C) و حد OSHA میانگین زمانی (TWA) است؛ یکسان بودن عدد، دورهٔ مواجهه را یکسان نمی‌کند. واحد جرمی منبع بدون تبدیل به ppm حفظ شده است.",
+          "en": "The NIOSH limit is a ceiling (C), while the OSHA limit is a TWA. Equal numbers do not imply equal averaging periods. Source mass units are retained without conversion to ppm."
+        }
+      ],
+      "references": [
+        {
+          "title": "NIOSH NPG introduction",
+          "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+        },
+        {
+          "title": "NPG Appendix G",
+          "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+        }
+      ]
+    }
+  ],
+  "jurisdiction": "United States federal general-industry references as reported by NPG; state plans, sector-specific applicability and Iranian law are not evaluated."
+}

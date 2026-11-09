@@ -1,0 +1,7 @@
+import React,{useState} from 'react';
+import {it,expect} from 'vitest';
+import {render,screen,fireEvent} from '@testing-library/react';
+import CommercialSolution from './calculators/workspace/CommercialSolution';
+import {emptyCommercial,type CommercialDraft} from './calculators/workspace/commercial-solution';
+import {newReagent} from './calculators/workspace/reagents';
+it('transfers only after explicit selection and detaches evidence on manual editing',()=>{const r={...newReagent(),name:'Example',lot:'L1',certificate:'C1',purity:'50%',purityBasis:'جرمی'};let latest:CommercialDraft;function Form(){const [d,setD]=useState(emptyCommercial);latest=d;return <CommercialSolution en value={d} onChange={setD} molarMass="50" name="Example" reagents={[r]}/>;}render(<Form/>);fireEvent.click(screen.getByText('Prepare from a commercial solution using mass content and density'));expect(screen.getByLabelText('Analyte mass content (% w/w)')).toHaveValue('');fireEvent.change(screen.getByLabelText('Choose recorded commercial product'),{target:{value:r.id}});fireEvent.click(screen.getByRole('button',{name:'Use this reagent mass content and reference'}));expect(screen.getByLabelText('Analyte mass content (% w/w)')).toHaveValue('50');expect(latest!.reagent?.lot).toBe('L1');fireEvent.change(screen.getByLabelText('Analyte mass content (% w/w)'),{target:{value:'49'}});expect(latest!.reagent).toBeUndefined();expect(latest!.sameSpecies).toBe(false);});

@@ -1,0 +1,7 @@
+import {readSolutionDraft,calculateSolution,type SolutionDraft} from './chemical-library';
+import {calculateCommercial} from './commercial-solution';
+import {type Reagent} from './reagents';
+function product(r?:Reagent){return r?{name:r.name,manufacturer:r.manufacturer,catalogue:r.catalogue,lot:r.lot,certificate:r.certificate,purity:r.purity,purityBasis:r.purityBasis}:undefined;}
+function material(d:SolutionDraft,en:boolean){const m=d.material;return {name:en?m.record.en:m.record.fa||m.record.en,formula:m.record.formula,cid:m.record.cid,retrievedOn:m.retrievedOn};}
+export function nominalPDFPayload(raw:SolutionDraft,en:boolean){const d=readSolutionDraft(raw),m=d.material;return {locale:en?'en':'fa',material:{...material(d,en),molarMass:m.record.molarMass,source:m.source,version:m.version,chemicalForm:en?m.record.formEn:m.record.formFa||m.record.formEn,waters:m.record.waters},inputs:{concentration:d.concentration,volume:d.volume,purity:d.purity,puritySource:d.puritySource},reagent:product(d.reagent),expectedMass:calculateSolution(d).mass};}
+export function commercialPDFPayload(raw:SolutionDraft,en:boolean){const d=readSolutionDraft(raw),c=d.commercial;if(!c)throw Error('Commercial preparation required');return {locale:en?'en':'fa',material:material(d,en),molarMass:d.material.record.molarMass,commercial:{...c,reagent:product(c.reagent)},expectedAliquot:calculateCommercial(c,d.material.record.molarMass).aliquotML};}

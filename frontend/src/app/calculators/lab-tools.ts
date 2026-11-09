@@ -4,8 +4,10 @@ export type LabTool = {
   category: number;
   fields: string[];
   fieldsEn: string[];
+  fieldHints?: { fa: string[]; en: string[] };
   example: number[];
   formula: string;
+  explanation?: { fa: string; en: string; source: string; section: string };
   unit: string;
   series?: boolean;
   pairs?: boolean;
@@ -136,4 +138,187 @@ labTools.push(
   { name: "توان ورودی پمپ با لحاظ بازده", en: "Pump input power with efficiency", category: 3,
     fields: ["توان هیدرولیکی (kW)", "بازده (%)"], fieldsEn: ["Hydraulic power (kW)", "Efficiency (%)"], example: [2, 80],
     formula: "Pin = Phyd × 100 / η", unit: "kW", calculate: ([p, e]) => p * 100 / e, valid: ([p, e]) => p >= 0 && e > 0 && e <= 100 },
+);
+
+const uncertaintyFields = [
+  "عدم‌قطعیت استاندارد تکرارپذیری",
+  "عدم‌قطعیت استاندارد کالیبراسیون",
+  "سایر مؤلفه‌ها پس از ترکیب (استاندارد)",
+];
+const uncertaintyFieldsEn = [
+  "Repeatability standard uncertainty",
+  "Calibration standard uncertainty",
+  "Combined other standard components",
+];
+const combinedUncertainty = ([repeatability, calibration, other]: number[]) =>
+  Math.hypot(repeatability, calibration, other);
+
+labTools.push(
+  {
+    name: "عدم‌قطعیت استاندارد نوع A از تکرار اندازه‌گیری",
+    en: "Type A standard uncertainty of the mean",
+    category: 2, series: true, unit: "",
+    fields: ["اندازه‌گیری‌های مستقل در یک واحد، با فاصله یا سطر جدید"],
+    fieldsEn: ["Independent readings in the same unit, separated by spaces or newlines"],
+    example: [9.8, 10, 10.2],
+    formula: "uA = s / √n",
+    explanation: {
+      fa: "s انحراف معیار نمونه و n تعداد اندازه‌گیری‌هاست. اگر نتیجهٔ گزارش‌شده میانگین تکرارهای مستقل در شرایط یکسان باشد، واریانس میانگین با افزایش تعداد تکرارها به نسبت ۱/n کم می‌شود. جذر آن، عدم‌قطعیت استاندارد میانگین را می‌دهد.",
+      en: "s is the sample standard deviation and n is the number of readings. For the mean of independent readings under the same conditions, the variance of the mean scales as 1/n. Its square root gives the standard uncertainty of the mean.",
+      source: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty",
+      section: "NIST TN 1297 · A.4",
+    },
+    calculate: values => sampleDeviation(values) / Math.sqrt(values.length),
+  },
+  {
+    name: "عدم‌قطعیت استاندارد ترکیبی",
+    en: "Combined standard uncertainty",
+    category: 2, unit: "",
+    fields: uncertaintyFields, fieldsEn: uncertaintyFieldsEn,
+    example: [0.03, 0.04, 0],
+    formula: "u_c = √(u_rep² + u_cal² + u_other²)",
+    explanation: {
+      fa: "u_rep سهم تکرارپذیری، u_cal سهم کالیبراسیون و u_other سهم ترکیبی سایر مؤلفه‌هاست. طبق قانون انتشار عدم‌قطعیت، وقتی سهم‌ها مستقل‌اند، واریانس‌هایشان جمع می‌شود. جذر مجموع، u_c را در واحد نتیجه به دست می‌دهد.",
+      en: "u_rep is the repeatability contribution, u_cal is the calibration contribution, and u_other combines the other contributions. The law of propagation adds their variances when the contributions are independent. The square root gives u_c in the result unit.",
+      source: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-5-combined-standard-uncertainty",
+      section: "NIST TN 1297 · §5",
+    },
+    calculate: combinedUncertainty,
+    valid: values => values.every(value => value >= 0),
+  },
+  {
+    name: "عدم‌قطعیت گسترده",
+    en: "Expanded measurement uncertainty",
+    category: 2, unit: "",
+    fields: [...uncertaintyFields, "ضریب پوشش (k)"],
+    fieldsEn: [...uncertaintyFieldsEn, "Coverage factor (k)"],
+    example: [0.03, 0.04, 0, 2],
+    formula: "U = k × √(u_rep² + u_cal² + u_other²)",
+    explanation: {
+      fa: "ابتدا u_c از ترکیب مؤلفه‌های استاندارد مستقل به دست می‌آید. با ضرب آن در ضریب پوشش k، عدم‌قطعیت گسترده U محاسبه می‌شود. نتیجهٔ اندازه‌گیری y را می‌توان به شکل y ± U همراه با k گزارش کرد. سطح پوشش به توزیع و درجات آزادی بستگی دارد.",
+      en: "First combine the independent standard contributions to obtain u_c. Multiply by the coverage factor k to obtain expanded uncertainty U. Report the measurement as y ± U together with k. Coverage depends on the distribution and degrees of freedom.",
+      source: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-6-expanded-uncertainty",
+      section: "NIST TN 1297 · §6",
+    },
+    calculate: values => values[3] * combinedUncertainty(values),
+    valid: values => values.slice(0, 3).every(value => value >= 0) && values[3] > 0,
+  },
+);
+
+labTools.push({
+  name: "بودجهٔ عدم‌قطعیت GC–FID با کالیبراسیون خارجی",
+  en: "GC–FID external calibration uncertainty budget",
+  category: 2,
+  fields: [
+    "غلظت گزارش‌شده", "عدم‌قطعیت نسبی استاندارد برازش (%)", "عدم‌قطعیت نسبی استاندارد مادهٔ مرجع و تهیهٔ استاندارد (%)",
+    "عدم‌قطعیت نسبی استاندارد دقت روش (%)", "عدم‌قطعیت نسبی استاندارد آماده‌سازی نمونه (%)",
+    "عدم‌قطعیت نسبی استاندارد بازیابی یا بایاس (%)", "ضریب پوشش (k)",
+  ],
+  fieldsEn: [
+    "Reported concentration", "Relative standard uncertainty of calibration fit (%)", "Relative standard uncertainty of reference material and standard preparation (%)",
+    "Relative standard uncertainty of method precision (%)", "Relative standard uncertainty of sample preparation (%)",
+    "Relative standard uncertainty of recovery or bias (%)", "Coverage factor (k)",
+  ],
+  example: [100, 1, 0.5, 2, 0.5, 1, 2],
+  formula: "C = [(A − b) / a] × F / R\nuᵣ = √(u_fit² + u_std² + u_prec² + u_prep² + u_rec²)\nU = k × |C| × uᵣ / 100",
+  unit: "",
+  calculate: ([c, fit, standard, precision, preparation, recovery, k]) =>
+    k * Math.abs(c) * Math.hypot(fit, standard, precision, preparation, recovery) / 100,
+  valid: ([c, ...components]) => c > 0 && components.slice(0, 5).every(value => value >= 0) && components[5] > 0,
+  explanation: {
+    fa: "در کالیبراسیون خارجی خطی، A مساحت پیک نمونه، a شیب و b عرض از مبدأ است. F ضریب تبدیل از محلول تزریقی به مبنای گزارش است. R کسر بازیابی است و تنها وقتی روش تصحیح بازیابی دارد در مخرج به کار می‌رود. غلظت C را طبق روش آزمون از قبل حساب کنید. منابع را از پراکندگی برازش و استاندارد مرجع، توزین و حجم‌سنجی، دقت بین‌روزی و تزریق، استخراج و رقیق‌سازی، و داده‌های بازیابی یا بایاس برآورد کنید. اثر هم‌پوشانی پیک، انتگرال‌گیری و رانش پاسخ را با داده‌های اعتبارسنجی بررسی کنید. فقط سهم‌های مستقل و بدون دوباره‌شماری را وارد کنید. اگر دقت کل روش اثری را پوشش داده است، آن اثر را دوباره اضافه نکنید. U در همان واحد غلظت گزارش‌شده است. این مدل نزدیک صفر یا با سهم‌های هم‌بسته به ارزیابی جداگانه نیاز دارد.",
+    en: "For linear external calibration, A is sample peak area, a the slope and b the intercept. F converts the injected solution concentration to the reporting basis. Divide by recovery fraction R only when the method applies recovery correction. Enter C as calculated by the test method. Estimate contributions from fit residuals, reference standards, weighing and volumetry, intermediate precision and injection, extraction and dilution, and recovery or bias data. Evaluate coelution, integration, and drift with validation data. Combine only independent contributions without double counting effects already included in method precision. U uses the reported concentration unit. Near zero or with correlated contributions, evaluate a separate model.",
+    source: "https://eurachem.org/index.php/publications/guides/quam",
+    section: "Eurachem/CITAC QUAM",
+  },
+});
+
+labTools.push({
+  name: "بودجهٔ عمومی عدم‌قطعیت GUM",
+  en: "General GUM uncertainty budget",
+  category: 2,
+  series: true,
+  fields: ["سهم‌های استاندارد در واحد نتیجه"],
+  fieldsEn: ["Standard contributions in the result unit"],
+  example: [0.03, 0.04, 0.02],
+  formula: "qᵢ = cᵢ × u(xᵢ)\nu_c(y) = √Σqᵢ²",
+  unit: "",
+  calculate: values => values.reduce((combined, contribution) => Math.hypot(combined, contribution), 0),
+  explanation: {
+    fa: "ابتدا معادلهٔ اندازه‌گیری آزمون را بنویسید. برای هر ورودی xᵢ، عدم‌قطعیت استاندارد u(xᵢ) را در ضریب حساسیت cᵢ ضرب کنید. ضریب حساسیت میزان تغییر نتیجه به ازای تغییر کوچک آن ورودی است. هر حاصل‌ضرب qᵢ را در یک سطر وارد کنید. ابزار مؤلفه‌های بدون هم‌بستگی را ترکیب می‌کند و u_c را در واحد نتیجه می‌دهد. مؤلفه‌های هم‌بسته به جمله‌های کوواریانس نیاز دارند.",
+    en: "Start with the test's measurement equation. Multiply each input standard uncertainty u(xᵢ) by its sensitivity coefficient cᵢ, the local change in the result per unit input change. Enter one product qᵢ per line. The tool combines uncorrelated contributions and reports u_c in the result unit. Correlated inputs require covariance terms.",
+    source: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty",
+    section: "NIST TN 1297 · A.3",
+  },
+});
+
+const propagationReference = "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty";
+
+labTools.push(
+  {
+    name: "عدم‌قطعیت توزین با ترازو",
+    en: "Balance weighing uncertainty",
+    category: 2, unit: "g",
+    fields: ["پراکندگی توزین‌های تکراری (g)", "تعداد توزین‌های میانگین‌گرفته‌شده", "عدم‌قطعیت درج‌شده در گواهی ترازو (g)", "ضریب پوشش درج‌شده در گواهی", "کوچک‌ترین تغییر عدد نمایشگر (g)", "بیشترین تغییر ناشی از رانش (g)", "بیشترین تغییر ناشی از دما (g)", "ضریب پوشش گزارش نهایی"],
+    fieldsEn: ["Repeat weighing standard deviation s (g)", "Independent readings averaged in result n", "Certificate expanded uncertainty Ucal (g)", "Certificate coverage factor kcal", "Display increment d (g)", "Drift half-width a (g)", "Temperature effect half-width b (g)", "Reporting coverage factor k"],
+    example: [0.002, 1, 0.004, 2, 0.001, 0.001, 0.001, 2],
+    fieldHints: {
+      fa: ["نمونه را چند بار مستقل وزن کنید و انحراف معیار نمونه (s) را از ابزار RSD بردارید. خود درصد RSD را وارد نکنید.",
+        "اگر عدد گزارش از یک توزین آمده، ۱ بزنید. اگر میانگین سه توزین است، ۳ بزنید.",
+        "در گواهی کالیبراسیون، برای بار مربوط دنبال Expanded uncertainty یا U بگردید. اگر به mg است، بر ۱۰۰۰ تقسیم کنید.",
+        "عدد k را از همان ردیف یا توضیح همان عدم‌قطعیت در گواهی بردارید.",
+        "فاصلهٔ دو عدد متوالی نمایشگر. مثلاً بین ۵۰٫۰۰۰ و ۵۰٫۰۰۱ گرم، گام ۰٫۰۰۱ گرم است.",
+        "از سوابق کنترل ترازو، حد تغییر را به گرم بردارید. برای بازهٔ ±۰٫۰۰۱ گرم، ۰٫۰۰۱ را وارد کنید.",
+        "اثر تغییر دما بر خواندهٔ ترازو را از دادهٔ آزمایش یا مشخصات دستگاه به گرم برآورد کنید. خود دما را وارد نکنید.",
+        "از روش اجرایی گزارش‌گیری بردارید. عدد ۲ در نمونه صرفاً مقدار نمونه است."],
+      en: ["Use the sample standard deviation s from repeated independent weighings. Enter s, not RSD.",
+        "Enter 1 for a single reported weighing or 3 if the result averages three weighings.",
+        "Look for expanded uncertainty U at the relevant load on the certificate. Divide mg by 1000 to obtain g.",
+        "Use the k associated with that uncertainty on the certificate.",
+        "Use the spacing between consecutive display readings, such as 0.001 g.",
+        "Use the drift half-width in grams from balance check records.",
+        "Estimate the effect of temperature on the reading in grams from experimental or instrument data.",
+        "Use the factor specified by your reporting procedure. The sample uses 2."],
+    },
+    formula: "u_rep = s / √n\nu_cal = Ucal / kcal\nu_res = d / √12\nu_drift = a / √3\nu_temp = b / √3\nu_c = √(u_rep² + u_cal² + u_res² + u_drift² + u_temp²)\nU = k × u_c",
+    calculate: ([s, n, certificate, kc, d, drift, temp, k]) =>
+      k * Math.hypot(s / Math.sqrt(n), certificate / kc, d / Math.sqrt(12), drift / Math.sqrt(3), temp / Math.sqrt(3)),
+    valid: ([s, n, certificate, kc, d, drift, temp, k]) =>
+      Number.isSafeInteger(n) && n >= 1 && kc > 0 && k > 0 && [s, certificate, d, drift, temp].every(value => value >= 0),
+    explanation: {
+      fa: "این الگو برای توزین مستقیم است. s را از داده‌های تکراری به دست آورید. n تعداد قرائت‌هایی است که واقعاً در نتیجه میانگین شده‌اند. برای نتیجهٔ تک‌قرائتی n برابر ۱ است. Ucal و kcal را از گواهی در بار مربوط بردارید. برای یک سهم مستقل گردکردن، خطا در بازهٔ ±d/2 یکنواخت فرض شده است. a و b نیم‌عرض بازه‌های یکنواخت رانش و اثر دما در واحد جرم‌اند. اگر سهمی در تکرارپذیری یا گواهی پوشش داده شده، آن را دوباره وارد نکنید. برای مؤلفهٔ پوشش‌داده‌شده یا نامرتبط صفر بگذارید. توزین تفاضلی به مدل قرائت‌های خودش نیاز دارد.",
+      en: "This template models direct weighing. Obtain s from repeat readings and enter the number n actually averaged in the reported result, or 1 for a single reading. Take Ucal and kcal from the certificate at the relevant load. The single independent rounding contribution assumes a uniform ±d/2 interval. a and b are drift and temperature half-widths in mass units. Enter zero for irrelevant or already covered components to avoid double counting. Difference weighing requires its own reading model.",
+      source: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-4-type-b-evaluation-standard-uncertainty",
+      section: "NIST TN 1297 · §4",
+    },
+  },
+  {
+    name: "عدم‌قطعیت چگالی از جرم و حجم",
+    en: "Density uncertainty from mass and volume",
+    category: 2, unit: "g/mL",
+    fields: ["جرم نمونه (g)", "حجم همان نمونه (mL)", "عدم‌قطعیت استاندارد جرم (g)", "عدم‌قطعیت استاندارد حجم (mL)", "ضریب پوشش گزارش نهایی"],
+    fieldsEn: ["Mass m (g)", "Volume V (mL)", "Standard mass uncertainty u(m) (g)", "Standard volume uncertainty u(V) (mL)", "Coverage factor k"],
+    example: [50, 50, 0.005, 0.02, 2],
+    fieldHints: {
+      fa: ["جرم خالص نمونه را از نتیجهٔ توزین بردارید.",
+        "حجم اندازه‌گیری‌شدهٔ همان نمونه را وارد کنید.",
+        "از بودجهٔ توزین، u(m) را بردارید. اگر فقط U و k دارید، U را بر k تقسیم کنید.",
+        "از بودجهٔ حجم، u(V) را بردارید. اگر گواهی فقط U و k دارد، U/k فقط سهم کالیبراسیون ظرف است.",
+        "ضریب پوشش را از روش اجرایی گزارش‌گیری بردارید."],
+      en: ["Use the net mass from the weighing result.",
+        "Enter the measured volume of that same sample.",
+        "Use u(m) from the weighing budget. If you have U and k, divide U by k.",
+        "Use u(V) from the volume budget. Certificate U/k represents the vessel calibration contribution.",
+        "Use the coverage factor specified in the reporting procedure."],
+    },
+    formula: "ρ = m / V\nc_m = 1 / V\nc_V = −m / V²\nu(ρ) = √[(c_m × u(m))² + (c_V × u(V))²]\nU = k × u(ρ)",
+    calculate: ([m, v, um, uv, k]) => k * Math.hypot(um / v, (m / v) * (uv / v)),
+    valid: ([m, v, um, uv, k]) => m > 0 && v > 0 && um >= 0 && uv >= 0 && k > 0,
+    explanation: {
+      fa: "شاخهٔ جرم می‌تواند شامل تکرارپذیری، کالیبراسیون و تفکیک‌پذیری ترازو باشد. اگر از الگوی توزین استفاده می‌کنید، U آن را بر k همان بودجه تقسیم کنید تا u(m) به دست آید. شاخهٔ حجم می‌تواند شامل گواهی ظرف، تکرارپذیری خواندن یا پرکردن و اثر دما باشد. ضرایب حساسیت مشتق‌های ρ نسبت به جرم و حجم‌اند. این فرم انتشار مرتبهٔ اول را برای جرم و حجم بدون هم‌بستگی به کار می‌برد. اگر دما اثر مشترک معناداری دارد، آن را در مدل جداگانه لحاظ کنید.",
+      en: "The mass branch can include repeatability, balance calibration and resolution. If using the balance template, divide its U by its k to obtain u(m). The volume branch can include vessel calibration, fill or reading repeatability and temperature. The sensitivities are derivatives of density with respect to mass and volume. The form uses first-order propagation for uncorrelated mass and volume. Model any significant common temperature effect separately.",
+      source: propagationReference,
+      section: "NIST TN 1297 · A.3",
+    },
+  },
 );

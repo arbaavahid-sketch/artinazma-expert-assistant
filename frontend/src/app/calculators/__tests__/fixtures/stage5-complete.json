@@ -1,0 +1,252 @@
+{
+  "format": "artin-lab-project",
+  "version": 1,
+  "id": "ae385db7-6d13-4695-827a-7d17c5868e47",
+  "savedAt": "2026-11-05T14:19:29.054Z",
+  "workflow": "gc-external-extraction",
+  "identity": {
+    "title": "",
+    "sample": "",
+    "sop": "",
+    "edition": "",
+    "matrix": ""
+  },
+  "evidence": [],
+  "standards": [
+    [
+      "",
+      ""
+    ],
+    [
+      "",
+      ""
+    ],
+    [
+      "",
+      ""
+    ]
+  ],
+  "stage": 0,
+  "gc": {
+    "data": {
+      "values": {
+        "area": "",
+        "extract": "",
+        "dilution": "",
+        "mass": "",
+        "recovery": ""
+      },
+      "uncertainties": {
+        "area": {
+          "value": "",
+          "kind": "standard",
+          "divisor": "",
+          "source": ""
+        },
+        "extract": {
+          "value": "",
+          "kind": "standard",
+          "divisor": "",
+          "source": ""
+        },
+        "dilution": {
+          "value": "",
+          "kind": "standard",
+          "divisor": "",
+          "source": ""
+        },
+        "mass": {
+          "value": "",
+          "kind": "standard",
+          "divisor": "",
+          "source": ""
+        },
+        "recovery": {
+          "value": "",
+          "kind": "standard",
+          "divisor": "",
+          "source": ""
+        }
+      },
+      "coverage": "2",
+      "coverageSource": ""
+    }
+  },
+  "solution": {
+    "material": {
+      "version": "pubchem-selected-2026-11-05-v1",
+      "retrievedOn": "2026-11-05",
+      "source": "PubChem PUG-REST",
+      "sourceUrl": "https://pubchem.ncbi.nlm.nih.gov/compound/887",
+      "property": "MolecularWeight",
+      "unit": "g/mol",
+      "kind": "computed",
+      "record": {
+        "cid": 887,
+        "fa": "متانول",
+        "en": "Methanol",
+        "formula": "CH3OH",
+        "sourceFormula": "CH4O",
+        "iupac": "methanol",
+        "molarMass": "32.042",
+        "waters": null,
+        "formFa": "ترکیب مولکولی مشخص",
+        "formEn": "Defined molecular compound",
+        "aliases": [
+          "متیل الکل",
+          "methyl alcohol"
+        ]
+      }
+    },
+    "concentration": "0.1",
+    "volume": "100",
+    "purity": "99.9",
+    "puritySource": "متانول — نمونهٔ فرضی · DEMO-01 · مثال فرضی برای آزمون ذخیره",
+    "reagent": {
+      "id": "17bc1c9b-bc70-4972-a750-c5cbf653f428",
+      "name": "متانول — نمونهٔ فرضی",
+      "manufacturer": "",
+      "catalogue": "",
+      "lot": "DEMO-01",
+      "certificate": "مثال فرضی برای آزمون ذخیره",
+      "purity": "۹۹٫۹ %",
+      "purityBasis": "جرمی",
+      "uncertainty": "",
+      "uncertaintyKind": "",
+      "coverageFactor": "",
+      "issued": "",
+      "opened": "",
+      "expires": "",
+      "storage": "",
+      "notes": ""
+    },
+    "preparation": {
+      "dilution": false,
+      "independent": true,
+      "inputs": {
+        "mass": {
+          "nominal": "100",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "0.1",
+            "divisor": "",
+            "source": "دادهٔ فرضی برای آزمون"
+          }
+        },
+        "purity": {
+          "nominal": "99",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "0.2",
+            "divisor": "",
+            "source": "دادهٔ فرضی برای آزمون"
+          }
+        },
+        "volume": {
+          "nominal": "100",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "0.05",
+            "divisor": "",
+            "source": "دادهٔ فرضی برای آزمون"
+          }
+        },
+        "aliquot": {
+          "nominal": "",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "",
+            "divisor": "",
+            "source": ""
+          }
+        },
+        "finalVolume": {
+          "nominal": "",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "",
+            "divisor": "",
+            "source": ""
+          }
+        }
+      }
+    },
+    "dilutionPlan": {
+      "label": {
+        "solutionId": "DEMO",
+        "preparedBy": "مثال فرضی",
+        "preparedOn": "۱۴۰۵/۰۸/۱۵ شمسی",
+        "expires": "",
+        "storage": "",
+        "notes": "نمونهٔ فرضی برای بررسی برچسب"
+      },
+      "stock": "1000",
+      "source": "محلول فرضی A — آزمون رابط",
+      "unit": "mg/L",
+      "steps": [
+        {
+          "target": "100",
+          "volume": "250",
+          "unit": "mg/L",
+          "volumeUnit": "mL"
+        },
+        {
+          "target": "1",
+          "volume": "250",
+          "unit": "mg/L",
+          "volumeUnit": "mL"
+        }
+      ]
+    },
+    "commercial": {
+      "massPercent": "10",
+      "percentSource": "دادهٔ فرضی",
+      "density": "1",
+      "densityConditions": "۲۰ درجه سلسیوس - فرضی",
+      "densitySource": "دادهٔ فرضی",
+      "productReference": "مثال فرضی - آزمون نرم‌افزار",
+      "target": "0.1",
+      "volume": "100",
+      "volumeUnit": "mL",
+      "sameSpecies": true
+    },
+    "labels": {
+      "nominal": {
+        "solutionId": "DEMO-N",
+        "preparedBy": "فرضی",
+        "preparedOn": "۱۴۰۵/۰۸/۱۵ شمسی",
+        "expires": "",
+        "storage": "طبق روش فرضی",
+        "notes": "نمونهٔ فرضی؛ تهیه واقعی تأیید نشده"
+      },
+      "commercial": {
+        "solutionId": "DEMO-C",
+        "preparedBy": "فرضی",
+        "preparedOn": "۱۴۰۵/۰۸/۱۵ شمسی",
+        "expires": "",
+        "storage": "طبق روش فرضی",
+        "notes": "نمونهٔ فرضی؛ تهیه واقعی تأیید نشده"
+      }
+    }
+  },
+  "reagents": [
+    {
+      "id": "17bc1c9b-bc70-4972-a750-c5cbf653f428",
+      "name": "متانول — نمونهٔ فرضی",
+      "manufacturer": "",
+      "catalogue": "",
+      "lot": "DEMO-01",
+      "certificate": "مثال فرضی برای آزمون ذخیره",
+      "purity": "۹۹٫۹ %",
+      "purityBasis": "جرمی",
+      "uncertainty": "",
+      "uncertaintyKind": "",
+      "coverageFactor": "",
+      "issued": "",
+      "opened": "",
+      "expires": "",
+      "storage": "",
+      "notes": ""
+    }
+  ]
+}

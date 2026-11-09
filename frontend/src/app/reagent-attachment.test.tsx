@@ -1,0 +1,14 @@
+import React,{useState} from 'react';
+import {it,expect} from 'vitest';
+import {render,screen,fireEvent} from '@testing-library/react';
+import {readCertificateAttachment,certificateFromFile,MAX_CERTIFICATE_BYTES} from './calculators/workspace/reagent-attachment';
+import {newReagent,readReagents} from './calculators/workspace/reagents';
+import ReagentAttachment from './calculators/workspace/ReagentAttachment';
+import fixture from './calculators/__tests__/fixtures/stage5-complete.json';
+import {readLabProject,serializeLabProject,parseProjectFile} from './calculators/workspace/project-file';
+import {nominalPDFPayload,commercialPDFPayload} from './calculators/workspace/solution-pdf-payload';
+const attachment={name:'example.pdf',mime:'application/pdf',base64:btoa('%PDF-1.7\nHypothetical attachment')};
+it('validates bounded local attachments and rejects disguised or oversized files',async()=>{expect(readCertificateAttachment(attachment)).toEqual(attachment);for(const bad of [{mime:'text/html'},{base64:btoa('<html>')},{name:'../bad.pdf'},{base64:'A'.repeat(Math.ceil(MAX_CERTIFICATE_BYTES/3)*4+4)}])expect(()=>readCertificateAttachment({...attachment,...bad})).toThrow();await expect(certificateFromFile({size:MAX_CERTIFICATE_BYTES+1} as File)).rejects.toThrow();});
+it('round-trips the certificate with its reagent and preserves snapshot independence',()=>{const p=readLabProject(fixture);p.reagents![0].certificateFile=readCertificateAttachment(attachment);p.solution!.reagent=structuredClone(p.reagents![0]);const q=parseProjectFile(serializeLabProject(p),'sample.json','','');expect(q.solution!.reagent!.certificateFile).toEqual(attachment);q.reagents![0].certificateFile=undefined;expect(q.solution!.reagent!.certificateFile).toEqual(attachment);expect(readReagents([{...newReagent(),certificateFile:attachment}])[0].certificateFile).toEqual(attachment);});
+it('keeps certificate bytes out of PDF requests',()=>{const d=readLabProject(fixture).solution!;d.reagent!.certificateFile=readCertificateAttachment(attachment);expect(JSON.stringify(nominalPDFPayload(d,true))).not.toContain(attachment.base64);expect(JSON.stringify(commercialPDFPayload(d,true))).not.toContain('certificateFile');});
+it('attaches locally and removes only the draft copy',async()=>{const r=newReagent();function Form(){const [value,setValue]=useState(r);return <ReagentAttachment en value={value} onChange={setValue}/>;}render(<Form/>);const bytes=new TextEncoder().encode('%PDF-1.7\nHypothetical attachment');const file={size:bytes.length,name:'example.pdf',type:'application/pdf',arrayBuffer:async()=>bytes.buffer} as File;fireEvent.change(screen.getByLabelText('Attach or replace certificate file'),{target:{files:[file]}});await screen.findByText('example.pdf');fireEvent.click(screen.getByRole('button',{name:'Remove draft attachment'}));expect(screen.queryByText('example.pdf')).toBeNull();});

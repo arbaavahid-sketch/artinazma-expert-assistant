@@ -1,0 +1,63 @@
+{
+  "version": "artin-niosh-selected-2026-11-07-v1",
+  "checkedOn": "2026-11-07",
+  "source": "CDC / NIOSH Pocket Guide to Chemical Hazards",
+  "sourceUrl": "https://www.cdc.gov/niosh/npg/default.html",
+  "delivery": "reviewed_snapshot",
+  "sourceVersion": null,
+  "fetchedAt": null,
+  "coverage": "Eight selected occupational reference records; not a complete NPG index.",
+  "changes": "Selected identity and exposure fields transcribed from official sources; line breaks normalized to semicolons; notes and references retained. No automatic conversion or compliance decision.",
+  "jurisdiction": "United States federal general-industry references as reported by NPG; state plans, sector-specific applicability and Iranian law are not evaluated.",
+  "record": {
+    "id": "0397",
+    "en": "Methyl alcohol",
+    "fa": "متانول",
+    "cas": "67-56-1",
+    "formula": "CH3OH",
+    "aliases": [
+      "Methanol",
+      "Methyl alcohol",
+      "متیل الکل"
+    ],
+    "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html",
+    "checkedOn": "2026-11-07",
+    "sourceReviewedOn": "2019-10-30",
+    "fetchedAt": null,
+    "limits": [
+      {
+        "agency": "NIOSH",
+        "kind": "REL",
+        "status": "recommendation",
+        "raw": "TWA 200 ppm (260 mg/m³); ST 250 ppm (325 mg/m³) [skin]",
+        "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html"
+      },
+      {
+        "agency": "OSHA",
+        "kind": "PEL",
+        "status": "reported_by_NPG",
+        "raw": "TWA 200 ppm (260 mg/m³)",
+        "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html",
+        "regulationUrl": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000"
+      },
+      {
+        "agency": "NIOSH",
+        "kind": "IDLH",
+        "status": "acute_reference",
+        "raw": "6000 ppm",
+        "sourceUrl": "https://www.cdc.gov/niosh/npg/npgd0397.html"
+      }
+    ],
+    "notes": [],
+    "references": [
+      {
+        "title": "NIOSH NPG introduction",
+        "url": "https://www.cdc.gov/niosh/npg/pgintrod.html"
+      },
+      {
+        "title": "NPG Appendix G",
+        "url": "https://www.cdc.gov/niosh/npg/nengapdxg.html"
+      }
+    ]
+  }
+}

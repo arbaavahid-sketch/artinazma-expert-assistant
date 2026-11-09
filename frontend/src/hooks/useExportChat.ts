@@ -1,3 +1,4 @@
+import {reportFontCSS} from '@/lib/report-font';
 import { useState } from "react";
 import type { ChatMessage } from "@/lib/chat-types";
 
@@ -33,9 +34,9 @@ export function useExportChat(messages: ChatMessage[]) {
 <head>
 <meta charset="UTF-8"/>
 <title>گفتگو با آرتین — آرتین آزما</title>
-<style>
+<style>${reportFontCSS}
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: ${font}; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: rtl; }
+  body { font-family: Vazir, ${font}; background: #fff; color: #1e293b; padding: 40px; font-size: 13px; direction: rtl; }
   .header { border-bottom: 2px solid #7c3aed; padding-bottom: 16px; margin-bottom: 28px; }
   .header h1 { font-size: 20px; font-weight: 900; color: #7c3aed; }
   .header .meta { font-size: 11px; color: #64748b; margin-top: 6px; }

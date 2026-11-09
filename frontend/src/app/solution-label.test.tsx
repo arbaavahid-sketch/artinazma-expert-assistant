@@ -1,0 +1,14 @@
+import React,{useState} from 'react';
+import {it,expect,vi,afterEach} from 'vitest';
+import {render,screen,fireEvent} from '@testing-library/react';
+import fixture from './calculators/__tests__/fixtures/stage5-complete.json';
+import {readLabProject,parseProjectFile,serializeLabProject} from './calculators/workspace/project-file';
+import {readSolutionDraft,type SolutionDraft} from './calculators/workspace/chemical-library';
+import {solutionLabel,buildSolutionLabelHTML} from './calculators/workspace/solution-label';
+import SolutionLabels from './calculators/workspace/SolutionLabels';
+vi.mock('@/lib/api',()=>({apiUrl:(s:string)=>s,customerFetch:(...args:Parameters<typeof fetch>)=>fetch(...args)}));
+afterEach(()=>vi.unstubAllGlobals());
+const draft=()=>readLabProject(fixture).solution!;
+it('preserves both preparation labels through a complete project round trip',()=>{const p=readLabProject(fixture),q=parseProjectFile(serializeLabProject(p),'sample.json','','');expect(q.solution!.labels).toEqual(p.solution!.labels);expect(solutionLabel(q.solution!,'nominal').label.solutionId).toBe('DEMO-N');expect(solutionLabel(q.solution!,'commercial').label.solutionId).toBe('DEMO-C');expect(solutionLabel(q.solution!,'commercial').basis).toContain('3.2042');});
+it('escapes print labels in both languages and requires a current recipe and ID',()=>{const d=draft();d.labels!.nominal!.notes='<script>bad</script>';for(const en of [true,false])for(const kind of ['nominal','commercial'] as const){const h=buildSolutionLabelHTML(d,kind,en);expect(h).not.toContain('<script>');expect(h).toContain('mol/L');expect(h).toContain(en?'Not recorded':'ثبت نشده');}expect(buildSolutionLabelHTML(d,'nominal',true)).toContain('&lt;script&gt;');d.labels!.nominal!.solutionId='';expect(()=>solutionLabel(d,'nominal')).toThrow();expect(()=>readSolutionDraft({...d,labels:{nominal:{...d.labels!.nominal,notes:'x'.repeat(301)}}})).toThrow();expect(()=>solutionLabel({...draft(),commercial:{...draft().commercial!,density:''}},'commercial')).toThrow();});
+it('updates preview metadata without changing the recipe and displays export failure',async()=>{vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:false}));let latest:SolutionDraft;function Form(){const [d,setD]=useState(draft);latest=d;return <SolutionLabels draft={d} kind="nominal" en onChange={setD}/>;}render(<Form/>);fireEvent.click(screen.getByText('Label this solution'));fireEvent.change(screen.getByLabelText('Solution ID'),{target:{value:'TEST-N'}});expect(latest!.labels!.nominal!.solutionId).toBe('TEST-N');expect(latest!.concentration).toBe('0.1');fireEvent.click(screen.getByRole('button',{name:'Download label PDF'}));expect(await screen.findByRole('alert')).toHaveTextContent('Export failed');});

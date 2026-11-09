@@ -1,0 +1,125 @@
+{
+  "results": [
+    {
+      "_index": "chebi-prod-compounds-07112026",
+      "_type": "_doc",
+      "_id": "17790",
+      "_score": 46.43962,
+      "_source": {
+        "chebi_accession": "CHEBI:17790",
+        "name": "methanol",
+        "ascii_name": "methanol",
+        "stars": 3,
+        "default_structure": 850,
+        "definition": "The primary alcohol that is the simplest aliphatic alcohol, comprising a methyl and an alcohol group.",
+        "inchikey": "OKKJLVBELUTLKV-UHFFFAOYSA-N",
+        "monoisotopicmass": 32.02621,
+        "charge": 0,
+        "mass": 32.042,
+        "inchi": "InChI=1S/CH4O/c1-2/h2H,1H3",
+        "smiles": "CO",
+        "formula": "CH4O",
+        "structures": [
+          22202,
+          850
+        ]
+      }
+    },
+    {
+      "_index": "chebi-prod-compounds-07112026",
+      "_type": "_doc",
+      "_id": "194665",
+      "_score": 36.067936,
+      "_source": {
+        "chebi_accession": "CHEBI:194665",
+        "name": "(3-Chlorophenyl)methanol",
+        "ascii_name": "(3-Chlorophenyl)methanol",
+        "stars": 2,
+        "default_structure": 3324989,
+        "inchi": "InChI=1S/C7H7ClO/c8-7-3-1-2-6(4-7)5-9/h1-4,9H,5H2",
+        "formula": "C7H7ClO",
+        "monoisotopicmass": 142.01854,
+        "charge": 0,
+        "inchikey": "ZSRDNPVYGSFUMD-UHFFFAOYSA-N",
+        "mass": 142.585,
+        "smiles": "OCc1cccc(Cl)c1",
+        "structures": [
+          3324989
+        ]
+      }
+    },
+    {
+      "_index": "chebi-prod-compounds-07112026",
+      "_type": "_doc",
+      "_id": "194743",
+      "_score": 36.067936,
+      "_source": {
+        "chebi_accession": "CHEBI:194743",
+        "name": "(3,5-Dichlorophenyl)methanol",
+        "ascii_name": "(3,5-Dichlorophenyl)methanol",
+        "stars": 2,
+        "default_structure": 3325301,
+        "inchikey": "VSNNLLQKDRCKCB-UHFFFAOYSA-N",
+        "monoisotopicmass": 175.97957,
+        "mass": 177.03,
+        "charge": 0,
+        "inchi": "InChI=1S/C7H6Cl2O/c8-6-1-5(4-10)2-7(9)3-6/h1-3,10H,4H2",
+        "smiles": "OCc1cc(Cl)cc(Cl)c1",
+        "formula": "C7H6Cl2O",
+        "structures": [
+          3325301
+        ]
+      }
+    },
+    {
+      "_index": "chebi-prod-compounds-07112026",
+      "_type": "_doc",
+      "_id": "24814",
+      "_score": 36.067936,
+      "_source": {
+        "chebi_accession": "CHEBI:24814",
+        "name": "indole-3-methanol",
+        "ascii_name": "indole-3-methanol",
+        "stars": 3,
+        "default_structure": 3458,
+        "definition": "An indolyl alcohol carrying a hydroxymethyl group at position 3. It is a constituent of the cruciferous vegetables and had anticancer activity.",
+        "inchi": "InChI=1S/C9H9NO/c11-6-7-5-10-9-4-2-1-3-8(7)9/h1-5,10-11H,6H2",
+        "formula": "C9H9NO",
+        "charge": 0,
+        "inchikey": "IVYPNXXAYMYVSP-UHFFFAOYSA-N",
+        "smiles": "OCc1cnc2ccccc12",
+        "monoisotopicmass": 147.06841,
+        "mass": 147.177,
+        "structures": [
+          3458
+        ]
+      }
+    },
+    {
+      "_index": "chebi-prod-compounds-07112026",
+      "_type": "_doc",
+      "_id": "62150",
+      "_score": 36.067936,
+      "_source": {
+        "chebi_accession": "CHEBI:62150",
+        "name": "(3,4-dimethoxyphenyl)methanol",
+        "ascii_name": "(3,4-dimethoxyphenyl)methanol",
+        "stars": 3,
+        "default_structure": 2779255,
+        "definition": "A member of the class of benzyl alcohols that is benzyl alcohol in which the hydrogens at positions 3 and 4 of the phenyl group are substituted by methoxy groups.",
+        "formula": "C9H12O3",
+        "inchikey": "OEGPRYNGFWGMMV-UHFFFAOYSA-N",
+        "inchi": "InChI=1S/C9H12O3/c1-11-8-4-3-7(6-10)5-9(8)12-2/h3-5,10H,6H2,1-2H3",
+        "charge": 0,
+        "monoisotopicmass": 168.07864,
+        "smiles": "COc1ccc(CO)cc1OC",
+        "mass": 168.192,
+        "structures": [
+          2779255
+        ]
+      }
+    }
+  ],
+  "total": 1000,
+  "number_pages": 200
+}

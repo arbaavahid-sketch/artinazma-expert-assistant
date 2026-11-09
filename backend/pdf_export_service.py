@@ -2,7 +2,7 @@
 PDF Export Service — گزارش PDF فارسی از سوالات کاربران.
 
 از fpdf2 با text_shaping (uharfbuzz) استفاده می‌کند تا حروف فارسی درست
-شکل‌دهی و راست‌به‌چپ چیده شوند. فونت Vazirmatn (لایسنس OFL) در backend/fonts.
+شکل‌دهی و راست‌به‌چپ چیده شوند. فونت Vazir (لایسنس OFL) در backend/fonts.
 """
 
 import logging
@@ -70,7 +70,7 @@ _STATUS_LABELS = {
 _RATING_LABELS = {"up": "رضایت", "down": "نارضایتی"}
 
 
-# فونت Vazirmatn گلیفِ زیرنویس/بالانویس ندارد و این کاراکترها در PDF حذف
+# فونت Vazir گلیفِ زیرنویس/بالانویس ندارد و این کاراکترها در PDF حذف
 # می‌شدند (مثلاً «N₂, CO₂, H₂S» می‌شد «N, CO, HS»). به رقم عادی تبدیل می‌کنیم.
 _SUB_SUP_MAP = str.maketrans(
     "₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻",
@@ -108,21 +108,21 @@ def _strip_markdown(text: str) -> str:
 class _QuestionsPDF(FPDF):
     def __init__(self):
         super().__init__(orientation="P", unit="mm", format="A4")
-        self.add_font("Vazirmatn", "", os.path.join(_FONT_DIR, "Vazirmatn-Regular.ttf"))
-        self.add_font("Vazirmatn", "B", os.path.join(_FONT_DIR, "Vazirmatn-Bold.ttf"))
+        self.add_font("Vazir", "", os.path.join(_FONT_DIR, "Vazir-Regular.ttf"))
+        self.add_font("Vazir", "B", os.path.join(_FONT_DIR, "Vazir-Bold.ttf"))
         self.set_text_shaping(True)
         self.set_auto_page_break(auto=True, margin=18)
         self.set_margins(left=15, top=15, right=15)
 
     def footer(self):
         self.set_y(-14)
-        self.set_font("Vazirmatn", "", 8)
+        self.set_font("Vazir", "", 8)
         self.set_text_color(120, 120, 120)
         self.cell(0, 8, f"صفحه {self.page_no()}", align="C")
         self.set_text_color(0, 0, 0)
 
     def rtl_line(self, text: str, size: float = 10.5, style: str = "", h: float = 6.5):
-        self.set_font("Vazirmatn", style, size)
+        self.set_font("Vazir", style, size)
         self.multi_cell(0, h, text, align="R", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 

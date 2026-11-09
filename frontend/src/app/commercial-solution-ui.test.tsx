@@ -1,0 +1,6 @@
+import React,{useState} from 'react';
+import {it,expect} from 'vitest';
+import {render,screen,fireEvent} from '@testing-library/react';
+import CommercialSolution from './calculators/workspace/CommercialSolution';
+import {emptyCommercial,type CommercialDraft} from './calculators/workspace/commercial-solution';
+it('requires recalculation after an edit and retains data across languages',()=>{function Form({en}:{en:boolean}){const [d,setD]=useState<CommercialDraft>({...emptyCommercial(),massPercent:'50',density:'1',target:'1',volume:'100',percentSource:'Example',densityConditions:'20 C',densitySource:'Example',productReference:'Lot A',sameSpecies:true});return <CommercialSolution en={en} value={d} onChange={setD} molarMass="50" name="Hypothetical compound"/>;}const view=render(<Form en/>);fireEvent.click(screen.getByText('Prepare from a commercial solution using mass content and density'));fireEvent.click(screen.getByRole('button',{name:'Calculate commercial aliquot'}));expect(screen.getByRole('status')).toHaveTextContent('10.00000 mL');view.rerender(<Form en={false}/>);expect(screen.getByRole('status')).toHaveTextContent('10.00000 mL');fireEvent.change(screen.getByLabelText('مقدار جزء موردنظر (% w/w)'),{target:{value:'40'}});expect(screen.getByRole('status')).toHaveTextContent('دوباره محاسبه کنید');expect(screen.queryByText('10.00000 mL')).toBeNull();});

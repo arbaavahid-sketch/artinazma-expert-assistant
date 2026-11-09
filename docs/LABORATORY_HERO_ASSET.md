@@ -1,0 +1,39 @@
+# Media loading policy — 8 November 2026
+
+The shared artwork now starts with the existing poster only. MP4 source attachment waits for viewport intersection, a visible tab, no reduced-motion preference and no save-data preference. Playback is started programmatically when permitted; it pauses while offscreen/hidden and resumes without resetting currentTime. Reduced motion/save-data use the static poster. There are still no overlay/native buttons, and the seamless v2 MP4 and poster bytes are unchanged. Media errors fall back to the poster. See [media loading acceptance and limits](LABORATORY_MEDIA_LOADING.md). Seven sensor/playback tests, TypeScript, lint and production build passed. Live browser review confirmed the actual reduced-motion case; normal playback and hidden/offscreen behavior were tested with simulated sensors, not claimed as new device acceptance.
+
+# Seamless video and no controls — 7 November 2026
+
+The active clip is now `frontend/public/videos/laboratory-equipment-glow-loop-v2.mp4` with matching `laboratory-equipment-glow-loop-poster.jpg`. At the user’s request, there are zero custom or native overlay buttons. Playback is automatic, muted, inline and repeating; picture-in-picture and remote playback are disabled.
+
+The original end/start had a visible discontinuity. A 14-frame circular eased dissolve blends the tail into the head, followed at wrap by its next original frame. Constant frame timestamps avoid an additional timing step. The derived H.264/yuv420p MP4 uses faststart, 176 decoded frames at 24 fps (7.333333 s in the browser, verified constant 24 fps) and is 3,800,443 bytes. The original 4,039,192-byte source remains unchanged. No bouncing/reverse playback or JavaScript restart timer is used.
+
+Reproduction: `backend/eval/prepare_laboratory_video_loop.py --ffmpeg <FFmpeg executable>` with backend Python, OpenCV and NumPy. FFmpeg was obtained from the standard PyPI imageio-ffmpeg 0.6.0 wheel into `tmp/video-tools` for this asset preparation only; it is not an application runtime dependency. Audit: `output/laboratory-video-loop-audit.json`. Mean absolute pixel difference at wrap changed from 16.3973/255 to 3.7710/255, about 77% smaller; the adjacent final frame step is 3.2688/255. This metric is a boundary check, not a perceptual quality guarantee. Browser playback used the new loop URL with muted=true, loop=true, controls=false, zero overlay buttons and no media error. Screenshot: `docs/laboratory-video-seamless-fa.png`.
+
+## Previous video revision
+
+# Current laboratory header video
+
+Updated 7 November 2026 at the user’s request. The shared laboratory artwork now uses the supplied `Laboratory_equipment_with_glowin…_684f8c54.mp4`, copied unchanged to `frontend/public/videos/laboratory-equipment-glow.mp4` (4,039,192 bytes; 1280×720; 24 fps; 190 frames; approximately 7.92 seconds). Its source is the user-provided file, not the previous procedural animation. A JPEG poster is extracted at 0.5 seconds from that video.
+
+The 4:3 display frame with object-fit:cover crops the encoded side bars from the 16:9 canvas; the original video file remains unchanged. At the user’s explicit follow-up request, playback is automatic, muted, inline and repeating with no custom or native controls. Picture-in-picture and remote playback are disabled; the decorative video does not intercept pointer input. The shared component updates both the calculators banner and the workspace artwork. Video captions and instrument readings are part of the supplied decorative footage, not live application measurements. Previous assets and their generation history are retained below.
+
+Browser verification: the actual MP4 loaded with duration 7.93 s, muted=true, loop=true and no media error. Automatic playback advanced normally after reload; pause and resume controls worked in the first revision; these controls were subsequently removed at the user’s request. Persian mobile 390×844 had document width 390, with the frame below the banner text; desktop retained the side-by-side layout. Screenshots: `docs/laboratory-video-mobile-fa.png` and `docs/laboratory-video-desktop-fa.png`. TypeScript, lint and production build passed. The deployed source video was confirmed byte-for-byte identical to the supplied file.
+
+## Previous artwork history
+
+### Laboratory header artwork
+
+Generated with the built-in `image_gen` tool. The source PNG is preserved with its generated alpha channel at `frontend/public/images/laboratory-instrumentation-hero-v1.png`.
+
+The shipped asset is `frontend/public/images/laboratory-instrumentation-loop-v3.webp`: an actual 100-frame, 5-second, continuously looping animated WebP. `frontend/scripts/render-laboratory-loop.mjs` renders visible rising vapor and bubbles in both the cyan vessel and amber cuvette, a moving amber meniscus and a gentle product-camera motion. This is a procedural animation of the generated artwork, not an AI-generated 3D video. It is served with Next Image `unoptimized` so image processing does not flatten its frames. The header search, network, labels and SVG instrument display were removed at the user's request. All 100 frame delays are set explicitly to 50 ms, and the encoded duration is validated after rendering.
+
+## Interactive finish
+
+The desktop artwork now has more space in the header. Mouse position drives a bounded perspective tilt (up to 3.5 degrees horizontally) and a soft light masked to the original glassware/instrument silhouette. Pointer movement updates element styles without re-rendering the calculator. Leaving the artwork resets the pose. Touch devices keep the stable layout; reduced-motion mode removes transition inertia.
+
+A 1.4-second cyan light pulse runs after a valid calculator submission or a validated successful GUM server response. Invalid inputs and failed requests do not trigger it. The pulse is decorative and does not indicate compliance with measurement limits. All effects share the same markup in Persian and English; the animated WebP remains unoptimized and continuously looping.
+
+## Exact generation prompt
+
+Use case: photorealistic-natural / premium CGI product photography. Asset: an elegant laboratory-and-industrial-measurement hero artwork for an established Persian/English professional laboratory app with midnight navy and cyan branding. Create a brand-new, highly realistic 3:2 landscape transparent-background cutout composition: one sophisticated precision stainless-steel measurement probe and a compact brushed-metal scientific sensor head beside a beautifully crafted clear borosilicate analytical vessel with a small amount of rich cyan liquid, a few realistic microscopic bubbles in the liquid, and very subtle translucent vapor above its narrow neck. A second slender sample cuvette with a restrained warm amber reflection may balance the composition. Real laboratory materials, optical glass refraction, finely machined aluminum, tactile brushed metal, extremely refined cyan rim lighting and soft white studio reflections. High-end scientific instrument catalogue photography, cinematic macro lens, physically plausible materials, sophisticated restrained industrial design. The subjects should be substantial and sculptural rather than small cartoon icons, framed together in the central 75% of the canvas with generous breathing room around the silhouette for gentle motion. The entire composition must work on a dark navy web header, with no rectangular background or visible solid floor, only a soft subtle contact shadow if needed. No typography, no logos, no labels, no numeric readings, no control UI, no graphs, no network, no diagram, no floating badges, no orbiting text, no people, no watermark, no bright neon sci-fi HUD, no cartoon or flat-vector illustration. This is only the photographic artwork; the page text is rendered separately. Transparent alpha background.

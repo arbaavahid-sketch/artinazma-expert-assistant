@@ -14,6 +14,8 @@
 }
 
 .core {
+  z-index: 2;
+  cursor: pointer;
   display: grid;
   place-items: center;
   width: 54px;
@@ -25,6 +27,7 @@
 }
 
 .orbit {
+  pointer-events: none;
   --radius: 96px;
   --duration: 34s;
   width: calc(2 * var(--radius));
@@ -42,16 +45,29 @@
 }
 
 .label {
+  pointer-events: auto;
+  cursor: pointer;
+  min-height: 28px;
   display: block;
   border: 1px solid #a5f3fc55;
   border-radius: 8px;
   background: #173863;
   padding: 4px 6px;
   color: #ecfeff;
-  font: 600 10px/1.3 monospace;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
   box-shadow: 0 3px 12px #071a38a0;
   animation: orbit var(--duration) linear infinite reverse;
 }
+
+.core:hover, .label:hover { border-color: #a5f3fc; background: #28527a; }
+.core:focus-visible, .label:focus-visible { outline: 2px solid #a5f3fc; outline-offset: 3px; }
+.label[aria-pressed='true'] { border-color: #a5f3fc; background: #24546b; }
+.scene:hover .orbit, .scene:hover .label,
+.scene:focus-within .orbit, .scene:focus-within .label,
+.scene:active .orbit, .scene:active .label { animation-play-state: paused; }
 
 .inner .label {
   background: #30386a;
@@ -60,6 +76,13 @@
 
 @keyframes orbit {
   to { rotate: 360deg; }
+}
+
+@media (max-width: 639px) {
+  .scene { height: 180px; }
+  .orbit { --radius: 76px; }
+  .inner { --radius: 43px; }
+  .label { font-size: 9px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

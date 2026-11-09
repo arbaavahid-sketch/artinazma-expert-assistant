@@ -71,6 +71,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         path = request.url.path
 
+        # Public numerical calculation has no session or persistent side effects.
+        if path == "/uncertainty/budget":
+            return await call_next(request)
+
         # Skip exempt paths
         if any(path.startswith(p) for p in _CSRF_EXEMPT_PATHS):
             return await call_next(request)

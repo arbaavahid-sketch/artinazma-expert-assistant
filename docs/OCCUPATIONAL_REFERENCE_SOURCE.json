@@ -1,0 +1,29 @@
+{
+  "snapshotVersion": "artin-niosh-selected-2026-11-07-v2",
+  "checkedOn": "2026-11-07",
+  "delivery": "reviewed_snapshot",
+  "count": 12,
+  "sha256": "b59e7bcfee415f905af92d12f439bfbe0f3dde68f93fc667e09087fecbbb10d1",
+  "scope": "Selected factual exposure references transcribed from the linked official NPG pages; not live regulatory or HSE approval. No ACGIH TLV data copied.",
+  "retrieval": "Primary official pages reviewed through web access on 2026-11-07. Direct urllib ingestion received HTTP 403; no live API connector is claimed.",
+  "sources": [
+    "https://www.cdc.gov/niosh/npg/npgd0397.html",
+    "https://www.cdc.gov/niosh/npg/npgd0004.html",
+    "https://www.cdc.gov/niosh/npg/npgd0049.html",
+    "https://www.cdc.gov/niosh/npg/npgd0619.html",
+    "https://www.cdc.gov/niosh/npg/npgd0322.html",
+    "https://www.cdc.gov/niosh/npg/npgd0028.html",
+    "https://www.cdc.gov/niosh/npg/npgd0337.html",
+    "https://www.cdc.gov/niosh/npg/npgd0577.html",
+    "https://www.cdc.gov/niosh/npg/npgd0262.html",
+    "https://www.cdc.gov/niosh/npg/npgd0002.html",
+    "https://www.cdc.gov/niosh/npg/npgd0447.html",
+    "https://www.cdc.gov/niosh/npg/npgd0565.html"
+  ],
+  "periodBasis": "https://www.cdc.gov/niosh/npg/pgintrod.html",
+  "regulatoryBasis": [
+    "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1000",
+    "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1028"
+  ],
+  "updateWorkflow": "Validate an offline candidate and produce a full diff with backend/eval/review_occupational_snapshot.py. Review official identity, periods, units, annotations and applicability for every added/changed record. Preserve missing source dates as null. The tool never promotes data. After source review, replace the active file, update this manifest SHA256/version/count and restart all backend workers to clear the catalog cache. Run the snapshot, candidate review and frontend tests. No live fetchedAt is assigned."
+}

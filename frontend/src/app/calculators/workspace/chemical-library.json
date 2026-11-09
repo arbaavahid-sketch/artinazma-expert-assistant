@@ -1,0 +1,19 @@
+{
+  "version": "pubchem-selected-2026-11-05-v1",
+  "retrievedOn": "2026-11-05",
+  "source": "PubChem PUG-REST",
+  "endpoint": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/5234,4873,10340,151402,24463,887,702,180/property/MolecularFormula,MolecularWeight,IUPACName/JSON",
+  "property": "MolecularWeight",
+  "unit": "g/mol",
+  "kind": "computed",
+  "records": [
+    {"cid":5234,"fa":"سدیم کلرید","en":"Sodium chloride","formula":"NaCl","sourceFormula":"ClNa","iupac":"sodium chloride","molarMass":"58.44","waters":0,"formFa":"بدون آب تبلور","formEn":"Anhydrous","aliases":["کلرید سدیم","نمک طعام","sodium chloride"]},
+    {"cid":4873,"fa":"پتاسیم کلرید","en":"Potassium chloride","formula":"KCl","sourceFormula":"ClK","iupac":"potassium chloride","molarMass":"74.55","waters":0,"formFa":"بدون آب تبلور","formEn":"Anhydrous","aliases":["کلرید پتاسیم","potassium chloride"]},
+    {"cid":10340,"fa":"سدیم کربنات بدون آب تبلور","en":"Sodium carbonate, anhydrous","formula":"Na2CO3","sourceFormula":"CNa2O3","iupac":"disodium;carbonate","molarMass":"105.988","waters":0,"formFa":"بدون آب تبلور","formEn":"Anhydrous","aliases":["کربنات سدیم","sodium carbonate anhydrous"]},
+    {"cid":151402,"fa":"سدیم کربنات ده‌آبه","en":"Sodium carbonate decahydrate","formula":"Na2CO3·10H2O","sourceFormula":"CH20Na2O13","iupac":"disodium;carbonate;decahydrate","molarMass":"286.14","waters":10,"formFa":"دارای ۱۰ مولکول آب تبلور","formEn":"10 waters of crystallization","aliases":["سدیم کربنات ده آبه","کربنات سدیم ده آبه","sodium carbonate decahydrate"]},
+    {"cid":24463,"fa":"مس(II) سولفات پنج‌آبه","en":"Copper(II) sulfate pentahydrate","formula":"CuSO4·5H2O","sourceFormula":"CuH10O9S","iupac":"copper;sulfate;pentahydrate","molarMass":"249.69","waters":5,"formFa":"دارای ۵ مولکول آب تبلور","formEn":"5 waters of crystallization","aliases":["سولفات مس پنج آبه","کات کبود","copper sulfate pentahydrate","cupric sulfate pentahydrate"]},
+    {"cid":887,"fa":"متانول","en":"Methanol","formula":"CH3OH","sourceFormula":"CH4O","iupac":"methanol","molarMass":"32.042","waters":null,"formFa":"ترکیب مولکولی مشخص","formEn":"Defined molecular compound","aliases":["متیل الکل","methyl alcohol"]},
+    {"cid":702,"fa":"اتانول","en":"Ethanol","formula":"C2H5OH","sourceFormula":"C2H6O","iupac":"ethanol","molarMass":"46.07","waters":null,"formFa":"ترکیب مولکولی مشخص","formEn":"Defined molecular compound","aliases":["اتیل الکل","ethyl alcohol"]},
+    {"cid":180,"fa":"استون","en":"Acetone","formula":"C3H6O","sourceFormula":"C3H6O","iupac":"propan-2-one","molarMass":"58.08","waters":null,"formFa":"ترکیب مولکولی مشخص","formEn":"Defined molecular compound","aliases":["پروپانون","propanone","propan-2-one"]}
+  ]
+}

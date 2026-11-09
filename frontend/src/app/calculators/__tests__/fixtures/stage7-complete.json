@@ -1,0 +1,1063 @@
+{
+  "format": "artin-lab-project",
+  "version": 1,
+  "id": "ae385db7-6d13-4695-827a-7d17c5868e47",
+  "savedAt": "2026-11-07T03:50:41.338Z",
+  "workflow": "gc-external-extraction",
+  "identity": {
+    "title": "",
+    "sample": "",
+    "sop": "",
+    "edition": "",
+    "matrix": ""
+  },
+  "evidence": [],
+  "standards": [
+    [
+      "0",
+      "1.1"
+    ],
+    [
+      "1",
+      "2.9"
+    ],
+    [
+      "2",
+      "5.2"
+    ],
+    [
+      "3",
+      "6.8"
+    ],
+    [
+      "4",
+      "9"
+    ]
+  ],
+  "stage": 4,
+  "gc": {
+    "data": {
+      "values": {
+        "area": "4.9",
+        "extract": "10",
+        "dilution": "1",
+        "mass": "1",
+        "recovery": "100"
+      },
+      "uncertainties": {
+        "area": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "extract": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "dilution": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "mass": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "recovery": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        }
+      },
+      "coverage": "2",
+      "coverageSource": "ضریب فرضی برای آزمون نرم‌افزار؛ ادعای پوشش دقیق ندارد",
+      "additional": [
+        {
+          "id": "validation-method-precision",
+          "preset": "methodPrecision",
+          "name": "مثال فرضی دقت کل روش در mg/kg",
+          "target": "result",
+          "basis": "absolute",
+          "value": "0.19999999999999932",
+          "kind": "standard",
+          "divisor": "",
+          "source": "Study transfer v1 · مثال فرضی دقت کل روش در mg/kg · 2026-11-07T03:22:44.383Z; raw study/source and review: validationTransfer in project JSON",
+          "overlapNote": "فرض مثال: پراکندگی 0.2 mg/kg اثر باقیماندهٔ کل روش است و با اثرهای مستقل ورودی‌ها هم‌پوشانی ندارد. مؤلفهٔ تکراری دقت در بودجه نیست؛ SE ضرایب تنها از برازش لحاظ می‌شود. این فرض برای فرایند واقعی تأیید نشده است.",
+          "independent": true
+        }
+      ]
+    },
+    "run": {
+      "calculatedAt": "2026-11-07T03:22:47.305Z",
+      "inputKey": "{\"rows\":[[\"0\",\"1.1\"],[\"1\",\"2.9\"],[\"2\",\"5.2\"],[\"3\",\"6.8\"],[\"4\",\"9\"]],\"data\":{\"values\":{\"area\":\"4.9\",\"extract\":\"10\",\"dilution\":\"1\",\"mass\":\"1\",\"recovery\":\"100\"},\"uncertainties\":{\"area\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"extract\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"dilution\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"mass\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"recovery\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"}},\"coverage\":\"2\",\"coverageSource\":\"ضریب فرضی برای آزمون نرم‌افزار؛ ادعای پوشش دقیق ندارد\",\"additional\":[{\"id\":\"validation-method-precision\",\"preset\":\"methodPrecision\",\"name\":\"مثال فرضی دقت کل روش در mg/kg\",\"target\":\"result\",\"basis\":\"absolute\",\"value\":\"0.19999999999999932\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"Study transfer v1 · مثال فرضی دقت کل روش در mg/kg · 2026-11-07T03:22:44.383Z; raw study/source and review: validationTransfer in project JSON\",\"overlapNote\":\"فرض مثال: پراکندگی 0.2 mg/kg اثر باقیماندهٔ کل روش است و با اثرهای مستقل ورودی‌ها هم‌پوشانی ندارد. مؤلفهٔ تکراری دقت در بودجه نیست؛ SE ضرایب تنها از برازش لحاظ می‌شود. این فرض برای فرایند واقعی تأیید نشده است.\",\"independent\":true}]}}",
+      "measured": 19.492385786802032,
+      "standard": 0.5248558102554539,
+      "expanded": 1.0497116205109078,
+      "coverage": 2,
+      "engine": "artin-linear-gum",
+      "engineVersion": "1"
+    }
+  },
+  "solution": {
+    "material": {
+      "version": "pubchem-selected-2026-11-05-v1",
+      "retrievedOn": "2026-11-05",
+      "source": "PubChem PUG-REST",
+      "sourceUrl": "https://pubchem.ncbi.nlm.nih.gov/compound/887",
+      "property": "MolecularWeight",
+      "unit": "g/mol",
+      "kind": "computed",
+      "record": {
+        "cid": 887,
+        "fa": "متانول",
+        "en": "Methanol",
+        "formula": "CH3OH",
+        "sourceFormula": "CH4O",
+        "iupac": "methanol",
+        "molarMass": "32.042",
+        "waters": null,
+        "formFa": "ترکیب مولکولی مشخص",
+        "formEn": "Defined molecular compound",
+        "aliases": [
+          "متیل الکل",
+          "methyl alcohol"
+        ]
+      }
+    },
+    "concentration": "0.1",
+    "volume": "100",
+    "purity": "99.9",
+    "puritySource": "متانول — نمونهٔ فرضی · DEMO-01 · مثال فرضی برای آزمون ذخیره",
+    "labels": {
+      "nominal": {
+        "solutionId": "DEMO-N-FINAL",
+        "preparedBy": "فرضی",
+        "preparedOn": "۱۴۰۵/۰۸/۱۵ شمسی",
+        "expires": "",
+        "storage": "طبق روش فرضی",
+        "notes": "نمونهٔ فرضی؛ تهیه واقعی تأیید نشده"
+      },
+      "commercial": {
+        "solutionId": "DEMO-C-FINAL",
+        "preparedBy": "فرضی",
+        "preparedOn": "۱۴۰۵/۰۸/۱۵ شمسی",
+        "expires": "",
+        "storage": "طبق روش فرضی",
+        "notes": "نمونهٔ فرضی؛ تهیه واقعی تأیید نشده"
+      }
+    },
+    "reagent": {
+      "id": "17bc1c9b-bc70-4972-a750-c5cbf653f428",
+      "name": "متانول — نمونهٔ فرضی",
+      "manufacturer": "",
+      "catalogue": "",
+      "lot": "DEMO-01",
+      "certificate": "مثال فرضی برای آزمون ذخیره",
+      "purity": "۹۹٫۹ %",
+      "purityBasis": "جرمی",
+      "uncertainty": "",
+      "uncertaintyKind": "",
+      "coverageFactor": "",
+      "issued": "",
+      "opened": "",
+      "expires": "",
+      "storage": "",
+      "notes": ""
+    },
+    "preparation": {
+      "dilution": false,
+      "independent": true,
+      "inputs": {
+        "mass": {
+          "nominal": "100",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "0.1",
+            "divisor": "",
+            "source": "دادهٔ فرضی برای آزمون"
+          }
+        },
+        "purity": {
+          "nominal": "99",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "0.2",
+            "divisor": "",
+            "source": "دادهٔ فرضی برای آزمون"
+          }
+        },
+        "volume": {
+          "nominal": "100",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "0.05",
+            "divisor": "",
+            "source": "دادهٔ فرضی برای آزمون"
+          }
+        },
+        "aliquot": {
+          "nominal": "",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "",
+            "divisor": "",
+            "source": ""
+          }
+        },
+        "finalVolume": {
+          "nominal": "",
+          "uncertainty": {
+            "kind": "standard",
+            "value": "",
+            "divisor": "",
+            "source": ""
+          }
+        }
+      }
+    },
+    "dilutionPlan": {
+      "label": {
+        "solutionId": "DEMO",
+        "preparedBy": "مثال فرضی",
+        "preparedOn": "۱۴۰۵/۰۸/۱۵ شمسی",
+        "expires": "",
+        "storage": "",
+        "notes": "نمونهٔ فرضی برای بررسی برچسب"
+      },
+      "stock": "1000",
+      "source": "محلول فرضی A — آزمون رابط",
+      "unit": "mg/L",
+      "steps": [
+        {
+          "target": "100",
+          "volume": "250",
+          "unit": "mg/L",
+          "volumeUnit": "mL"
+        },
+        {
+          "target": "1",
+          "volume": "250",
+          "unit": "mg/L",
+          "volumeUnit": "mL"
+        }
+      ]
+    },
+    "commercial": {
+      "massPercent": "10",
+      "percentSource": "دادهٔ فرضی",
+      "density": "1",
+      "densityConditions": "۲۰ درجه سلسیوس - فرضی",
+      "densitySource": "دادهٔ فرضی",
+      "productReference": "مثال فرضی - آزمون نرم‌افزار",
+      "target": "0.1",
+      "volume": "100",
+      "volumeUnit": "mL",
+      "sameSpecies": true
+    }
+  },
+  "precisionStudy": {
+    "title": "مثال فرضی دقت کل روش در mg/kg",
+    "analyte": "آنالیت فرضی A",
+    "matrix": "نمونهٔ فرضی A در آب",
+    "method": "SOP فرضی برای آزمون نرم‌افزار - بازنگری ۱",
+    "unit": "mg/kg",
+    "level": "20 mg/kg",
+    "conditions": "۵ آماده‌سازی مستقل، اپراتور و دستگاه یکسان، همان روز؛ دادهٔ فرضی",
+    "source": "داده‌های کاملاً فرضی برای آزمون انتقال نرم‌افزار؛ همان مطالعهٔ قبلی نیست",
+    "version": 1,
+    "scope": "whole-method",
+    "independent": true,
+    "ratioScale": true,
+    "observations": "19.8\n20\n20.2"
+  },
+  "biasStudy": {
+    "referenceValue": "9.8",
+    "referenceUnit": "mg/L",
+    "referenceSource": "گواهی فرضی DEMO-REF-01؛ بچ فرضی - فقط آزمون نرم‌افزار",
+    "referenceConditions": "آنالیت فرضی A در آب، همان کمیت و شرایط مطالعه؛ مقدار مرجع فرضی",
+    "referenceUncertainty": "0.2",
+    "coverageFactor": "2",
+    "version": 1,
+    "study": {
+      "title": "مطالعهٔ فرضی تکرارپذیری A",
+      "analyte": "آنالیت فرضی A",
+      "matrix": "نمونهٔ فرضی A در آب",
+      "method": "SOP فرضی برای آزمون نرم‌افزار - بازنگری ۱",
+      "unit": "mg/L",
+      "level": "10 mg/L - فرضی",
+      "conditions": "۵ آماده‌سازی مستقل، اپراتور و دستگاه یکسان، همان روز؛ دادهٔ فرضی",
+      "source": "کاربرگ فرضی DEMO-PREC-01",
+      "version": 1,
+      "scope": "whole-method",
+      "independent": true,
+      "ratioScale": true,
+      "observations": "9.8\n10\n10.2\n9.9\n10.1"
+    },
+    "referenceUncertaintyKind": "expanded",
+    "independentReference": true,
+    "comparable": true
+  },
+  "intermediateStudy": {
+    "title": "مطالعهٔ فرضی دقت میانی A",
+    "analyte": "آنالیت فرضی A",
+    "matrix": "نمونهٔ فرضی در آب",
+    "method": "SOP فرضی - بازنگری ۱؛ آزمون نرم‌افزار",
+    "unit": "mg/L",
+    "level": "12 mg/L - فرضی",
+    "conditions": "۳ روز فرضی در یک آزمایشگاه، اپراتور و دستگاه ثابت؛ هر تکرار آماده‌سازی مستقل؛ طرح متوازن اثر تصادفی روز",
+    "source": "کاربرگ فرضی DEMO-IP-01",
+    "version": 1,
+    "scope": "whole-method",
+    "factor": "day",
+    "independent": true,
+    "designReviewed": true,
+    "groups": [
+      {
+        "label": "روز فرضی ۱",
+        "observations": "9\n11"
+      },
+      {
+        "label": "روز فرضی ۲",
+        "observations": "11\n13"
+      },
+      {
+        "label": "روز فرضی ۳",
+        "observations": "13\n15"
+      }
+    ]
+  },
+  "calibrationStudy": {
+    "title": "مطالعهٔ فرضی کالیبراسیون A",
+    "analyte": "آنالیت فرضی A",
+    "matrix": "استانداردهای فرضی در آب",
+    "method": "SOP فرضی - بازنگری ۱؛ آزمون نرم‌افزار",
+    "xUnit": "mg/L",
+    "yUnit": "area",
+    "conditions": "۵ سطح، پاسخ مستقل در یک دستگاه و نوبت؛ فرض واریانس مشترک و خطای ناچیز x فقط برای این مثال فرضی",
+    "source": "کاربرگ فرضی DEMO-CAL-01",
+    "standardsSource": "DEMO-CAL-STD-01 - مقادیر کاملاً فرضی برای آزمون نرم‌افزار",
+    "version": 1,
+    "independent": true,
+    "modelReviewed": true,
+    "rows": [
+      {
+        "x": "0",
+        "y": "1.1"
+      },
+      {
+        "x": "1",
+        "y": "2.9"
+      },
+      {
+        "x": "2",
+        "y": "5.2"
+      },
+      {
+        "x": "3",
+        "y": "6.8"
+      },
+      {
+        "x": "4",
+        "y": "9"
+      }
+    ]
+  },
+  "controlStudy": {
+    "version": 1,
+    "baseline": {
+      "title": "مثال NIST برای آزمون نرم‌افزار",
+      "analyte": "پاسخ نمونهٔ منتشرشده",
+      "matrix": "مثال آموزشی؛ دادهٔ واقعی آزمایشگاه نیست",
+      "method": "NIST/SEMATECH pmc322",
+      "unit": "واحد نمونه",
+      "conditions": "ده مشاهده به ترتیب مثال منتشرشده؛ فقط بررسی پیاده‌سازی نرم‌افزار",
+      "source": "https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc322.htm",
+      "reviewNote": "کاربرد صرفاً آزمون عددی است؛ کفایت مبنای یک فرایند واقعی تأیید نشده است.",
+      "version": 1,
+      "timeOrderConfirmed": true,
+      "modelReviewed": true,
+      "rows": [
+        {
+          "label": "B1",
+          "value": "49.6"
+        },
+        {
+          "label": "B2",
+          "value": "47.6"
+        },
+        {
+          "label": "B3",
+          "value": "49.9"
+        },
+        {
+          "label": "B4",
+          "value": "51.3"
+        },
+        {
+          "label": "B5",
+          "value": "47.8"
+        },
+        {
+          "label": "B6",
+          "value": "51.2"
+        },
+        {
+          "label": "B7",
+          "value": "52.6"
+        },
+        {
+          "label": "B8",
+          "value": "52.4"
+        },
+        {
+          "label": "B9",
+          "value": "53.6"
+        },
+        {
+          "label": "B10",
+          "value": "52.1"
+        }
+      ]
+    },
+    "frozen": {
+      "title": "مثال NIST برای آزمون نرم‌افزار",
+      "analyte": "پاسخ نمونهٔ منتشرشده",
+      "matrix": "مثال آموزشی؛ دادهٔ واقعی آزمایشگاه نیست",
+      "method": "NIST/SEMATECH pmc322",
+      "unit": "واحد نمونه",
+      "conditions": "ده مشاهده به ترتیب مثال منتشرشده؛ فقط بررسی پیاده‌سازی نرم‌افزار",
+      "source": "https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc322.htm",
+      "reviewNote": "کاربرد صرفاً آزمون عددی است؛ کفایت مبنای یک فرایند واقعی تأیید نشده است.",
+      "version": 1,
+      "timeOrderConfirmed": true,
+      "modelReviewed": true,
+      "rows": [
+        {
+          "label": "B1",
+          "value": "49.6"
+        },
+        {
+          "label": "B2",
+          "value": "47.6"
+        },
+        {
+          "label": "B3",
+          "value": "49.9"
+        },
+        {
+          "label": "B4",
+          "value": "51.3"
+        },
+        {
+          "label": "B5",
+          "value": "47.8"
+        },
+        {
+          "label": "B6",
+          "value": "51.2"
+        },
+        {
+          "label": "B7",
+          "value": "52.6"
+        },
+        {
+          "label": "B8",
+          "value": "52.4"
+        },
+        {
+          "label": "B9",
+          "value": "53.6"
+        },
+        {
+          "label": "B10",
+          "value": "52.1"
+        }
+      ],
+      "frozenAt": "2026-11-07T02:55:45.925Z"
+    },
+    "monitoring": [
+      {
+        "label": "P1",
+        "value": "51"
+      },
+      {
+        "label": "P2",
+        "value": "60"
+      }
+    ],
+    "monitoringSource": "دو مقدار فرضی صرفاً برای آزمون سیگنال: 51 و 60؛ دادهٔ NIST نیستند.",
+    "monitoringComparable": true
+  },
+  "monteCarloStudy": {
+    "version": 1,
+    "seed": "42",
+    "maxBatches": "5",
+    "digits": "1",
+    "probability": "0.95",
+    "distributionNote": "مثال کاملاً فرضی برای آزمون نرم‌افزار: دادهٔ مرحلهٔ قبل، مؤلفه‌های نرمال با u ثابت، هم‌بستگی a و b از OLS و اثر اضافی دقت 0.2 mg/kg. به Top-Down افزوده نمی‌شود؛ تأیید SOP یا روش واقعی نیست.",
+    "reviewed": true,
+    "snapshot": {
+      "identity": {
+        "title": "",
+        "sample": "",
+        "sop": "",
+        "edition": "",
+        "matrix": ""
+      },
+      "rows": [
+        [
+          "0",
+          "1.1"
+        ],
+        [
+          "1",
+          "2.9"
+        ],
+        [
+          "2",
+          "5.2"
+        ],
+        [
+          "3",
+          "6.8"
+        ],
+        [
+          "4",
+          "9"
+        ]
+      ],
+      "data": {
+        "values": {
+          "area": "4.9",
+          "extract": "10",
+          "dilution": "1",
+          "mass": "1",
+          "recovery": "100"
+        },
+        "uncertainties": {
+          "area": {
+            "value": ".01",
+            "kind": "standard",
+            "divisor": "",
+            "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+          },
+          "extract": {
+            "value": ".01",
+            "kind": "standard",
+            "divisor": "",
+            "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+          },
+          "dilution": {
+            "value": ".01",
+            "kind": "standard",
+            "divisor": "",
+            "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+          },
+          "mass": {
+            "value": ".01",
+            "kind": "standard",
+            "divisor": "",
+            "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+          },
+          "recovery": {
+            "value": ".01",
+            "kind": "standard",
+            "divisor": "",
+            "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+          }
+        },
+        "coverage": "2",
+        "coverageSource": "ضریب فرضی برای آزمون نرم‌افزار؛ ادعای پوشش دقیق ندارد",
+        "additional": [
+          {
+            "id": "validation-method-precision",
+            "preset": "methodPrecision",
+            "name": "مثال فرضی دقت کل روش در mg/kg",
+            "target": "result",
+            "basis": "absolute",
+            "value": "0.19999999999999932",
+            "kind": "standard",
+            "divisor": "",
+            "source": "Study transfer v1 · مثال فرضی دقت کل روش در mg/kg · 2026-11-07T03:22:44.383Z; raw study/source and review: validationTransfer in project JSON",
+            "overlapNote": "فرض مثال: پراکندگی 0.2 mg/kg اثر باقیماندهٔ کل روش است و با اثرهای مستقل ورودی‌ها هم‌پوشانی ندارد. مؤلفهٔ تکراری دقت در بودجه نیست؛ SE ضرایب تنها از برازش لحاظ می‌شود. این فرض برای فرایند واقعی تأیید نشده است.",
+            "independent": true
+          }
+        ]
+      }
+    },
+    "run": {
+      "at": "2026-11-07T03:50:30.510Z",
+      "inputKey": "{\"version\":1,\"seed\":\"42\",\"maxBatches\":\"5\",\"digits\":\"1\",\"probability\":\"0.95\",\"distributionNote\":\"مثال کاملاً فرضی برای آزمون نرم‌افزار: دادهٔ مرحلهٔ قبل، مؤلفه‌های نرمال با u ثابت، هم‌بستگی a و b از OLS و اثر اضافی دقت 0.2 mg/kg. به Top-Down افزوده نمی‌شود؛ تأیید SOP یا روش واقعی نیست.\",\"reviewed\":true,\"snapshot\":{\"identity\":{\"title\":\"\",\"sample\":\"\",\"sop\":\"\",\"edition\":\"\",\"matrix\":\"\"},\"rows\":[[\"0\",\"1.1\"],[\"1\",\"2.9\"],[\"2\",\"5.2\"],[\"3\",\"6.8\"],[\"4\",\"9\"]],\"data\":{\"values\":{\"area\":\"4.9\",\"extract\":\"10\",\"dilution\":\"1\",\"mass\":\"1\",\"recovery\":\"100\"},\"uncertainties\":{\"area\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"extract\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"dilution\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"mass\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"recovery\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"}},\"coverage\":\"2\",\"coverageSource\":\"ضریب فرضی برای آزمون نرم‌افزار؛ ادعای پوشش دقیق ندارد\",\"additional\":[{\"id\":\"validation-method-precision\",\"preset\":\"methodPrecision\",\"name\":\"مثال فرضی دقت کل روش در mg/kg\",\"target\":\"result\",\"basis\":\"absolute\",\"value\":\"0.19999999999999932\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"Study transfer v1 · مثال فرضی دقت کل روش در mg/kg · 2026-11-07T03:22:44.383Z; raw study/source and review: validationTransfer in project JSON\",\"overlapNote\":\"فرض مثال: پراکندگی 0.2 mg/kg اثر باقیماندهٔ کل روش است و با اثرهای مستقل ورودی‌ها هم‌پوشانی ندارد. مؤلفهٔ تکراری دقت در بودجه نیست؛ SE ضرایب تنها از برازش لحاظ می‌شود. این فرض برای فرایند واقعی تأیید نشده است.\",\"independent\":true}]}}}",
+      "analysis": {
+        "algorithm": "artin-adaptive-gc-mc-v1",
+        "engine": "numpy-model-mc",
+        "engine_version": "2.4.4",
+        "python_version": "3.14.0",
+        "rng": "PCG64-SeedSequence-spawn-v1",
+        "model": "gcExtraction",
+        "model_sha256": "25d66571af8ef758e48ca7899b1d2b89f68cd0cda5912b029e053dca10ac53f7",
+        "quantile_method": "linear",
+        "calibration_range": [
+          0,
+          4
+        ],
+        "calibration_exceedances": 0,
+        "settings": {
+          "seed": 42,
+          "max_batches": 5,
+          "significant_digits": 1,
+          "probability": 0.95
+        },
+        "block_size": 10000,
+        "minimum_batches": 5,
+        "batches": 5,
+        "samples": 50000,
+        "seed": 42,
+        "probability": 0.95,
+        "interval": "equal-tail",
+        "mean": 19.493333286577755,
+        "mean_shift": 0.0009474997757230597,
+        "standard_uncertainty": 0.5246969880110889,
+        "lower": 18.470413014991816,
+        "upper": 20.519606806475693,
+        "histogram": [
+          {
+            "offset": -2.215978818639436,
+            "count": 1
+          },
+          {
+            "offset": -2.063568123300551,
+            "count": 1
+          },
+          {
+            "offset": -1.9111574279616659,
+            "count": 4
+          },
+          {
+            "offset": -1.758746732622781,
+            "count": 19
+          },
+          {
+            "offset": -1.606336037283896,
+            "count": 50
+          },
+          {
+            "offset": -1.453925341945011,
+            "count": 121
+          },
+          {
+            "offset": -1.301514646606126,
+            "count": 267
+          },
+          {
+            "offset": -1.149103951267241,
+            "count": 509
+          },
+          {
+            "offset": -0.9966932559283562,
+            "count": 990
+          },
+          {
+            "offset": -0.8442825605894713,
+            "count": 1497
+          },
+          {
+            "offset": -0.6918718652505862,
+            "count": 2502
+          },
+          {
+            "offset": -0.5394611699117012,
+            "count": 3467
+          },
+          {
+            "offset": -0.3870504745728163,
+            "count": 4479
+          },
+          {
+            "offset": -0.23463977923393128,
+            "count": 5358
+          },
+          {
+            "offset": -0.08222908389504624,
+            "count": 5548
+          },
+          {
+            "offset": 0.07018161144383865,
+            "count": 5769
+          },
+          {
+            "offset": 0.22259230678272354,
+            "count": 5146
+          },
+          {
+            "offset": 0.3750030021216084,
+            "count": 4450
+          },
+          {
+            "offset": 0.5274136974604933,
+            "count": 3462
+          },
+          {
+            "offset": 0.6798243927993782,
+            "count": 2526
+          },
+          {
+            "offset": 0.8322350881382634,
+            "count": 1725
+          },
+          {
+            "offset": 0.9846457834771486,
+            "count": 1045
+          },
+          {
+            "offset": 1.1370564788160336,
+            "count": 532
+          },
+          {
+            "offset": 1.2894671741549184,
+            "count": 292
+          },
+          {
+            "offset": 1.4418778694938033,
+            "count": 130
+          },
+          {
+            "offset": 1.594288564832688,
+            "count": 66
+          },
+          {
+            "offset": 1.746699260171573,
+            "count": 29
+          },
+          {
+            "offset": 1.8991099555104582,
+            "count": 9
+          },
+          {
+            "offset": 2.0515206508493433,
+            "count": 3
+          },
+          {
+            "offset": 2.203931346188228,
+            "count": 3
+          }
+        ],
+        "applicability_exceedances": 24998,
+        "applicability_exceedance_fraction": 0.49996,
+        "converged": true,
+        "stop_reason": "tolerance_met",
+        "tolerance": 0.05,
+        "normal_assumption": "standard, certificate and repeatability contributions treated as normal",
+        "checkpoints": [
+          {
+            "batches": 5,
+            "samples": 50000,
+            "tolerance": 0.05,
+            "twice_standard_errors": [
+              0.0028068715147968955,
+              0.001621878984803553,
+              0.009061265527267192,
+              0.007413075645765837
+            ],
+            "tolerance_met": true
+          }
+        ],
+        "linear_reference": {
+          "measured": 19.492385786802032,
+          "standard_uncertainty": 0.5248558102554539,
+          "expanded_uncertainty": 1.0497116205109078,
+          "coverage": 2,
+          "engine": "artin-linear-gum",
+          "engine_version": "1"
+        }
+      }
+    }
+  },
+  "topDownStudy": {
+    "title": "مثال فرضی Top-Down برای آزمون نرم‌افزار",
+    "analyte": "آنالیت فرضی A",
+    "matrix": "آب؛ مثال فرضی",
+    "method": "مثال آموزشی تک‌CRM؛ SOP واقعی نیست",
+    "unit": "mg/L",
+    "level": "فقط سطح فرضی 10 mg/L",
+    "conditions": "فقط آزمون عددی پیاده‌سازی؛ نمایندگی تغییر بچ، کالیبراسیون و اپراتور در آزمایشگاه واقعی تأیید نشده است.",
+    "period": "پنج سری فرضی؛ شاهد کافی برای تغییرات بلندمدت واقعی نیست",
+    "qcSource": "پنج مقدار کاملاً فرضی QC برای آزمون نرم‌افزار",
+    "crmSource": "پنج مقدار کاملاً فرضی از یک CRM؛ گواهی واقعی استفاده نشده است",
+    "referenceValue": "10",
+    "referenceUncertainty": "0.05",
+    "referenceK": "",
+    "referenceSource": "مقدار فرضی 10 mg/L و u=0.05 mg/L صرفاً برای آزمون؛ CoA واقعی نیست.",
+    "coverage": "2",
+    "coverageSource": "k=2 صرفاً برای مقایسهٔ نرم‌افزار؛ ادعای پوشش دقیق 95% ندارد.",
+    "biasDecision": "بایاس فرضی +0.2 mg/L در مدل تک‌CRM لحاظ می‌شود؛ تصحیح خودکار یا تأیید روش واقعی نیست.",
+    "overlapNote": "فرض آزمون: کنترل و میانگین CRM مستقل و در همان ماتریس/سطح/واحدند. این فرض برای روش واقعی تأیید نشده؛ به GUM افزوده نمی‌شود.",
+    "version": 1,
+    "protocol": "nordtest-537-ed4-single-crm-absolute",
+    "qc": "QC1;9.8\nQC2;10\nQC3;10.2\nQC4;9.9\nQC5;10.1",
+    "crm": "CRM1;10\nCRM2;10.1\nCRM3;10.2\nCRM4;10.3\nCRM5;10.4",
+    "referenceKind": "standard",
+    "designReviewed": true,
+    "combinationReviewed": true
+  },
+  "validationTransfer": {
+    "version": 1,
+    "identity": {
+      "title": "",
+      "sample": "",
+      "sop": "",
+      "edition": "",
+      "matrix": ""
+    },
+    "at": "2026-11-07T03:22:44.383Z",
+    "inputKey": "{\"rows\":[[\"0\",\"1.1\"],[\"1\",\"2.9\"],[\"2\",\"5.2\"],[\"3\",\"6.8\"],[\"4\",\"9\"]],\"data\":{\"values\":{\"area\":\"4.9\",\"extract\":\"10\",\"dilution\":\"1\",\"mass\":\"1\",\"recovery\":\"100\"},\"uncertainties\":{\"area\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"extract\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"dilution\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"mass\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"},\"recovery\":{\"value\":\".01\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست\"}},\"coverage\":\"2\",\"coverageSource\":\"ضریب فرضی برای آزمون نرم‌افزار؛ ادعای پوشش دقیق ندارد\",\"additional\":[{\"id\":\"validation-method-precision\",\"preset\":\"methodPrecision\",\"name\":\"مثال فرضی دقت کل روش در mg/kg\",\"target\":\"result\",\"basis\":\"absolute\",\"value\":\"0.19999999999999932\",\"kind\":\"standard\",\"divisor\":\"\",\"source\":\"Study transfer v1 · مثال فرضی دقت کل روش در mg/kg · 2026-11-07T03:22:44.383Z; raw study/source and review: validationTransfer in project JSON\",\"overlapNote\":\"فرض مثال: پراکندگی 0.2 mg/kg اثر باقیماندهٔ کل روش است و با اثرهای مستقل ورودی‌ها هم‌پوشانی ندارد. مؤلفهٔ تکراری دقت در بودجه نیست؛ SE ضرایب تنها از برازش لحاظ می‌شود. این فرض برای فرایند واقعی تأیید نشده است.\",\"independent\":true}]}}",
+    "plan": {
+      "precision": "repeatability",
+      "repetitions": "1",
+      "calibration": true,
+      "overlapNote": "فرض مثال: پراکندگی 0.2 mg/kg اثر باقیماندهٔ کل روش است و با اثرهای مستقل ورودی‌ها هم‌پوشانی ندارد. مؤلفهٔ تکراری دقت در بودجه نیست؛ SE ضرایب تنها از برازش لحاظ می‌شود. این فرض برای فرایند واقعی تأیید نشده است.",
+      "applicabilityNote": "مثال فرضی برای آزمون نرم‌افزار؛ مطالعهٔ mg/kg جدید و کالیبراسیون نمونه برای نمایش انتقال انتخاب شدند. ادعای انطباق روش واقعی نیست.",
+      "biasDecision": "مطالعهٔ بایاسِ قبلی مربوط به مثال دیگر است و فقط سابقه است؛ برای این نمونه کاربرد عددی ندارد. بایاس یا u(b) اضافه نمی‌شود.",
+      "controlDecision": "P2 مثال فرضی کنترل سیگنال دارد. این مثال مجوز گزارش نتیجهٔ واقعی نیست؛ در کار واقعی باید علت بررسی و تعیین تکلیف شود.",
+      "reviewed": true
+    },
+    "sources": {
+      "precisionStudy": {
+        "title": "مثال فرضی دقت کل روش در mg/kg",
+        "analyte": "آنالیت فرضی A",
+        "matrix": "نمونهٔ فرضی A در آب",
+        "method": "SOP فرضی برای آزمون نرم‌افزار - بازنگری ۱",
+        "unit": "mg/kg",
+        "level": "20 mg/kg",
+        "conditions": "۵ آماده‌سازی مستقل، اپراتور و دستگاه یکسان، همان روز؛ دادهٔ فرضی",
+        "source": "داده‌های کاملاً فرضی برای آزمون انتقال نرم‌افزار؛ همان مطالعهٔ قبلی نیست",
+        "version": 1,
+        "scope": "whole-method",
+        "independent": true,
+        "ratioScale": true,
+        "observations": "19.8\n20\n20.2"
+      },
+      "calibrationStudy": {
+        "title": "مطالعهٔ فرضی کالیبراسیون A",
+        "analyte": "آنالیت فرضی A",
+        "matrix": "استانداردهای فرضی در آب",
+        "method": "SOP فرضی - بازنگری ۱؛ آزمون نرم‌افزار",
+        "xUnit": "mg/L",
+        "yUnit": "area",
+        "conditions": "۵ سطح، پاسخ مستقل در یک دستگاه و نوبت؛ فرض واریانس مشترک و خطای ناچیز x فقط برای این مثال فرضی",
+        "source": "کاربرگ فرضی DEMO-CAL-01",
+        "standardsSource": "DEMO-CAL-STD-01 - مقادیر کاملاً فرضی برای آزمون نرم‌افزار",
+        "version": 1,
+        "independent": true,
+        "modelReviewed": true,
+        "rows": [
+          {
+            "x": "0",
+            "y": "1.1"
+          },
+          {
+            "x": "1",
+            "y": "2.9"
+          },
+          {
+            "x": "2",
+            "y": "5.2"
+          },
+          {
+            "x": "3",
+            "y": "6.8"
+          },
+          {
+            "x": "4",
+            "y": "9"
+          }
+        ]
+      },
+      "biasStudy": {
+        "referenceValue": "9.8",
+        "referenceUnit": "mg/L",
+        "referenceSource": "گواهی فرضی DEMO-REF-01؛ بچ فرضی - فقط آزمون نرم‌افزار",
+        "referenceConditions": "آنالیت فرضی A در آب، همان کمیت و شرایط مطالعه؛ مقدار مرجع فرضی",
+        "referenceUncertainty": "0.2",
+        "coverageFactor": "2",
+        "version": 1,
+        "study": {
+          "title": "مطالعهٔ فرضی تکرارپذیری A",
+          "analyte": "آنالیت فرضی A",
+          "matrix": "نمونهٔ فرضی A در آب",
+          "method": "SOP فرضی برای آزمون نرم‌افزار - بازنگری ۱",
+          "unit": "mg/L",
+          "level": "10 mg/L - فرضی",
+          "conditions": "۵ آماده‌سازی مستقل، اپراتور و دستگاه یکسان، همان روز؛ دادهٔ فرضی",
+          "source": "کاربرگ فرضی DEMO-PREC-01",
+          "version": 1,
+          "scope": "whole-method",
+          "independent": true,
+          "ratioScale": true,
+          "observations": "9.8\n10\n10.2\n9.9\n10.1"
+        },
+        "referenceUncertaintyKind": "expanded",
+        "independentReference": true,
+        "comparable": true
+      },
+      "controlStudy": {
+        "version": 1,
+        "baseline": {
+          "title": "مثال NIST برای آزمون نرم‌افزار",
+          "analyte": "پاسخ نمونهٔ منتشرشده",
+          "matrix": "مثال آموزشی؛ دادهٔ واقعی آزمایشگاه نیست",
+          "method": "NIST/SEMATECH pmc322",
+          "unit": "واحد نمونه",
+          "conditions": "ده مشاهده به ترتیب مثال منتشرشده؛ فقط بررسی پیاده‌سازی نرم‌افزار",
+          "source": "https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc322.htm",
+          "reviewNote": "کاربرد صرفاً آزمون عددی است؛ کفایت مبنای یک فرایند واقعی تأیید نشده است.",
+          "version": 1,
+          "timeOrderConfirmed": true,
+          "modelReviewed": true,
+          "rows": [
+            {
+              "label": "B1",
+              "value": "49.6"
+            },
+            {
+              "label": "B2",
+              "value": "47.6"
+            },
+            {
+              "label": "B3",
+              "value": "49.9"
+            },
+            {
+              "label": "B4",
+              "value": "51.3"
+            },
+            {
+              "label": "B5",
+              "value": "47.8"
+            },
+            {
+              "label": "B6",
+              "value": "51.2"
+            },
+            {
+              "label": "B7",
+              "value": "52.6"
+            },
+            {
+              "label": "B8",
+              "value": "52.4"
+            },
+            {
+              "label": "B9",
+              "value": "53.6"
+            },
+            {
+              "label": "B10",
+              "value": "52.1"
+            }
+          ]
+        },
+        "frozen": {
+          "title": "مثال NIST برای آزمون نرم‌افزار",
+          "analyte": "پاسخ نمونهٔ منتشرشده",
+          "matrix": "مثال آموزشی؛ دادهٔ واقعی آزمایشگاه نیست",
+          "method": "NIST/SEMATECH pmc322",
+          "unit": "واحد نمونه",
+          "conditions": "ده مشاهده به ترتیب مثال منتشرشده؛ فقط بررسی پیاده‌سازی نرم‌افزار",
+          "source": "https://www.itl.nist.gov/div898/handbook/pmc/section3/pmc322.htm",
+          "reviewNote": "کاربرد صرفاً آزمون عددی است؛ کفایت مبنای یک فرایند واقعی تأیید نشده است.",
+          "version": 1,
+          "timeOrderConfirmed": true,
+          "modelReviewed": true,
+          "rows": [
+            {
+              "label": "B1",
+              "value": "49.6"
+            },
+            {
+              "label": "B2",
+              "value": "47.6"
+            },
+            {
+              "label": "B3",
+              "value": "49.9"
+            },
+            {
+              "label": "B4",
+              "value": "51.3"
+            },
+            {
+              "label": "B5",
+              "value": "47.8"
+            },
+            {
+              "label": "B6",
+              "value": "51.2"
+            },
+            {
+              "label": "B7",
+              "value": "52.6"
+            },
+            {
+              "label": "B8",
+              "value": "52.4"
+            },
+            {
+              "label": "B9",
+              "value": "53.6"
+            },
+            {
+              "label": "B10",
+              "value": "52.1"
+            }
+          ],
+          "frozenAt": "2026-11-07T02:55:45.925Z"
+        },
+        "monitoring": [
+          {
+            "label": "P1",
+            "value": "51"
+          },
+          {
+            "label": "P2",
+            "value": "60"
+          }
+        ],
+        "monitoringSource": "دو مقدار فرضی صرفاً برای آزمون سیگنال: 51 و 60؛ دادهٔ NIST نیستند.",
+        "monitoringComparable": true
+      }
+    }
+  },
+  "reagents": [
+    {
+      "id": "17bc1c9b-bc70-4972-a750-c5cbf653f428",
+      "certificateFile": {
+        "name": "nominal-solution-en.pdf",
+        "mime": "application/pdf",
+        "base64": "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aXJtYXRuCi9EZXNjZW5kYW50Rm9udHMgWzggMCBSXQovRW5jb2RpbmcgL0lkZW50aXR5LUgKL1N1YnR5cGUgL1R5cGUwCi9Ub1VuaWNvZGUgOSAwIFIKL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjggMCBvYmoKPDwKL0Jhc2VGb250IC9NUERGQUErVmF6aXJtYXRuCi9DSURTeXN0ZW1JbmZvIDEwIDAgUgovQ0lEVG9HSURNYXAgMTIgMCBSCi9EVyA0NDMKL0ZvbnREZXNjcmlwdG9yIDExIDAgUgovU3VidHlwZSAvQ0lERm9udFR5cGUyCi9UeXBlIC9Gb250Ci9XIFsgMCBbIDAgNjUyIDYxNiA1OTcgMjcyIDcxMyA1MzkgNjIzIDI0NCA1NTIgNTcwIDg3NyAyNDMgNTQ0IDI0MyAzMzkgNTYyIDUzMCAzMjcgNDg0IF0KIDIwIDIzIDU2MiAyNCBbIDQ2NiAyNzEgNTYyIDI3MSA1NjIgNTM2IDY1MSA2NTYgMjY5IDU2MiA1NjIgMzQyIDU2MiAzNDIgNTQ5IDUyMyA0MTIgNDMxIDI2NSA2MzcgMjY1IDg3MyA2MzEgNzMyIDc1MSA1NjIgNzEzIDQ3MyA1NTEgNTE2IDU2NCA1NTEgMjYxIDU2OCA0OTYgNTA3IDY4OCAxOTcgNTU0IDY0OCA1NjIgMzQ4IDU5NCA2ODEgNDgyIDQ5MSAyMTEgXQpdCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9MZW5ndGggMTMyMQo+PgpzdHJlYW0KL0NJREluaXQgL1Byb2NTZXQgZmluZHJlc291cmNlIGJlZ2luCjEyIGRpY3QgYmVnaW4KYmVnaW5jbWFwCi9DSURTeXN0ZW1JbmZvCjw8L1JlZ2lzdHJ5IChBZG9iZSkKL09yZGVyaW5nIChVQ1MpCi9TdXBwbGVtZW50IDAKPj4gZGVmCi9DTWFwTmFtZSAvQWRvYmUtSWRlbnRpdHktVUNTIGRlZgovQ01hcFR5cGUgMiBkZWYKMSBiZWdpbmNvZGVzcGFjZXJhbmdlCjwwMDAwPiA8RkZGRj4KZW5kY29kZXNwYWNlcmFuZ2UKNzEgYmVnaW5iZmNoYXIKPDAwMDA+IDwwMDAwPgo8MDAyMD4gPDAwMjA+CjwwMDAxPiA8MDA0MT4KPDAwMDI+IDwwMDUyPgo8MDAwMz4gPDAwNTQ+CjwwMDA0PiA8MDA0OT4KPDAwMDU+IDwwMDRFPgo8MDAwNj4gPDAwNEM+CjwwMDA3PiA8MDA0Mj4KPDAwMDg+IDwwMDdDPgo8MDAwOT4gPDAwNkU+CjwwMDBBPiA8MDA2Rj4KPDAwMEI+IDwwMDZEPgo8MDAwQz4gPDAwNjk+CjwwMDBEPiA8MDA2MT4KPDAwMEU+IDwwMDZDPgo8MDAwRj4gPDAwNzI+CjwwMDEwPiA8MDA3MD4KPDAwMTE+IDwwMDY1Pgo8MDAxMj4gPDAwNzQ+CjwwMDEzPiA8MDA3Nj4KPDAwMTQ+IDwwMDMxPgo8MDAxNT4gPDAwMzI+CjwwMDE2PiA8MDAzMD4KPDAwMTc+IDwwMDM2Pgo8MDAxOD4gPDAwMkQ+CjwwMDE5PiA8MDAzQT4KPDAwMUE+IDwwMDM5Pgo8MDAxQj4gPDAwMkU+CjwwMDFDPiA8MDAzND4KPDAwMUQ+IDwwMDJCPgo8MDAxRT4gPDAwNDM+CjwwMDFGPiA8MDA0ND4KPDAwMjE+IDwwMDM1Pgo8MDAyMj4gPDAwMzM+CjwwMDIzPiA8MDAyOD4KPDAwMjQ+IDwwMDY3Pgo8MDAyNT4gPDAwMjk+CjwwMDI2PiA8MDAzRD4KPDAwMjc+IDwwMDYzPgo8MDAyOD4gPDAwMkY+CjwwMDI5PiA8MDAyQT4KPDAwMkE+IDwwMDVCPgo8MDAyQj4gPDAwNTY+CjwwMDJDPiA8MDA1RD4KPDAwMkQ+IDwwMDREPgo8MDAyRT4gPDAwNTA+CjwwMDJGPiA8MDAyNT4KPDAwMzA+IDwwMDc3Pgo8MDAzMT4gPDAwMzg+CjwwMDMyPiA8MDA0OD4KPDAwMzM+IDwwMDc5Pgo8MDAzND4gPDAwNjg+CjwwMDM1PiA8MDA3Mz4KPDAwMzY+IDwwMDY0Pgo8MDAzNz4gPDAwNzU+CjwwMDM4PiA8MDBCNz4KPDAwMzk+IDwwMDQ1Pgo8MDAzQT4gPDAwNzg+CjwwMDNCPiA8MDA2Qj4KPDAwM0M+IDwwMDRGPgo8MDAzRD4gPDAwMkM+CjwwMDNFPiA8MDA2NjAwNjk+CjwwMDNGPiA8MDA1NT4KPDAwNDA+IDwwMDYyPgo8MDA0MT4gPDAwNjY+CjwwMDQyPiA8MDA1Mz4KPDAwNDM+IDww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IC9Gb250Cj4+CmVuZG9iagoxNSAwIG9iago8PAovQmFzZUZvbnQgL01QREZBQStWYXppcm1hdG5Cb2xkCi9DSURTeXN0ZW1JbmZvIDE3IDAgUgovQ0lEVG9HSURNYXAgMTkgMCBSCi9EVyA0NDMKL0ZvbnREZXNjcmlwdG9yIDE4IDAgUgovU3VidHlwZSAvQ0lERm9udFR5cGUyCi9UeXBlIC9Gb250Ci9XIFsgMCBbIDAgNzA2IDU2NCA4NjYgMjY1IDU2MSA1MzUgMjY1IDUxNCAzNTggMzY2IDQ3OSA1NjAgMzM4IDU2MiA1NDAgNjE2IDU2MyA1MjEgNTYwIDU0MiAzMjEgMzk2IDMxOCA0NTQgNjQ0IDc5OCA2NDEgNTY0IDU3MSA1NzQgMjk4IDI1MiBdCiAzMyAzNSA1NzQgMzYgWyA2MjAgNTA2IDUwMyA1NDkgODc1IDY0NSA2NTQgODc1IDUwOSBdCl0KPj4KZW5kb2JqCjE2IDAgb2JqCjw8Ci9MZW5ndGggOTUzCj4+CnN0cmVhbQovQ0lESW5pdCAvUHJvY1NldCBmaW5kcmVzb3VyY2UgYmVnaW4KMTIgZGljdCBiZWdpbgpiZWdpbmNtYXAKL0NJRFN5c3RlbUluZm8KPDwvUmVnaXN0cnkgKEFkb2JlKQovT3JkZXJpbmcgKFVDUykKL1N1cHBsZW1lbnQgMAo+PiBkZWYKL0NNYXBOYW1lIC9BZG9iZS1JZGVudGl0eS1VQ1MgZGVmCi9DTWFwVHlwZSAyIGRlZgoxIGJlZ2luY29kZXNwYWNlcmFuZ2UKPDAwMDA+IDxGRkZGPgplbmRjb2Rlc3BhY2VyYW5nZQo0NSBiZWdpbmJmY2hhcgo8MDAwMD4gPDAwMDA+CjwwMDIwPiA8MDAyMD4KPDAwMDE+IDwwMDRFPgo8MDAwMj4gPDAwNkY+CjwwMDAzPiA8MDA2RD4KPDAwMDQ+IDwwMDY5Pgo8MDAwNT4gPDAwNkU+CjwwMDA2PiA8MDA2MT4KPDAwMDc+IDwwMDZDPgo8MDAwOD4gPDAwNzM+CjwwMDA5PiA8MDA2Nj4KPDAwMEE+IDwwMDcyPgo8MDAwQj4gPDAwMkQ+CjwwMDBDPiA8MDA3NT4KPDAwMEQ+IDwwMDc0Pgo8MDAwRT4gPDAwNzA+CjwwMDBGPiA8MDA2NT4KPDAwMTA+IDwwMDUzPgo8MDAxMT4gPDAwNjQ+CjwwMDEyPiA8MDA2Mz4KPDAwMTM+IDwwMDY4Pgo8MDAxND4gPDA2MkY+CjwwMDE1PiA8MDZDQz4KPDAwMTY+IDwwNjMxPgo8MDAxNz4gPDA2NDQ+CjwwMDE4PiA8MDZBOT4KPDAwMTk+IDwwNjQ1Pgo8MDAxQT4gPDA2MzM+CjwwMDFCPiA8MDA1Mj4KPDAwMUM+IDwwMDcxPgo8MDAxRD4gPDAwNjc+CjwwMDFFPiA8MDAzMD4KPDAwMUY+IDwwMDJFPgo8MDAyMT4gPDAwMzU+CjwwMDIyPiA8MDAzOT4KPDAwMjM+IDwwMDMzPgo8MDAyND4gPDAwNTQ+CjwwMDI1PiA8MDA3Nj4KPDAwMjY+IDwwMDc5Pgo8MDAyNz4gPDAwNDY+CjwwMDI4PiA8MDA0RD4KPDAwMjk+IDwwMDUwPgo8MDAyQT4gPDAwNDM+CjwwMDJCPiA8MDA1Nz4KPDAwMkM+IDwwMDdBPgplbmRiZmNoYXIKZW5kY21hcApDTWFwTmFtZSBjdXJyZW50ZGljdCAvQ01hcCBkZWZpbmVyZXNvdXJjZSBwb3AKZW5kCmVuZAplbmRzdHJlYW0KZW5kb2JqCjE3IDAgb2JqCjw8Ci9PcmRlcmluZyAoVUNTKQovUmVnaXN0cnkgKEFkb2JlKQovU3VwcGxlbWVudCAwCj4+CmVuZG9iagoxOCAwIG9iago8PAovQXNjZW50IDEwMjUKL0NhcEhlaWdodCA4MDAKL0Rlc2NlbnQgLTUzNwovRmxhZ3MgMjYyMTQ4Ci9Gb250QkJveCBbLTUwOSAtNTY5IDE1MDQgMTA1Nl0KL0ZvbnRGaWxlMiAyMCAwIFIKL0ZvbnROYW1lIC9NUERGQUErVmF6aXJtYXRuQm9sZAovSXRhbGljQW5nbGUgMAovTWlzc2luZ1dpZHRoIDQ0MwovU3RlbVYgMTY1Ci9UeXBlIC9Gb250RGVzY3JpcHRvcgo+PgplbmRvYmoKMTkgMCBvYmoKPDwKL0ZpbHRlciAvRmxhdGVEZWNvZGUKL0xlbmd0aCAyMTcKPj4Kc3RyZWFtCnic7cGJMgIAAEDBZwZJkg5yhJxpNOT/f67vMLO7HTXoodtuumvcsnXTnrvuvddWXXXepMsWbfrsq+8+2rVt2FPz/nrs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cmVhdGlvbkRhdGUgKEQ6MjAyNjExMDYxMDA5MTJaKQo+PgplbmRvYmoKeHJlZgowIDI0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMTA4IDAwMDAwIG4gCjAwMDAwMDAyMTEgMDAwMDAgbiAKMDAwMDAwMDI5MiAwMDAwMCBuIAowMDAwMDA1MzUxIDAwMDAwIG4gCjAwMDAwMDU0MzIgMDAwMDAgbiAKMDAwMDAxMTY2OCAwMDAwMCBuIAowMDAwMDExODA5IDAwMDAwIG4gCjAwMDAwMTIyNjMgMDAwMDAgbiAKMDAwMDAxMzYzNiAwMDAwMCBuIAowMDAwMDEzNzA2IDAwMDAwIG4gCjAwMDAwMTM5MjIgMDAwMDAgbiAKMDAwMDAxNDI1MiAwMDAwMCBuIAowMDAwMDE5NjY5IDAwMDAwIG4gCjAwMDAwMTk4MTcgMDAwMDAgbiAKMDAwMDAyMDE3NiAwMDAwMCBuIAowMDAwMDIxMTgxIDAwMDAwIG4gCjAwMDAwMjEyNTEgMDAwMDAgbiAKMDAwMDAyMTQ3NyAwMDAwMCBuIAowMDAwMDIxNzY3IDAwMDAwIG4gCjAwMDAwMjU4ODggMDAwMDAgbiAKMDAwMDAyNTk4NyAwMDAwMCBuIAowMDAwMDI2MDg2IDAwMDAwIG4gCnRyYWlsZXIKPDwKL1NpemUgMjQKL1Jvb3QgMiAwIFIKL0luZm8gMjMgMCBSCi9JRCBbPDkyNDEyNDRDNUY2NjU3RDY4RUJENTVEOTZEM0RGQjlEPjw5MjQxMjQ0QzVGNjY1N0Q2OEVCRDU1RDk2RDNERkI5RD5dCj4+CnN0YXJ0eHJlZgoyNjE0MgolJUVPRgo="
+      },
+      "name": "متانول — نمونهٔ فرضی",
+      "manufacturer": "",
+      "catalogue": "",
+      "lot": "DEMO-01",
+      "certificate": "مثال فرضی برای آزمون ذخیره",
+      "purity": "۹۹٫۹ %",
+      "purityBasis": "جرمی",
+      "uncertainty": "",
+      "uncertaintyKind": "",
+      "coverageFactor": "",
+      "issued": "",
+      "opened": "",
+      "expires": "",
+      "storage": "",
+      "notes": ""
+    }
+  ]
+}

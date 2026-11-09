@@ -1,0 +1,6 @@
+import React,{useState} from 'react';
+import {it,expect} from 'vitest';
+import {render,screen,fireEvent} from '@testing-library/react';
+import DilutionScale from './calculators/workspace/DilutionScale';
+import {type DilutionPlan} from './calculators/workspace/dilution-plan';
+it('previews before applying and prevents applying stale previews',()=>{function Form(){const [p,setP]=useState<DilutionPlan>({stock:'1000',unit:'mg/L',source:'Example',steps:[{target:'100',unit:'mg/L',volume:'100',volumeUnit:'mL'}]});return <><output>{p.steps[0].volume}</output><DilutionScale en plan={p} onChange={setP}/></>;}render(<Form/>);fireEvent.click(screen.getByText('Scale recipe volume'));fireEvent.change(screen.getByLabelText('New final-stage volume'),{target:{value:'250'}});fireEvent.click(screen.getByRole('button',{name:'Preview volume scaling'}));expect(screen.getByText('25.00000')).toBeVisible();expect(screen.getByRole('status')).toHaveTextContent('100');fireEvent.change(screen.getByLabelText('New final-stage volume'),{target:{value:'200'}});expect(screen.queryByRole('button',{name:'Apply new volumes'})).toBeNull();fireEvent.click(screen.getByRole('button',{name:'Preview volume scaling'}));fireEvent.click(screen.getByRole('button',{name:'Apply new volumes'}));expect(screen.getByRole('status')).toHaveTextContent('200');});

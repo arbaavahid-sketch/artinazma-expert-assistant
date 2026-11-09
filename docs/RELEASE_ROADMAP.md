@@ -1,5 +1,7 @@
 # Release Roadmap
 
+Current laboratory release review (2026-11-09): see [local acceptance and deployment/rollback runbook](LAB_RELEASE_CANDIDATE_2026-11-09.md). The June checklist below is historical. Production environment validation still has 11 failures; Docker CLI is now installed and Compose configuration validates with synthetic check variables, but the Docker daemon is unavailable. No production deployment is claimed.
+
 Last updated: 2026-06-20
 
 This roadmap tracks the remaining work needed to move ArtinAzma Expert Assistant from "production-ready codebase" to a confident public release.

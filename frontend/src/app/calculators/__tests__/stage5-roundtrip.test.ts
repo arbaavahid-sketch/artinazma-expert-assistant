@@ -1,0 +1,10 @@
+import {it,expect} from 'vitest';
+import fixture from './fixtures/stage5-complete.json';
+import {readLabProject,serializeLabProject,parseProjectFile} from '../workspace/project-file';
+import {calculateCommercial} from '../workspace/commercial-solution';
+import {calculateSolution} from '../workspace/chemical-library';
+import {calculateStockPreparation} from '../workspace/gc-workflow';
+import {calculateDilution} from '../workspace/dilution-plan';
+import {dilutionLabels} from '../workspace/dilution-print';
+it('round-trips all stage-5 attachments together across repeated saves',()=>{let p=readLabProject(fixture);const original=structuredClone(p);for(let i=0;i<3;i++){p=parseProjectFile(serializeLabProject(p),'file.json','ignored','ignored');expect(p).toEqual(original);}const d=p.solution!;expect(Object.keys(d)).toEqual(expect.arrayContaining(['reagent','commercial','preparation','dilutionPlan']));expect(dilutionLabels(d.dilutionPlan!).map(l=>l.id)).toEqual(['DEMO-D1','DEMO-D2']);expect(calculateSolution(d).mass).toBeCloseTo(.3207407407407407);expect(calculateCommercial(d.commercial!,d.material.record.molarMass).aliquotML).toBeCloseTo(3.2042);expect(calculateStockPreparation(d.preparation!).concentration).toBe(990);expect(calculateDilution(d.dilutionPlan!).map(r=>r.aliquotML)).toEqual([25,2.5]);});
+it('keeps the recipe reagent snapshot independent from later registry edits',()=>{const p=readLabProject(fixture);p.reagents![0].lot='NEW-LOT';const q=readLabProject(JSON.parse(serializeLabProject(p)));expect(q.reagents![0].lot).toBe('NEW-LOT');expect(q.solution!.reagent!.lot).toBe('DEMO-01');expect(q.solution!.commercial!.productReference).toContain('فرضی');});

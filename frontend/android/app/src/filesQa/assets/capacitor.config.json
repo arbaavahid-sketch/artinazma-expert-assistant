@@ -1,0 +1,14 @@
+{
+  "appId": "net.artinazma.expertassistant.filesqa",
+  "appName": "Artin Files QA",
+  "webDir": "capacitor-web",
+  "server": {
+    "url": "http://127.0.0.1:3117/calculators/workspace",
+    "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {"launchAutoHide": true, "launchShowDuration": 1400, "showSpinner": false},
+    "StatusBar": {"style": "LIGHT", "backgroundColor": "#1d4ed8"}
+  },
+  "android": {"allowMixedContent": false, "captureInput": false}
+}

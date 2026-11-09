@@ -1,0 +1,8 @@
+import {it,expect} from 'vitest';
+import {reagentPurity,reagentReference} from './calculators/workspace/reagent-solution';
+import {newReagent} from './calculators/workspace/reagents';
+import {chemicals,newSolutionDraft,readSolutionDraft,calculateSolution} from './calculators/workspace/chemical-library';
+it('accepts explicit mass percent and rejects ambiguous units',()=>{const r={...newReagent(),purity:'۹۹٫۹ %',purityBasis:'جرمی'};expect(reagentPurity(r)).toBe(99.9);for(const purity of ['99 mg/mL','>99%','101%','0%',''])expect(reagentPurity({...r,purity})).toBeNull();expect(reagentPurity({...r,purityBasis:'v/v'})).toBeNull();});
+it('preserves a reagent snapshot with the solution',()=>{const r={...newReagent(),name:'Example',lot:'L1',certificate:'C1',purity:'99%',purityBasis:'w/w'};const d={...newSolutionDraft(chemicals[0]),concentration:'0.1',volume:'100',purity:'99',puritySource:reagentReference(r),reagent:r};const restored=readSolutionDraft(JSON.parse(JSON.stringify(d)));expect(restored.reagent).toEqual(r);expect(calculateSolution(restored).mass).toBeGreaterThan(0);r.lot='L2';expect(restored.reagent?.lot).toBe('L1');expect(()=>readSolutionDraft({...d,reagent:{...r,purity:99}})).toThrow();});
+
+it('rejects a linked snapshot inconsistent with entered purity or reference',()=>{const r={...newReagent(),lot:'L1',certificate:'C1',purity:'99%',purityBasis:'w/w'};const d={...newSolutionDraft(chemicals[0]),purity:'98',puritySource:reagentReference(r),reagent:r};expect(()=>readSolutionDraft(d)).toThrow();expect(()=>readSolutionDraft({...d,purity:'99',puritySource:'other'})).toThrow();});

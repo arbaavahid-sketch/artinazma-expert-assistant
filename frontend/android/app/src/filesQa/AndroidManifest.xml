@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Local-only test variant. Release retains HTTPS and its original app ID. -->
+    <application android:usesCleartextTraffic="true">
+        <provider
+            android:name="net.artinazma.expertassistant.QaFailureDocumentsProvider"
+            android:authorities="${applicationId}.failure.documents"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+    </application>
+</manifest>

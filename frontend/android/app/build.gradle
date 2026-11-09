@@ -42,6 +42,14 @@ android {
         }
     }
     buildTypes {
+        filesQa {
+            initWith debug
+            applicationIdSuffix ".filesqa"
+            versionNameSuffix "-files-qa"
+            matchingFallbacks = ['debug']
+            resValue "string", "app_name", "Artin Files QA"
+            resValue "string", "title_activity_main", "Artin Files QA"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

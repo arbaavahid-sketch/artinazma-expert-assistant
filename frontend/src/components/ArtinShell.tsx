@@ -14,6 +14,7 @@ import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/components/ThemeProvider";
 import AdminGlobalSearch from "@/components/AdminGlobalSearch";
+import NativeDocumentRecovery from "@/components/NativeDocumentRecovery";
 import ServerStatus from "@/components/ServerStatus";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -371,19 +372,26 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         <button
           onClick={() => setMobileSidebarOpen(false)}
           className="absolute inset-0 z-30 bg-slate-950/35 md:hidden"
-          aria-label="بستن منو"
+          aria-label={isRtl ? "بستن منو" : "Close menu"}
         />
       )}
 
       {/* Sidebar — absolute positioning, visibility controlled by display (translate unreliable in RTL) */}
       <aside
-        className={`absolute inset-y-0 z-40 flex-col border-[--border-soft] bg-white shadow-2xl shadow-slate-950/20 transition-all duration-300 dark:bg-slate-950 ${
+        className={`absolute inset-y-0 z-40 flex-col border-[--border-soft] bg-white shadow-xl shadow-slate-950/10 md:shadow-none transition-all duration-300 dark:bg-slate-950 ${
           isRtl ? "right-0 border-l" : "left-0 border-r"
         } ${
-          sidebarCollapsed ? "w-[88px]" : "w-[300px]"
+          sidebarCollapsed ? "w-[88px]" : "w-[260px]"
         } ${mobileSidebarOpen ? "flex" : "hidden md:flex"}`}
       >
           <div className="relative shrink-0 px-4 pb-7 pt-14">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(false)}
+              className={`absolute top-4 flex h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-white text-xl text-slate-700 dark:bg-slate-900 dark:text-slate-100 md:hidden ${isRtl ? "left-4" : "right-4"}`}
+              aria-label={isRtl ? "بستن نوار کناری" : "Close sidebar"}
+            ><span aria-hidden="true">×</span></button>
+
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
               className={`absolute top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-blue-50 dark:hover:bg-slate-800 md:flex ${
@@ -407,10 +415,10 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                   </div>
 
                   <div className="mt-3 text-center">
-                    <div className="text-sm font-bold text-slate-900">
+                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       {isRtl ? "دستیار هوشمند آرتین آزما" : "ArtinAzma Intelligent Assistant"}
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       ArtinAzma Expert Assistant
                     </div>
                   </div>
@@ -773,7 +781,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           {/* Desktop spacer — mirrors sidebar width */}
           <div
             className={`hidden md:block shrink-0 transition-all duration-300 ${
-              sidebarCollapsed ? "w-[88px]" : "w-[300px]"
+              sidebarCollapsed ? "w-[88px]" : "w-[260px]"
             }`}
           />
           <main
@@ -783,6 +791,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden focus:outline-none"
           >
             <SectionErrorBoundary>
+              <NativeDocumentRecovery en={locale === "en"}/>
               {children}
             </SectionErrorBoundary>
           </main>

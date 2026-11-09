@@ -1,0 +1,885 @@
+{
+  "id": 17790,
+  "chebi_accession": "CHEBI:17790",
+  "name": "methanol",
+  "stars": 3,
+  "definition": "The primary alcohol that is the simplest aliphatic alcohol, comprising a methyl and an alcohol group.",
+  "ascii_name": "methanol",
+  "names": {
+    "SYNONYM": [
+      {
+        "name": "Alcohol,methyl",
+        "status": "S",
+        "type": "SYNONYM",
+        "source": "ChEMBL",
+        "ascii_name": "Alcohol,methyl",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "carbinol",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "ChemIDplus",
+        "ascii_name": "carbinol",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "CH<small><sub>3</sub></small>OH",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "ChEBI",
+        "ascii_name": "CH3OH",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "MeOH",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "ChEBI",
+        "ascii_name": "MeOH",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "Methanol",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "KEGG COMPOUND",
+        "ascii_name": "Methanol",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "METHANOL",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "PDBeChem",
+        "ascii_name": "METHANOL",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "methyl alcohol",
+        "status": "S",
+        "type": "SYNONYM",
+        "source": "ChEMBL",
+        "ascii_name": "methyl alcohol",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "Methyl alcohol",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "KEGG COMPOUND",
+        "ascii_name": "Methyl alcohol",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "Methylalkohol",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "NIST Chemistry WebBook",
+        "ascii_name": "Methylalkohol",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "NSC-85232",
+        "status": "S",
+        "type": "SYNONYM",
+        "source": "ChEMBL",
+        "ascii_name": "NSC-85232",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "spirit of wood",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "HMDB",
+        "ascii_name": "spirit of wood",
+        "adapted": true,
+        "language_code": "en"
+      },
+      {
+        "name": "wood alcohol",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "ChemIDplus",
+        "ascii_name": "wood alcohol",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "wood naphtha",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "ChemIDplus",
+        "ascii_name": "wood naphtha",
+        "adapted": false,
+        "language_code": "en"
+      },
+      {
+        "name": "wood spirit",
+        "status": "C",
+        "type": "SYNONYM",
+        "source": "NIST Chemistry WebBook",
+        "ascii_name": "wood spirit",
+        "adapted": false,
+        "language_code": "en"
+      }
+    ],
+    "IUPAC NAME": [
+      {
+        "name": "methanol",
+        "status": "C",
+        "type": "IUPAC NAME",
+        "source": "IUPAC",
+        "ascii_name": "methanol",
+        "adapted": false,
+        "language_code": "en"
+      }
+    ],
+    "UNIPROT NAME": [
+      {
+        "name": "methanol",
+        "status": "C",
+        "type": "UNIPROT NAME",
+        "source": "UniProt",
+        "ascii_name": "methanol",
+        "adapted": false,
+        "language_code": "en"
+      }
+    ]
+  },
+  "chemical_data": {
+    "formula": "CH4O",
+    "charge": 0,
+    "mass": "32.042",
+    "monoisotopic_mass": "32.02621"
+  },
+  "modified_on": "2018-07-19T14:41:20Z",
+  "secondary_ids": [
+    "CHEBI:6816",
+    "CHEBI:14588",
+    "CHEBI:25227",
+    "CHEBI:44080",
+    "CHEBI:44553"
+  ],
+  "default_structure": {
+    "id": 850,
+    "smiles": "CO",
+    "standard_inchi": "InChI=1S/CH4O/c1-2/h2H,1H3",
+    "standard_inchi_key": "OKKJLVBELUTLKV-UHFFFAOYSA-N",
+    "wurcs": null,
+    "is_r_group": false
+  },
+  "compound_origins": [
+    {
+      "species_text": "Escherichia coli",
+      "species_accession": "562",
+      "component_text": null,
+      "component_accession": null,
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "21988831",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:562",
+      "source_accession_url": "http://europepmc.org/abstract/MED/21988831",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Homo sapiens",
+      "species_accession": "9606",
+      "component_text": "saliva",
+      "component_accession": "UBERON:0001836",
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "19259987",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:9606",
+      "component_accession_url": "https://purl.obolibrary.org/obo/UBERON_0001836",
+      "source_accession_url": "http://europepmc.org/abstract/MED/19259987",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Homo sapiens",
+      "species_accession": "9606",
+      "component_text": "urine",
+      "component_accession": "BTO:0001419",
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "21389975",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:9606",
+      "component_accession_url": "https://purl.obolibrary.org/obo/BTO_0001419",
+      "source_accession_url": "http://europepmc.org/abstract/MED/21389975",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Homo sapiens",
+      "species_accession": "9606",
+      "component_text": "blood",
+      "component_accession": "UBERON:0000178",
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "Article",
+      "source_accession": "Baselt, RC. Disposition of toxic drugs and chemicals in man. 1982. 2nd edition. Biomedical Publications. Davis, CA.",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:9606",
+      "component_accession_url": "https://purl.obolibrary.org/obo/UBERON_0000178",
+      "source_accession_url": null,
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Homo sapiens",
+      "species_accession": "9606",
+      "component_text": "cerebrospinal fluid",
+      "component_accession": "UBERON:0001359",
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "18502700",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:9606",
+      "component_accession_url": "https://purl.obolibrary.org/obo/UBERON_0001359",
+      "source_accession_url": "http://europepmc.org/abstract/MED/18502700",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Homo sapiens",
+      "species_accession": "9606",
+      "component_text": "faeces",
+      "component_accession": "UBERON:0001988",
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "19167006",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:9606",
+      "component_accession_url": "https://purl.obolibrary.org/obo/UBERON_0001988",
+      "source_accession_url": "http://europepmc.org/abstract/MED/19167006",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Homo sapiens",
+      "species_accession": "9606",
+      "component_text": "breast milk",
+      "component_accession": "ENVO:02000031",
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "24027187",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:9606",
+      "component_accession_url": "https://purl.obolibrary.org/obo/ENVO_02000031",
+      "source_accession_url": "http://europepmc.org/abstract/MED/24027187",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Homo sapiens",
+      "species_accession": "9606",
+      "component_text": null,
+      "component_accession": null,
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "DOI",
+      "source_accession": "10.1038/nbt.2488",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:9606",
+      "source_accession_url": "https://bioregistry.io/doi:10.1038/nbt.2488",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Mus musculus",
+      "species_accession": "10090",
+      "component_text": null,
+      "component_accession": null,
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "19425150",
+      "comments": "Source: BioModels - MODEL1507180067",
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:10090",
+      "source_accession_url": "http://europepmc.org/abstract/MED/19425150",
+      "species_accession_prefix": "ncbitaxon"
+    },
+    {
+      "species_text": "Mycoplasma genitalium",
+      "species_accession": "2097",
+      "component_text": null,
+      "component_accession": null,
+      "strain_text": null,
+      "strain_accession": null,
+      "source": "PubMed",
+      "source_accession": "22817898",
+      "comments": null,
+      "species_accession_url": "https://bioregistry.io/ncbitaxon:2097",
+      "source_accession_url": "http://europepmc.org/abstract/MED/22817898",
+      "species_accession_prefix": "ncbitaxon"
+    }
+  ],
+  "created_by": [],
+  "ontology_relations": {
+    "incoming_relations": [
+      {
+        "init_id": 25248,
+        "init_name": "methyl ester",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 77699,
+        "init_name": "methyl formate",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 44499,
+        "init_name": "methyl nonanoate",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 41531,
+        "init_name": "methyl <small>L</small>-cysteinate",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 76004,
+        "init_name": "dimethyl fumarate",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 62810,
+        "init_name": "<i>cis</i>-heme <em>d</em> hydroxychlorin γ-spirolactone methyl ester",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 32772,
+        "init_name": "methyloxidanyl",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 35460,
+        "init_name": "dimethyl maleate",
+        "relation_type": "has functional parent",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 52090,
+        "init_name": "methoxide",
+        "relation_type": "is conjugate base of",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 24712,
+        "init_name": "hydroxymethyl group",
+        "relation_type": "is substituent group from",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 44520,
+        "init_name": "methoxy group",
+        "relation_type": "is substituent group from",
+        "final_id": 17790,
+        "final_name": "methanol"
+      },
+      {
+        "init_id": 79073,
+        "init_name": "CHOH group",
+        "relation_type": "is substituent group from",
+        "final_id": 17790,
+        "final_name": "methanol"
+      }
+    ],
+    "outgoing_relations": [
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "has role",
+        "final_id": 76971,
+        "final_name": "<em>Escherichia coli</em> metabolite"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "has role",
+        "final_id": 33292,
+        "final_name": "fuel"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "has role",
+        "final_id": 48360,
+        "final_name": "amphiprotic solvent"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "has role",
+        "final_id": 131604,
+        "final_name": "<em>Mycoplasma genitalium</em> metabolite"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "has role",
+        "final_id": 77746,
+        "final_name": "human metabolite"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "has role",
+        "final_id": 75771,
+        "final_name": "mouse metabolite"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "is a",
+        "final_id": 15734,
+        "final_name": "primary alcohol"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "is a",
+        "final_id": 50584,
+        "final_name": "alkyl alcohol"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "is a",
+        "final_id": 64708,
+        "final_name": "one-carbon compound"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "is a",
+        "final_id": 134179,
+        "final_name": "volatile organic compound"
+      },
+      {
+        "init_id": 17790,
+        "init_name": "methanol",
+        "relation_type": "is conjugate acid of",
+        "final_id": 52090,
+        "final_name": "methoxide"
+      }
+    ]
+  },
+  "database_accessions": {
+    "CITATION": [
+      {
+        "id": 1178436,
+        "accession_number": "10836148",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/10836148",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178435,
+        "accession_number": "10866370",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/10866370",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838447,
+        "accession_number": "11141607",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/11141607",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838443,
+        "accession_number": "11430978",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/11430978",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838442,
+        "accession_number": "11489599",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/11489599",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838445,
+        "accession_number": "11680737",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/11680737",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 603949,
+        "accession_number": "11684179",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/11684179",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178437,
+        "accession_number": "12926880",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/12926880",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838448,
+        "accession_number": "14012711",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/14012711",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838444,
+        "accession_number": "14678513",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/14678513",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838446,
+        "accession_number": "14760634",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/14760634",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838441,
+        "accession_number": "15172721",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/15172721",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178438,
+        "accession_number": "15857133",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/15857133",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838451,
+        "accession_number": "15906011",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/15906011",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 861137,
+        "accession_number": "16705261",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/16705261",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838450,
+        "accession_number": "17451998",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/17451998",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178439,
+        "accession_number": "17544548",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/17544548",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838453,
+        "accession_number": "17733096",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/17733096",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178440,
+        "accession_number": "19056282",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/19056282",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838449,
+        "accession_number": "19064074",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/19064074",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 838452,
+        "accession_number": "19850112",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/19850112",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 787452,
+        "accession_number": "20314698",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/20314698",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178434,
+        "accession_number": "2033592",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/2033592",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178441,
+        "accession_number": "25668638",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/25668638",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178442,
+        "accession_number": "30108945",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/30108945",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178443,
+        "accession_number": "31006524",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/31006524",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178433,
+        "accession_number": "3599019",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/3599019",
+        "prefix": "pubmed"
+      },
+      {
+        "id": 1178432,
+        "accession_number": "3882967",
+        "type": "CITATION",
+        "source_name": "PubMed",
+        "url": "http://europepmc.org/abstract/MED/3882967",
+        "prefix": "pubmed"
+      }
+    ],
+    "REGISTRY_NUMBER": [
+      {
+        "id": 791411,
+        "accession_number": "1098229",
+        "type": "REGISTRY_NUMBER",
+        "source_name": "Reaxys",
+        "url": null,
+        "prefix": "reaxys"
+      },
+      {
+        "id": 99682,
+        "accession_number": "449",
+        "type": "REGISTRY_NUMBER",
+        "source_name": "Gmelin",
+        "url": null,
+        "prefix": "gmelin"
+      }
+    ],
+    "CAS": [
+      {
+        "id": 20761,
+        "accession_number": "67-56-1",
+        "type": "CAS",
+        "source_name": "KEGG COMPOUND",
+        "url": null,
+        "prefix": "kegg.compound"
+      },
+      {
+        "id": 99680,
+        "accession_number": "67-56-1",
+        "type": "CAS",
+        "source_name": "ChemIDplus",
+        "url": "https://bioregistry.io/chemidplus:67-56-1",
+        "prefix": "chemidplus"
+      },
+      {
+        "id": 77969,
+        "accession_number": "67-56-1",
+        "type": "CAS",
+        "source_name": "NIST Chemistry WebBook",
+        "url": "http://webbook.nist.gov/cgi/cbook.cgi?ID=67-56-1",
+        "prefix": "nist"
+      }
+    ],
+    "MANUAL_X_REF": [
+      {
+        "id": 20742,
+        "accession_number": "C00132",
+        "type": "MANUAL_X_REF",
+        "source_name": "KEGG COMPOUND",
+        "url": "https://bioregistry.io/kegg.compound:C00132",
+        "prefix": "kegg.compound"
+      },
+      {
+        "id": 77970,
+        "accession_number": "c0132",
+        "type": "MANUAL_X_REF",
+        "source_name": "UM-BBD",
+        "url": "https://bioregistry.io/umbbd.compound:c0132",
+        "prefix": "umbbd.compound"
+      },
+      {
+        "id": 864913,
+        "accession_number": "D02309",
+        "type": "MANUAL_X_REF",
+        "source_name": "KEGG DRUG",
+        "url": "https://bioregistry.io/kegg.drug:D02309",
+        "prefix": "kegg.drug"
+      },
+      {
+        "id": 795664,
+        "accession_number": "HMDB0001875",
+        "type": "MANUAL_X_REF",
+        "source_name": "HMDB",
+        "url": "https://bioregistry.io/hmdb:HMDB0001875",
+        "prefix": "hmdb"
+      },
+      {
+        "id": 795662,
+        "accession_number": "Methanol",
+        "type": "MANUAL_X_REF",
+        "source_name": "Wikipedia",
+        "url": "https://bioregistry.io/wikipedia.en:Methanol",
+        "prefix": "wikipedia.en"
+      },
+      {
+        "id": 795663,
+        "accession_number": "METOH",
+        "type": "MANUAL_X_REF",
+        "source_name": "MetaCyc",
+        "url": "https://bioregistry.io/metacyc.compound:METOH",
+        "prefix": "metacyc.compound"
+      },
+      {
+        "id": 83932,
+        "accession_number": "MOH",
+        "type": "MANUAL_X_REF",
+        "source_name": "PDBeChem",
+        "url": "https://bioregistry.io/pdb-ccd:MOH",
+        "prefix": "pdb-ccd"
+      }
+    ]
+  },
+  "roles_classification": [
+    {
+      "application": false,
+      "chemical_role": false,
+      "chebi_accession": "CHEBI:131604",
+      "name": "Mycoplasma genitalium metabolite",
+      "definition": "Any bacterial metabolite produced during a metabolic reaction in <em>Mycoplasma genitalium</em>.",
+      "id": 131604,
+      "biological_role": true
+    },
+    {
+      "application": true,
+      "chemical_role": false,
+      "chebi_accession": "CHEBI:33292",
+      "name": "fuel",
+      "definition": "An energy-rich substance that can be transformed with release of usable energy.",
+      "id": 33292,
+      "biological_role": false
+    },
+    {
+      "application": false,
+      "chemical_role": false,
+      "chebi_accession": "CHEBI:77746",
+      "name": "human metabolite",
+      "definition": "Any mammalian metabolite  produced during a metabolic reaction in humans (<em>Homo sapiens</em>).",
+      "id": 77746,
+      "biological_role": true
+    },
+    {
+      "application": false,
+      "chemical_role": false,
+      "chebi_accession": "CHEBI:75771",
+      "name": "mouse metabolite",
+      "definition": "Any mammalian metabolite produced during a metabolic reaction in a mouse (<em>Mus musculus</em>).",
+      "id": 75771,
+      "biological_role": true
+    },
+    {
+      "application": false,
+      "chemical_role": false,
+      "chebi_accession": "CHEBI:76971",
+      "name": "Escherichia coli metabolite",
+      "definition": "Any bacterial metabolite produced during a metabolic reaction in <em>Escherichia coli</em>.",
+      "id": 76971,
+      "biological_role": true
+    },
+    {
+      "application": true,
+      "chemical_role": true,
+      "chebi_accession": "CHEBI:48360",
+      "name": "amphiprotic solvent",
+      "definition": "Self-ionizing solvent possessing both characteristics of Brønsted acids and bases.",
+      "id": 48360,
+      "biological_role": false
+    }
+  ],
+  "is_released": true
+}

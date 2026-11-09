@@ -1,0 +1,8 @@
+import {it,expect} from 'vitest';
+import {newSolutionDraft,chemicals} from './calculators/workspace/chemical-library';
+import {emptyStockPreparation} from './calculators/workspace/gc-workflow';
+import {buildSolutionReport} from './calculators/workspace/solution-report';
+function fixture(){const preparation=emptyStockPreparation();preparation.independent=true;for(const [k,n,u] of [['mass','100','0.1'],['purity','99','0.2'],['volume','100','0.05']] as const)preparation.inputs[k]={nominal:n,uncertainty:{kind:'standard',value:u,divisor:'',source:'Hypothetical <script>alert(1)</script> & CoA'}};return {...newSolutionDraft(chemicals[0]),preparation};}
+it('reports actual concentration separately from an unfinished nominal recipe in both languages',()=>{for(const en of [true,false]){const h=buildSolutionReport(fixture(),en,'2026-11-05T12:00:00Z');expect(h).toContain('990.00000 mg/L');expect(h).toContain(`${Math.sqrt(.99**2+2**2+.495**2).toPrecision(7)} mg/L`);expect(h).toContain(en?'lang="en" dir="ltr"':'lang="fa" dir="rtl"');expect(h).toContain('&lt;script&gt;');expect(h).not.toContain('<script>');expect(h).toContain("default-src 'none'");}});
+it('rejects incomplete, nonindependent, or malformed report input',()=>{const d=fixture();expect(()=>buildSolutionReport({...d,preparation:undefined},true,'2026-11-05')).toThrow();expect(()=>buildSolutionReport(d,true,'bad')).toThrow();d.preparation.independent=false;expect(()=>buildSolutionReport(d,true,'2026-11-05')).toThrow();});
+it('recalculates from current data rather than retaining old output',()=>{const d=fixture();d.preparation.inputs.mass.nominal='200';expect(buildSolutionReport(d,true,'2026-11-05')).toContain('1980.0000 mg/L');});

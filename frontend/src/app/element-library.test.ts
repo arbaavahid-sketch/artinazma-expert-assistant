@@ -1,0 +1,5 @@
+import {it,expect} from 'vitest';
+import {readFileSync} from 'node:fs';
+import {elements,elementMetadata,findElements,isotopeValue} from './calculators/workspace/element-library';
+it('validates all element and isotope identities',()=>{expect(elements).toHaveLength(118);let count=0;for(const [i,e] of elements.entries()){expect(e.atomic_number).toBe(i+1);expect(e.fa).toMatch(/[آ-ی]/);const d=JSON.parse(readFileSync(`public/data/elements/${elementMetadata.version}/${i+1}.json`,'utf8'));expect(d.atomic_number).toBe(i+1);expect(d.isotopes).toHaveLength(e.isotope_count);expect(new Set(d.isotopes.map((r:{mass_number:number})=>r.mass_number)).size).toBe(e.isotope_count);for(const r of d.isotopes)expect(r.mass_number).toBeGreaterThanOrEqual(i+1);count+=d.isotopes.length;}expect(count).toBe(3557);});
+it('searches Persian and symbols and preserves unknown values',()=>{for(const q of ['۲۶','Fe','آهن'])expect(findElements(q)[0].atomic_number).toBe(26);expect(findElements('اورانیوم')[0].atomic_number).toBe(92);expect(isotopeValue(null)).toBeNull();expect(isotopeValue(1)).toBe('1');});

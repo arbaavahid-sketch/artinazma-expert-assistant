@@ -1,0 +1,63 @@
+import type { FamilyModel } from "./family-models";
+
+const input = (fa: string, en: string, unit: string) => ({ fa, en, unit });
+const quam = "https://www.eurachem.org/index.php/publications/guides/quam";
+const ratio = (scale: number, complement = false) => ([a, b]: number[]) => ({
+  value: scale * (complement ? 1 - a / b : a / b),
+  sensitivities: [scale * (complement ? -1 : 1) / b, scale * (complement ? 1 : -1) * a / b ** 2],
+  valid: b > 0 && a >= 0 && a <= b,
+});
+
+export const extendedModels: Record<string, FamilyModel> = {
+  acidBaseNumber: {
+    fa: "عدد اسیدی یا قلیایی بر مبنای KOH", en: "Acid/base number as KOH", unit: "mg KOH/g",
+    formula: "N = (V − Vb) × c_eq × M_KOH / m",
+    inputs: [input("حجم مصرفی تیترانت از گزارش دستگاه", "Titrant volume", "mL"), input("حجم بلانک همان روش", "Blank volume", "mL"),
+      input("غلظت اکی‌والانی واقعی تیترانت پس از استانداردسازی", "Actual equivalent concentration", "eq/L"),
+      input("جرم نمونه از اختلاف دو توزین", "Net sample mass", "g"), input("جرم اکی‌والانی KOH طبق روش؛ معمولاً ۵۶٫۱", "KOH equivalent mass", "g/eq")],
+    explanation: "حجم خالص در غلظت اکی‌والانی ضرب می‌شود و با جرم اکی‌والانی KOH به mg KOH تبدیل می‌شود. تقسیم بر جرم نمونه، عدد اسیدی/قلیایی می‌دهد. روش تشخیص نقطهٔ پایانی و تیترانت باید با SOP منطبق باشند. عدم‌قطعیت غلظت را از استانداردسازی، حجم را از بودجهٔ بورت و جرم را از بودجهٔ توزین بردارید.",
+    reference: "https://www.xylemanalytics.com/File%20Library/Resource%20Library/SIA/09%20Application%20Papers/AN151_Acidity_Number_in_Aviation_Turbine_Fuel_ASTM_D_3242_EN.pdf",
+    example: [2, .1, .1, 5, 56.1],
+    evaluate: ([v,b,c,m,k]) => ({value:(v-b)*c*k/m, sensitivities:[c*k/m,-c*k/m,(v-b)*k/m,-(v-b)*c*k/m**2,(v-b)*c/m],valid:v>=0&&b>=0&&c>0&&m>0&&k>0}),
+  },
+  pycnometer: {
+    fa:"چگالی با پیکنومتر و آب مرجع", en:"Pycnometer density against water", unit:"kg/m³",
+    formula:"ρs = (ms − m0) / (mw − m0) × ρw",
+    inputs:[input("جرم پیکنومتر خالی و خشک", "Empty pycnometer mass", "g"),input("جرم پیکنومتر پر از نمونه", "Sample-filled mass", "g"),input("جرم پیکنومتر پر از آب مرجع", "Water-filled mass", "g"),input("چگالی آب مرجع در دمای اندازه‌گیری", "Reference water density at measurement temperature", "kg/m³")],
+    explanation:"با فرض حجم یکسان در دمای یکسان، نسبت جرم مایعات برابر نسبت چگالی آن‌هاست. چگالی آب را از مرجع معتبر در دمای واقعی بردارید. تصحیح شناوری هوا و انبساط ظرف در این رابطهٔ پایه نیست؛ در صورت اهمیت باید در مدل اختصاصی روش منظور شوند. جرم خالی مشترک است و نباید دوباره به‌صورت ورودی مستقل تکرار شود.",reference:quam,example:[20,45,49.94,998.2],
+    evaluate:([z,s,w,r])=>({value:(s-z)/(w-z)*r,sensitivities:[r*(s-w)/(w-z)**2,r/(w-z),-r*(s-z)/(w-z)**2,(s-z)/(w-z)],valid:s>z&&w>z&&r>0}),
+  },
+  volumePercent:{fa:"درصد حجمی جزء",en:"Volume fraction percentage",unit:"% vol",formula:"φ = 100 × Vcomponent / Vsample",
+    inputs:[input("حجم جزء جداشده با تصحیح بلانک", "Corrected component volume", "mL"),input("حجم کل نمونه در همان مبنای دما", "Total sample volume on the same temperature basis", "mL")],
+    explanation:"حجم جزء بر حجم کل نمونه در یک مبنای دمایی تقسیم می‌شود. حد قرائت، کالیبراسیون ظرف، بازیابی جداسازی، دما و تکرارپذیری را بررسی کنید. رابطه، مراحل تقطیر یا سانتریفیوژ استاندارد را جایگزین نمی‌کند.",reference:quam,example:[.5,100],evaluate:ratio(100)},
+  ratioPercent:{fa:"نسبت نتیجهٔ پس از آزمون به پیش از آزمون",en:"Retained result percentage",unit:"%",formula:"R = 100 × after / before",
+    inputs:[input("نتیجهٔ پس از عملیات", "Result after treatment", "same unit"),input("نتیجهٔ پیش از عملیات", "Result before treatment", "same unit")],
+    explanation:"دو نتیجه باید واحد و مبنای یکسان داشته باشند. هم‌بستگی ناشی از دستگاه یا نمونهٔ مشترک را بررسی کنید. مقدار بالاتر از ۱۰۰ درصد نیز برای این نسبت مجاز است.",reference:quam,example:[60,80],
+    evaluate:([a,b])=>({value:100*a/b,sensitivities:[100/b,-100*a/b**2],valid:b>0&&a>=0})},
+  solubility:{fa:"درصد حلالیت از باقیماندهٔ نامحلول",en:"Solubility from insoluble residue",unit:"% mass",formula:"S = 100 × (1 − m_insoluble / m_sample)",
+    inputs:[input("جرم خالص باقیماندهٔ نامحلول پس از تصحیح بلانک", "Net insoluble residue", "g"),input("جرم اولیهٔ نمونه", "Initial sample mass", "g")],
+    explanation:"جرم نامحلول از جرم اولیه کم می‌شود و سهم محلول محاسبه می‌شود. خشک‌کردن تا جرم ثابت، بلانک فیلتر، انتقال نمونه و تکرارپذیری باید در بودجه بررسی شوند.",reference:quam,example:[.1,2],evaluate:ratio(100,true)},
+  transmission:{fa:"درصد عبور نوری از شدت نور",en:"Optical transmittance",unit:"% T",formula:"T = 100 × I / I0",
+    inputs:[input("شدت نور نمونه پس از تصحیح تاریک", "Dark-corrected sample intensity", "signal"),input("شدت نور مرجع پس از تصحیح تاریک", "Dark-corrected reference intensity", "signal")],
+    explanation:"نسبت شدت نور عبوری به مرجع در طول موج و پهنای باند مشخص است. نور سرگردان، بلانک، کووت، طول موج، خطی‌بودن و رانش را بررسی کنید. اگر دستگاه مستقیماً %T می‌دهد می‌توانید از مدل قرائت تصحیح‌شده استفاده کنید.",reference:"https://www.nist.gov/system/files/documents/srm/SP260-54.PDF",example:[50,100],evaluate:ratio(100)},
+  absorbance:{fa:"جذب نوری از درصد عبور",en:"Absorbance from transmittance",unit:"1",formula:"A = −log10(T / 100)",
+    inputs:[input("درصد عبور نوری در طول موج انتخاب‌شده", "Transmittance percentage at selected wavelength", "% T")],
+    explanation:"جذب دهدهی، منفی لگاریتم نسبت عبور است. این تبدیل برای یک طول موج است و تفسیر طیف یا شناسایی ماده انجام نمی‌دهد. عدم‌قطعیت %T باید اثرهای مرتبط دستگاه و بلانک را پوشش دهد.",reference:"https://goldbook.iupac.org/terms/view/A00028",example:[50],
+    evaluate:([t])=>({value:-Math.log10(t/100),sensitivities:[-1/(Math.LN10*t)],valid:t>0&&t<=100})},
+  apiGravity:{fa:"گراویتی API از چگالی نسبی در ۶۰°F",en:"API gravity from SG at 60°F",unit:"°API",formula:"API = 141.5 / SG(60°F/60°F) − 131.5",
+    inputs:[input("چگالی نسبی تصحیح‌شده به ۶۰°F/۶۰°F", "Specific gravity corrected to 60°F/60°F", "1")],
+    explanation:"این رابطه تعریف مقیاس API است. چگالی نسبی باید پیش‌تر با روش معتبر به مبنای ۶۰°F/۶۰°F تبدیل شده باشد. وارد کردن چگالی kg/m³ یا SG در دمای دیگر درست نیست؛ این فرم جداول تصحیح دما را اجرا نمی‌کند.",reference:"https://www.eia.gov/tools/glossary/index.php?id=API",example:[.85],
+    evaluate:([d])=>({value:141.5/d-131.5,sensitivities:[-141.5/d**2],valid:d>0})},
+  kfCoulometric:{fa:"آب با کارل فیشر کولومتری",en:"Coulometric Karl Fischer water",unit:"mg/kg",formula:"w = (q_water − q_blank) / m",
+    inputs:[input("جرم آب دستگاه پس از تصحیح رانش طبق روش", "Instrument water mass after method drift correction", "µg"),input("آب بلانک؛ اگر قبلاً کسر شده با دلیل صفر", "Water blank, zero only if already subtracted", "µg"),input("جرم نمونهٔ تزریق‌شده از اختلاف توزین", "Injected sample mass by difference", "g")],
+    explanation:"µg آب بر g نمونه برابر mg/kg یا ppm جرمی است. این ورودی بار الکتریکی نیست، جرم آب گزارش‌شده توسط دستگاه است. استاندارد آب، رانش، بلانک، رطوبت محیط، واکنش جانبی و آزادسازی کامل آب را بررسی کنید؛ تصحیح رانش را دوبار اعمال نکنید.",reference:"https://www.mt.com/gb/en/home/library/guides/lab-analytical-instruments/karl-fischer-titration-guide-principle.html",example:[120,20,1],
+    evaluate:([q,b,m])=>({value:(q-b)/m,sensitivities:[1/m,-1/m,-(q-b)/m**2],valid:q>=0&&b>=0&&m>0})},
+  kfVolumetric:{fa:"آب با کارل فیشر حجمی",en:"Volumetric Karl Fischer water",unit:"mg/kg",formula:"w = 1000 × (V − Vb) × t / m",
+    inputs:[input("حجم تیترانت مصرفی با تصحیح رانش طبق روش", "Method drift-corrected titrant volume", "mL"),input("حجم بلانک که هنوز کسر نشده", "Unsubtracted blank volume", "mL"),input("تیتر واقعی آب از استانداردسازی روزانه", "Actual standardized water titer", "mg/mL"),input("جرم نمونهٔ تزریق‌شده", "Injected sample mass", "g")],
+    explanation:"حجم خالص در تیتر واقعی آب ضرب می‌شود تا mg آب به دست آید؛ تقسیم بر جرم g و ضرب در ۱۰۰۰، mg/kg می‌دهد. تیتر با غلظت مولار تفاوت دارد. این مدل برای KF حجمی است و نباید به روش کولومتری نسبت داده شود.",reference:"https://www.mt.com/gb/en/home/library/guides/lab-analytical-instruments/karl-fischer-titration-guide-principle.html",example:[.5,.02,5,1],
+    evaluate:([v,b,t,m])=>({value:1000*(v-b)*t/m,sensitivities:[1000*t/m,-1000*t/m,1000*(v-b)/m,-1000*(v-b)*t/m**2],valid:v>=0&&b>=0&&t>0&&m>0})},
+  gcNormalization:{fa:"درصد جزء با نرمال‌سازی پاسخ تصحیح‌شده",en:"Response-corrected component normalization",unit:"% corrected response",formula:"p = 100 × (Ai × Fi) / (Ai × Fi + S_other)",
+    inputs:[input("مساحت پیک جزء موردنظر", "Component peak area", "area"),input("ضریب ضربی پاسخ این جزء طبق تعریف کالیبراسیون", "Multiplicative response correction factor", "1"),input("مجموع مساحت × ضریب سایر اجزا؛ بدون جزء موردنظر", "Sum of corrected other components, excluding this component", "corrected area")],
+    explanation:"صورت و مجموع سایر اجزا جدا وارد می‌شوند تا یک مساحت هم در صورت و هم در مخرج به‌عنوان دو ورودی مستقل شمرده نشود. Fi در این مدل ضریب ضربی است؛ اگر نرم‌افزار RF را معکوس تعریف می‌کند باید تبدیل شود. تبدیل سهم پاسخ به درصد جرمی/حجمی فقط با کالیبراسیون و مبنای روش مجاز است. پیک‌های حذف‌شده و هم‌پوشانی را بررسی کنید.",reference:"https://www.agilent.com/library/usermanuals/Public/03396-90540.pdf",example:[20,1,80],
+    evaluate:([a,f,s])=>({value:100*a*f/(a*f+s),sensitivities:[100*f*s/(a*f+s)**2,100*a*s/(a*f+s)**2,-100*a*f/(a*f+s)**2],valid:a>=0&&f>0&&s>=0&&a*f+s>0})},
+};

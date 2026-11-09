@@ -30,10 +30,10 @@ def _patch_externals(monkeypatch, answer="پاسخ تستی آرتین", raise_a
     monkeypatch.setattr(chat_mod, "build_local_answer", lambda *a, **k: "پاسخ محلی")
 
 
-def test_chat_returns_ai_answer(app_client, monkeypatch):
+def test_chat_returns_ai_answer(authenticated_client, monkeypatch):
     _patch_externals(monkeypatch, answer="گوگرد کل با D2622 اندازه‌گیری می‌شود.")
 
-    res = app_client.post("/chat", json={"message": "درباره D2622 توضیح بده"})
+    res = authenticated_client.post("/chat", json={"message": "درباره D2622 توضیح بده"})
     assert res.status_code == 200
 
     data = res.json()
@@ -45,11 +45,11 @@ def test_chat_returns_ai_answer(app_client, monkeypatch):
     assert isinstance(data["sources"], list)
 
 
-def test_chat_falls_back_to_local_when_ai_fails(app_client, monkeypatch):
+def test_chat_falls_back_to_local_when_ai_fails(authenticated_client, monkeypatch):
     # وقتی AI خطا بدهد، endpoint نباید 500 بدهد؛ باید به پاسخ محلی برگردد
     _patch_externals(monkeypatch, raise_ai=True)
 
-    res = app_client.post("/chat", json={"message": "یک سوال عمومی"})
+    res = authenticated_client.post("/chat", json={"message": "یک سوال عمومی"})
     assert res.status_code == 200
 
     data = res.json()
@@ -57,11 +57,11 @@ def test_chat_falls_back_to_local_when_ai_fails(app_client, monkeypatch):
     assert data["answer"] == "پاسخ محلی"
 
 
-def test_chat_persists_question(app_client, monkeypatch):
+def test_chat_persists_question(authenticated_client, monkeypatch):
     # هر درخواست باید در DB ذخیره شود و question_id معتبر برگردد
     _patch_externals(monkeypatch, answer="ذخیره شود")
 
-    res = app_client.post("/chat", json={"message": "سوال برای ذخیره", "user_id": "anonymous"})
+    res = authenticated_client.post("/chat", json={"message": "سوال برای ذخیره", "user_id": "anonymous"})
     assert res.status_code == 200
     data = res.json()
     assert isinstance(data["question_id"], int)
@@ -78,7 +78,7 @@ def test_chat_persists_question(app_client, monkeypatch):
     assert saved["metadata"]["source_count"] == len(data["sources"])
 
 
-def test_chat_sources_include_citation_fields(app_client, monkeypatch):
+def test_chat_sources_include_citation_fields(authenticated_client, monkeypatch):
     import routes.chat as chat_mod
 
     _patch_externals(monkeypatch, answer="پاسخ با منبع داخلی")
@@ -98,7 +98,7 @@ def test_chat_sources_include_citation_fields(app_client, monkeypatch):
         ],
     )
 
-    res = app_client.post("/chat", json={"message": "JFTOT-230 چیست؟"})
+    res = authenticated_client.post("/chat", json={"message": "JFTOT-230 چیست؟"})
     assert res.status_code == 200
     data = res.json()
 
@@ -110,7 +110,7 @@ def test_chat_sources_include_citation_fields(app_client, monkeypatch):
     assert "JFTOT-230" in source["excerpt"]
 
 
-def test_chat_injects_lab_answer_contract_for_d3227(app_client, monkeypatch):
+def test_chat_injects_lab_answer_contract_for_d3227(authenticated_client, monkeypatch):
     import routes.chat as chat_mod
 
     captured = {}
@@ -124,7 +124,7 @@ def test_chat_injects_lab_answer_contract_for_d3227(app_client, monkeypatch):
     monkeypatch.setattr(chat_mod, "find_artinazma_resources", lambda *a, **k: [])
     monkeypatch.setattr(chat_mod, "build_local_answer", lambda *a, **k: "local")
 
-    res = app_client.post("/chat", json={"message": "محلول تیترانت رو طبق ASTM D3227 چطوری درست کنم؟"})
+    res = authenticated_client.post("/chat", json={"message": "محلول تیترانت رو طبق ASTM D3227 چطوری درست کنم؟"})
     assert res.status_code == 200
 
     context = captured["context"]
@@ -136,8 +136,8 @@ def test_chat_injects_lab_answer_contract_for_d3227(app_client, monkeypatch):
     assert "do not describe it as a NaOH titrant" in context
 
 
-def test_chat_requires_message_field(app_client, monkeypatch):
+def test_chat_requires_message_field(authenticated_client, monkeypatch):
     _patch_externals(monkeypatch)
     # بدنه بدون فیلد اجباری message → خطای اعتبارسنجی 422
-    res = app_client.post("/chat", json={"domain": "auto"})
+    res = authenticated_client.post("/chat", json={"domain": "auto"})
     assert res.status_code == 422

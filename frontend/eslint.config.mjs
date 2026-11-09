@@ -16,7 +16,8 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["electron/**/*.cjs"],
+    // Node audit scripts use CommonJS to load the TypeScript catalog.
+    files: ["electron/**/*.cjs", "scripts/*.cjs"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
     },

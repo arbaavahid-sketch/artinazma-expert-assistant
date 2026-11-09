@@ -1,0 +1,293 @@
+{
+  "source": "ChEBI · EMBL-EBI",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "fetchedAt": "2026-11-07T10:00:00Z",
+  "sourceUrl": "https://www.ebi.ac.uk/chebi/CHEBI:17790",
+  "sourceVersion": null,
+  "adapterVersion": "artin-chebi-public-v1",
+  "changes": "Selected fields normalized; source markup converted to plain text; lists bounded and truncation reported.",
+  "requestedId": "CHEBI:17790",
+  "id": "CHEBI:17790",
+  "name": "methanol",
+  "definition": "The primary alcohol that is the simplest aliphatic alcohol, comprising a methyl and an alcohol group.",
+  "stars": 3,
+  "formula": "CH4O",
+  "charge": 0,
+  "inchiKey": "OKKJLVBELUTLKV-UHFFFAOYSA-N",
+  "inchi": "InChI=1S/CH4O/c1-2/h2H,1H3",
+  "sourceUpdatedAt": "2018-07-19T14:41:20Z",
+  "synonyms": [
+    {
+      "name": "Alcohol,methyl",
+      "type": "SYNONYM",
+      "source": "ChEMBL"
+    },
+    {
+      "name": "carbinol",
+      "type": "SYNONYM",
+      "source": "ChemIDplus"
+    },
+    {
+      "name": "CH3OH",
+      "type": "SYNONYM",
+      "source": "ChEBI"
+    },
+    {
+      "name": "MeOH",
+      "type": "SYNONYM",
+      "source": "ChEBI"
+    },
+    {
+      "name": "Methanol",
+      "type": "SYNONYM",
+      "source": "KEGG COMPOUND"
+    },
+    {
+      "name": "METHANOL",
+      "type": "SYNONYM",
+      "source": "PDBeChem"
+    },
+    {
+      "name": "methyl alcohol",
+      "type": "SYNONYM",
+      "source": "ChEMBL"
+    },
+    {
+      "name": "Methyl alcohol",
+      "type": "SYNONYM",
+      "source": "KEGG COMPOUND"
+    },
+    {
+      "name": "Methylalkohol",
+      "type": "SYNONYM",
+      "source": "NIST Chemistry WebBook"
+    },
+    {
+      "name": "NSC-85232",
+      "type": "SYNONYM",
+      "source": "ChEMBL"
+    },
+    {
+      "name": "spirit of wood",
+      "type": "SYNONYM",
+      "source": "HMDB"
+    },
+    {
+      "name": "wood alcohol",
+      "type": "SYNONYM",
+      "source": "ChemIDplus"
+    },
+    {
+      "name": "wood naphtha",
+      "type": "SYNONYM",
+      "source": "ChemIDplus"
+    },
+    {
+      "name": "wood spirit",
+      "type": "SYNONYM",
+      "source": "NIST Chemistry WebBook"
+    },
+    {
+      "name": "methanol",
+      "type": "IUPAC NAME",
+      "source": "IUPAC"
+    },
+    {
+      "name": "methanol",
+      "type": "UNIPROT NAME",
+      "source": "UniProt"
+    }
+  ],
+  "synonymsTruncated": false,
+  "relations": [
+    {
+      "direction": "outgoing",
+      "relation": "has role",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:76971",
+      "toName": "Escherichia coli metabolite"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "has role",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:33292",
+      "toName": "fuel"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "has role",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:48360",
+      "toName": "amphiprotic solvent"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "has role",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:131604",
+      "toName": "Mycoplasma genitalium metabolite"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "has role",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:77746",
+      "toName": "human metabolite"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "has role",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:75771",
+      "toName": "mouse metabolite"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "is a",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:15734",
+      "toName": "primary alcohol"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "is a",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:50584",
+      "toName": "alkyl alcohol"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "is a",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:64708",
+      "toName": "one-carbon compound"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "is a",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:134179",
+      "toName": "volatile organic compound"
+    },
+    {
+      "direction": "outgoing",
+      "relation": "is conjugate acid of",
+      "fromId": "CHEBI:17790",
+      "fromName": "methanol",
+      "toId": "CHEBI:52090",
+      "toName": "methoxide"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:25248",
+      "fromName": "methyl ester",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:77699",
+      "fromName": "methyl formate",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:44499",
+      "fromName": "methyl nonanoate",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:41531",
+      "fromName": "methyl L-cysteinate",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:76004",
+      "fromName": "dimethyl fumarate",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:62810",
+      "fromName": "cis-heme d hydroxychlorin γ-spirolactone methyl ester",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:32772",
+      "fromName": "methyloxidanyl",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "has functional parent",
+      "fromId": "CHEBI:35460",
+      "fromName": "dimethyl maleate",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "is conjugate base of",
+      "fromId": "CHEBI:52090",
+      "fromName": "methoxide",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "is substituent group from",
+      "fromId": "CHEBI:24712",
+      "fromName": "hydroxymethyl group",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "is substituent group from",
+      "fromId": "CHEBI:44520",
+      "fromName": "methoxy group",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    },
+    {
+      "direction": "incoming",
+      "relation": "is substituent group from",
+      "fromId": "CHEBI:79073",
+      "fromName": "CHOH group",
+      "toId": "CHEBI:17790",
+      "toName": "methanol"
+    }
+  ],
+  "relationsTruncated": false,
+  "expectedInchiKey": "OKKJLVBELUTLKV-UHFFFAOYSA-N",
+  "matchBasis": "supplied_full_standard_inchikey",
+  "match": "exact"
+}

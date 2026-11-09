@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@font-face { font-family: Vazir; src: url("/fonts/Vazir-Variable.woff2") format("woff2"); font-style: normal; font-weight: 100 900; font-display: swap; }
 
 /* Enable class-based dark mode for Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -40,8 +41,8 @@
   --color-danger-border: #fecaca;
   --color-danger-text: #b91c1c;
   --font-persian-fallback: "IRANSans", "Yekan", "Segoe UI", Tahoma, Arial, sans-serif;
-  --font-persian: var(--font-vazirmatn, "Vazirmatn"), var(--font-persian-fallback);
-  --font-english: "Times New Roman", Times, serif;
+  --font-persian: "Vazir", var(--font-persian-fallback);
+  --font-english: "Vazir", Tahoma, Arial, sans-serif;
   --font-size-display: clamp(1.85rem, 1.25rem + 2vw, 3rem);
   --font-size-h1: clamp(1.5rem, 1.3rem + 0.9vw, 2rem);
   --font-size-h2: clamp(1.25rem, 1.15rem + 0.55vw, 1.6rem);
@@ -95,10 +96,7 @@ html.dark { color-scheme: dark; }
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at top right, rgba(29, 78, 216, 0.08), transparent 30rem),
-    radial-gradient(circle at bottom left, rgba(8, 145, 178, 0.07), transparent 26rem),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-persian), var(--font-persian-fallback);
   font-size: var(--font-size-body);

@@ -1,5 +1,6 @@
 "use client";
 
+import {reportFontCSS} from '@/lib/report-font';
 import { useState } from "react";
 import { apiUrl, backendRequestUrl, getCsrfToken } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -383,8 +384,8 @@ export default function AnalyzePage() {
 <head>
 <meta charset="utf-8"/>
 <title>${isEn ? "Artin analysis report" : "گزارش تحلیل آرتین"}</title>
-<style>
-  body { font-family: Tahoma, Arial, 'Segoe UI', sans-serif; padding: 40px; color: #1e293b; line-height: 2; direction: ${isEn ? "ltr" : "rtl"}; }
+<style>${reportFontCSS}
+  body { font-family:Vazir,Tahoma,Arial,sans-serif; padding: 40px; color: #1e293b; line-height: 2; direction: ${isEn ? "ltr" : "rtl"}; }
   h1 { font-size: 22px; font-weight: 900; color: #065f46; border-bottom: 2px solid #065f46; padding-bottom: 10px; }
   .meta { font-size: 13px; color: #64748b; margin-bottom: 24px; }
   .content { white-space: pre-wrap; font-size: 14px; background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; }
@@ -433,8 +434,8 @@ ${followUpHistory.length ? `
       .replace(/^#{1}\s+(.+)/gm, "<h1>$1</h1>")
       .replace(/\n/g, "<br/>");
     const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
-<head><meta charset='utf-8'/><style>
-  body{font-family:Tahoma,Arial,sans-serif;direction:${isEn ? "ltr" : "rtl"};padding:40px;font-size:13pt;}
+<head><meta charset='utf-8'/><style>${reportFontCSS}
+  body{font-family:Vazir,Tahoma,Arial,sans-serif;direction:${isEn ? "ltr" : "rtl"};padding:40px;font-size:13pt;}
   h1,h2,h3{color:#065f46;} table{border-collapse:collapse;width:100%;}
   td,th{border:1px solid #ccc;padding:6px 10px;}
 </style></head>

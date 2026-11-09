@@ -1,0 +1,274 @@
+{
+  "snapshot": {
+    "identity": {
+      "title": "",
+      "sample": "",
+      "sop": "",
+      "edition": "",
+      "matrix": ""
+    },
+    "rows": [
+      [
+        "0",
+        "1.1"
+      ],
+      [
+        "1",
+        "2.9"
+      ],
+      [
+        "2",
+        "5.2"
+      ],
+      [
+        "3",
+        "6.8"
+      ],
+      [
+        "4",
+        "9"
+      ]
+    ],
+    "data": {
+      "values": {
+        "area": "4.9",
+        "extract": "10",
+        "dilution": "1",
+        "mass": "1",
+        "recovery": "100"
+      },
+      "uncertainties": {
+        "area": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "extract": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "dilution": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "mass": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        },
+        "recovery": {
+          "value": ".01",
+          "kind": "standard",
+          "divisor": "",
+          "source": "مثال فرضی مستقل برای بررسی نرم‌افزار؛ تأیید علمی فرایند واقعی نیست"
+        }
+      },
+      "coverage": "2",
+      "coverageSource": "ضریب فرضی برای آزمون نرم‌افزار؛ ادعای پوشش دقیق ندارد",
+      "additional": [
+        {
+          "id": "validation-method-precision",
+          "preset": "methodPrecision",
+          "name": "مثال فرضی دقت کل روش در mg/kg",
+          "target": "result",
+          "basis": "absolute",
+          "value": "0.19999999999999932",
+          "kind": "standard",
+          "divisor": "",
+          "source": "Study transfer v1 · مثال فرضی دقت کل روش در mg/kg · 2026-11-07T03:22:44.383Z; raw study/source and review: validationTransfer in project JSON",
+          "overlapNote": "فرض مثال: پراکندگی 0.2 mg/kg اثر باقیماندهٔ کل روش است و با اثرهای مستقل ورودی‌ها هم‌پوشانی ندارد. مؤلفهٔ تکراری دقت در بودجه نیست؛ SE ضرایب تنها از برازش لحاظ می‌شود. این فرض برای فرایند واقعی تأیید نشده است.",
+          "independent": true
+        }
+      ]
+    }
+  },
+  "analysis": {
+    "algorithm": "artin-adaptive-gc-mc-v1",
+    "engine": "numpy-model-mc",
+    "engine_version": "2.4.4",
+    "python_version": "3.14.0",
+    "rng": "PCG64-SeedSequence-spawn-v1",
+    "model": "gcExtraction",
+    "model_sha256": "25d66571af8ef758e48ca7899b1d2b89f68cd0cda5912b029e053dca10ac53f7",
+    "quantile_method": "linear",
+    "settings": {
+      "seed": 42,
+      "max_batches": 5,
+      "significant_digits": 2,
+      "probability": 0.95
+    },
+    "block_size": 10000,
+    "minimum_batches": 5,
+    "batches": 5,
+    "samples": 50000,
+    "seed": 42,
+    "probability": 0.95,
+    "interval": "equal-tail",
+    "mean": 19.493333286577755,
+    "mean_shift": 0.0009474997757230597,
+    "standard_uncertainty": 0.5246969880110889,
+    "lower": 18.470413014991816,
+    "upper": 20.519606806475693,
+    "histogram": [
+      {
+        "offset": -2.215978818639436,
+        "count": 1
+      },
+      {
+        "offset": -2.063568123300551,
+        "count": 1
+      },
+      {
+        "offset": -1.9111574279616659,
+        "count": 4
+      },
+      {
+        "offset": -1.758746732622781,
+        "count": 19
+      },
+      {
+        "offset": -1.606336037283896,
+        "count": 50
+      },
+      {
+        "offset": -1.453925341945011,
+        "count": 121
+      },
+      {
+        "offset": -1.301514646606126,
+        "count": 267
+      },
+      {
+        "offset": -1.149103951267241,
+        "count": 509
+      },
+      {
+        "offset": -0.9966932559283562,
+        "count": 990
+      },
+      {
+        "offset": -0.8442825605894713,
+        "count": 1497
+      },
+      {
+        "offset": -0.6918718652505862,
+        "count": 2502
+      },
+      {
+        "offset": -0.5394611699117012,
+        "count": 3467
+      },
+      {
+        "offset": -0.3870504745728163,
+        "count": 4479
+      },
+      {
+        "offset": -0.23463977923393128,
+        "count": 5358
+      },
+      {
+        "offset": -0.08222908389504624,
+        "count": 5548
+      },
+      {
+        "offset": 0.07018161144383865,
+        "count": 5769
+      },
+      {
+        "offset": 0.22259230678272354,
+        "count": 5146
+      },
+      {
+        "offset": 0.3750030021216084,
+        "count": 4450
+      },
+      {
+        "offset": 0.5274136974604933,
+        "count": 3462
+      },
+      {
+        "offset": 0.6798243927993782,
+        "count": 2526
+      },
+      {
+        "offset": 0.8322350881382634,
+        "count": 1725
+      },
+      {
+        "offset": 0.9846457834771486,
+        "count": 1045
+      },
+      {
+        "offset": 1.1370564788160336,
+        "count": 532
+      },
+      {
+        "offset": 1.2894671741549184,
+        "count": 292
+      },
+      {
+        "offset": 1.4418778694938033,
+        "count": 130
+      },
+      {
+        "offset": 1.594288564832688,
+        "count": 66
+      },
+      {
+        "offset": 1.746699260171573,
+        "count": 29
+      },
+      {
+        "offset": 1.8991099555104582,
+        "count": 9
+      },
+      {
+        "offset": 2.0515206508493433,
+        "count": 3
+      },
+      {
+        "offset": 2.203931346188228,
+        "count": 3
+      }
+    ],
+    "applicability_exceedances": 24998,
+    "calibration_range": [
+      0.0,
+      4.0
+    ],
+    "calibration_exceedances": 0,
+    "applicability_exceedance_fraction": 0.49996,
+    "checkpoints": [
+      {
+        "batches": 5,
+        "samples": 50000,
+        "tolerance": 0.005,
+        "twice_standard_errors": [
+          0.0028068715147968955,
+          0.001621878984803553,
+          0.009061265527267192,
+          0.007413075645765837
+        ],
+        "tolerance_met": false
+      }
+    ],
+    "converged": false,
+    "stop_reason": "batch_limit",
+    "tolerance": 0.005,
+    "normal_assumption": "standard, certificate and repeatability contributions treated as normal",
+    "linear_reference": {
+      "measured": 19.492385786802032,
+      "standard_uncertainty": 0.5248558102554539,
+      "expanded_uncertainty": 1.0497116205109078,
+      "coverage": 2.0,
+      "engine": "artin-linear-gum",
+      "engine_version": "1"
+    }
+  }
+}

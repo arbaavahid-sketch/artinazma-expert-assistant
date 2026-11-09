@@ -53,3 +53,24 @@ def app_client(test_db):
 def admin_headers():
     """هدرهای ادمین برای تست."""
     return {"X-Admin-Key": os.environ["ADMIN_API_KEY"]}
+
+
+@pytest.fixture
+def authenticated_client(app_client):
+    """Approved test customer, using the actual login and JWT validation path."""
+    from uuid import uuid4
+    import db_service
+    email = f"release-{uuid4().hex}@example.invalid"
+    password = "Synthetic-release-test-password"
+    result = db_service.create_customer("Release test", email, password)
+    assert result["success"]
+    assert db_service.set_customer_approval_status(result["customer_id"], "approved")
+    # Isolate this login from earlier tests sharing the in-memory IP limiter.
+    from utils.deps import limiter
+    limiter.reset()
+    response = app_client.post("/customers/login", json={"email": email, "password": password})
+    assert response.status_code == 200 and response.json()["success"]
+    try:
+        yield app_client
+    finally:
+        app_client.cookies.clear()

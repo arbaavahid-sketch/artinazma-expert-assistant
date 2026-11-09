@@ -280,3 +280,10 @@ frontend/android/app/keystore.properties
 
 # Runtime upload dirs (test artifacts land here when CWD is repo root)
 uploads/
+
+# Isolated uncertainty engine evaluation
+backend/.venv-uncertainty/
+
+# Local review artifacts and source archive (not deployment inputs)
+output/
+frontend/src.zip
