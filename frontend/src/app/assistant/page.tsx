@@ -3,6 +3,9 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import type {LibraryResources} from "@/lib/library-resources";
+import {isAppEnvironment} from "@/lib/app-environment";
 import { apiUrl, backendFetch, getCsrfToken } from "@/lib/api";
 import { getOrCreateUserId } from "@/lib/user";
 import { getSavedCustomer } from "@/lib/customer";
@@ -110,6 +113,8 @@ function formatAnalysisUploadError(error: unknown, kind: "file" | "image", isEn:
 }
 
 function AssistantPageInner() {
+  const [appMode,setAppMode]=useState(false);
+  useEffect(()=>{setAppMode(isAppEnvironment());},[]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { locale, dir } = useI18n();
@@ -410,8 +415,8 @@ ${cleanAnswer}`,
     return () => { cancelled = true; };
   }, [loadSavedChatSession, sessionIdParam]);
 
-  const needsContact = !customer && guestUsed >= 1 && !guestIdentified;
-  const guestOutOfQuestions = !customer && (guestUsed >= GUEST_FREE_QUESTIONS || needsContact);
+  const needsContact = !customer && !appMode && guestUsed >= 1 && !guestIdentified;
+  const guestOutOfQuestions = !customer && (appMode || guestUsed >= GUEST_FREE_QUESTIONS || needsContact);
 
   // Rate limit countdown timer
   useEffect(() => {
@@ -546,6 +551,7 @@ ${cleanAnswer}`,
     const activeCustomer = customer;
 
     const bodyPayload = {
+      client_surface: isAppEnvironment()?'app':'web',
       message: finalMessage,
       domain,
       response_mode: responseMode,
@@ -622,6 +628,7 @@ ${cleanAnswer}`,
                 role: "assistant",
                 content: cleanAssistantOutput(accumulatedText),
                 sources: (event.sources as Source[]) || [],
+                library_resources: event.library_resources as LibraryResources|undefined,
                 detected_domain: event.detected_domain as string,
                 question_intent: event.question_intent as string,
                 resource_links: (event.resource_links as ResourceLink[]) || [],
@@ -655,6 +662,7 @@ ${cleanAnswer}`,
                 finalAssistantMsg.content,
                 {
                   sources: finalAssistantMsg.sources || [],
+                  library_resources: finalAssistantMsg.library_resources,
                   detected_domain: finalAssistantMsg.detected_domain,
                   question_id: finalAssistantMsg.question_id,
                   resource_links: finalAssistantMsg.resource_links || [],
@@ -825,6 +833,7 @@ ${cleanAnswer}`,
           data.error ||
           "فایل دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
         detected_domain: "file-analysis",
+        question_id: data.question_id as number|undefined,
         relatedDevices,
       };
 
@@ -834,6 +843,7 @@ ${cleanAnswer}`,
         assistantMessage.content,
         {
           detected_domain: "file-analysis",
+          question_id: data.question_id,
           file_name: data.file_name,
           file_url: data.file_url,
           file_type: data.file_type,
@@ -929,6 +939,7 @@ ${cleanAnswer}`,
           data.error ||
           "عکس دریافت شد، اما تحلیل مشخصی برگردانده نشد.",
         detected_domain: "image-analysis",
+        question_id: data.question_id as number|undefined,
         relatedDevices,
       };
 
@@ -938,6 +949,7 @@ ${cleanAnswer}`,
         assistantMessage.content,
         {
           detected_domain: "image-analysis",
+          question_id: data.question_id,
           file_name: data.file_name,
           file_url: data.file_url,
           file_type: data.file_type,
@@ -1090,7 +1102,7 @@ ${cleanAnswer}`,
       onDragLeave={handleDragLeave}
       onDrop={(e) => { e.preventDefault(); if (customer) handleDrop(e); }}
     >
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-slate-100 px-3 py-2"><LabChatLauncher en={isEn}/></div>
+      {searchParams.get('lab')==='1'&&<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-slate-100 px-3 py-2"><span className="text-xs text-slate-500">{isEn?'Attached laboratory project':'پروندهٔ منتقل‌شده از آزمایشگاه'}</span><LabChatLauncher en={isEn}/><Link className="text-xs underline" href="/assistant">{isEn?'Return to general chat':'بازگشت به چت عمومی'}</Link></div>}
       <DropOverlay show={isDragOver} isEn={isEn} />
       <input
         ref={uploadInputRef}
@@ -1172,6 +1184,7 @@ ${cleanAnswer}`,
           </div>
 
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+            {!customer&&<><Link href="/customer-login?next=/assistant" className="shrink-0 rounded-lg bg-blue-700 px-3 py-2 text-xs font-bold text-white">{isEn?"Sign in":"ورود به حساب"}</Link><Link href="/customer-register" className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">{isEn?"Register":"ثبت‌نام"}</Link></>}
             {/* Domain + mode — visible on desktop, hidden on mobile */}
             <select
               disabled={!customer}
@@ -1323,7 +1336,7 @@ ${cleanAnswer}`,
                   composer that would swallow whatever they type. */}
               {guestOutOfQuestions ? (
                 <div className="w-full max-w-xl">
-                  {needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} />}
+                  {needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} appMode={appMode} />}
                 </div>
               ) : (
               <HeroComposer
@@ -1365,9 +1378,8 @@ ${cleanAnswer}`,
               aria-label={isEn ? "Conversation" : "گفتگو"}
             >
               {messages.map((item, index) => (
-                <MessageBubble
+                <div key={index}><MessageBubble
                   toolsEnabled={!!customer}
-                  key={index}
                   item={item}
                   index={index}
                   loading={loading}
@@ -1386,12 +1398,12 @@ ${cleanAnswer}`,
                   onEdit={handleEditMessage}
                   onRegenerate={regenerateLastResponse}
                   canRegenerate={!loading && item.role === "assistant" && index === messages.length - 1}
-                />
+                />{item.role==='assistant'&&item.question_id&&['file-analysis','image-analysis'].includes(item.detected_domain??'')&&<Link href={`/laboratory-imports?analysis=${item.question_id}`} className="mx-4 my-2 inline-flex rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">{isEn?'Review file data and calculate':'بررسی داده‌های این فایل و اجرای محاسبه'}</Link>}</div>
               ))}
 
               {/* دروازه مهمان: یا سؤال تجاری پرسیده، یا سهمیه رایگانش تمام شده */}
               {guestOutOfQuestions && (
-                needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} />
+                needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} appMode={appMode} />
               )}
 
               {/* راهنمای نصب صدای TTS */}

@@ -1,3 +1,4 @@
+import type {LibraryResources} from '@/lib/library-resources';
 import {readLabProject,type LabProject} from './project-file';
 import {preparePhysical} from './physical-run';
 import {prepareGCBudget} from './gc-workflow';
@@ -12,13 +13,13 @@ export type LabContext={project:LabProject;snapshot:LabSnapshot};
 export type LabChange={path:string;value:string;previous:string;reason:string};
 export type LabProposal={id:string;revision:string;changes:LabChange[]};
 export type LabCalculation={id:string;kind:string;unit:string;inputs:unknown;result:Record<string,unknown>;calculatedAt:string;revision:string|null};
-export type LabReply={answer:string;calculations:LabCalculation[];proposals:LabProposal[];revision:string|null};
+export type LabReply={answer:string;library_resources?:LibraryResources;calculations:LabCalculation[];proposals:LabProposal[];revision:string|null};
 export type LabTurn={question:string;reply:LabReply;sourceKey:string};
 const HANDOFF='artin-lab-chat-handoff-v1',RETURN='artin-lab-chat-return-v1';
 
 function clean(value:unknown):unknown{
  if(Array.isArray(value))return value.map(clean);
- if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>!['savedAt','run','physicalRun','graphs','legacy','attachments','certificates','certificateFile','dataUrl','originalText','reagents','__proto__','constructor','prototype'].includes(key)).map(([key,v])=>[key,clean(v)]));
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>!['savedAt','run','physicalRun','graphs','legacy','attachments','certificates','certificateFile','dataUrl','originalText','__proto__','constructor','prototype'].includes(key)).map(([key,v])=>[key,clean(v)]));
  return value;
 }
 export const contextKey=(context:LabContext|null)=>JSON.stringify(context?.snapshot??null);
@@ -50,7 +51,8 @@ export function captureLabContext(project:LabProject,methodBudget:Record<string,
   else if(project.workflow==='weighing'&&project.weighing){budget=preparePhysical('weighing',project.weighing).request;unit='g';}
   else if(project.workflow==='gc-external-extraction'&&project.gc){budget=prepareGCBudget(project.standards,project.gc.data).request;unit='mg/kg';}
  }catch{budget=null;}
- const snapshot:LabSnapshot={project:clean(project) as Record<string,unknown>,budget,unit};
+ const compact=project.dataImport?{...project,dataImport:{id:project.dataImport.id,fileName:project.dataImport.fileName,sha256:project.dataImport.sha256,revision:project.dataImport.revision,mode:project.dataImport.selection.mode,reviewedAt:project.dataImport.reviewedAt}}:project;
+ const snapshot:LabSnapshot={project:clean(compact) as Record<string,unknown>,budget,unit};
  if(JSON.stringify(snapshot).length>160000)throw Error('context-too-large');
  return {project,snapshot};
 }

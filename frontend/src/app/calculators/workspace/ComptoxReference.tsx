@@ -3,10 +3,10 @@ import {useTextExport} from './use-text-export';
 import {useEffect,useRef,useState} from 'react';
 import s from './preview.module.css';
 type RecordData={id:string;name:string;cas:string|null;dtxcid:string|null;smiles:string|null;source:string;sourceUrl:string;fetchedAt:string;sourceUpdatedAt:null;sourceVersion:null;adapterVersion:string;scope:string;structuralMatch:'unverified'};
-export default function ComptoxReference({en}:{en:boolean}){
+export default function ComptoxReference({en,initialId=''}:{en:boolean;initialId?:string}){
  const textExport=useTextExport(en);
  const t=(fa:string,e:string)=>en?e:fa;
- const [configured,setConfigured]=useState<boolean>(),[id,setId]=useState(''),[record,setRecord]=useState<RecordData>(),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [configured,setConfigured]=useState<boolean>(),[id,setId]=useState(initialId),[record,setRecord]=useState<RecordData>(),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const [statusRetry,setStatusRetry]=useState(0),[statusFailed,setStatusFailed]=useState(false);
  const active=useRef<AbortController|null>(null);
  useEffect(()=>{const c=new AbortController();setStatusFailed(false);fetch('/api/chemicals/comptox',{signal:c.signal}).then(async r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(c.signal.aborted)return;if(typeof d.configured!=='boolean')throw Error();setConfigured(d.configured);}).catch(()=>{if(!c.signal.aborted)setStatusFailed(true);});return()=>{c.abort();active.current?.abort();};},[statusRetry]);
@@ -16,6 +16,7 @@ export default function ComptoxReference({en}:{en:boolean}){
   catch(e){if(!c.signal.aborted)setError(e instanceof Error&&e.message==='503'?'key':e instanceof Error&&e.message==='429'?'busy':e instanceof Error&&e.message==='404'?'missing':'unavailable');}
   finally{if(!c.signal.aborted)setBusy(false);}
  }
+ useEffect(()=>{if(configured&&initialId&&/^DTXSID[0-9]{7,10}$/i.test(initialId))void load();},[configured,initialId]); // eslint-disable-line react-hooks/exhaustive-deps
  function edit(value:string){active.current?.abort();setBusy(false);setRecord(undefined);setError('');setId(value);}
  async function download(){if(!record)return;await textExport.save(JSON.stringify(record,null,2),`artin-${record.id}.json`,'json');}
  return <section aria-label={t('مرجع CompTox','CompTox reference')}><h2>{t('CompTox؛ شناسهٔ ماده در EPA','CompTox · EPA substance identity')}</h2>

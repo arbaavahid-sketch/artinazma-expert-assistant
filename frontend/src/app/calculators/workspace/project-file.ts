@@ -1,3 +1,4 @@
+import {readConfirmedImport,type ConfirmedImport} from './data-import';
 import {readMethodStudy,type MethodStudy} from './method-study';
 import {readDecisionStudy,type DecisionStudy} from './decision-rule';
 import {readMCStudy,type MCStudy} from './monte-carlo';
@@ -22,7 +23,8 @@ export const evidenceIds = ['standard', 'instrument', 'preparation', 'precision'
 export type ProjectIdentity = { title: string; sample: string; sop: string; edition: string; matrix: string };
 export type LabProject = {
   format: 'artin-lab-project'; version: 1; id: string; savedAt: string;
-  workflow: 'gc-external-extraction' | 'legacy-gum' | 'weighing' | 'density' | 'method-study';
+  workflow: 'gc-external-extraction' | 'legacy-gum' | 'weighing' | 'density' | 'method-study' | 'data-import';
+  dataImport?:ConfirmedImport;
   methodStudy?:MethodStudy;
   decisionStudy?:DecisionStudy;
   monteCarloStudy?:MCStudy;
@@ -58,8 +60,11 @@ export function readLabProject(value: unknown): LabProject {
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error('Invalid project ID');
   const savedAt = string(data.savedAt, 50);
   if (!Number.isFinite(Date.parse(savedAt))) throw new Error('Invalid save date');
-  if (data.workflow !== 'gc-external-extraction' && data.workflow !== 'legacy-gum' && data.workflow !== 'weighing' && data.workflow !== 'density' && data.workflow !== 'method-study') throw new Error('Unknown workflow');
+  if (data.workflow !== 'gc-external-extraction' && data.workflow !== 'legacy-gum' && data.workflow !== 'weighing' && data.workflow !== 'density' && data.workflow !== 'method-study' && data.workflow !== 'data-import') throw new Error('Unknown workflow');
   if (!Number.isInteger(data.stage) || (data.stage as number) < 0 || (data.stage as number) > 4) throw new Error('Invalid stage');
+  const dataImport=data.workflow==='data-import'?readConfirmedImport(data.dataImport):undefined;
+  if(data.workflow!=='data-import'&&data.dataImport!==undefined)throw Error('Unexpected imported data');
+  if(dataImport&&['gc','legacy','density','weighing','methodStudy'].some(k=>data[k]!==undefined))throw Error('Unexpected imported workflow data');
   const methodStudy=data.workflow==='method-study'?readMethodStudy(data.methodStudy):undefined;
   if(data.workflow!=='method-study'&&data.methodStudy!==undefined)throw Error('Unexpected method study');
   if(methodStudy&&(data.gc!==undefined||data.legacy!==undefined))throw Error('Unexpected method workflow data');
@@ -150,7 +155,7 @@ export function readLabProject(value: unknown): LabProject {
     }
   }
   return { format: 'artin-lab-project', version: 1, id, savedAt, workflow: data.workflow, identity,
-    evidence: data.evidence as string[], standards, stage: data.stage as number, ...(methodStudy?{methodStudy}:{}),...(legacy ? { legacy } : {}),...(gc?{gc}:{}),...(weighing?{weighing}:{}),...(density?{density}:{}),...(physicalRun?{physicalRun}:{}),...(solution?{solution}:{}),...(precisionStudy?{precisionStudy}:{}),...(biasStudy?{biasStudy}:{}),...(intermediateStudy?{intermediateStudy}:{}),...(calibrationStudy?{calibrationStudy}:{}),...(controlStudy?{controlStudy}:{}),...(data.decisionStudy===undefined?{}:{decisionStudy:readDecisionStudy(data.decisionStudy)}),...(data.monteCarloStudy===undefined?{}:{monteCarloStudy:readMCStudy(data.monteCarloStudy)}),...(data.topDownStudy===undefined?{}:{topDownStudy:readTopDownStudy(data.topDownStudy)}),...(data.validationTransfer===undefined?{}:{validationTransfer:readStudyTransfer(data.validationTransfer)}),...(data.reagents===undefined?{}:{reagents:readReagents(data.reagents)}) };
+    evidence: data.evidence as string[], standards, stage: data.stage as number, ...(dataImport?{dataImport}:{}),...(methodStudy?{methodStudy}:{}),...(legacy ? { legacy } : {}),...(gc?{gc}:{}),...(weighing?{weighing}:{}),...(density?{density}:{}),...(physicalRun?{physicalRun}:{}),...(solution?{solution}:{}),...(precisionStudy?{precisionStudy}:{}),...(biasStudy?{biasStudy}:{}),...(intermediateStudy?{intermediateStudy}:{}),...(calibrationStudy?{calibrationStudy}:{}),...(controlStudy?{controlStudy}:{}),...(data.decisionStudy===undefined?{}:{decisionStudy:readDecisionStudy(data.decisionStudy)}),...(data.monteCarloStudy===undefined?{}:{monteCarloStudy:readMCStudy(data.monteCarloStudy)}),...(data.topDownStudy===undefined?{}:{topDownStudy:readTopDownStudy(data.topDownStudy)}),...(data.validationTransfer===undefined?{}:{validationTransfer:readStudyTransfer(data.validationTransfer)}),...(data.reagents===undefined?{}:{reagents:readReagents(data.reagents)}) };
 }
 
 export function parseProjectFile(content: string, fileName: string, id: string, now: string): LabProject {

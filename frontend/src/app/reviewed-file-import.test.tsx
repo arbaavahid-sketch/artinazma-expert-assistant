@@ -1,0 +1,46 @@
+import React from 'react';
+import {beforeEach,expect,it,vi} from 'vitest';
+import {fireEvent,render,screen,waitFor} from '@testing-library/react';
+import ImportPage from './laboratory-imports/page';
+import {backendFetch} from '@/lib/api';
+import {importedProject,type ConfirmedImport} from './calculators/workspace/data-import';
+import {readLabProject,serializeLabProject} from './calculators/workspace/project-file';
+import {captureLabContext,readLabHandoff} from './calculators/workspace/lab-chat-bridge';
+const push=vi.hoisted(()=>vi.fn());
+vi.mock('next/navigation',()=>({useRouter:()=>({push})}));
+vi.mock('@/lib/i18n',()=>({useI18n:()=>({locale:'en'})}));
+vi.mock('@/lib/api',()=>({apiUrl:(p:string)=>p,backendRequestUrl:(p:string)=>p,backendFetch:vi.fn()}));
+const table={id:'table1',label:'Mass',location:'CSV record',page:null,columns:[{id:'c0',label:'mass'}],rows:[{row:2,cells:['9.8']},{row:3,cells:['10']},{row:4,cells:['10.2']}]};
+const preview={id:'a'.repeat(32),fileName:'synthetic.csv',sha256:'b'.repeat(64),extraction:'deterministic',tables:[table],rawText:'',warnings:[]};
+const result={id:'c'.repeat(32),sourceId:preview.id,fileName:preview.fileName,sha256:preview.sha256,revision:'d'.repeat(64),reviewedAt:'2026-11-09T00:00:00Z',calculatedAt:'2026-11-09T00:00:01Z',engine:'artin-reviewed-file-v1',unit:'g',table,selection:{mode:'statistics',rows:[2,3,4],review_note:'Source reviewed'},inputs:{values:[9.8,10,10.2]},result:{n:3,mean:10,sample_sd:.2}} satisfies ConfirmedImport;
+beforeEach(()=>{vi.clearAllMocks();sessionStorage.clear();window.history.replaceState(null,'','/laboratory-imports');});
+it('requires explicit units and review, sends corrected values, invalidates an old result on edit',async()=>{
+ vi.mocked(backendFetch).mockResolvedValueOnce(new Response(JSON.stringify(preview))).mockResolvedValueOnce(new Response('{"models":{}}')).mockResolvedValueOnce(new Response(JSON.stringify(result)));
+ render(<ImportPage/>);
+ fireEvent.change(screen.getByLabelText('Data file'),{target:{files:[new File(['mass\n9.8\n10\n10.2'],'synthetic.csv',{type:'text/csv'})]}});
+ fireEvent.click(screen.getByRole('button',{name:'Load table preview'}));await screen.findByText('synthetic.csv');
+ const calculate=screen.getByRole('button',{name:'Confirm data and calculate'});expect(calculate).toBeDisabled();
+ fireEvent.change(screen.getByLabelText('Replicate values'),{target:{value:'c0'}});
+ fireEvent.change(screen.getByLabelText('Actual column unit; dimensionless: 1'),{target:{value:'g'}});
+ fireEvent.change(screen.getByLabelText('Result unit / y unit for regression'),{target:{value:'g'}});
+ fireEvent.change(screen.getByLabelText('Row 3 mass'),{target:{value:'10.1'}});
+ fireEvent.change(screen.getByLabelText('Review note and reasons for exclusions or edits'),{target:{value:'Corrected row 3 after comparing source'}});
+ expect(calculate).toBeDisabled();fireEvent.click(screen.getByLabelText('I checked selected rows, numbers, units and calculation assumptions against the source'));
+ fireEvent.click(calculate);await screen.findByRole('region',{name:'Calculation result'});
+ const payload=JSON.parse(String(vi.mocked(backendFetch).mock.calls[2][1]?.body));expect(payload.edits).toEqual({'3:c0':'10.1'});expect(payload.rows).toEqual([2,3,4]);expect(payload.independent).toBe(false);
+ fireEvent.click(screen.getByRole('button',{name:'Discuss result with Artin'}));expect(push).toHaveBeenCalledWith('/assistant?lab=1');expect(readLabHandoff()?.project.dataImport?.id).toBe(result.id);
+ fireEvent.change(screen.getByLabelText('Row 2 mass'),{target:{value:'9.9'}});expect(screen.queryByRole('region',{name:'Calculation result'})).toBeNull();expect(calculate).toBeDisabled();
+});
+it('imports an existing analysis source without reupload and shows login on denied access',async()=>{
+ window.history.replaceState(null,'','/laboratory-imports?analysis=42');vi.mocked(backendFetch).mockResolvedValue(new Response('{}',{status:401}));
+ render(<ImportPage/>);fireEvent.click(screen.getByRole('button',{name:'Load table preview'}));
+ await screen.findByRole('link',{name:'Sign in with email and password'});
+ expect(vi.mocked(backendFetch).mock.calls[0][0]).toBe('/laboratory/imports/from-analysis');expect(JSON.parse(String(vi.mocked(backendFetch).mock.calls[0][1]?.body)).question_id).toBe(42);
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Load table preview'})).toBeEnabled());
+});
+it('roundtrips file provenance without fabricating a GC budget and compacts chat context',()=>{
+ const project=importedProject(result),saved=readLabProject(JSON.parse(serializeLabProject(project)));
+ expect(saved.dataImport?.sha256).toBe(result.sha256);expect(saved.gc).toBeUndefined();
+ const context=captureLabContext(saved);expect(context.snapshot.budget).toBeNull();expect(context.snapshot.project.dataImport).toEqual({id:result.id,fileName:result.fileName,sha256:result.sha256,revision:result.revision,mode:'statistics',reviewedAt:result.reviewedAt});
+ expect(()=>readLabProject({...project,workflow:'density'})).toThrow();
+});

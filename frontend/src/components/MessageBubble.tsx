@@ -28,6 +28,7 @@ import {
   VolumeX,
   Wrench,
 } from "lucide-react";
+import LibraryResourceCards from '@/components/LibraryResourceCards';
 import Tooltip from "@/components/Tooltip";
 import RelatedDeviceCards from "@/app/assistant/RelatedDeviceCards";
 import { useI18n } from "@/lib/i18n";
@@ -607,6 +608,7 @@ function MessageBubble({
               images={item.resource_images}
             />
           )}
+          {!isUser && <LibraryResourceCards value={item.library_resources} en={isEn}/>}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {toolsEnabled && !isUser && !loading && onQuote && showQuoteCta(item) && (
             <button

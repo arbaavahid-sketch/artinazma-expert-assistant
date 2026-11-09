@@ -345,23 +345,16 @@ def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
             f"متن:\n{doc.get('content', '')}"
         )
     context = "\n\n".join(context_parts)
-    # Explicit ChEBI identifiers only; transform follow-ups stay history-only.
-    chebi_reference = None
-    if not is_transform_followup and re.search(r"\bCHEBI:[1-9][0-9]{0,9}\b", body.message, re.I):
-        from chebi_service import chebi_chat_context
-        chebi_context, chebi_reference = chebi_chat_context(body.message)
-        if chebi_context:
-            context = f"{context}\n\n{chebi_context}".strip()
-            search_mode += "+chebi"
-
-
-    occupational_reference = None
-    if not is_transform_followup and re.search(r"\b(?:NIOSH|OSHA|NPG|IDLH|REL|PEL)\b", body.message, re.I):
-        from occupational_reference import occupational_chat_context
-        occupational_context, occupational_reference = occupational_chat_context(body.message)
-        if occupational_context:
-            context = f"{context}\n\n{occupational_context}".strip()
-            search_mode += "+niosh_snapshot"
+    # Shared reference retrieval uses the same identities/snapshots as the laboratory UI.
+    from library_chat import library_chat_context
+    library_context, library_resources = ('', None) if is_transform_followup else library_chat_context(body.message, body.chemical_cid)
+    chebi_reference = (library_resources or {}).get('chebi')
+    occupational_reference = (library_resources or {}).get('occupational')
+    if library_context:
+        context = f"{context}\n\n{library_context}".strip()
+        search_mode += '+laboratory_references'
+        if chebi_reference: search_mode += '+chebi'
+        if occupational_reference: search_mode += '+niosh_snapshot'
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()
@@ -623,6 +616,7 @@ Laboratory answer contract:
         "detected_domain": detected_domain,
         "history": history,
         "sources": sources,
+        "library_resources": library_resources,
         "resource_links": resource_links,
         "resource_images": resource_images,
         "customer_context": customer_context,
@@ -642,6 +636,7 @@ def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_
         "search_mode": p["search_mode"],
         "best_score": p["best_score"],
         "web_search_used": p["allow_web_search"],
+        "library_resources": p.get("library_resources"),
         "source_count": len(p["sources"]),
         "resource_link_count": len(p["resource_links"]),
         "resource_image_count": len(p["resource_images"]),
@@ -734,6 +729,7 @@ def chat(request: Request, body: ChatRequest = Depends(authorize_chat)):
         "detected_domain": p["detected_domain"],
         "answer": answer,
         "sources": p["sources"],
+        "library_resources": p.get("library_resources"),
         "resource_links": p["resource_links"] if p["allow_company_reference"] else [],
         "resource_images": p["resource_images"] if p["allow_company_reference"] else [],
         "search_mode": p["search_mode"],
@@ -773,6 +769,8 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
         and not body.context
         and not body.customer_id
         and not is_transform_followup
+        and not p.get("library_resources")
+        and not body.chemical_cid
     )
     if _use_cache:
         _cached = _response_cache.get(body.message, detected_domain)
@@ -801,6 +799,7 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
             "type": "meta",
             "detected_domain": detected_domain,
             "sources": sources,
+            "library_resources": p.get("library_resources"),
             "resource_links": resource_links if allow_company_reference else [],
             "resource_images": resource_images if allow_company_reference else [],
             "search_mode": search_mode,

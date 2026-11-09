@@ -1,6 +1,6 @@
 import re as _re
-from typing import Optional, List
-from pydantic import BaseModel, field_validator
+from typing import Optional, List, Literal
+from pydantic import BaseModel, field_validator, Field
 from laboratory_chat import LaboratorySnapshot
 
 
@@ -10,6 +10,8 @@ class ChatHistoryMessage(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    client_surface: Literal['web','app'] = 'web'
+    chemical_cid: Optional[int] = Field(default=None, ge=1, le=9999999999)
     message: str
     history: Optional[List[ChatHistoryMessage]] = None
     domain: Optional[str] = "auto"

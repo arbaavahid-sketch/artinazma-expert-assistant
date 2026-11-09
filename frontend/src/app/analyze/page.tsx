@@ -218,6 +218,7 @@ export default function AnalyzePage() {
   const progressStepsFile = isEn
     ? ["Uploading file...", "Processing and reading data...", "Sending to Artin for analysis...", "Running specialized analysis..."]
     : PROGRESS_STEPS_FILE;
+  const [analysisSources,setAnalysisSources]=useState<{id:number;name:string}[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [testType, setTestType] = useState("general");
   const [imageType, setImageType] = useState("general");
@@ -254,7 +255,7 @@ export default function AnalyzePage() {
     }
     const next = [...files, ...valid].slice(0, 5); // max 5 files
     setFiles(next);
-    setFileAnalysis("");
+    setFileAnalysis("");setAnalysisSources([]);
     setResultType("");
     setFollowUpHistory([]);
 
@@ -331,6 +332,7 @@ export default function AnalyzePage() {
         xhr.send(formData);
       });
       clearInterval(interval);
+      if(typeof data.question_id==='number'&&data.ai_analysis)setAnalysisSources(prev=>[...prev,{id:data.question_id as number,name:f.name}]);
       if (data.ai_analysis) return data.ai_analysis as string;
       if (data.error) return isEn ? `⚠️ Error: ${data.error as string}` : `⚠️ خطا: ${friendlyError(data.error as string)}`;
       return JSON.stringify(data, null, 2);
@@ -812,6 +814,7 @@ ${htmlBody}
 
             {fileAnalysis && (
               <>
+                {analysisSources.map(source=><a className="my-3 block rounded-xl border border-blue-200 bg-blue-50 p-4 font-bold text-blue-800" key={source.id} href={`/laboratory-imports?analysis=${source.id}`}>{isEn?'Review data and calculate':'بررسی داده‌ها و اجرای محاسبه'} · {source.name}</a>)}
                 <div
                   className={`rounded-[28px] border p-6 leading-9 shadow-inner ${
                     resultType === "error"

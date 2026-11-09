@@ -87,3 +87,5 @@
 @media(prefers-reduced-motion:reduce) { .method { transition:none; } }
 @media(max-width:760px) { .welcome { grid-template-columns:minmax(0,1fr); padding:24px; gap:24px; }.welcomeMedia { width:100%; max-width:520px; justify-self:center; }.welcomeActions { margin-top:20px; } }
 @media(max-width:600px) { .welcome { padding:22px 18px; border-radius:16px 16px 0 0; }.welcome h1 { font-size:28px; }.welcome p { font-size:13px; }.metrics { padding:20px 16px; }.metrics > div { grid-template-columns:16px 26px minmax(0,1fr); gap:5px; } }
+
+.listToggle{display:flex;align-items:center;justify-content:space-between;gap:12px;width:calc(100% - 48px);margin:0 24px 18px;padding:12px 14px;border:1px solid var(--border-soft);border-radius:9px;font-size:13px;font-weight:650;cursor:pointer;background:var(--surface-soft);color:var(--foreground)}

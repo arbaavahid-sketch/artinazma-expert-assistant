@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-export default function GuestRegistrationCard({ isEn = false }: { isEn?: boolean }) {
+export default function GuestRegistrationCard({ isEn = false,appMode=false }: { isEn?: boolean;appMode?:boolean }) {
   return (
     <div className="mx-auto mt-4 w-full max-w-xl rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
       <p className="font-semibold text-slate-900">
-        {isEn ? "Your 3 free questions have been used." : "۳ سؤال رایگان شما استفاده شده است."}
+        {appMode?(isEn?'Sign in to use the Artin app':'برای استفاده از اپ آرتین وارد حساب شوید'):isEn ? "Your 3 free questions have been used." : "۳ سؤال رایگان شما استفاده شده است."}
       </p>
       <p className="mt-2 text-sm text-slate-600">
-        {isEn ? "Register and sign in to continue chatting and use file and image analysis."
+        {appMode?(isEn?'Already registered? Sign in with your email and password. New users can create an account and await approval.':'اگر قبلاً ثبت‌نام کرده‌اید، با ایمیل و رمز عبور وارد شوید. کاربران جدید می‌توانند حساب بسازند و پس از تأیید از امکانات استفاده کنند.'):isEn ? "Register and sign in to continue chatting and use file and image analysis."
           : "برای ادامه گفتگو و استفاده از تحلیل فایل و عکس، ثبت‌نام را تکمیل کنید. پس از تأیید مدیر، همه امکانات بدون سقف روزانه در دسترس است."}
       </p>
       <div className="mt-4 flex justify-center gap-4">

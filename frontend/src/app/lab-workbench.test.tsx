@@ -7,7 +7,8 @@ import {methodName} from './calculators/method-names-en';
 const callbacks=()=>({onNew:vi.fn(),onOpen:vi.fn(),onContinue:vi.fn(),onMethod:vi.fn(),onSection:vi.fn()});
 it('searches the actual method bank, combines material filters and resets an empty result',()=>{
  const actions=callbacks();render(<LabWorkbench en hasDraft={false} identity={{title:'',sample:'',matrix:'',sop:'',edition:''}} workflowTitle="GC" {...actions}/>);
- expect(screen.getAllByRole('button',{name:/^Create project for /})).toHaveLength(7);
+ expect(screen.queryAllByRole('button',{name:/^Create project for /})).toHaveLength(0);
+ fireEvent.click(screen.getByRole('button',{name:'Show method list'}));expect(screen.getAllByRole('button',{name:/^Create project for /})).toHaveLength(7);
  fireEvent.change(screen.getByLabelText('Search test methods'),{target:{value:'D445'}});
  const expected=bank.filter(m=>`${m.name} ${methodName(m,true)} ${m.standard_codes.join(' ')}`.includes('D445')).slice(0,7);
  expect(screen.getAllByRole('button',{name:/^Create project for /})).toHaveLength(expected.length);

@@ -1,3 +1,4 @@
+import type {LibraryResources} from './library-resources';
 /**
  * تایپ‌های مشترک چت — استفاده‌شده در assistant/page.tsx و کامپوننت‌های استخراج‌شده.
  */
@@ -32,6 +33,7 @@ export type ResourceImage = {
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+  library_resources?: LibraryResources;
   sources?: Source[];
   detected_domain?: string;
   question_id?: number;
@@ -62,6 +64,7 @@ export type SavedChatMessage = {
   role: "user" | "assistant";
   content: string;
   metadata?: {
+    library_resources?: LibraryResources;
     sources?: Source[];
     detected_domain?: string;
     question_id?: number;

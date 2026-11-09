@@ -127,6 +127,7 @@ export function useCustomerChatSession({
           role: item.role === "user" ? "user" : "assistant",
           content: item.content,
           sources: item.metadata?.sources || [],
+          library_resources: item.metadata?.library_resources,
           detected_domain: item.metadata?.detected_domain,
           question_id: item.metadata?.question_id,
           relatedDevices: item.metadata?.relatedDevices || [],

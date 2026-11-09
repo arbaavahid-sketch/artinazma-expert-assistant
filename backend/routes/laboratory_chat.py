@@ -13,7 +13,7 @@ router = APIRouter(tags=['Laboratory chat'])
 def laboratory_chat(request: Request, response: Response, body: ChatRequest = Depends(authorize_chat)):
     response.headers['Cache-Control'] = 'no-store'
     try:
-        return ask_laboratory(body.message, body.history or [], body.laboratory)
+        return ask_laboratory(body.message, body.history or [], body.laboratory, None, body.customer_id, body.chemical_cid)
     except ValueError:
         raise HTTPException(422, detail='Invalid laboratory data or conversation size') from None
     except Exception:

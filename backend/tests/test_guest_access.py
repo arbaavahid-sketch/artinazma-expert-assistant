@@ -169,3 +169,10 @@ def test_contact_capture_is_cookie_bound(client, monkeypatch):
         assert result.status_code == 200
         assert result.json()["guest_name"] == "Test Visitor"
     assert client.post("/probe", json={"message": "four"}).status_code == 403
+
+def test_app_requires_login_without_consuming_web_allowance(client):
+    client.get('/chat/access')
+    response = client.post('/probe', json={'message': 'app question', 'client_surface': 'app', 'customer_id': 999})
+    assert response.status_code == 401 and response.json()['detail'] == 'app_login_required'
+    assert client.get('/chat/access').json()['used'] == 0
+    assert client.post('/probe', json={'message': 'web question', 'client_surface': 'web'}).status_code == 200

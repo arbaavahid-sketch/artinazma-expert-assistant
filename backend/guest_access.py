@@ -65,6 +65,8 @@ def authorize_chat(body: ChatRequest, request: Request,
         body.user_id = f"customer_{body.customer_id}"
         return body
     # Never trust account IDs or memory identities supplied by an anonymous caller.
+    if body.client_surface == 'app':
+        raise HTTPException(401, detail='app_login_required')
     body.customer_id = None
     body.context = None
     body.domain = "auto"
