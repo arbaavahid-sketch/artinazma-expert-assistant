@@ -6,13 +6,22 @@
   "start_url": "/assistant?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#ffffff",
   "theme_color": "#1d4ed8",
   "orientation": "portrait-primary",
   "lang": "fa",
   "dir": "rtl",
-  "categories": ["business", "productivity", "education", "utilities"],
+  "categories": [
+    "business",
+    "productivity",
+    "education",
+    "utilities"
+  ],
   "prefer_related_applications": false,
   "icons": [
     {
@@ -108,6 +117,19 @@
       "short_name": "درخواست",
       "description": "ثبت درخواست فنی، مشاوره یا پیگیری",
       "url": "/customer-request?source=pwa_shortcut_request",
+      "icons": [
+        {
+          "src": "/icons/pwa-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "محیط آزمایشگاه",
+      "short_name": "آزمایشگاه",
+      "description": "پرونده آزمون، محاسبات و منابع آزمایشگاهی",
+      "url": "/calculators?source=pwa_shortcut_lab",
       "icons": [
         {
           "src": "/icons/pwa-96.png",

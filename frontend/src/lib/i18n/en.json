@@ -20,6 +20,7 @@
     "confirm": "Confirm"
   },
   "nav": {
+    "install": "Add to Home Screen",
     "calculators": "Laboratory calculators",
     "home": "Home",
     "assistant": "AI Assistant",

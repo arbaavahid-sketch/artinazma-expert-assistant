@@ -85,6 +85,7 @@ const navItemDefs: { href: string; labelKey: string; fallback: string; Icon: Luc
   { href: "/products", labelKey: "nav.products", fallback: "محصولات", Icon: Package },
   { href: "/customer-request", labelKey: "nav.customerRequest", fallback: "درخواست مشاوره", Icon: PhoneCall },
   { href: "/customer-dashboard", labelKey: "nav.dashboard", fallback: "حساب من", Icon: CircleUserRound },
+  { href: "/install", labelKey: "nav.install", fallback: "افزودن به صفحهٔ اصلی", Icon: Home },
 ];
 
 const adminItemDefs: SidebarItemDef[] = [
@@ -449,7 +450,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
               </div>
             )}
 
-            {navItems.filter((item) => customer || isAdmin || item.href === "/assistant").map((item) => {
+            {navItems.filter((item) => customer || isAdmin || item.href === "/assistant" || item.href === "/install").map((item) => {
               const isActive =
                 item.href === "/"
                   ? pathname === "/"

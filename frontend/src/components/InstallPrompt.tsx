@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Download, Sparkles, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import Link from 'next/link';
+import {Capacitor} from '@capacitor/core';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -15,36 +17,39 @@ export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [ios, setIos] = useState(false);
 
   useEffect(() => {
-    // Check if already dismissed in this session
-    if (sessionStorage.getItem("pwa_install_dismissed")) return;
+    if(Capacitor.isNativePlatform()||window.matchMedia?.('(display-mode: standalone)')?.matches||(navigator as Navigator&{standalone?:boolean}).standalone)return;
+    try{if(sessionStorage.getItem('pwa_install_dismissed'))return;}catch{/* Storage may be unavailable in private browsing. */}
+    let timer:ReturnType<typeof setTimeout>|undefined;
+    const isIos=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    if(isIos){setIos(true);timer=setTimeout(()=>setShowBanner(true),3000);}
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       // Show banner after a slight delay so it doesn't feel intrusive
-      setTimeout(() => setShowBanner(true), 3000);
+      clearTimeout(timer);timer=setTimeout(() => setShowBanner(true), 3000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    const installed=()=>{clearTimeout(timer);setShowBanner(false);setDeferredPrompt(null);};
+    window.addEventListener('appinstalled',installed);
+    return () => {clearTimeout(timer);window.removeEventListener("beforeinstallprompt", handler);window.removeEventListener('appinstalled',installed);};
   }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      setShowBanner(false);
-    }
-    setDeferredPrompt(null);
+    try{await deferredPrompt.prompt();await deferredPrompt.userChoice;}
+    catch{/* The manual guide remains available from the navigation. */}
+    finally{setShowBanner(false);setDeferredPrompt(null);}
   };
 
   const handleDismiss = () => {
     setShowBanner(false);
     setDismissed(true);
-    sessionStorage.setItem("pwa_install_dismissed", "1");
+    try{sessionStorage.setItem("pwa_install_dismissed", "1");}catch{/* Dismiss still works without storage. */}
   };
 
   if (!showBanner || dismissed) return null;
@@ -58,19 +63,19 @@ export default function InstallPrompt() {
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 text-sm font-black text-slate-900 dark:text-slate-100">
             <Sparkles size={14} className="shrink-0 text-blue-600 dark:text-blue-300" />
-            {isEn ? "Install Artin app" : "نصب اپلیکیشن آرتین"}
+            {isEn ? "Artin on your Home Screen" : "آرتین روی صفحهٔ اصلی"}
           </p>
           <p className="mt-0.5 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">
             {isEn ? "Open faster from your home screen." : "دسترسی سریع‌تر از صفحه اصلی موبایل."}
           </p>
         </div>
-        <button
+        {ios?<Link href="/install" className="inline-flex shrink-0 items-center rounded-2xl bg-blue-700 px-3 py-2.5 text-xs font-bold text-white">{isEn?'Install guide':'راهنمای نصب'}</Link>:<button
           onClick={handleInstall}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl bg-blue-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-blue-800"
         >
           <Download size={15} />
           {isEn ? "Install" : "نصب"}
-        </button>
+        </button>}
         <button
           onClick={handleDismiss}
           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
