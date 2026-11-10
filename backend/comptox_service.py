@@ -1,4 +1,4 @@
-"""Credential-gated CTX identity lookup; hazard/prediction data are not inferred."""
+"""Read selected identity and reference datasets from EPA CTX."""
 import copy
 import hashlib
 import json
@@ -17,6 +17,11 @@ from fastapi import HTTPException
 from pubchem_gate import PubChemGate, ReferenceBusy
 
 BASE = 'https://comptox.epa.gov/ctx-api/chemical/search/equal/'
+DATASETS = {
+    'hazard': ('hazard/toxval/search/by-dtxsid/', ('toxvalType','qualifier','toxvalNumeric','toxvalUnits','speciesCommon','exposureRoute','studyDurationValue','studyDurationUnits','source','subsource','year','doi')),
+    'exposure': ('exposure/ccd/monitoring-data/search/by-dtxsid/', ('nhanesCohort','demographic','median','lowerBound','upperBound','unit','units')),
+    'predictions': ('chemical/property/predicted/search/by-dtxsid/', ('propName','propValue','propValueString','propUnit','modelName','sourceName','adConclusion','adReasoning','propValueError')),
+}
 DOCS = 'https://www.epa.gov/comptox-tools/computational-toxicology-and-exposure-apis-about'
 ID = re.compile(r'DTXSID[0-9]{7,10}')
 gate = PubChemGate(Path(__file__).resolve().parent/'storage'/'comptox_gate.sqlite3')
@@ -66,7 +71,7 @@ def normalize(raw, identity, fetched_at):
     if not name:
         raise ValueError('Missing CTX name')
     dtxcid = text('dtxcid', 32)
-    if dtxcid and not re.fullmatch(r'DTXCID[0-9]{6,10}', dtxcid):
+    if dtxcid and not re.fullmatch(r'DTXCID[0-9]{5,10}', dtxcid):
         raise ValueError('Invalid CTX structure identifier')
     return {'id': identity, 'name': name, 'cas': text('casrn', 100),
             'dtxcid': dtxcid, 'smiles': text('smiles'),
@@ -79,12 +84,29 @@ def normalize(raw, identity, fetched_at):
             'changes': 'Selected identity fields only; no toxicity, exposure or QSAR values are imported.'}
 
 
-def compound(value):
+def normalize_dataset(raw, identity, section, fetched_at):
+    if not isinstance(raw, list):
+        raise ValueError('Unexpected CTX dataset')
+    rows = []
+    for item in raw:
+        if not isinstance(item, dict) or item.get('dtxsid') != identity:
+            raise ValueError('CTX dataset identity mismatch')
+        row = {field: item[field] for field in DATASETS[section][1]
+               if type(item.get(field)) in (str, int, float) and item[field] != ''}
+        if row:
+            rows.append(row)
+    return {'id': identity, 'section': section, 'rows': rows[:500], 'total': len(rows),
+            'fetchedAt': fetched_at, 'sourceUrl': 'https://comptox.epa.gov/ctx-api/'+DATASETS[section][0]+identity}
+
+
+def compound(value, section='identity'):
     identity = identifier(value)
+    if section != 'identity' and section not in DATASETS:
+        raise HTTPException(400, 'Invalid CompTox dataset')
     key = api_key()
     if not key:
         raise HTTPException(503, 'CompTox API key is not configured')
-    cache_key = (hashlib.sha256(key.encode()).digest(), identity)
+    cache_key = (hashlib.sha256(key.encode()).digest(), identity, section)
     with _lock:
         cached = _cache.get(cache_key)
         if cached and time.monotonic()-cached[0] < 3600:
@@ -96,16 +118,18 @@ def compound(value):
     try:
         token = gate.acquire()
         gate.wait_for_dispatch()
-        request = urllib.request.Request(BASE+identity, headers={'Accept':'application/json', 'x-api-key':key})
+        base = BASE if section == 'identity' else 'https://comptox.epa.gov/ctx-api/'+DATASETS[section][0]
+        request = urllib.request.Request(base+identity, headers={'Accept':'application/json', 'x-api-key':key})
         try:
             with urllib.request.build_opener(NoRedirect()).open(request, timeout=15) as response:
                 payload = response.read(2_000_001)
                 if len(payload)>2_000_000:
                     raise ValueError('CTX response too large')
-                raw = json.loads(payload)
-                if raw == []:
+                raw = json.loads(payload, parse_constant=lambda _: None)
+                if raw == [] and section == 'identity':
                     raise HTTPException(404, 'DTXSID not found in CTX')
-                result = normalize(raw, identity, datetime.now(timezone.utc).isoformat().replace('+00:00','Z'))
+                fetched_at = datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
+                result = normalize(raw, identity, fetched_at) if section == 'identity' else normalize_dataset(raw, identity, section, fetched_at)
         except urllib.error.HTTPError as error:
             if error.code in (429,503):
                 from routes.chemicals import retry_delay

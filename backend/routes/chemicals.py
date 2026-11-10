@@ -209,6 +209,8 @@ def translate_chemical_rows(request: Request, body: TranslationRequest):
 
 @router.get('/comptox')
 @limiter.limit('20/minute')
-def comptox_reference(request: Request, dtxsid: str = Query(default='', max_length=16)):
+def comptox_reference(request: Request, dtxsid: str = Query(default='', max_length=16), section: str = Query(default='identity', max_length=16)):
     from comptox_service import status, compound
+    if section != 'identity':
+        return compound(dtxsid, section)
     return compound(dtxsid) if dtxsid else status()

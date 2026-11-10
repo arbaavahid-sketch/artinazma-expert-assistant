@@ -22,7 +22,7 @@ it('retrieves only an explicit identifier and shows missing data and unverified 
  const fetcher=vi.fn().mockResolvedValueOnce(response({configured:true})).mockResolvedValueOnce(response(record));vi.stubGlobal('fetch',fetcher);render(<ComptoxReference en/>);
  await screen.findByText(/A server key is configured/);fireEvent.change(screen.getByLabelText('DTXSID'),{target:{value:'dtxsid7020182'}});fireEvent.click(screen.getByRole('button',{name:'Retrieve EPA record'}));
  await screen.findByRole('article',{name:'CompTox record'});expect(fetcher.mock.calls[1][0]).toBe('/api/chemicals/comptox?dtxsid=DTXSID7020182');
- expect(screen.getByRole('article')).toHaveTextContent('is unverified');expect(screen.getAllByText('Not reported')).toHaveLength(3);
+ expect(screen.getByRole('article')).toHaveTextContent('About record matching');expect(screen.getAllByText('Not reported')).toHaveLength(3);
  fireEvent.change(screen.getByLabelText('DTXSID'),{target:{value:'DTXSID0000000'}});expect(screen.queryByRole('article')).toBeNull();
 });
 it('discards an in-flight response after the identifier is edited',async()=>{

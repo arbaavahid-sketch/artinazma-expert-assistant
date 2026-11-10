@@ -12,6 +12,20 @@ IDENTITY='DTXSID7020182'
 RAW=[{'dtxsid':IDENTITY,'preferredName':'Synthetic contract example','casrn':None,'dtxcid':None,'smiles':None}]
 
 
+def test_accepts_five_digit_structure_identifier_returned_by_epa():
+    record = service.normalize([dict(RAW[0], dtxcid='DTXCID30182')], IDENTITY, None)
+    assert record['dtxcid'] == 'DTXCID30182'
+
+
+def test_dataset_preserves_study_units_and_rejects_mismatched_identity():
+    row = {'dtxsid': IDENTITY, 'toxvalType': 'NOAEL', 'toxvalNumeric': 10, 'toxvalUnits': 'mg/kg-day', 'internal': 'ignored'}
+    result = service.normalize_dataset([row], IDENTITY, 'hazard', '2026-11-10')
+    assert result['rows'] == [{'toxvalType': 'NOAEL', 'toxvalNumeric': 10, 'toxvalUnits': 'mg/kg-day'}]
+    with pytest.raises(ValueError):
+        service.normalize_dataset([dict(row, dtxsid='DTXSID2021731')], IDENTITY, 'hazard', None)
+    assert service.normalize_dataset([], IDENTITY, 'exposure', None)['total'] == 0
+
+
 @pytest.fixture(autouse=True)
 def setup(monkeypatch):
     monkeypatch.delenv('COMPTOX_API_KEY',raising=False)
