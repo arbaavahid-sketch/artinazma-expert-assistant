@@ -61,6 +61,11 @@ async function parseCookie(
   return { customerId: id };
 }
 
+async function approvedAccount(request:NextRequest){
+  const base=process.env.BACKEND_INTERNAL_URL||'http://127.0.0.1:8000';
+  try{const response=await fetch(base+'/customers/access',{headers:{cookie:request.headers.get('cookie')||'',...(request.headers.get('authorization')?{authorization:request.headers.get('authorization')!}:{})},cache:'no-store',signal:AbortSignal.timeout(8000)});if(!response.ok)return null;const data=await response.json();return data.approved===true&&Number.isSafeInteger(data.customer_id)?data.customer_id as number:null;}catch{return null;}
+}
+
 // POST — called after successful login/register
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -69,6 +74,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid customer_id" }, { status: 400 });
   }
 
+  const approvedId=await approvedAccount(request);
+  if(approvedId!==customerId)return NextResponse.json({error:"Approved account required"},{status:401});
   const cookieValue = await buildCookieValue(customerId);
 
   const response = NextResponse.json({ success: true, customer_id: customerId });
@@ -101,6 +108,7 @@ export async function GET(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ authenticated: false, error: "invalid session" }, { status: 401 });
   }
+  if(await approvedAccount(request)!==session.customerId)return NextResponse.json({authenticated:false},{status:401});
   return NextResponse.json({ authenticated: true, customer_id: session.customerId });
 }
 

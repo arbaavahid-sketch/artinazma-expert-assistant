@@ -29,6 +29,7 @@ from routes.tts import router as tts_router
 from routes.uncertainty import router as uncertainty_router
 from routes.laboratory_chat import router as laboratory_chat_router
 from routes.lab_imports import router as lab_imports_router
+from routes.calculation_activity import router as calculation_activity_router
 
 import time as _time
 
@@ -218,5 +219,6 @@ app.include_router(tts_router)
 app.include_router(uncertainty_router)
 app.include_router(laboratory_chat_router)
 app.include_router(lab_imports_router)
+app.include_router(calculation_activity_router)
 from routes.chemicals import router as chemicals_router
 app.include_router(chemicals_router)

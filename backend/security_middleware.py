@@ -71,7 +71,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         path = request.url.path
 
-        # Public numerical calculation has no session or persistent side effects.
+        # Numerical route requires its own approved-account dependency; no access is granted here.
         if path == "/uncertainty/budget":
             return await call_next(request)
 

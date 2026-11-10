@@ -1,3 +1,4 @@
+from auth_service import get_current_customer
 import io
 import pytest
 from pypdf import PdfReader
@@ -25,7 +26,7 @@ def test_endpoint_and_long_labels():
     from fastapi.testclient import TestClient
     from routes.uncertainty import router
     from utils.deps import limiter
-    app=FastAPI();app.state.limiter=limiter;app.include_router(router)
+    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router)
     with TestClient(app) as client:
         r=client.post('/uncertainty/dilution-report.pdf',json=example())
         assert r.status_code==200 and r.content.startswith(b'%PDF-')

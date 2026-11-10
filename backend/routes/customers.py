@@ -356,6 +356,11 @@ def customer_login(body: CustomerLoginRequest, request: Request):
     return response
 
 
+@router.get("/customers/access", tags=["Customers"])
+def customer_access(current_user: dict = Depends(get_current_customer)):
+    return JSONResponse({'approved': True, 'customer_id': current_user['customer_id']}, headers={'Cache-Control':'no-store'})
+
+
 @router.post("/customers/ws-ticket", tags=["Customers"], summary="Issue one-time WebSocket ticket")
 def customer_ws_ticket(current_user: dict = Depends(get_current_customer)):
     """Return a short-lived one-time ticket for WebSocket authentication."""

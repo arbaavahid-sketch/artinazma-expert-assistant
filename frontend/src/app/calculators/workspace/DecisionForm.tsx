@@ -1,4 +1,5 @@
 "use client";
+import {observeCalculation} from '@/lib/calculation-activity';
 import {useTextExport} from './use-text-export';
 import {useState} from 'react';
 import {buildDecisionReport,calculateDecision,decisionIsCurrent,decisionLabel,decisionSource,readDecisionSnapshot,type DecisionSnapshot,type DecisionStudy} from './decision-rule';
@@ -14,7 +15,7 @@ export default function DecisionForm({en,value:d,current,verified,enabled,onChan
   const r=sourceReady&&run?.key===key?run.result:undefined;
   function edit(p:Partial<DecisionStudy>){onChange({...d,...p,reviewed:false});setError(false);}
   function copy(){try{if(!enabled||!verified||!current)throw Error();onChange({...d,snapshot:readDecisionSnapshot(current),reviewed:false});setRun(undefined);setError(false);}catch{setError(true);}}
-  function calculate(){try{if(!sourceReady)throw Error();setRun({key,result:calculateDecision(d)});setError(false);}catch{setRun(undefined);setError(true);}}
+  function calculate(){try{if(!sourceReady)throw Error();setRun({key,result:observeCalculation('decision',()=>calculateDecision(d))});setError(false);}catch{setRun(undefined);setError(true);}}
   async function exportReport(){textExport.clear();try{if(!r||!sourceReady)throw Error();const html=buildDecisionReport(d,en,true,new Date().toISOString());await textExport.save(html,`artin-decision-${en?'en':'fa'}.html`,'html');}catch{setError(true);}}
   return <section className={s.solutionPanel}><h1>{t('قاعدهٔ تصمیم مستند','Documented decision rule')}</h1><p>{t('برای نتیجهٔ GC خطی GUM، حدود مشخصات را در mg/kg و مرجع آن‌ها ثبت کنید. یک حد کافی است؛ حد خالی یعنی از آن سمت محدودیتی تعریف نشده است.','Record specification limits in mg/kg and their source for the linear GC GUM result. One limit is sufficient; an empty limit means that side is unspecified.')}</p>
     <p>{t('قاعدهٔ سه‌حالته: بازهٔ y ± U کاملاً داخل حدود شامل مرزها → انطباق؛ کاملاً بیرون → عدم‌انطباق؛ تداخل با مرز → نامعین. محاسبه با اعداد گردنشده است. تماس از بیرون با مرز نیز نامعین است.','Three-state rule: y ± U wholly within inclusive limits → conformity; wholly outside → nonconformity; overlap → indeterminate. Comparisons use unrounded values. Touching a boundary from outside is also indeterminate.')}</p>

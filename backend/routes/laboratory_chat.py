@@ -1,11 +1,13 @@
+from calculation_activity import CalculationActivityRoute
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from guest_access import authorize_chat
+from auth_service import get_current_customer
 from schemas.models import ChatRequest
 from laboratory_chat import ask_laboratory
 from utils.deps import limiter
 
-router = APIRouter(tags=['Laboratory chat'])
+router = APIRouter(route_class=CalculationActivityRoute, dependencies=[Depends(get_current_customer)], tags=['Laboratory chat'])
 
 
 @router.post('/chat/laboratory')

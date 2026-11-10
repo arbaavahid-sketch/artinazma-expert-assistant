@@ -1,3 +1,4 @@
+from auth_service import get_current_customer
 import io
 import json
 import pytest
@@ -65,7 +66,7 @@ def test_export_rejects_tampered_or_incomplete_run(monkeypatch,change):
 
 def test_pdf_endpoint_headers_and_bad_request(monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    app=FastAPI();app.state.limiter=limiter;app.include_router(router)
+    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router)
     client=TestClient(app)
     response=client.post('/uncertainty/physical-report.pdf',json=example())
     assert response.status_code==200 and response.headers['content-type']=='application/pdf'

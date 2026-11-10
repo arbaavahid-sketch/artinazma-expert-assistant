@@ -13,6 +13,10 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/customer-dashboard/") ||
     pathname === "/customer-request" ||
     pathname.startsWith("/customer-request/") ||
+    pathname === "/calculators" ||
+    pathname.startsWith("/calculators/") ||
+    pathname === "/laboratory-imports" ||
+    pathname.startsWith("/laboratory-imports/") ||
     pathname === "/analyze" ||
     pathname === "/memory" ||
     pathname.startsWith("/memory/") ||
@@ -66,6 +70,8 @@ export const config = {
     "/customer-dashboard/:path*",
     "/customer-request/:path*",
     "/analyze/:path*",
+    "/calculators/:path*",
+    "/laboratory-imports/:path*",
     "/memory/:path*",
     "/knowledge/:path*",
     "/questions/:path*",

@@ -1,3 +1,4 @@
+from auth_service import get_current_customer
 import io
 import json
 import math
@@ -77,7 +78,7 @@ def test_invalid_or_changed_input_cannot_be_exported(monkeypatch,field):
 
 def test_gc_pdf_route_rejects_bad_result_and_returns_pdf(monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    app=FastAPI();app.state.limiter=limiter;app.include_router(router);client=TestClient(app)
+    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router);client=TestClient(app)
     p=example();response=client.post('/uncertainty/gc-report.pdf',json=p)
     assert response.status_code==200 and response.content.startswith(b'%PDF-')
     assert response.headers['cache-control']=='no-store'

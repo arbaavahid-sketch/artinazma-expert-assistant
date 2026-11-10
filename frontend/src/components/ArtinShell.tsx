@@ -92,6 +92,7 @@ const adminItemDefs: SidebarItemDef[] = [
   { href: "/admin", label: { fa: "پنل ادمین", en: "Admin Panel" }, Icon: LayoutDashboard },
   { href: "/admin/knowledge", label: { fa: "بانک دانش", en: "Knowledge Base" }, Icon: Database },
   { href: "/admin/questions", label: { fa: "سوالات کاربران", en: "User Questions" }, Icon: MessagesSquare },
+  { href: "/admin/calculations", label: { fa: "استفاده از محاسبات", en: "Calculation Usage" }, Icon: Calculator },
   { href: "/admin/requests", label: { fa: "درخواست‌ها", en: "Requests" }, Icon: Inbox },
   { href: "/admin/customers", label: { fa: "مشتریان", en: "Customers" }, Icon: Users },
   { href: "/admin/dashboard", label: { fa: "داشبورد", en: "Dashboard" }, Icon: ChartBar },

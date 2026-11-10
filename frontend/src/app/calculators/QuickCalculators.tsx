@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import {trackCalculation} from "@/lib/calculation-activity";
 import { Activity, ArrowLeftRight, Calculator as CalculatorIcon, Check, ChevronDown, Copy, Droplets, Gauge, LayoutGrid, Scale, Search, ShieldCheck, Thermometer, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { labTools, linearFit, mean, sampleDeviation } from "./lab-tools";
@@ -211,7 +212,7 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
 
   return (
     <form className="ui-card space-y-5 p-5 sm:p-7"
-      onSubmit={event => { event.preventDefault(); setSubmitted(true); setCopyStatus(""); if (!error) onCalculated(); }}>
+      onSubmit={event => { event.preventDefault(); setSubmitted(true); setCopyStatus(""); trackCalculation(`quick-${tool}`,error?'error':'success',title); if (!error) onCalculated(); }}>
       <div className="border-b border-[var(--border-soft)] pb-4">
         <span className="mb-2 inline-flex rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-semibold text-[var(--color-info-text)]">{category}</span>
         <h2 className="text-xl font-extrabold sm:text-2xl">{title}</h2>

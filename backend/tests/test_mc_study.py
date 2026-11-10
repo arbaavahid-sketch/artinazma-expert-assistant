@@ -1,3 +1,4 @@
+from auth_service import get_current_customer
 import copy
 import math
 import numpy as np
@@ -82,7 +83,7 @@ def test_strict_bounded_options(patch):
 
 def test_endpoint_rejects_wrong_model_and_does_not_change_caller_input(monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    app=FastAPI();app.state.limiter=limiter;app.include_router(router);client=TestClient(app)
+    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router);client=TestClient(app)
     d=payload();before=copy.deepcopy(d);r=client.post('/uncertainty/mc-study',json=d)
     assert r.status_code==200 and d==before
     d['calibration_range']=[11,20]

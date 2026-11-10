@@ -1,3 +1,4 @@
+from calculation_activity import CalculationActivityRoute
 import logging
 from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
@@ -7,7 +8,7 @@ from auth_service import get_current_customer
 from utils.deps import limiter
 import lab_import_service as service
 
-router = APIRouter(prefix='/laboratory/imports', tags=['Reviewed file calculations'])
+router = APIRouter(route_class=CalculationActivityRoute, prefix='/laboratory/imports', tags=['Reviewed file calculations'])
 
 
 def fail(error):

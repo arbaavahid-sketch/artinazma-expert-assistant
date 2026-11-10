@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import {prepareCalculationActivity} from '@/lib/calculation-activity';
 import ImportedDataProject from './ImportedDataProject';
 import type {ConfirmedImport} from './data-import';
 import methodBank from '../method-bank.json';
@@ -101,6 +102,7 @@ function NewSampleDialog({en,title,onSave,onCancel,onCreate}:{en:boolean;title:s
 }
 
 export default function LabWorkspace() {
+  useEffect(()=>{void prepareCalculationActivity();},[]);
   const { locale } = useI18n();
   const en = locale === 'en';
   const text = (fa: string, english: string) => en ? english : fa;

@@ -1,3 +1,4 @@
+from auth_service import get_current_customer
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -15,7 +16,7 @@ def payload():
 
 
 def test_budget_route():
-    app = FastAPI()
+    app = FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"}
     app.state.limiter = limiter
     app.include_router(router)
     with TestClient(app) as client:
@@ -45,10 +46,10 @@ def test_rejects_invalid_standard_uncertainty(value):
     with pytest.raises(ValidationError):
         BudgetRequest(**data)
 
-def test_public_calculation_with_production_csrf_middleware(monkeypatch):
+def test_approved_calculation_with_production_csrf_middleware(monkeypatch):
     from security_middleware import CSRFMiddleware
     monkeypatch.setenv("TESTING", "0")
-    app = FastAPI()
+    app = FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"}
     app.state.limiter = limiter
     app.include_router(router)
     app.add_middleware(CSRFMiddleware)

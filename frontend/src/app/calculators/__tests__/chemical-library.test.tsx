@@ -34,7 +34,7 @@ describe('sourced compound library and molar preparation',()=>{
   });
   it('does not guess purity and invalidates its result after an edit while retaining data across languages',()=>{
     function Form({en}:{en:boolean}){const [d,setD]=useState<SolutionDraft>();return <ChemicalLibrary en={en} draft={d} onChange={setD}/>;}
-    const {rerender}=render(<Form en/>);fireEvent.click(screen.getByRole('button',{name:'Common shortcuts'}));fireEvent.click(screen.getByRole('button',{name:/^sodium chloride/i}));fireEvent.click(screen.getByRole('button',{name:'Prepare a molar solution with this compound'}));
+    const {rerender}=render(<Form en/>);fireEvent.click(screen.getByRole('button',{name:'Show material list'}));fireEvent.click(screen.getByRole('button',{name:'Common shortcuts'}));fireEvent.click(screen.getByRole('button',{name:/^sodium chloride/i}));fireEvent.click(screen.getByRole('button',{name:'Prepare a molar solution with this compound'}));
     const region=within(screen.getByRole('region',{name:'Molar solution calculation'}));expect(region.getByLabelText('Substance mass purity (% w/w)')).toHaveValue('');
     for(const [name,value] of [['Target concentration (mol/L)','.1'],['Final solution volume (mL)','250'],['Substance mass purity (% w/w)','98'],['Purity source and certificate or lot reference','Hypothetical CoA mass fraction']])fireEvent.change(region.getByLabelText(name),{target:{value}});
     fireEvent.click(region.getByRole('button',{name:'Calculate required mass'}));expect(region.getByRole('status')).toHaveTextContent('1.490816 g');

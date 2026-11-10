@@ -4,6 +4,7 @@ import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import ApprovedCustomerGate from "@/components/ApprovedCustomerGate";
 import type {LibraryResources} from "@/lib/library-resources";
 import {isAppEnvironment} from "@/lib/app-environment";
 import { apiUrl, backendFetch, getCsrfToken } from "@/lib/api";
@@ -1102,7 +1103,7 @@ ${cleanAnswer}`,
       onDragLeave={handleDragLeave}
       onDrop={(e) => { e.preventDefault(); if (customer) handleDrop(e); }}
     >
-      {searchParams.get('lab')==='1'&&<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-slate-100 px-3 py-2"><span className="text-xs text-slate-500">{isEn?'Attached laboratory project':'پروندهٔ منتقل‌شده از آزمایشگاه'}</span><LabChatLauncher en={isEn}/><Link className="text-xs underline" href="/assistant">{isEn?'Return to general chat':'بازگشت به چت عمومی'}</Link></div>}
+      {searchParams.get('lab')==='1'&&<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-slate-100 px-3 py-2"><span className="text-xs text-slate-500">{isEn?'Attached laboratory project':'پروندهٔ منتقل‌شده از آزمایشگاه'}</span><ApprovedCustomerGate><LabChatLauncher en={isEn}/></ApprovedCustomerGate><Link className="text-xs underline" href="/assistant">{isEn?'Return to general chat':'بازگشت به چت عمومی'}</Link></div>}
       <DropOverlay show={isDragOver} isEn={isEn} />
       <input
         ref={uploadInputRef}

@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import {
   ArrowLeft,
   BarChart3,
+  Calculator,
   Database,
   FileQuestion,
   Inbox,
@@ -16,6 +17,13 @@ import {
 } from "lucide-react";
 
 const adminCards = [
+  {
+    href: "/admin/calculations",
+    title: { fa: "استفاده از محاسبات", en: "Calculation Usage" },
+    description: { fa: "مشاهدهٔ کاربر، ابزار، زمان و وضعیت محاسبات آزمایشگاهی.", en: "See who used each laboratory calculator, when, and its outcome." },
+    Icon: Calculator,
+    className: "bg-cyan-800 text-white",
+  },
   {
     href: "/admin/dashboard",
     title: { fa: "داشبورد مدیریتی", en: "Management Dashboard" },

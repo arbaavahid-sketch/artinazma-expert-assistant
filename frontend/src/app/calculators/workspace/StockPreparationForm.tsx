@@ -1,5 +1,6 @@
 "use client";
 
+import {useAutoCalculationActivity} from './use-auto-calculation-activity';
 import {useId,useState} from 'react';
 import {calculateStockPreparation,numeric,stockKeys,uncertaintyKinds,type StockPreparation,type StockKey} from './gc-workflow';
 import s from './preview.module.css';
@@ -24,6 +25,7 @@ export default function StockPreparationForm({value,onChange,en,standalone=false
   const active=value.dilution?stockKeys:stockKeys.slice(0,3);
   let result:ReturnType<typeof calculateStockPreparation>|null=null;
   try{result=calculateStockPreparation(value);}catch{/* Incomplete drafts remain editable. */}
+  useAutoCalculationActivity(JSON.stringify(value),Boolean(result));
   return <section className={s.stockPreparation} aria-label={standalone?t('عدم‌قطعیت محلول تهیه‌شده','Prepared solution uncertainty'):t('تهیهٔ استاندارد مشترک','Shared standard preparation')}>
     <h4>{standalone?t('غلظت جرمی و عدم‌قطعیت محلول','Solution mass concentration and uncertainty'):t('محاسبه از تهیهٔ محلول استاندارد','Calculate from standard preparation')}</h4>
     <p className={s.muted}>{standalone?t('برای تهیه از جرم ماده و رساندن به حجم نهایی؛ واکنش، تبدیل نمک به عنصر و CRM آماده در این مدل نیستند.','For preparation from weighed substance made up to final volume; reactions, salt-to-element conversion and ready-made CRMs are outside this model.'):t('برای حل‌کردن یک مادهٔ دارای خلوص جرمی مشخص و رساندن آن به حجم معلوم. این مدل واکنش شیمیایی، تبدیل نمک به عنصر، CRM آماده یا رقیق‌سازی مستقل نقاط کالیبراسیون را پوشش نمی‌دهد. فقط آماده‌سازی‌ای را ثبت کنید که بین استانداردها مشترک است.','For dissolving a substance of known mass purity and making it up to a stated volume. This model does not cover chemical reactions, salt-to-element conversion, ready-made CRMs or independent dilution of calibration points. Record only preparation shared by the standards.')}</p>

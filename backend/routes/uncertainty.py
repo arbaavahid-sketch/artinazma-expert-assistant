@@ -1,17 +1,19 @@
+from calculation_activity import CalculationActivityRoute
 from dilution_pdf_service import DilutionReport, build_dilution_pdf
 from commercial_pdf_service import CommercialReport, build_commercial_pdf
 from nominal_solution_pdf_service import NominalSolutionReport, build_nominal_solution_pdf
 from solution_label_pdf_service import SolutionLabelReport, build_solution_label_pdf
 from solution_pdf_service import SolutionReport, build_solution_pdf
 import logging
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from auth_service import get_current_customer
 from physical_pdf_service import PhysicalReport, build_physical_pdf
 from gc_pdf_service import GCReport, build_gc_pdf
 from uncertainty_service import BudgetRequest, calculate_budget
 from mc_study_service import MCStudyRequest, calculate_mc_study
 from utils.deps import limiter
 
-router = APIRouter(prefix="/uncertainty", tags=["Measurement uncertainty"])
+router = APIRouter(route_class=CalculationActivityRoute, dependencies=[Depends(get_current_customer)], prefix="/uncertainty", tags=["Measurement uncertainty"])
 
 
 @router.post('/mc-study')

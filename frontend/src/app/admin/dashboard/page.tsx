@@ -7,6 +7,7 @@ import { apiUrl, adminUrl } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import {
   Activity,
+  Calculator,
   AlertTriangle,
   ArrowUpRight,
   BarChart3,
@@ -271,6 +272,7 @@ export default function DashboardPage() {
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
   const [responseTimeStats, setResponseTimeStats] = useState<ResponseTimeStats | null>(null);
   const [businessAnalytics, setBusinessAnalytics] = useState<BusinessAnalytics | null>(null);
+  const [calculationStats,setCalculationStats]=useState<{total:number;today:number;customers:number}|null>(null);
   const [loading, setLoading] = useState(false);
   const [analyticsDays, setAnalyticsDays] = useState(14);
 
@@ -278,7 +280,7 @@ export default function DashboardPage() {
     setLoading(true);
 
     try {
-      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes, cacheRes, feedbackRes, responseTimeRes, businessRes] = await Promise.all([
+      const [knowledgeRes, questionRes, requestRes, analyticsRes, customerRes, cacheRes, feedbackRes, responseTimeRes, businessRes, calculationRes] = await Promise.all([
         fetch(apiUrl("/knowledge/stats"), { cache: "no-store" }),
         fetch(adminUrl("/questions/stats"), { cache: "no-store" }),
         fetch(adminUrl("/customer-requests/stats"), { cache: "no-store" }),
@@ -288,6 +290,7 @@ export default function DashboardPage() {
         fetch(adminUrl("/admin/feedback-stats"), { cache: "no-store" }),
         fetch(adminUrl("/admin/response-time-stats"), { cache: "no-store" }),
         fetch(adminUrl(`/admin/business-analytics?days=${analyticsDays}`), { cache: "no-store" }),
+        fetch(adminUrl("/admin/calculation-activity/stats"), {cache:"no-store"}),
       ]);
 
       const results = await Promise.allSettled([
@@ -300,6 +303,7 @@ export default function DashboardPage() {
         feedbackRes.json(),
         responseTimeRes.json(),
         businessRes.json(),
+        calculationRes.ok?calculationRes.json():Promise.reject(new Error("usage unavailable")),
       ]);
 
       setKnowledgeStats(results[0].status === "fulfilled" ? results[0].value : null);
@@ -311,7 +315,9 @@ export default function DashboardPage() {
       setFeedbackStats(results[6].status === "fulfilled" ? results[6].value : null);
       setResponseTimeStats(results[7]?.status === "fulfilled" ? results[7].value : null);
       setBusinessAnalytics(results[8]?.status === "fulfilled" ? results[8].value : null);
+      setCalculationStats(results[9]?.status === "fulfilled" ? results[9].value : null);
     } catch {
+      setCalculationStats(null);
       setKnowledgeStats(null);
       setQuestionStats(null);
       setRequestStats(null);
@@ -416,6 +422,8 @@ export default function DashboardPage() {
             tone="blue"
             href="/admin/knowledge"
           />
+
+          <DashboardCard title={isEn?"Calculation usage":"استفاده از محاسبات"} value={calculationStats?.total??0} icon={<Calculator size={24}/>} tone="blue" href="/admin/calculations"/>
 
           <DashboardCard
             title={isEn ? "Total questions" : "کل سوالات"}

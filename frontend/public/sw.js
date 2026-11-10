@@ -1,5 +1,5 @@
-// ArtinAzma PWA Service Worker v6
-const CACHE_VERSION = "artinazma-v6";
+// ArtinAzma PWA Service Worker v7
+const CACHE_VERSION = "artinazma-v7";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -21,6 +21,8 @@ const SENSITIVE_PATH_PREFIXES = [
   "/api/",
   "/assistant",
   "/analyze",
+  "/calculators",
+  "/laboratory-imports",
   "/customer-dashboard",
   "/customer-login",
   "/customer-register",

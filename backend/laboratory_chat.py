@@ -124,6 +124,7 @@ class LabTools:
         self.customer_id = customer_id
         self.snapshot = snapshot
         self.calculations = []
+        self.failures = []
         self.proposals = []
 
     def record(self, kind, inputs, result, unit=''):
@@ -270,7 +271,7 @@ def ask_laboratory(message, history, snapshot=None, transport=None, customer_id=
             answer = ''.join(c.get('text', '') for i in output if i.get('type') == 'message' for c in i.get('content', []) if c.get('type') == 'output_text').strip()
             if not answer:
                 raise RuntimeError('Empty laboratory response')
-            return {'answer': answer, 'calculations': tools.calculations, 'proposals': tools.proposals, 'library_resources': library_resources,
+            return {'answer': answer, 'calculations': tools.calculations, 'proposals': tools.proposals, 'library_resources': library_resources, 'failed_calculations': tools.failures,
                     'revision': revision(snapshot) if snapshot else None}
         # Preserve reasoning items as required by Responses tool continuations.
         inputs.extend(output)
@@ -285,6 +286,8 @@ def ask_laboratory(message, history, snapshot=None, transport=None, customer_id=
                 result = tools.execute(item['name'], arguments)
                 encoded = json.dumps({'ok': True, 'data': result}, ensure_ascii=False, allow_nan=False)
             except (ValueError, ArithmeticError, KeyError, TypeError) as error:
+                if item.get('name') in {'calculate_quick','calculate_model','calculate_current_budget','calculate_uncertainty','convert_lab_units','recalculate_import'}:
+                    tools.failures.append(item['name'])
                 # Errors carry no credentials or external response bodies.
                 encoded = json.dumps({'ok': False, 'error': str(error)[:2000]}, ensure_ascii=False)
             inputs.append({'type': 'function_call_output', 'call_id': item['call_id'], 'output': encoded})
