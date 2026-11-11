@@ -1,14 +1,14 @@
 # annotated-doc==0.0.4  # حذف شد: وابستگی واقعی برنامه نیست و در آینه‌ی pip ایران موجود نبود
 annotated-types==0.7.0
 anyio==4.14.2
-certifi==2026.4.22
+certifi==2026.10.18
 cffi==2.0.0
 charset-normalizer==3.4.7
 click==8.3.3
 colorama==0.4.6
 cryptography==50.0.0
 distro==1.9.0
-dnspython==2.8.0
+dnspython==2.9.0
 email-validator==2.3.0
 et_xmlfile==2.0.0
 fastapi==0.136.1
@@ -36,10 +36,10 @@ scipy==1.17.1
 openai==2.33.0
 openpyxl==3.1.5
 pandas==3.0.2
-pillow==12.3.0
+pillow==13.0.0
 proto-plus==1.27.2
 protobuf==7.34.1
-pyasn1==0.6.4
+pyasn1==0.6.5
 pyasn1_modules==0.4.2
 pycparser==3.0
 pydantic==2.13.3
@@ -48,7 +48,7 @@ pydantic-settings==2.14.2
 pydantic_core==2.46.3
 Pygments==2.20.0
 pyparsing==3.3.2
-pypdf==6.19.0
+pypdf==6.21.4
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 python-multipart==0.0.31

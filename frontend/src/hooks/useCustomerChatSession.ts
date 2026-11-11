@@ -57,11 +57,11 @@ export function useCustomerChatSession({
       setCustomer(activeCustomer);
       setActiveSessionId(newSessionId);
 
-      window.history.replaceState(
-        null,
-        "",
-        `/assistant?session_id=${newSessionId}`,
-      );
+      const search = new URLSearchParams({ session_id: String(newSessionId) });
+      if (new URLSearchParams(window.location.search).get("design") === "preview") {
+        search.set("design", "preview");
+      }
+      window.history.replaceState(null, "", `/assistant?${search}`);
 
       return newSessionId;
     } catch {
@@ -126,6 +126,7 @@ export function useCustomerChatSession({
         (item: SavedChatMessage) => ({
           role: item.role === "user" ? "user" : "assistant",
           content: item.content,
+          actualPrompt: item.metadata?.actual_prompt,
           sources: item.metadata?.sources || [],
           library_resources: item.metadata?.library_resources,
           detected_domain: item.metadata?.detected_domain,

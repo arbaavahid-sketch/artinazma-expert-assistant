@@ -1,12 +1,12 @@
 import React from 'react';
 import {act,cleanup,fireEvent,render} from '@testing-library/react';
-import {beforeEach,afterEach,expect,it,vi} from 'vitest';
+import {beforeEach,afterEach,expect,it,vi,type Mock} from 'vitest';
 import LaboratoryArtwork from './calculators/LaboratoryArtwork';
 
 let motion:EventTarget&{matches:boolean};
 let connection:EventTarget&{saveData:boolean};
 let intersect:(entries:IntersectionObserverEntry[])=>void;
-let disconnect:ReturnType<typeof vi.fn>;
+let disconnect:Mock<() => void>;
 let play:ReturnType<typeof vi.spyOn>,pause:ReturnType<typeof vi.spyOn>;
 function visible(container:HTMLElement,value=true){act(()=>intersect([{target:container.firstElementChild,isIntersecting:value} as IntersectionObserverEntry]));}
 function changeVisibility(value:'hidden'|'visible'){Object.defineProperty(document,'visibilityState',{configurable:true,value});act(()=>document.dispatchEvent(new Event('visibilitychange')));}

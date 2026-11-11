@@ -199,8 +199,14 @@ export function cleanMarkdownText(text: string) {
   return cleaned;
 }
 
+export function isNonEquipmentTurn(userText: string) {
+  const text = userText.trim().toLowerCase().replace(/[.!؟?]+$/, "");
+  return !text || /^(?:سلام|درود|hello|hi|hey|خلاصه‌تر کن|فنی‌تر توضیح بده|تبدیل به جدول|منابع و اقدام بعدی را استخراج کن|make it shorter|make it more technical|convert to table|extract sources and next steps)$/.test(text);
+}
+
 /** آیا باید کارت های تجهیزات مرتبط نمایش داده شوند؟ */
 export function shouldShowRelatedDeviceCards(userText: string, selectedDomain: string) {
+  if (isNonEquipmentTurn(userText)) return false;
   const text = userText.toLowerCase();
 
   if (selectedDomain === "equipment") return true;

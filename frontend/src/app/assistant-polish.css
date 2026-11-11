@@ -2,12 +2,6 @@
    Claude / ChatGPT-style chat — clean white canvas
    ────────────────────────────────────────────────────────────── */
 
-/* Page background */
-[data-app-path="/assistant"] > section,
-[data-app-path="/assistant"] section {
-  background: #ffffff !important;
-}
-
 /* ── Composer box ───────────────────────────────────────────── */
 .chat-composer-box {
   position: relative;
@@ -93,14 +87,14 @@
 }
 
 .chat-composer-send-button {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: #176456;
   color: #ffffff;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+  box-shadow: none;
 }
 
 .chat-composer-send-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
-  box-shadow: 0 16px 28px rgba(37, 99, 235, 0.28);
+  background: #124d43;
+  box-shadow: none;
 }
 
 .dark .chat-composer-box {
@@ -231,6 +225,26 @@
 }
 
 /* Code */
+.ai-md-pre {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-block: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  text-align: left;
+  white-space: pre;
+}
+
+.ai-md-pre .ai-md-code {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+}
+
 .ai-md-code {
   direction: ltr;
   display: inline-block;
@@ -249,7 +263,7 @@
   margin: 14px 0;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  direction: rtl;
+  direction: inherit;
 }
 
 .ai-md-table {
@@ -257,7 +271,7 @@
   border-collapse: collapse;
   background: #ffffff;
   font-size: 13.5px;
-  direction: rtl;
+  direction: inherit;
 }
 
 .ai-md-th {
@@ -266,7 +280,7 @@
   font-weight: 700;
   padding: 10px 13px;
   border-bottom: 1px solid #e5e7eb;
-  text-align: right;
+  text-align: start;
   white-space: nowrap;
 }
 
@@ -373,8 +387,8 @@
   }
 }
 
-.group {
-  animation: messageSlideIn 0.3s ease-out;
+@media (prefers-reduced-motion: no-preference) {
+  .artin-message { animation: messageSlideIn 0.3s ease-out; }
 }
 
 /* ── Typing indicator animation ────────────────────────────── */

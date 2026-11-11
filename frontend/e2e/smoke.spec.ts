@@ -20,7 +20,17 @@ test("customer login page renders the login form", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Login|ورود/i })).toBeVisible();
 });
 
-test("assistant page renders prompt composer", async ({ page }) => {
+test("the first service worker install does not reload the login page", async ({ page }) => {
+  await page.goto("/customer-login");
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+
+  expect(await page.evaluate(() => sessionStorage.getItem("artin_sw_reloaded"))).toBeNull();
+});
+
+test("assistant opens on the new start screen and inserts a topic draft", async ({ page }) => {
+  await page.route(/\/chat\/access(?:\?|$)/, (route) => route.fulfill({
+    json: { customer_id: 1, used: 0, identified: true },
+  }));
   await page.context().addCookies([
     {
       name: "artin_customer_session",
@@ -38,8 +48,12 @@ test("assistant page renders prompt composer", async ({ page }) => {
 
   await page.goto("/assistant");
 
-  await expect(page.getByRole("heading", { name: /What can Artin help you with today|امروز چه کمکی از آرتین می‌خواهید/i })).toBeVisible();
-  await expect(page.getByPlaceholder(/Ask Artin|از آرتین بپرسید/i).first()).toBeVisible();
+  const composer = page.getByPlaceholder(/Ask Artin|از آرتین بپرسید/i).first();
+  await expect(page.getByRole("heading", { name: /Ask Artin|از آرتین بپرسید/i })).toBeVisible();
+  await expect(composer).toBeEmpty();
+  await page.getByRole("button", { name: /Choose laboratory equipment|انتخاب تجهیزات آزمایشگاهی/i }).click();
+  await expect(composer).toHaveValue(/mercury in crude oil|جیوه در نفت خام/i);
+  await expect(composer).toBeFocused();
 });
 
 test("admin login page renders protected entry form", async ({ page }) => {

@@ -108,9 +108,12 @@ def _fetch(path):
         raise
     finally:
         if token:
-            try:gate.release(token)
-            except sqlite3.Error:pass
-        with _lock:_pending.pop(path,None)
+            try:
+                gate.release(token)
+            except sqlite3.Error:
+                pass
+        with _lock:
+            _pending.pop(path,None)
 
 
 def provenance(stamp, source_url):
@@ -163,9 +166,12 @@ def compound_chebi(value, expected_key=None):
 def chebi_chat_context(message):
     """Explicit identifiers only: no inferred chemical identity or broad text lookup."""
     ids=list(dict.fromkeys(x.upper() for x in re.findall(r'\bCHEBI:[1-9][0-9]{0,9}\b',message,re.I)))
-    if len(ids)!=1:return '',None
-    try:r=compound_chebi(ids[0])
-    except HTTPException:return '',None
+    if len(ids)!=1:
+        return '',None
+    try:
+        r=compound_chebi(ids[0])
+    except HTTPException:
+        return '',None
     # Source data stays inside JSON, separate from application instructions.
     excerpt={k:r[k] for k in ['id','name','definition','formula','charge','inchiKey','sourceUpdatedAt','fetchedAt','sourceUrl','license','adapterVersion']}
     excerpt['name']=excerpt['name'][:200]

@@ -55,13 +55,15 @@ def test_route_uses_complete_smiles_and_keeps_source_cid():
 def test_route_rejects_connectivity_only_or_wrong_identity():
     for record in [{'CID':887,'ConnectivitySMILES':'CO'},{'CID':702,'SMILES':'CO'}]:
         with patch('routes.chemicals.fetch_pubchem_record',return_value=fetched_record({'PropertyTable':{'Properties':[record]}})):
-            with pytest.raises(HTTPException) as error:call()
+            with pytest.raises(HTTPException) as error:
+                call()
         assert error.value.status_code in (404,422)
 
 
 def test_route_reports_engine_unavailable_without_fabricating_results():
     with patch('routes.chemicals.fetch_pubchem_record',return_value=fetched_record({'PropertyTable':{'Properties':[{'CID':887,'SMILES':'CO'}]}})),patch('chemical_structure.analyze_smiles',side_effect=StructureUnavailable):
-        with pytest.raises(HTTPException) as error:call()
+        with pytest.raises(HTTPException) as error:
+            call()
     assert error.value.status_code==503
 
 

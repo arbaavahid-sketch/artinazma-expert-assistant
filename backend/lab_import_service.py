@@ -188,7 +188,8 @@ def create_import(owner, name, content, header=True, transport=None):
                 raise ValueError('Image exceeds 24 megapixels; crop the table first')
             image = ImageOps.exif_transpose(image).convert('RGB')
             image.thumbnail((2400, 2400))
-            clean = io.BytesIO();image.save(clean, format='JPEG', quality=92)
+            clean = io.BytesIO()
+            image.save(clean, format='JPEG', quality=92)
             parts = [{'type': 'input_image', 'image_url': 'data:image/jpeg;base64,'+base64.b64encode(clean.getvalue()).decode(), 'detail': 'high'}]
         try:
             tables, notes = structured_tables(parts, transport)
@@ -298,7 +299,8 @@ def calculate_review(preview, review):
     for key, text in review.edits.items():
         if not isinstance(text, str) or len(text) > 500 or not re.fullmatch(r'\d+:c\d{1,2}', key):
             raise ValueError('Invalid cell edit')
-        row, col = key.split(':');row = int(row)
+        row, col = key.split(':')
+        row = int(row)
         if row not in row_index or col not in col_index:
             raise ValueError('Edited cell not found')
         before = row_index[row]['cells'][col_index[col]]
@@ -332,11 +334,16 @@ def calculate_review(preview, review):
             raise ValueError('Calibration requires at least three paired rows and two mapped columns')
         if mappings[1].unit.strip() != review.unit.strip():
             raise ValueError('Calibration y unit must equal the result unit')
-        x = np.array([get(r, 0, mappings[0].unit) for r in review.rows]);y = np.array([get(r, 1, mappings[1].unit) for r in review.rows])
-        dx, dy = x-x.mean(), y-y.mean();sxx, syy = float(dx@dx), float(dy@dy)
+        x = np.array([get(r, 0, mappings[0].unit) for r in review.rows])
+        y = np.array([get(r, 1, mappings[1].unit) for r in review.rows])
+        dx, dy = x-x.mean(), y-y.mean()
+        sxx, syy = float(dx@dx), float(dy@dy)
         if not sxx > 0:
             raise ValueError('Calibration needs distinct x values')
-        slope = float(dx@dy)/sxx;intercept = float(y.mean()-slope*x.mean());residuals = dy-slope*dx;sse = float(residuals@residuals)
+        slope = float(dx@dy)/sxx
+        intercept = float(y.mean()-slope*x.mean())
+        residuals = dy-slope*dx
+        sse = float(residuals@residuals)
         result = {'n': len(x), 'slope': slope, 'intercept': intercept, 'r_squared': 1-sse/syy if syy else None,
                   'residual_sd': math.sqrt(sse/(len(x)-2)), 'x_min': float(x.min()), 'x_max': float(x.max()),
                   'x_unit': mappings[0].unit, 'y_unit': mappings[1].unit, 'assumption': 'unweighted ordinary least squares; x uncertainty not included'}

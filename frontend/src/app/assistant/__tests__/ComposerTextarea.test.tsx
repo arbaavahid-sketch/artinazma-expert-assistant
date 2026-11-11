@@ -1,29 +1,39 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { AssistantRuntimeProvider, ComposerPrimitive, useExternalStoreRuntime, type ThreadMessageLike } from "@assistant-ui/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createRef } from "react";
 import ComposerTextarea from "../ComposerTextarea";
 
-function renderComposer(overrides: Partial<Parameters<typeof ComposerTextarea>[0]> = {}) {
-  const props = {
-    chatInputRef: createRef<HTMLTextAreaElement>(),
-    className: "composer-test",
-    isEn: false,
-    message: "",
-    onKeyDown: vi.fn(),
-    onMessageChange: vi.fn(),
-    placeholder: "از آرتین بپرسید...",
-    ...overrides,
-  };
+function renderComposer(isEn = false) {
+  const ref = createRef<HTMLTextAreaElement>();
+  const onNew = vi.fn(async () => {});
+  let composer: ReturnType<typeof useExternalStoreRuntime>["thread"]["composer"];
 
-  const view = render(<ComposerTextarea {...props} />);
-  return { props, ...view };
+  function TestComposer() {
+    const runtime = useExternalStoreRuntime<ThreadMessageLike>({ messages: [], onNew, convertMessage: (message) => message });
+    composer = runtime.thread.composer;
+
+    return (
+      <AssistantRuntimeProvider runtime={runtime}>
+        <ComposerPrimitive.Root>
+          <ComposerTextarea chatInputRef={ref} className="composer-test" isEn={isEn} placeholder="از آرتین بپرسید..." />
+        </ComposerPrimitive.Root>
+      </AssistantRuntimeProvider>
+    );
+  }
+
+  render(<TestComposer />);
+  return {
+    textarea: ref.current!,
+    onNew,
+    setText: (text: string) => act(() => composer.setText(text)),
+    getText: () => composer.getState().text,
+  };
 }
 
 describe("ComposerTextarea", () => {
   it("enables browser and keyboard text correction features", () => {
-    renderComposer();
-
-    const textarea = screen.getByPlaceholderText("از آرتین بپرسید...");
+    const { textarea } = renderComposer();
     expect(textarea).toHaveAttribute("dir", "rtl");
     expect(textarea).toHaveAttribute("spellcheck", "true");
     expect(textarea).toHaveAttribute("autocorrect", "on");
@@ -32,112 +42,35 @@ describe("ComposerTextarea", () => {
   });
 
   it("uses ltr direction for the English composer", () => {
-    renderComposer({ isEn: true });
-
+    renderComposer(true);
     expect(screen.getByPlaceholderText("از آرتین بپرسید...")).toHaveAttribute("dir", "ltr");
   });
 
-  it("lets the browser own caret placement while typing", () => {
-    const { props } = renderComposer({ message: "سلام دنیا" });
-    const textarea = screen.getByPlaceholderText("از آرتین بپرسید...") as HTMLTextAreaElement;
-
+  it("syncs programmatic drafts and middle-of-text edits with the runtime", () => {
+    const { textarea, setText, getText } = renderComposer();
+    setText("سلام دنیا");
+    expect(textarea).toHaveValue("سلام دنیا");
     textarea.focus();
     textarea.setSelectionRange(5, 5);
     fireEvent.change(textarea, { target: { value: "سلام خوب دنیا" } });
-
-    expect(props.onMessageChange).toHaveBeenCalledWith("سلام خوب دنیا");
-    expect(textarea).not.toHaveAttribute("value");
+    expect(getText()).toBe("سلام خوب دنیا");
+    setText("");
+    expect(textarea).toHaveValue("");
   });
 
-  it("does not overwrite middle-of-text edits on rerender while focused", () => {
-    const ref = createRef<HTMLTextAreaElement>();
-    const onMessageChange = vi.fn();
-    const { rerender } = render(
-      <ComposerTextarea
-        chatInputRef={ref}
-        className="composer-test"
-        isEn={false}
-        message="سلام دنیا"
-        onKeyDown={vi.fn()}
-        onMessageChange={onMessageChange}
-        placeholder="از آرتین بپرسید..."
-      />,
-    );
-    const textarea = screen.getByPlaceholderText("از آرتین بپرسید...") as HTMLTextAreaElement;
-
-    textarea.focus();
-    textarea.setSelectionRange(5, 5);
-    fireEvent.change(textarea, { target: { value: "سلام خوب دنیا" } });
-    textarea.setSelectionRange(9, 9);
-
-    rerender(
-      <ComposerTextarea
-        chatInputRef={ref}
-        className="composer-test"
-        isEn={false}
-        message="سلام دنیا"
-        onKeyDown={vi.fn()}
-        onMessageChange={onMessageChange}
-        placeholder="از آرتین بپرسید..."
-      />,
-    );
-
-    expect(textarea.value).toBe("سلام خوب دنیا");
-    expect(textarea.selectionStart).toBe(9);
-  });
-
-  it("keeps IME composition text owned by the browser until composition ends", () => {
-    const { props, rerender } = renderComposer({ message: "متن اول" });
-    const textarea = screen.getByPlaceholderText("از آرتین بپرسید...") as HTMLTextAreaElement;
-
-    textarea.focus();
+  it("does not send during IME composition or on Shift+Enter", () => {
+    const { textarea, onNew } = renderComposer();
     fireEvent.compositionStart(textarea);
-    fireEvent.change(textarea, { target: { value: "متن اصلاح‌شده" } });
-
-    rerender(
-      <ComposerTextarea
-        {...props}
-        message="متن اول"
-      />,
-    );
-
-    expect(textarea.value).toBe("متن اصلاح‌شده");
-
+    fireEvent.change(textarea, { target: { value: "سلام" } });
+    fireEvent.keyDown(textarea, { key: "Enter", isComposing: true, keyCode: 229 });
     fireEvent.compositionEnd(textarea);
+    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true });
+    expect(onNew).not.toHaveBeenCalled();
+    expect(textarea).toHaveValue("سلام");
 
-    expect(props.onMessageChange).toHaveBeenLastCalledWith("متن اصلاح‌شده");
-  });
-
-  it("syncs external message changes without making typing controlled", () => {
-    const ref = createRef<HTMLTextAreaElement>();
-    const onMessageChange = vi.fn();
-    const { rerender } = render(
-      <ComposerTextarea
-        chatInputRef={ref}
-        className="composer-test"
-        isEn={false}
-        message="سلام"
-        onKeyDown={vi.fn()}
-        onMessageChange={onMessageChange}
-        placeholder="از آرتین بپرسید..."
-      />,
-    );
-    const textarea = screen.getByPlaceholderText("از آرتین بپرسید...") as HTMLTextAreaElement;
-
-    expect(textarea.value).toBe("سلام");
-
-    rerender(
-      <ComposerTextarea
-        chatInputRef={ref}
-        className="composer-test"
-        isEn={false}
-        message=""
-        onKeyDown={vi.fn()}
-        onMessageChange={onMessageChange}
-        placeholder="از آرتین بپرسید..."
-      />,
-    );
-
-    expect(textarea.value).toBe("");
+    fireEvent.keyDown(textarea, { key: "Enter" });
+    expect(onNew).toHaveBeenCalledWith(expect.objectContaining({
+      content: [{ type: "text", text: "سلام" }],
+    }));
   });
 });

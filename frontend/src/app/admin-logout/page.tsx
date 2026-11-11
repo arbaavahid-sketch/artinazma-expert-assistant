@@ -18,7 +18,7 @@ export default function AdminLogoutPage() {
   }, []);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[var(--background)] px-6 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-4xl items-center justify-center">
         <div className="w-full max-w-xl rounded-[40px] border border-slate-200 bg-white p-10 text-center shadow-sm">
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[30px] bg-red-50 text-red-700">

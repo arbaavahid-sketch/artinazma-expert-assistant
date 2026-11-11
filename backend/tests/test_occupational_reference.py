@@ -51,19 +51,23 @@ def test_search_requires_selection_and_never_fills_uncovered_or_wrong_cas_with_z
 
 @pytest.mark.parametrize('value',['../x','https://evil.example','0397/','397','00000'])
 def test_identifier_is_bounded_and_not_a_path(value):
-    with pytest.raises(HTTPException) as e:service.reference(identity=value)
+    with pytest.raises(HTTPException) as e:
+        service.reference(identity=value)
     assert e.value.status_code==400
 
 
 def test_unknown_record_and_invalid_request_are_controlled():
-    with pytest.raises(HTTPException) as e:service.reference(identity='9999')
+    with pytest.raises(HTTPException) as e:
+        service.reference(identity='9999')
     assert e.value.status_code==404
     for kwargs in [dict(query='x'*121),dict(query='x\n'),dict(query='methanol',identity='0397')]:
-        with pytest.raises(HTTPException):service.reference(**kwargs)
+        with pytest.raises(HTTPException):
+            service.reference(**kwargs)
 
 
 def test_returned_snapshot_cannot_mutate_the_shared_reference():
-    r=service.reference(identity='0397');r['record']['limits'][0]['raw']='wrong'
+    r=service.reference(identity='0397')
+    r['record']['limits'][0]['raw']='wrong'
     assert service.reference(identity='0397')['record']['limits'][0]['raw'].startswith('TWA 200')
 
 

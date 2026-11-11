@@ -267,7 +267,7 @@ export default function QuestionDetailPage() {
 
   if (loading) {
     return (
-      <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+      <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
         <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
           <RefreshCw
             className="mx-auto mb-4 animate-spin text-purple-700"
@@ -283,7 +283,7 @@ export default function QuestionDetailPage() {
 
   if (!question) {
     return (
-      <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+      <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
         <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
           {isEn ? "Question not found." : "سوال موردنظر پیدا نشد."}
           <Link
@@ -300,7 +300,7 @@ export default function QuestionDetailPage() {
   const sources = question.sources || [];
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">

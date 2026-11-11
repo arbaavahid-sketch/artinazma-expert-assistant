@@ -383,7 +383,7 @@ export default function AdminSettingsPage() {
   }, [gdriveSchedule?.sync_status]);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">

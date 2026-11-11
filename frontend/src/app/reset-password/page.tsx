@@ -58,7 +58,7 @@ function ResetPasswordInner() {
 
   if (tokenValid === null) {
     return (
-      <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+      <section className="min-h-full bg-[var(--background)] px-6 py-8">
         <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center">
           <div className="text-slate-500">{isEn ? "Verifying link..." : "در حال بررسی لینک..."}</div>
         </div>
@@ -68,7 +68,7 @@ function ResetPasswordInner() {
 
   if (!tokenValid) {
     return (
-      <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+      <section className="min-h-full bg-[var(--background)] px-6 py-8">
         <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center">
           <div className="ui-card w-full rounded-[32px] p-8 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl">⚠️</div>
@@ -85,7 +85,7 @@ function ResetPasswordInner() {
   }
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[var(--background)] px-6 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center">
         <div className="ui-card w-full rounded-[32px] p-8 shadow-sm lg:p-10">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">

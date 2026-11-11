@@ -347,10 +347,10 @@ export default function DashboardPage() {
   const currentMonthParam = useMemo(() => new Date().toISOString().slice(0, 7), []);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-3 py-5 sm:px-6 sm:py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+        <div className="ui-card mb-6 overflow-hidden rounded-2xl">
+          <div className="border-s-4 border-teal-700 bg-[var(--surface)] p-4 sm:p-7">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
@@ -361,7 +361,7 @@ export default function DashboardPage() {
                   {isEn ? "ArtinAzma Management Dashboard" : "داشبورد مدیریتی آرتین آزما"}
                 </div>
 
-                <h1 className="text-3xl font-black text-slate-900">
+                <h1 className="text-2xl font-bold text-[var(--foreground)] sm:text-3xl">
                   {isEn ? "System Overview" : "نمای کلی سیستم"}
                 </h1>
 
@@ -1134,7 +1134,7 @@ function DailyLineChart({
     .filter(({ i }) => i % labelStep === 0 || i === n - 1);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="ui-card artin-analytics-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-4">
       <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="text-lg font-black text-slate-900">{isEn ? "Daily Activity" : "فعالیت روزانه"}</h2>
@@ -1172,12 +1172,13 @@ function DailyLineChart({
         viewBox={`0 0 ${W} ${H}`}
         className="min-h-0 w-full flex-1"
         style={{ direction: "ltr", fontFamily: "inherit" }}
-        aria-hidden="true"
+        role="img"
+        aria-label={isEn ? "Daily question counts" : "نمودار تعداد پرسش‌های روزانه"}
       >
         <defs>
           <linearGradient id="lineArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="#0d9488" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#0d9488" stopOpacity="0.02" />
           </linearGradient>
         </defs>
         {/* Grid lines */}
@@ -1198,7 +1199,7 @@ function DailyLineChart({
         <polyline
           points={points}
           fill="none"
-          stroke="#3b82f6"
+          stroke="#0d9488"
           strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -1206,7 +1207,7 @@ function DailyLineChart({
         {/* Data points */}
         {data.map((d, i) => (
           <g key={d.day}>
-            <circle cx={xOf(i)} cy={yOf(d.count)} r="3.5" fill="white" stroke="#3b82f6" strokeWidth="2" />
+            <circle cx={xOf(i)} cy={yOf(d.count)} r="3.5" fill="white" stroke="#0d9488" strokeWidth="2" />
             {d.count > 0 && (
               <title>{isEn ? `${d.day}: ${d.count} questions` : `${d.day}: ${d.count} سوال`}</title>
             )}
@@ -1255,7 +1256,7 @@ function DomainPieChart({ domains, locale }: { domains: QuestionDomain[]; locale
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="ui-card artin-analytics-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-4">
       <div className="mb-3 flex shrink-0 items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-base font-black leading-6 text-slate-900">
@@ -1311,7 +1312,7 @@ function FeedbackStatsWidget({ stats, locale }: { stats: FeedbackStats; locale: 
     : 0;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="ui-card artin-analytics-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-4">
       <div className="mb-3 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
           <Star size={20} />
@@ -1401,7 +1402,7 @@ function CacheGaugeWidget({ stats, locale }: { stats: CacheStats; locale: string
   const color = pct > 80 ? "#ef4444" : pct > 50 ? "#f59e0b" : "#10b981";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="ui-card artin-analytics-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-4">
       <div className="mb-2">
         <h2 className="text-base font-black text-slate-900">{isEn ? "Smart Cache Status" : "وضعیت Cache هوشمند"}</h2>
         <p className="mt-1 text-xs font-bold text-slate-500">
@@ -1453,7 +1454,7 @@ function HourlyHeatmap({ data, locale }: { data: { hour: number; count: number }
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="ui-card artin-analytics-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-4">
       <div className="mb-2">
         <h2 className="text-base font-black text-slate-900">{isEn ? "Peak Hours" : "ساعات پرتردد"}</h2>
         <p className="mt-1 text-xs font-bold text-slate-500">{isEn ? "User activity by hour of day" : "فعالیت کاربران به تفکیک ساعت روز"}</p>
@@ -1500,7 +1501,7 @@ function ResponseTimeWidget({ avgMs, totalAnswered, locale }: { avgMs: number; t
   const barPct = Math.min(100, Math.round((avgMs / 20000) * 100));
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="ui-card artin-analytics-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-4">
       <div className="mb-3 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
           <Clock3 size={20} />
@@ -1564,12 +1565,12 @@ function DashboardCard({
   return (
     <Link
       href={href}
-      className="group rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="ui-card group rounded-2xl p-4 transition hover:border-teal-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-bold text-slate-500">{title}</div>
-          <div className="mt-3 text-4xl font-black text-slate-900">{value}</div>
+          <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">{title}</div>
+          <div className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{value}</div>
         </div>
 
         <div

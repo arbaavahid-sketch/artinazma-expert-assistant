@@ -353,8 +353,10 @@ def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
     if library_context:
         context = f"{context}\n\n{library_context}".strip()
         search_mode += '+laboratory_references'
-        if chebi_reference: search_mode += '+chebi'
-        if occupational_reference: search_mode += '+niosh_snapshot'
+        if chebi_reference:
+            search_mode += '+chebi'
+        if occupational_reference:
+            search_mode += '+niosh_snapshot'
 
     if artinazma_context:
         context = f"{context}\n\n{artinazma_context}".strip()

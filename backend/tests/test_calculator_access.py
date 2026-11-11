@@ -12,8 +12,10 @@ def client(tmp_path,monkeypatch):
     monkeypatch.setattr(base,'DB_PATH',tmp_path/'access.db')
     monkeypatch.setattr(limiter,'enabled',False)
     app=FastAPI()
-    for router in (uncertainty.router,laboratory_chat.router,calculation_activity.router,customers.router):app.include_router(router)
-    with TestClient(app) as instance:yield instance
+    for router in (uncertainty.router,laboratory_chat.router,calculation_activity.router,customers.router):
+        app.include_router(router)
+    with TestClient(app) as instance:
+        yield instance
 
 
 @pytest.mark.parametrize('kind',['anonymous','pending','blocked','invalid'])
@@ -24,9 +26,11 @@ def test_every_calculation_entry_rejects_unapproved_access_before_execution(clie
     from auth_service import create_access_token
     row={'id':7,'full_name':'Synthetic','email':'qa@example.invalid','approval_status':'pending' if kind=='pending' else 'approved','is_blocked':kind=='blocked'}
     monkeypatch.setattr(db_service,'get_customer_by_id',lambda _:row)
-    if kind!='anonymous':client.headers['Authorization']='Bearer '+('invalid' if kind=='invalid' else create_access_token(7,'qa@example.invalid'))
+    if kind!='anonymous':
+        client.headers['Authorization']='Bearer '+('invalid' if kind=='invalid' else create_access_token(7,'qa@example.invalid'))
     calculate=Mock(side_effect=AssertionError('Numerical engine must not run'))
-    monkeypatch.setattr(numerical,'calculate_budget',calculate);monkeypatch.setattr(chat,'ask_laboratory',calculate)
+    monkeypatch.setattr(numerical,'calculate_budget',calculate)
+    monkeypatch.setattr(chat,'ask_laboratory',calculate)
     for path,payload in [('/uncertainty/budget',{'measured':1,'coverage':2,'components':[{'name':'x','value':.1}]}),('/uncertainty/mc-study',{}),('/uncertainty/physical-report.pdf',{}),('/chat/laboratory',{'message':'calculate','customer_id':7}),('/calculation-activity',{'event_id':'a'*32,'tool':'quick-0','status':'success'})]:
         result=client.post(path,json=payload)
         assert result.status_code in (401,403),(kind,path,result.text)

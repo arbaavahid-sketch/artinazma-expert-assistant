@@ -33,7 +33,8 @@ def library_chat_context(message, selected_cid=None, chemical_fetch=None):
     from chebi_service import chebi_chat_context
     chebi_context, chebi = chebi_chat_context(message)
     if chebi_context:
-        parts.append(chebi_context);bundle['chebi'] = chebi
+        parts.append(chebi_context)
+        bundle['chebi'] = chebi
         link('chebi', chebi['id']+' · '+chebi['name'], reference=chebi['id'])
     elif re.search('ChEBI', message, re.I):
         link('chebi', 'مرجع ChEBI / ChEBI reference')
@@ -51,8 +52,10 @@ def library_chat_context(message, selected_cid=None, chemical_fetch=None):
                 query += ' '+chemical['records'][0].get('cas','')
         occupational_context, occupational = occupational_chat_context(query)
         if occupational_context:
-            parts.append(occupational_context);bundle['occupational'] = occupational
-            r = occupational['record'];link('occupational', 'NIOSH NPG '+r['id']+' · '+r['en'], reference=r['id'])
+            parts.append(occupational_context)
+            bundle['occupational'] = occupational
+            r = occupational['record']
+            link('occupational', 'NIOSH NPG '+r['id']+' · '+r['en'], reference=r['id'])
         else:
             parts.append('The reviewed NIOSH library has no uniquely matched record for this question. Do not invent exposure limits or treat a US reference as Iranian law. Ask for exact CAS or open the reference selector.')
             link('occupational', 'مواجههٔ شغلی NIOSH / NIOSH reference')

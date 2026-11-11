@@ -46,7 +46,8 @@ def main():
     if len(original)!=190 or len(result)!=176:
         raise ValueError('Unexpected clip length; review the transition parameters')
     cv2.imwrite(str(root/'frontend/public/images/laboratory-equipment-glow-loop-poster.jpg'),result[0],[cv2.IMWRITE_JPEG_QUALITY,90])
-    difference = lambda a,b:float(np.mean(np.abs(a.astype(np.float32)-b.astype(np.float32))))
+    def difference(a, b):
+        return float(np.mean(np.abs(a.astype(np.float32)-b.astype(np.float32))))
     audit = {'sourceFrames':len(original),'loopFrames':len(result),'fps':24,'transitionFrames':14,
              'sourceBoundaryMeanAbsoluteDifference':difference(original[-1],original[0]),
              'loopBoundaryMeanAbsoluteDifference':difference(result[-1],result[0]),

@@ -7,6 +7,7 @@ import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useI18n } from "@/lib/i18n";
 import Tooltip from "@/components/Tooltip";
+import styles from "@/components/workspace-pages.module.css";
 import {
   Bell,
   CircleUserRound,
@@ -472,7 +473,7 @@ export default function CustomerDashboardPage() {
 
   if (!customer) {
     return (
-      <section className="flex min-h-screen items-center justify-center bg-[#f7f7f8] px-6">
+      <section className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6">
         <div className="ui-card rounded-[32px] p-8 text-center shadow-sm">
           <div className="text-lg font-black text-slate-900">
             {isEn ? "Checking your account..." : "در حال بررسی حساب کاربری..."}
@@ -489,28 +490,28 @@ export default function CustomerDashboardPage() {
   const localizedCustomerName = isEn ? latinizePersianName(visibleCustomerName) : visibleCustomerName;
 
   return (
-    <section className="min-h-full w-full max-w-full overflow-x-hidden bg-[#f7f7f8] px-3 py-6 md:px-6 md:py-8" dir={dir}>
+    <section className={styles.page} dir={dir}>
       <div className="mx-auto w-full max-w-7xl min-w-0 overflow-hidden">
-        <div className="ui-card mb-6 overflow-hidden rounded-[36px] shadow-sm">
-          <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-5 md:p-8">
+        <header className={styles.masthead}>
+          <div>
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div className="flex min-w-0 items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-blue-700 text-white shadow-sm">
-                  <CircleUserRound size={34} strokeWidth={1.8} />
+                <div className={styles.tileIcon}>
+                  <CircleUserRound size={24} strokeWidth={1.8} />
                 </div>
 
                 <div className="min-w-0">
-                  <div className="mb-2 text-sm font-bold text-blue-700">
+                  <div className={styles.eyebrow}>
                     {isEn ? "Customer account" : "حساب کاربری مشتری"}
                   </div>
 
-                  <h1 className="text-3xl font-black text-slate-900">
+                  <h1>
                     {isEn
                       ? localizedCustomerName ? `Hello ${localizedCustomerName}` : "Hello"
                       : `سلام ${customer.full_name}`}
                   </h1>
 
-                  <p className="mt-2 max-w-3xl leading-8 text-slate-600">
+                  <p>
                     {isEn
                       ? "Your previous conversations, account information, and contact path with Artin are available here."
                       : "گفتگوهای قبلی، اطلاعات حساب و مسیر ارتباط با آرتین اینجا در دسترس شماست."}
@@ -615,25 +616,25 @@ export default function CustomerDashboardPage() {
           )}
 
           {/* Quick links */}
-          <div className="border-t border-slate-100 bg-slate-50 px-8 py-4">
+          <div className="mt-4 border-t border-[var(--work-line)] pt-4">
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/assistant"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                className={`${styles.chip} min-h-11`}
               >
                 <Sparkles size={15} />
                 {isEn ? "Artin assistant" : "دستیار آرتین"}
               </Link>
               <Link
                 href="/analyze"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
+                className={`${styles.chip} min-h-11`}
               >
                 <FlaskConical size={15} />
                 {isEn ? "Test analysis" : "تحلیل تست"}
               </Link>
               <Link
                 href="/customer-request"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
+                className={`${styles.chip} min-h-11`}
               >
                 <PhoneCall size={15} />
                 {isEn ? "Request consultation" : "درخواست مشاوره"}
@@ -641,9 +642,307 @@ export default function CustomerDashboardPage() {
             </div>
           </div>
 
-        </div>
+        </header>
 
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+        <dl className="my-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {([
+            [isEn ? "Conversations" : "گفتگوها", sessions.length, MessageSquareText],
+            [isEn ? "Messages" : "پیام‌ها", sessions.reduce((sum, session) => sum + (session.message_count || 0), 0), Hash],
+            [isEn ? "Requests" : "درخواست‌ها", customerRequests.length, FileText],
+            [isEn ? "Unread notifications" : "اعلان‌های خوانده‌نشده", unreadCount, Bell],
+          ] as const).map(([label, value, Icon]) => (
+            <div className={styles.tile} key={label}>
+              <span className={styles.tileIcon}><Icon size={17} aria-hidden="true" /></span>
+              <dt className={`${styles.muted} text-xs`}>{label}</dt>
+              <dd className="text-xl font-bold tabular-nums">{new Intl.NumberFormat(locale).format(value)}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,29%)] lg:items-start">
+          <div className={`${styles.panel} min-w-0 p-4 md:p-6`}>
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl">
+                  {isEn ? "My conversations" : "گفتگوهای من"}
+                </h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  {isEn ? "Click any conversation to continue it." : "برای ادامه هر گفتگو، روی آن کلیک کنید."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {sessions.length > 0 && (
+                  <button
+                    onClick={deleteAllSessions}
+                    disabled={clearingAllSessions}
+                    className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-center text-sm"
+                  >
+                    <Trash2 size={16} />
+                    {clearingAllSessions ? (isEn ? "Deleting..." : "در حال حذف...") : (isEn ? "Delete all conversations" : "حذف همه گفتگوها")}
+                  </button>
+                )}
+
+                <Link
+                  href="/assistant"
+                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-3 text-center text-sm"
+                >
+                  {isEn ? "Start a new conversation" : "شروع گفتگوی تازه"}
+                </Link>
+              </div>
+            </div>
+
+            {sessions.length > 1 && (
+              <div className="mb-4 space-y-3">
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <Search size={16} className="shrink-0 text-slate-400" />
+                  <input
+                    type="text"
+                    value={sessionSearch}
+                    onChange={(e) => setSessionSearch(e.target.value)}
+                    placeholder={isEn ? "Search conversation titles and message text..." : "جستجو در عنوان و متن پیام‌های گفتگو..."}
+                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                  />
+                  {historySearchLoading && <Loader2 size={15} className="shrink-0 animate-spin text-blue-500" />}
+                  {sessionSearch && (
+                    <button
+                      onClick={() => setSessionSearch("")}
+                      className="shrink-0 text-slate-400 hover:text-slate-600"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
+
+                {sessionSearch.trim().length >= 2 && (
+                  <div className="rounded-3xl border border-blue-100 bg-blue-50/50 p-3">
+                    <div className="mb-2 text-xs font-black text-blue-700">
+                      {isEn ? "Results inside messages" : "نتیجه‌های داخل پیام‌ها"}
+                    </div>
+                    {historySearchResults.length > 0 ? (
+                      <div className="space-y-2">
+                        {historySearchResults.map((result) => (
+                          <Link
+                            key={result.message_id}
+                            href={`/assistant?session_id=${result.session_id}`}
+                            className="artin-motion-card block rounded-2xl border border-blue-100 bg-white p-3 hover:border-blue-200"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="font-black text-slate-800">
+                                {result.session_title || (isEn ? "New conversation" : "گفتگوی جدید")}
+                              </div>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
+                                {result.role === "user" ? (isEn ? "You" : "شما") : (isEn ? "Artin" : "آرتین")}
+                              </span>
+                            </div>
+                            <p className="mt-2 max-h-14 overflow-hidden text-sm leading-7 text-slate-600">
+                              {result.snippet}
+                            </p>
+                            <div className="mt-1 text-xs text-slate-400">
+                              {formatDate(result.created_at, locale)}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl bg-white p-4 text-sm text-slate-500">
+                        {historySearchLoading ? (isEn ? "Searching..." : "در حال جستجو...") : (isEn ? "No message matched this phrase." : "پیامی با این عبارت پیدا نشد.")}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {sessionMessage && (
+              <div className="ui-alert ui-alert-info mb-5">
+                {sessionMessage}
+              </div>
+            )}
+            {loading ? (
+              <div className="rounded-3xl bg-slate-50 p-6">
+                <div className="ui-skeleton h-5 w-44" />
+                <div className="mt-4 space-y-3">
+                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
+                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
+                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
+                </div>
+              </div>
+            ) : sessions.length > 0 ? (() => {
+              const matchedSessionIds = new Set(historySearchResults.map((item) => item.session_id));
+              const filteredSessions = sessionSearch.trim()
+                ? sessions.filter((s) =>
+                    (s.title || (isEn ? "New conversation" : "گفتگوی جدید"))
+                      .toLowerCase()
+                      .includes(sessionSearch.toLowerCase()) ||
+                    matchedSessionIds.has(s.id)
+                  )
+                : sessions;
+              return filteredSessions.length > 0 ? (
+              <div className="space-y-3">
+                {filteredSessions.map((session) => (
+                  <Link
+                    key={session.id}
+                    href={`/assistant?session_id=${session.id}`}
+                    className="artin-motion-card group block rounded-3xl border border-slate-200 bg-slate-50 p-5 hover:border-blue-200 hover:bg-white"
+                  >
+                    <div className="flex flex-col gap-2">
+                      {/* Title / Rename row */}
+                      <div className="min-w-0">
+                        {renamingSessionId === session.id ? (
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              autoFocus
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") renameSession(session.id);
+                                if (e.key === "Escape") { setRenamingSessionId(null); setRenameValue(""); }
+                              }}
+                              className="flex-1 rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-300"
+                              maxLength={120}
+                            />
+                            <button
+                              onClick={() => renameSession(session.id)}
+                              disabled={savingRename}
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {savingRename ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                            </button>
+                            <button
+                              onClick={() => { setRenamingSessionId(null); setRenameValue(""); }}
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="truncate text-base font-black text-slate-900 group-hover:text-blue-700">
+                              {session.title || (isEn ? "New conversation" : "گفتگوی جدید")}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setRenamingSessionId(session.id);
+                                setRenameValue(session.title || "");
+                              }}
+                              className="shrink-0 rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
+                              title={isEn ? "Rename" : "تغییر نام"}
+                            >
+                              <Pencil size={13} />
+                            </button>
+                          </div>
+                        )}
+
+                        {session.last_message_preview && renamingSessionId !== session.id && (
+                          <p className="mt-1 truncate text-sm leading-6 text-slate-500">
+                            {session.last_message_preview}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Bottom row: date/count + action buttons */}
+                      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <Clock3 size={13} />
+                            {formatDate(session.updated_at || session.created_at, locale)}
+                          </span>
+                          {(session.message_count ?? 0) > 0 && (
+                            <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-600">
+                              <Hash size={11} />
+                              {session.message_count} {isEn ? "messages" : "پیام"}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex max-w-full flex-wrap items-center gap-2 sm:justify-end" onClick={(e) => e.preventDefault()}>
+                          <Tooltip label={isEn ? "Export PDF" : "خروجی PDF"} position="top">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                exportSessionPDF(session);
+                              }}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-blue-700"
+                            >
+                              <Download size={15} />
+                            </button>
+                          </Tooltip>
+
+                          <Tooltip label={isEn ? "Delete conversation" : "حذف گفتگو"} position="top">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                deleteOneSession(session.id);
+                              }}
+                              disabled={deletingSessionId === session.id}
+                              className="inline-flex h-10 min-w-[76px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-black text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                            >
+                              {deletingSessionId === session.id ? (
+                                <Loader2 size={15} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={17} />
+                              )}
+                              {isEn ? "Delete" : "حذف"}
+                            </button>
+                          </Tooltip>
+
+                          <span className="inline-flex items-center rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                            {isEn ? "Continue" : "ادامه ←"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="ui-empty rounded-3xl p-10">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-400 shadow-sm">
+                  <Search size={26} strokeWidth={1.8} />
+                </div>
+                <h3 className="mt-4 text-base font-black text-slate-700">
+                  {isEn ? "No results found" : "نتیجه‌ای یافت نشد"}
+                </h3>
+                <p className="mt-2 text-sm text-slate-500">
+                  {isEn ? `No conversation matched "${sessionSearch}".` : `گفتگویی با عبارت «${sessionSearch}» پیدا نشد.`}
+                </p>
+                <button
+                  onClick={() => setSessionSearch("")}
+                  className="mt-4 text-sm font-bold text-blue-700 hover:underline"
+                >
+                  {isEn ? "Clear search" : "پاک کردن جستجو"}
+                </button>
+              </div>
+            );
+            })() : (
+              <div className="ui-empty rounded-3xl p-10">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-blue-700 shadow-sm">
+                  <MessageSquareText size={30} strokeWidth={1.8} />
+                </div>
+
+                <h3 className="mt-5 text-lg font-black text-slate-900">
+                  {isEn ? "No conversations saved yet" : "هنوز گفتگویی ذخیره نشده است"}
+                </h3>
+
+                <p className="mt-3 leading-7 text-slate-500">
+                  {isEn
+                    ? "Ask Artin your first question so the conversation is saved in your account."
+                    : "اولین سوال خود را از آرتین بپرسید تا گفتگو در حساب شما ذخیره شود."}
+                </p>
+
+                <Link
+                  href="/assistant"
+                  className="ui-btn ui-btn-primary mt-6 inline-flex rounded-2xl px-6 py-3"
+                >
+                  {isEn ? "Start conversation with Artin" : "شروع گفتگو با آرتین"}
+                </Link>
+              </div>
+            )}
+          </div>
           <aside className="min-w-0 space-y-6">
             <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-5 flex items-center justify-between gap-3">
@@ -806,28 +1105,14 @@ export default function CustomerDashboardPage() {
               </div>
             </div>
 
-            <div className="ui-card rounded-[32px] p-6 shadow-sm">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-2xl bg-blue-50 p-4 text-center">
-                  <div className="text-2xl font-black text-blue-700">{sessions.length}</div>
-                  <div className="mt-1 text-xs font-bold text-blue-600">{isEn ? "Conversations" : "گفتگو"}</div>
-                </div>
-                <div className="rounded-2xl bg-emerald-50 p-4 text-center">
-                  <div className="text-2xl font-black text-emerald-700">
-                    {sessions.reduce((sum, s) => sum + (s.message_count || 0), 0)}
-                  </div>
-                  <div className="mt-1 text-xs font-bold text-emerald-600">{isEn ? "Messages" : "پیام"}</div>
+            {sessions.length > 0 && (
+              <div className={`${styles.panel} p-4`}>
+                <div className={`${styles.muted} text-xs font-bold`}>{isEn ? "Last activity" : "آخرین فعالیت"}</div>
+                <div className="mt-1 text-sm font-bold">
+                  {formatDate(sessions[0]?.updated_at || sessions[0]?.created_at, locale)}
                 </div>
               </div>
-              {sessions.length > 0 && (
-                <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-center">
-                  <div className="text-xs font-bold text-slate-400">{isEn ? "Last activity" : "آخرین فعالیت"}</div>
-                  <div className="mt-1 text-sm font-black text-slate-700">
-                    {formatDate(sessions[0]?.updated_at || sessions[0]?.created_at, locale)}
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
 
             <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -873,7 +1158,7 @@ export default function CustomerDashboardPage() {
                     <Link
                       key={item.id}
                       href={`/customer-dashboard/requests/${item.id}`}
-                      className="rounded-2xl border border-slate-100 bg-slate-50 p-3"
+                      className="artin-motion-card block rounded-2xl border border-slate-100 bg-slate-50 p-3"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -920,290 +1205,6 @@ export default function CustomerDashboardPage() {
               </Link>
             </div>
           </aside>
-
-          <div className="ui-card min-w-0 rounded-[32px] p-4 shadow-sm md:p-6">
-            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-black text-slate-900">
-                  {isEn ? "My conversations" : "گفتگوهای من"}
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  {isEn ? "Click any conversation to continue it." : "برای ادامه هر گفتگو، روی آن کلیک کنید."}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {sessions.length > 0 && (
-                  <button
-                    onClick={deleteAllSessions}
-                    disabled={clearingAllSessions}
-                    className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-center text-sm"
-                  >
-                    <Trash2 size={16} />
-                    {clearingAllSessions ? (isEn ? "Deleting..." : "در حال حذف...") : (isEn ? "Delete all conversations" : "حذف همه گفتگوها")}
-                  </button>
-                )}
-
-                <Link
-                  href="/assistant"
-                  className="ui-btn ui-btn-ghost rounded-2xl px-4 py-3 text-center text-sm"
-                >
-                  {isEn ? "Start a new conversation" : "شروع گفتگوی تازه"}
-                </Link>
-              </div>
-            </div>
-
-            {sessions.length > 1 && (
-              <div className="mb-4 space-y-3">
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <Search size={16} className="shrink-0 text-slate-400" />
-                  <input
-                    type="text"
-                    value={sessionSearch}
-                    onChange={(e) => setSessionSearch(e.target.value)}
-                    placeholder={isEn ? "Search conversation titles and message text..." : "جستجو در عنوان و متن پیام‌های گفتگو..."}
-                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
-                  />
-                  {historySearchLoading && <Loader2 size={15} className="shrink-0 animate-spin text-blue-500" />}
-                  {sessionSearch && (
-                    <button
-                      onClick={() => setSessionSearch("")}
-                      className="shrink-0 text-slate-400 hover:text-slate-600"
-                    >
-                      <X size={15} />
-                    </button>
-                  )}
-                </div>
-
-                {sessionSearch.trim().length >= 2 && (
-                  <div className="rounded-3xl border border-blue-100 bg-blue-50/50 p-3">
-                    <div className="mb-2 text-xs font-black text-blue-700">
-                      {isEn ? "Results inside messages" : "نتیجه‌های داخل پیام‌ها"}
-                    </div>
-                    {historySearchResults.length > 0 ? (
-                      <div className="space-y-2">
-                        {historySearchResults.map((result) => (
-                          <Link
-                            key={result.message_id}
-                            href={`/assistant?session_id=${result.session_id}`}
-                            className="block rounded-2xl border border-blue-100 bg-white p-3 transition hover:border-blue-200 hover:shadow-sm"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className="font-black text-slate-800">
-                                {result.session_title || (isEn ? "New conversation" : "گفتگوی جدید")}
-                              </div>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
-                                {result.role === "user" ? (isEn ? "You" : "شما") : (isEn ? "Artin" : "آرتین")}
-                              </span>
-                            </div>
-                            <p className="mt-2 max-h-14 overflow-hidden text-sm leading-7 text-slate-600">
-                              {result.snippet}
-                            </p>
-                            <div className="mt-1 text-xs text-slate-400">
-                              {formatDate(result.created_at, locale)}
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl bg-white p-4 text-sm text-slate-500">
-                        {historySearchLoading ? (isEn ? "Searching..." : "در حال جستجو...") : (isEn ? "No message matched this phrase." : "پیامی با این عبارت پیدا نشد.")}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            {sessionMessage && (
-              <div className="ui-alert ui-alert-info mb-5">
-                {sessionMessage}
-              </div>
-            )}
-            {loading ? (
-              <div className="rounded-3xl bg-slate-50 p-6">
-                <div className="ui-skeleton h-5 w-44" />
-                <div className="mt-4 space-y-3">
-                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
-                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
-                  <div className="ui-skeleton h-16 w-full rounded-2xl" />
-                </div>
-              </div>
-            ) : sessions.length > 0 ? (() => {
-              const matchedSessionIds = new Set(historySearchResults.map((item) => item.session_id));
-              const filteredSessions = sessionSearch.trim()
-                ? sessions.filter((s) =>
-                    (s.title || (isEn ? "New conversation" : "گفتگوی جدید"))
-                      .toLowerCase()
-                      .includes(sessionSearch.toLowerCase()) ||
-                    matchedSessionIds.has(s.id)
-                  )
-                : sessions;
-              return filteredSessions.length > 0 ? (
-              <div className="space-y-3">
-                {filteredSessions.map((session) => (
-                  <Link
-                    key={session.id}
-                    href={`/assistant?session_id=${session.id}`}
-                    className="group block rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-200 hover:bg-white hover:shadow-sm"
-                  >
-                    <div className="flex flex-col gap-2">
-                      {/* Title / Rename row */}
-                      <div className="min-w-0">
-                        {renamingSessionId === session.id ? (
-                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                            <input
-                              autoFocus
-                              value={renameValue}
-                              onChange={(e) => setRenameValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") renameSession(session.id);
-                                if (e.key === "Escape") { setRenamingSessionId(null); setRenameValue(""); }
-                              }}
-                              className="flex-1 rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-300"
-                              maxLength={120}
-                            />
-                            <button
-                              onClick={() => renameSession(session.id)}
-                              disabled={savingRename}
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-50"
-                            >
-                              {savingRename ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                            </button>
-                            <button
-                              onClick={() => { setRenamingSessionId(null); setRenameValue(""); }}
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50"
-                            >
-                              <X size={13} />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <div className="truncate text-base font-black text-slate-900 group-hover:text-blue-700">
-                              {session.title || (isEn ? "New conversation" : "گفتگوی جدید")}
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setRenamingSessionId(session.id);
-                                setRenameValue(session.title || "");
-                              }}
-                              className="shrink-0 rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
-                              title={isEn ? "Rename" : "تغییر نام"}
-                            >
-                              <Pencil size={13} />
-                            </button>
-                          </div>
-                        )}
-
-                        {session.last_message_preview && renamingSessionId !== session.id && (
-                          <p className="mt-1 truncate text-sm leading-6 text-slate-500">
-                            {session.last_message_preview}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Bottom row: date/count + action buttons */}
-                      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                        <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <Clock3 size={13} />
-                            {formatDate(session.updated_at || session.created_at, locale)}
-                          </span>
-                          {(session.message_count ?? 0) > 0 && (
-                            <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-600">
-                              <Hash size={11} />
-                              {session.message_count} {isEn ? "messages" : "پیام"}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex max-w-full flex-wrap items-center gap-2 sm:justify-end" onClick={(e) => e.preventDefault()}>
-                          <Tooltip label={isEn ? "Export PDF" : "خروجی PDF"} position="top">
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                exportSessionPDF(session);
-                              }}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-blue-700"
-                            >
-                              <Download size={15} />
-                            </button>
-                          </Tooltip>
-
-                          <Tooltip label={isEn ? "Delete conversation" : "حذف گفتگو"} position="top">
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                deleteOneSession(session.id);
-                              }}
-                              disabled={deletingSessionId === session.id}
-                              className="inline-flex h-10 min-w-[76px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-black text-red-700 transition hover:bg-red-100 disabled:opacity-50"
-                            >
-                              {deletingSessionId === session.id ? (
-                                <Loader2 size={15} className="animate-spin" />
-                              ) : (
-                                <Trash2 size={17} />
-                              )}
-                              {isEn ? "Delete" : "حذف"}
-                            </button>
-                          </Tooltip>
-
-                          <span className="inline-flex items-center rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-                            {isEn ? "Continue" : "ادامه ←"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="ui-empty rounded-3xl p-10">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-400 shadow-sm">
-                  <Search size={26} strokeWidth={1.8} />
-                </div>
-                <h3 className="mt-4 text-base font-black text-slate-700">
-                  {isEn ? "No results found" : "نتیجه‌ای یافت نشد"}
-                </h3>
-                <p className="mt-2 text-sm text-slate-500">
-                  {isEn ? `No conversation matched "${sessionSearch}".` : `گفتگویی با عبارت «${sessionSearch}» پیدا نشد.`}
-                </p>
-                <button
-                  onClick={() => setSessionSearch("")}
-                  className="mt-4 text-sm font-bold text-blue-700 hover:underline"
-                >
-                  {isEn ? "Clear search" : "پاک کردن جستجو"}
-                </button>
-              </div>
-            );
-            })() : (
-              <div className="ui-empty rounded-3xl p-10">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-blue-700 shadow-sm">
-                  <MessageSquareText size={30} strokeWidth={1.8} />
-                </div>
-
-                <h3 className="mt-5 text-lg font-black text-slate-900">
-                  {isEn ? "No conversations saved yet" : "هنوز گفتگویی ذخیره نشده است"}
-                </h3>
-
-                <p className="mt-3 leading-7 text-slate-500">
-                  {isEn
-                    ? "Ask Artin your first question so the conversation is saved in your account."
-                    : "اولین سوال خود را از آرتین بپرسید تا گفتگو در حساب شما ذخیره شود."}
-                </p>
-
-                <Link
-                  href="/assistant"
-                  className="ui-btn ui-btn-primary mt-6 inline-flex rounded-2xl px-6 py-3"
-                >
-                  {isEn ? "Start conversation with Artin" : "شروع گفتگو با آرتین"}
-                </Link>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </section>

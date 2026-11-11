@@ -6,7 +6,8 @@ from routes import chemicals
 
 @pytest.mark.parametrize('path',['https://evil.example','../health','pug_view/data/compound/1/JSON?heading=Unknown','pug/compound/cid/1/property/MolecularWeight/JSON','pug/compound/name/a/cids/JSON?url=http://localhost'])
 def test_rejects_unrestricted_transport(path):
-    with pytest.raises(HTTPException) as error: chemicals.fetch_pubchem(path)
+    with pytest.raises(HTTPException) as error:
+        chemicals.fetch_pubchem(path)
     assert error.value.status_code==400
 
 def test_transport_caches_and_only_uses_pubchem():

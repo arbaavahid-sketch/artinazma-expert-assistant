@@ -105,7 +105,8 @@ def test_gate_bounds_shared_admission_and_recovers_expired_leases(tmp_path):
     a=PubChemGate(tmp_path/'shared.sqlite3',clock=lambda:now[0])
     b=PubChemGate(a.path,clock=lambda:now[0])
     leases=[a.acquire() for _ in range(24)]
-    with pytest.raises(ReferenceBusy):b.acquire()
+    with pytest.raises(ReferenceBusy):
+        b.acquire()
     b.release(leases[0])
     b.acquire()
     now[0]+=46
@@ -123,7 +124,8 @@ def test_dispatch_releases_database_before_sleep_and_rechecks_backoff(tmp_path):
         now[0]+=delay
     b.sleep=sleep
     b.wait_for_dispatch()
-    with pytest.raises(ReferenceBusy):b.wait_for_dispatch()
+    with pytest.raises(ReferenceBusy):
+        b.wait_for_dispatch()
 
 
 def test_independent_worker_processes_share_dispatch_rate(tmp_path):
@@ -139,4 +141,5 @@ def test_independent_worker_processes_share_dispatch_rate(tmp_path):
 def test_redirect_cannot_leave_https_pubchem():
     handler=chemicals.SameHostRedirect()
     for url in ['http://pubchem.ncbi.nlm.nih.gov/rest/x','https://evil.example/','https://pubchem.ncbi.nlm.nih.gov@evil.example/']:
-        with pytest.raises(urllib.error.URLError):handler.redirect_request(None,None,302,'',{},url)
+        with pytest.raises(urllib.error.URLError):
+            handler.redirect_request(None,None,302,'',{},url)

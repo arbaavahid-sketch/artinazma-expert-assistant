@@ -43,7 +43,8 @@ def test_unknown_degrees_correlations_and_contradictory_evidence_are_rejected(mo
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
     base=dict(name='A',value=.1,sensitivity=1)
     for component in [base,{**base,'study_count':10},{**base,'degrees_of_freedom':5,'infinite_degrees':True}]:
-        with pytest.raises(ValueError):calculate_budget(budget([component]))
+        with pytest.raises(ValueError):
+            calculate_budget(budget([component]))
     with pytest.raises(ValueError,match='independent'):
         calculate_budget(budget([{**base,'infinite_degrees':True}]*2,
             correlations=[dict(first=0,second=1,coefficient=.5)]))

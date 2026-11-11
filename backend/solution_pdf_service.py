@@ -32,7 +32,8 @@ def recompute_solution(payload):
 def build_solution_pdf(payload):
     c, ur, keys = recompute_solution(payload)
     en=payload.locale=='en'
-    t=lambda fa, english: english if en else fa
+    def t(fa, english):
+        return english if en else fa
     pdf=ReportPDF(en)
     pdf.add_page()
     pdf.line(t('گزارش محلول تهیه‌شده و عدم‌قطعیت استاندارد','Prepared solution and standard uncertainty report'),True,17)

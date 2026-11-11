@@ -59,7 +59,8 @@ def build_nominal_solution_pdf(payload):
     mass = recompute_nominal(payload)
     d, material = payload.inputs, payload.material
     en = payload.locale == 'en'
-    t = lambda fa, english: english if en else fa
+    def t(fa, english):
+        return english if en else fa
     pdf = ReportPDF(en)
     pdf.add_page()
     pdf.line(t('گزارش اسمی جرم لازم برای محلول مولار', 'Nominal mass for molar-solution preparation'), True, 17)

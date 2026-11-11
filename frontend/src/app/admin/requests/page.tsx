@@ -484,91 +484,76 @@ export default function AdminRequestsPage() {
   }, []);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-4 py-6 sm:px-6 sm:py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
-            <div className="mb-6 flex justify-end">
-              <LanguageSwitcher variant="purple" />
+        <header className="mb-5 flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border-soft)] pb-5">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--color-success-bg)] text-[var(--color-success-text)]">
+                <Inbox size={21} aria-hidden="true" />
+              </span>
+              <h1 className="text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">
+                {isEn ? "Customer Requests" : "درخواست‌های مشتریان"}
+              </h1>
             </div>
-            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
-                  <Inbox size={17} />
-                  {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
-                </div>
-
-                <h1 className="text-3xl font-black text-slate-900">
-                  {isEn ? "Customer Requests" : "درخواست‌های مشتریان"}
-                </h1>
-
-                <p className="mt-4 max-w-3xl leading-8 text-slate-600">
-                  {isEn
-                    ? "Track registered consultation, equipment, chemical, catalyst, test analysis, troubleshooting, and price inquiry requests."
-                    : "درخواست‌های ثبت‌شده برای مشاوره، تجهیزات، مواد شیمیایی، کاتالیست، تحلیل تست، عیب‌یابی و استعلام قیمت در این بخش قابل پیگیری هستند."}
-                </p>
-              </div>
-
-              <button
-                onClick={loadRequests}
-                disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                <RefreshCw
-                  size={18}
-                  className={loading ? "animate-spin" : ""}
-                />
-                {isEn ? "Refresh" : "بروزرسانی"}
-              </button>
-            </div>
+            <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
+              {isEn ? "Review inquiries and track their status." : "درخواست‌ها را بررسی و وضعیت پیگیری آن‌ها را ثبت کنید."}
+            </p>
           </div>
-        </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <LanguageSwitcher variant="purple" />
+            <button type="button" onClick={loadRequests} disabled={loading} className="ui-btn ui-btn-ghost gap-2">
+              <RefreshCw size={16} className={loading ? "animate-spin" : ""} aria-hidden="true" />
+              {isEn ? "Refresh" : "بروزرسانی"}
+            </button>
+          </div>
+        </header>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
             <div className="text-sm font-bold text-slate-500">
               {isEn ? "Total requests" : "کل درخواست‌ها"}
             </div>
-            <div className="mt-2 text-3xl font-black text-slate-900">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-slate-900">
               {requests.length}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 sm:p-4">
             <div className="text-sm font-bold text-blue-700">{isEn ? "New" : "جدید"}</div>
-            <div className="mt-2 text-3xl font-black text-blue-700">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-blue-700">
               {statusCounts.new}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
+          <div className="rounded-xl border border-amber-100 bg-amber-50 p-3 sm:p-4">
             <div className="text-sm font-bold text-amber-700">
               {isEn ? "Reviewing" : "در حال بررسی"}
             </div>
-            <div className="mt-2 text-3xl font-black text-amber-700">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-amber-700">
               {statusCounts.reviewing}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-purple-100 bg-purple-50 p-5">
+          <div className="rounded-xl border border-purple-100 bg-purple-50 p-3 sm:p-4">
             <div className="text-sm font-bold text-purple-700">
               {isEn ? "Pricing" : "قیمت‌گذاری"}
             </div>
-            <div className="mt-2 text-3xl font-black text-purple-700">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-purple-700">
               {statusCounts.pricing}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 sm:p-4">
             <div className="text-sm font-bold text-emerald-700">{isEn ? "Sent" : "ارسال‌شده"}</div>
-            <div className="mt-2 text-3xl font-black text-emerald-700">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-emerald-700">
               {statusCounts.sent}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
             <div className="text-sm font-bold text-slate-600">{isEn ? "Closed" : "بسته‌شده"}</div>
-            <div className="mt-2 text-3xl font-black text-slate-600">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-slate-600">
               {statusCounts.closed}
             </div>
           </div>

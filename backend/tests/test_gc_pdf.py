@@ -13,7 +13,8 @@ from utils.deps import limiter
 
 
 def example(locale='fa', extras=False):
-    raw=lambda value:dict(value=value,kind='standard',divisor='',source='مثال فرضی - Hypothetical source')
+    def raw(value):
+        return dict(value=value,kind='standard',divisor='',source='مثال فرضی - Hypothetical source')
     rows=[['0','10'],['5','61'],['10','109'],['15','161']]
     values=dict(area='110',extract='50',dilution='2',mass='10',recovery='80')
     uncertainties={k:raw(v) for k,v in zip(values,['1','.05','.01','.005','1'])}
@@ -44,7 +45,8 @@ def test_gc_recomputation_matches_reference_with_covariance_and_preparation(monk
     assert result['measured']==pytest.approx(124.6257485)
     assert fit['slope']==pytest.approx(10.02)
     assert fit['intercept']==pytest.approx(10.1)
-    if not extras:assert result['expanded_uncertainty']==pytest.approx(4.480433,abs=1e-6)
+    if not extras:
+        assert result['expanded_uncertainty']==pytest.approx(4.480433,abs=1e-6)
     assert len(result['components'])==(10 if extras else 7)
     assert fit['correlation']<0
 
@@ -53,7 +55,8 @@ def test_gc_recomputation_matches_reference_with_covariance_and_preparation(monk
 def test_complete_pdf_includes_fit_sources_preparation_and_budget(monkeypatch,locale):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
     content=build_gc_pdf(GCReport.model_validate(example(locale,extras=True)))
-    reader=PdfReader(io.BytesIO(content));text='\n'.join(p.extract_text() for p in reader.pages)
+    reader=PdfReader(io.BytesIO(content))
+    text='\n'.join(p.extract_text() for p in reader.pages)
     assert content.startswith(b'%PDF-') and 4<=len(reader.pages)<=12
     assert 'حجم عصاره' not in text
     assert ('Raw sample data' if locale=='en' else 'داده‌های خام نمونه') in text
@@ -65,21 +68,33 @@ def test_complete_pdf_includes_fit_sources_preparation_and_budget(monkeypatch,lo
 def test_invalid_or_changed_input_cannot_be_exported(monkeypatch,field):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
     p=example(extras=True)
-    if field=='rows':p['rows'][1][1]='999'
-    elif field=='result':p['run']['standard']=999
-    elif field=='source':p['data']['uncertainties']['mass']['source']=''
-    elif field=='independence':p['data']['additional'][0]['independent']=False
-    elif field=='purity':p['data']['additional'][0]['preparation']['inputs']['purity']['nominal']='101'
-    else:p['data']['values']['area']='999999'
+    if field=='rows':
+        p['rows'][1][1]='999'
+    elif field=='result':
+        p['run']['standard']=999
+    elif field=='source':
+        p['data']['uncertainties']['mass']['source']=''
+    elif field=='independence':
+        p['data']['additional'][0]['independent']=False
+    elif field=='purity':
+        p['data']['additional'][0]['preparation']['inputs']['purity']['nominal']='101'
+    else:
+        p['data']['values']['area']='999999'
     # Rebind the snapshot to ensure semantic checks are tested, not only stale-key detection.
     p['run']['inputKey']=json.dumps(dict(rows=p['rows'],data=p['data']))
-    with pytest.raises(ValueError):recompute_gc(GCReport.model_validate(p))
+    with pytest.raises(ValueError):
+        recompute_gc(GCReport.model_validate(p))
 
 
 def test_gc_pdf_route_rejects_bad_result_and_returns_pdf(monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router);client=TestClient(app)
-    p=example();response=client.post('/uncertainty/gc-report.pdf',json=p)
+    app=FastAPI()
+    app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"}
+    app.state.limiter=limiter
+    app.include_router(router)
+    client=TestClient(app)
+    p=example()
+    response=client.post('/uncertainty/gc-report.pdf',json=p)
     assert response.status_code==200 and response.content.startswith(b'%PDF-')
     assert response.headers['cache-control']=='no-store'
     p['run']['expanded']=99

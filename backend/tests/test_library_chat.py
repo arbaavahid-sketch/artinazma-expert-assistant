@@ -1,4 +1,3 @@
-import json
 from types import SimpleNamespace
 import pytest
 from chemical_chat import explicit_query, chemical_chat_context

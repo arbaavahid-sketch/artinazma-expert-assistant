@@ -264,7 +264,7 @@ function AdminCustomersContent() {
     : customers;
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="ui-card mb-6 overflow-hidden rounded-[36px] shadow-sm">

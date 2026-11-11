@@ -1,4 +1,5 @@
 "use client";
+import { conversationLabels, useConversationLabels } from "./ConversationLabels";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,6 +13,7 @@ import {
 import { ToastProvider } from "@/components/Toast";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useI18n } from "@/lib/i18n";
+import BazaarUpdateNotice from "@/components/BazaarUpdateNotice";
 import { useTheme } from "@/components/ThemeProvider";
 import AdminGlobalSearch from "@/components/AdminGlobalSearch";
 import NativeDocumentRecovery from "@/components/NativeDocumentRecovery";
@@ -43,6 +45,7 @@ import {
   Sparkles,
   Sun,
   Pencil,
+  Tag,
   Trash2,
   Users,
 } from "lucide-react";
@@ -108,6 +111,13 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
   return <Icon size={21} strokeWidth={1.8} className="text-slate-700 dark:text-slate-300" />;
 }
 
+function normalizeConversationSearch(value: string) {
+  return value.normalize("NFKC").toLowerCase()
+    .replace(/[يى]/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[\s\u200c\u200d]/g, "");
+}
+
 export default function ArtinShell({ children }: ArtinShellProps) {
   const pathname = usePathname();
   const { t, locale } = useI18n();
@@ -127,8 +137,19 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   const { confirm } = useConfirm();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [horizontalAdminNav, setHorizontalAdminNav] = useState(false);
+  const [conversationSearch, setConversationSearch] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [conversationFilter, setConversationFilter] = useState("");
+  const [openLabelsSessionId, setOpenLabelsSessionId] = useState<number | null>(null);
   const [customerSessions, setCustomerSessions] = useState<ChatSession[]>([]);
+  const { assignments, toggle: toggleConversationLabel } = useConversationLabels(customer?.id);
+  const conversationQuery = normalizeConversationSearch(conversationSearch);
+  const visibleConversations = customerSessions.filter((session) => {
+    const title = session.title || (isRtl ? "گفتگوی جدید" : "New conversation");
+    return normalizeConversationSearch(title).includes(conversationQuery)
+      && (!conversationFilter || assignments[session.id]?.includes(conversationFilter));
+  });
   const [renamingSessionId, setRenamingSessionId] = useState<number | null>(null);
   const [renameTitle, setRenameTitle] = useState("");
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
@@ -346,7 +367,8 @@ export default function ArtinShell({ children }: ArtinShellProps) {
   return (
     <ToastProvider>
     <div
-      className="relative h-screen overflow-hidden bg-[--background] text-[--foreground]"
+      className="relative h-dvh overflow-hidden bg-[--background] text-[--foreground]"
+      data-admin-horizontal={isAdmin && isAdminArea && horizontalAdminNav ? "true" : undefined}
       data-mobile-sidebar-open={mobileSidebarOpen ? "true" : "false"}
       dir={isRtl ? "rtl" : "ltr"}
     >
@@ -373,20 +395,22 @@ export default function ArtinShell({ children }: ArtinShellProps) {
       {mobileSidebarOpen && (
         <button
           onClick={() => setMobileSidebarOpen(false)}
-          className="absolute inset-0 z-30 bg-slate-950/35 md:hidden"
+          className="artin-sidebar-backdrop absolute inset-0 z-30 bg-slate-950/35 md:hidden"
           aria-label={isRtl ? "بستن منو" : "Close menu"}
         />
       )}
 
       {/* Sidebar — absolute positioning, visibility controlled by display (translate unreliable in RTL) */}
       <aside
-        className={`absolute inset-y-0 z-40 flex-col border-[--border-soft] bg-white shadow-xl shadow-slate-950/10 md:shadow-none transition-all duration-300 dark:bg-slate-950 ${
+        data-app-sidebar
+        data-assistant-sidebar={pathname === "/assistant" ? "true" : undefined}
+        className={`absolute inset-y-0 z-40 flex-col border-[var(--border-soft)] bg-[var(--surface)] shadow-xl shadow-slate-950/10 transition-all duration-300 md:shadow-none ${
           isRtl ? "right-0 border-l" : "left-0 border-r"
         } ${
           sidebarCollapsed ? "w-[88px]" : "w-[260px]"
         } ${mobileSidebarOpen ? "flex" : "hidden md:flex"}`}
       >
-          <div className="relative shrink-0 px-4 pb-7 pt-14">
+          <div className="relative shrink-0 px-4 pb-4 pt-14">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(false)}
@@ -408,7 +432,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             {!sidebarCollapsed ? (
               <>
                 <Link href="/" className="block">
-                  <div className="mx-auto w-[78%]">
+                  <div className="mx-auto w-28">
                     <img
                       src="/images/artinazma-logo.png"
                       alt={isRtl ? "آرتین آزما" : "ArtinAzma"}
@@ -416,12 +440,9 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                     />
                   </div>
 
-                  <div className="mt-3 text-center">
+                  <div className="mt-2 text-center">
                     <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       {isRtl ? "دستیار هوشمند آرتین آزما" : "ArtinAzma Intelligent Assistant"}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      ArtinAzma Expert Assistant
                     </div>
                   </div>
                 </Link>
@@ -464,20 +485,17 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                   href={item.href}
                   onClick={() => setMobileSidebarOpen(false)}
                   title={item.label}
-                  className={`group mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
+                  aria-current={isActive ? "page" : undefined}
+                  className={`artin-nav-item group mb-1 flex min-h-10 items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition ${
                     sidebarCollapsed ? "justify-center px-2" : ""
                   } ${
                     isActive
-                      ? "bg-[--surface] font-bold text-blue-700 shadow-sm shadow-slate-200/20"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-[--surface]"
+                      ? "font-bold"
+                      : ""
                   }`}
                 >
                   <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
-                      isActive
-                        ? "bg-blue-50 dark:bg-blue-950 text-blue-700"
-                        : "bg-[--surface] text-slate-500 dark:text-slate-400 group-hover:text-blue-700"
-                    }`}
+                    className="flex h-6 w-6 shrink-0 items-center justify-center"
                   >
                     <item.Icon size={19} strokeWidth={1.9} />
                   </span>
@@ -490,11 +508,37 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             {!sidebarCollapsed && customer && customerSessions.length > 0 && (
               <div className="mt-6">
                 <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
-{locale === "fa" ? "گفتگوهای من" : "My Conversations"}
+                  {locale === "fa" ? "تاریخچهٔ گفتگوها" : "Conversation history"}
                 </div>
 
+                <input
+                  type="search"
+                  aria-label={isRtl ? "جست‌وجوی گفتگوها" : "Search conversations"}
+                  placeholder={isRtl ? "جست‌وجوی گفتگوها" : "Search conversations"}
+                  value={conversationSearch}
+                  onChange={(event) => setConversationSearch(event.target.value)}
+                  className="mb-2 w-full rounded-lg border border-[var(--border-soft)] px-3 py-2 text-sm"
+                />
+                <select
+                  aria-label={isRtl ? "دستهٔ گفتگو" : "Conversation category"}
+                  value={conversationFilter}
+                  onChange={(event) => setConversationFilter(event.target.value)}
+                  className="mb-2 w-full rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-2 py-2 text-sm"
+                >
+                  <option value="">{isRtl ? "همهٔ گفتگوها" : "All conversations"}</option>
+                  {conversationLabels.map(({ id, fa, en }) => <option key={id} value={id}>{isRtl ? fa : en}</option>)}
+                </select>
+                {visibleConversations.length === 0 && (
+                  <div className="rounded-lg border border-[var(--border-soft)] px-3 py-2 text-xs">
+                    <p role="status">{isRtl ? "گفتگویی با این جست‌وجو یا فیلتر پیدا نشد." : "No conversations match your search or filter."}</p>
+                    <button type="button" className="mt-2 font-semibold underline underline-offset-2"
+                      onClick={() => { setConversationSearch(""); setConversationFilter(""); }}>
+                      {isRtl ? "پاک‌کردن جست‌وجو و فیلتر" : "Clear search and filter"}
+                    </button>
+                  </div>
+                )}
                 <div className="space-y-1">
-                  {customerSessions.slice(0, 12).map((session) => {
+                  {visibleConversations.map((session) => {
                     const isActiveSession =
                       String(session.id) === activeSessionId;
 
@@ -550,14 +594,25 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                               href={`/assistant?session_id=${session.id}`}
                               onClick={() => setMobileSidebarOpen(false)}
                               title={session.title}
-                              className={`min-w-0 flex-1 truncate py-3 pr-4 text-sm ${
+                              className={`min-w-0 flex-1 truncate py-2.5 ps-3 text-sm ${
                                 isActiveSession ? "font-bold" : ""
                               }`}
                             >
                               {session.title || (isRtl ? "گفتگوی جدید" : "New conversation")}
                             </Link>
 
-                            <div className="hidden shrink-0 items-center gap-1 pl-2 group-hover:flex">
+                            <div className="flex shrink-0 items-center gap-1 pe-1 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                              <button
+                                type="button"
+                                aria-label={isRtl ? "برچسب‌های گفتگو" : "Conversation labels"}
+                                title={isRtl ? "برچسب‌های گفتگو" : "Conversation labels"}
+                                aria-expanded={openLabelsSessionId === session.id}
+                                aria-controls={openLabelsSessionId === session.id ? `conversation-labels-${session.id}` : undefined}
+                                onClick={() => setOpenLabelsSessionId((id) => id === session.id ? null : session.id)}
+                                className="grid size-7 place-items-center rounded-lg text-slate-500 hover:bg-[var(--surface-soft)]"
+                              >
+                                <Tag size={14} aria-hidden="true" />
+                              </button>
                               <button
                                 onClick={() => {
                                   setRenamingSessionId(session.id);
@@ -582,6 +637,17 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                               </button>
                             </div>
                           </div>
+                        )}
+                        {renamingSessionId !== session.id && openLabelsSessionId === session.id && (
+                            <div id={`conversation-labels-${session.id}`} className="mb-2 flex flex-wrap gap-1 px-3 text-xs">
+                              {conversationLabels.map(({ id, fa, en }) => (
+                                <button key={id} type="button" aria-pressed={assignments[session.id]?.includes(id) ?? false}
+                                  onClick={() => toggleConversationLabel(session.id, id)}
+                                  className="rounded-md border border-[var(--border-soft)] px-2 py-1 aria-pressed:bg-teal-700 aria-pressed:text-white">
+                                  {isRtl ? fa : en}
+                                </button>
+                              ))}
+                            </div>
                         )}
                       </div>
                     );
@@ -767,7 +833,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
           </div>
           <button
             onClick={() => setMobileSidebarOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+            className="artin-motion-action flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
             aria-label={isRtl ? "باز کردن منو" : "Open menu"}
           >
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -782,21 +848,43 @@ export default function ArtinShell({ children }: ArtinShellProps) {
         <div className="flex min-h-0 flex-1">
           {/* Desktop spacer — mirrors sidebar width */}
           <div
+            data-app-sidebar-spacer
             className={`hidden md:block shrink-0 transition-all duration-300 ${
               sidebarCollapsed ? "w-[88px]" : "w-[260px]"
             }`}
           />
-          <main
-            id="main-content"
-            tabIndex={-1}
-            data-app-path={pathname}
-            className="relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden focus:outline-none"
-          >
-            <SectionErrorBoundary>
-              <NativeDocumentRecovery en={locale === "en"}/>
-              {children}
-            </SectionErrorBoundary>
-          </main>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            {!isAdminArea && <BazaarUpdateNotice en={locale === "en"} />}
+            <main
+              id="main-content"
+              tabIndex={-1}
+              data-app-path={pathname}
+              className="relative min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden focus:outline-none"
+            >
+              <SectionErrorBoundary>
+                {isAdminArea && isAdmin && (
+                  <div className="sticky top-0 z-20 hidden border-b border-[var(--border-soft)] bg-[var(--surface)] px-4 py-2 md:block">
+                    <button type="button" aria-pressed={horizontalAdminNav} className="ui-btn ui-btn-ghost"
+                      onClick={() => setHorizontalAdminNav((current) => !current)}>
+                      {horizontalAdminNav ? (isRtl ? "منوی کناری" : "Sidebar navigation") : (isRtl ? "منوی افقی" : "Top navigation")}
+                    </button>
+                    {horizontalAdminNav && (
+                      <nav aria-label={isRtl ? "بخش‌های مدیریت" : "Administration"} className="flex gap-1 overflow-x-auto py-1">
+                        {adminItems.map(({ href, label, Icon }) => (
+                          <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}
+                            className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[var(--surface-soft)] aria-[current=page]:bg-[var(--surface-soft)]">
+                            <Icon size={16} aria-hidden="true" />{label}
+                          </Link>
+                        ))}
+                      </nav>
+                    )}
+                  </div>
+                )}
+                <NativeDocumentRecovery en={locale === "en"}/>
+                {children}
+              </SectionErrorBoundary>
+            </main>
+          </div>
         </div>
       </div>
     </div>

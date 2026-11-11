@@ -198,7 +198,8 @@ def calibration_chart(pdf, fit):
     ymin, ymax = min(ys), max(ys)
     pad = max((ymax-ymin)*.08, 1)
     ymin, ymax = ymin-pad, ymax+pad
-    xy = lambda x,y: (x0+(x-xmin)/(xmax-xmin)*width, y0+height-(y-ymin)/(ymax-ymin)*height)
+    def xy(x, y):
+        return (x0+(x-xmin)/(xmax-xmin)*width, y0+height-(y-ymin)/(ymax-ymin)*height)
     pdf.set_draw_color(100,110,125)
     FPDF.line(pdf,x0,y0,x0,y0+height)
     FPDF.line(pdf,x0,y0+height,x0+width,y0+height)
@@ -206,7 +207,8 @@ def calibration_chart(pdf, fit):
     FPDF.line(pdf,*xy(xmin,fit['slope']*xmin+fit['intercept']),*xy(xmax,fit['slope']*xmax+fit['intercept']))
     pdf.set_fill_color(35,95,180)
     for x,y in points:
-        px,py=xy(x,y);pdf.ellipse(px-1,py-1,2,2,style='F')
+        px,py=xy(x,y)
+        pdf.ellipse(px-1,py-1,2,2,style='F')
     pdf.set_y(y0+height+4)
     pdf.line(f'x: {xmin:g} .. {xmax:g} mg/L | y: {ymin:.5g} .. {ymax:.5g} area',size=9,ltr=True)
 
@@ -214,19 +216,24 @@ def calibration_chart(pdf, fit):
 def build_gc_pdf(payload):
     result, fit = recompute_gc(payload)
     en = payload.locale == 'en'
-    t = lambda fa,english: english if en else fa
-    pdf = ReportPDF(en);pdf.add_page()
+    def t(fa, english):
+        return english if en else fa
+    pdf = ReportPDF(en)
+    pdf.add_page()
     pdf.line(t('گزارش آزمون GC-FID','GC-FID test report'),True,18)
     pdf.line('ARTIN LAB | GC extraction model v1',ltr=True)
     for key,fa,english in [('title','عنوان','Title'),('sample','نمونه','Sample'),('sop','روش اجرایی','SOP'),('edition','ویرایش روش','Method edition'),('matrix','ماتریس','Matrix')]:
-        pdf.line(t(fa,english),True,9);pdf.line(getattr(payload.identity,key) or '-')
+        pdf.line(t(fa,english),True,9)
+        pdf.line(getattr(payload.identity,key) or '-')
     pdf.line(f'{payload.run.calculatedAt} | {payload.run.engine} | v{payload.run.engineVersion}',size=9,ltr=True)
     pdf.line(f'{result["measured"]:.7g} +/- {result["expanded_uncertainty"]:.4g} mg/kg',True,17,True)
     pdf.line(f'u = {result["standard_uncertainty"]:.7g} mg/kg; k = {result["coverage"]:g}',ltr=True)
-    pdf.line(t('مبنای انتخاب ضریب پوشش','Coverage basis'),True);pdf.line(payload.data.coverageSource)
+    pdf.line(t('مبنای انتخاب ضریب پوشش','Coverage basis'),True)
+    pdf.line(payload.data.coverageSource)
     pdf.line('C = (A-b)/a * V*D / (m*R/100)',ltr=True)
     pdf.line(t('مدل: کالیبراسیون خارجی، استخراج و تصحیح بازیابی. حجم نهایی محلول در mL، جرم نمونه در g، بازیابی در واحد درصد و نتیجه در mg/kg است. این مدل برای تحلیل مستقیم بدون استخراج نیست.','Model: external calibration, extraction and recovery correction. Final solution volume in mL, sample mass in g, recovery in percentage points, result in mg/kg. This is not a direct-analysis model without extraction.'))
-    pdf.add_page();pdf.line(t('کالیبراسیون و برازش','Calibration and fit'),True,15)
+    pdf.add_page()
+    pdf.line(t('کالیبراسیون و برازش','Calibration and fit'),True,15)
     pdf.line(f'a = {fit["slope"]:.8g}; b = {fit["intercept"]:.8g}; residual s = {fit["se"]:.8g}',ltr=True)
     pdf.line(f'u(a) = {fit["us"]:.8g}; u(b) = {fit["ub"]:.8g}; corr(a,b) = {fit["correlation"]:.8g}',ltr=True,size=9)
     calibration_chart(pdf,fit)
@@ -240,21 +247,27 @@ def build_gc_pdf(payload):
     kinds={'standard':t('عدم‌قطعیت استاندارد','Standard uncertainty'),'certificate':t('گواهی U و k','Certificate U and k'),'rectangular':t('حد مستطیلی','Rectangular bound'),'triangular':t('حد مثلثی','Triangular bound'),'resolution':t('گام تفکیک','Resolution step'),'repeatability':t('انحراف معیار','Standard deviation')}
     long_sources=[]
     def source_cell(source):
-        if len(source)<=180:return source
-        if source not in long_sources:long_sources.append(source)
+        if len(source)<=180:
+            return source
+        if source not in long_sources:
+            long_sources.append(source)
         ref=long_sources.index(source)+1
         return source[:130]+' ... '+t('متن کامل منبع ','Full source ')+str(ref)
-    pdf.add_page(orientation='L');pdf.line(t('داده‌های خام نمونه','Raw sample data'),True,15)
+    pdf.add_page(orientation='L')
+    pdf.line(t('داده‌های خام نمونه','Raw sample data'),True,15)
     raw_rows=[]
     for key in SAMPLE_KEYS:
         raw=getattr(payload.data.uncertainties,key)
         raw_rows.append([labels[key],getattr(payload.data.values,key),UNITS[MODEL_KEYS.index(key)],kinds[raw.kind],raw.value,raw.divisor or '-',source_cell(raw.source)])
     pdf.data_table([t('کمیت','Quantity'),t('مقدار','Nominal'),t('واحد','Unit'),t('نوع داده','Input type'),t('عدد خام','Raw uncertainty'),'k / n',t('منبع','Source')],raw_rows,[40,20,25,35,25,17,70],(1,2,4,5))
-    pdf.add_page(orientation='L');pdf.line(t('بودجه عدم‌قطعیت','Uncertainty budget'),True,15)
+    pdf.add_page(orientation='L')
+    pdf.line(t('بودجه عدم‌قطعیت','Uncertainty budget'),True,15)
     budget_rows=[]
     for index,item in enumerate(result['components']):
         if index<7:
-            key=MODEL_KEYS[index];name=labels[key];unit=UNITS[index]
+            key=MODEL_KEYS[index]
+            name=labels[key]
+            unit=UNITS[index]
             source=t('از برازش OLS همین داده‌ها','From this OLS fit') if key in ['slope','intercept'] else getattr(payload.data.uncertainties,key).source
         else:
             extra=payload.data.additional[index-7]
@@ -271,11 +284,14 @@ def build_gc_pdf(payload):
         pdf.line(t('هدف','Target')+': '+(t('نتیجه (mg/kg)','Result (mg/kg)') if extra.target=='result' else labels[extra.target]))
         pdf.line(t('مبنای اثر','Effect basis')+': '+(t('نسبی (%)','Relative (%)') if extra.basis=='relative' else t('مطلق در واحد هدف','Absolute in target units')))
         if not extra.preparation:
-            pdf.line(kinds[extra.kind]);pdf.line(f'{extra.value} | k/n = {extra.divisor or "-"}',ltr=True)
+            pdf.line(kinds[extra.kind])
+            pdf.line(f'{extra.value} | k/n = {extra.divisor or "-"}',ltr=True)
         item=result['components'][7+index]
         pdf.line(f'u = {item["standard_uncertainty"]:.8g}; c = {item["sensitivity"]:.8g}; effect = {item["contribution"]:.8g} mg/kg',ltr=True,size=9)
-        pdf.line(t('منبع ثبت‌شده','Recorded source'),True);pdf.line(extra.source or t('از داده‌های تهیه استاندارد','From preparation data'))
-        pdf.line(t('بررسی هم‌پوشانی','Overlap assessment'),True);pdf.line(extra.overlapNote)
+        pdf.line(t('منبع ثبت‌شده','Recorded source'),True)
+        pdf.line(extra.source or t('از داده‌های تهیه استاندارد','From preparation data'))
+        pdf.line(t('بررسی هم‌پوشانی','Overlap assessment'),True)
+        pdf.line(extra.overlapNote)
         if extra.preparation:
             concentration,relative,active=stock_result(extra.preparation)
             pdf.line(t('تهیه استاندارد مشترک','Shared standard preparation'),True,13)
@@ -284,14 +300,17 @@ def build_gc_pdf(payload):
             names={'mass':t('جرم (mg)','Mass (mg)'),'purity':t('خلوص (%)','Purity (%)'),'volume':t('حجم مادر (mL)','Stock volume (mL)'),'aliquot':t('حجم برداشتی (mL)','Aliquot (mL)'),'finalVolume':t('حجم نهایی (mL)','Final volume (mL)')}
             prep_rows=[]
             for key in active:
-                q=getattr(extra.preparation.inputs,key);raw=q.uncertainty
+                q=getattr(extra.preparation.inputs,key)
+                raw=q.uncertainty
                 prep_rows.append([names[key],q.nominal,kinds[raw.kind],raw.value,raw.divisor or '-',f'{standard(raw):.8g}',source_cell(raw.source)])
             pdf.data_table([t('کمیت و واحد','Quantity and unit'),t('مقدار خام','Raw nominal'),t('نوع داده','Input type'),t('عدم‌قطعیت خام','Raw uncertainty'),'k / n','u',t('منبع','Source')],prep_rows,[44,22,35,25,17,25,64],(1,3,4,5))
             pdf.line(t('این مدل فقط تهیه مشترک مستقل است؛ واکنش، تبدیل نمک به عنصر و رقیق‌سازی مستقل نقاط را پوشش نمی‌دهد.','Only common independent preparation is modeled; reactions, salt-to-element conversion and independent point dilutions are excluded.'))
     if long_sources:
-        pdf.add_page(orientation='P');pdf.line(t('متن کامل منابع بلند','Full source references'),True,15)
+        pdf.add_page(orientation='P')
+        pdf.line(t('متن کامل منابع بلند','Full source references'),True,15)
         for i,source in enumerate(long_sources,1):
-            pdf.line(t('منبع ','Source ')+str(i),True);pdf.line(source)
+            pdf.line(t('منبع ','Source ')+str(i),True)
+            pdf.line(source)
     with pdf.unbreakable() as section:
         section.line(t('فرض‌ها و محدودیت‌ها','Assumptions and limitations'),True,13)
         section.line(t('انتشار مرتبه اول با هم‌بستگی شیب و عرض از مبدأ است. اثرهای تکمیلی مستقل و بدون دوباره‌شماری توسط واردکننده داده ارزیابی شده‌اند. k=2 تضمین پوشش دقیق ۹۵٪ نیست. این گزارش تأیید انطباق یا صحه‌گذاری کامل روش نیست.','First-order propagation includes slope-intercept correlation. Additional effects were assessed as independent and not double counted by the data provider. k=2 does not guarantee exact 95% coverage. This report is not a conformity decision or complete method validation.'))

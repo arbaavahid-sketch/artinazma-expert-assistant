@@ -1,135 +1,116 @@
 "use client";
-import { useState } from "react";
+
+import { ChartNoAxesCombined, CornerDownLeft, FlaskConical, GitCompare, Microscope, Factory } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { ThreadPrimitive } from "@assistant-ui/react";
+import styles from "@/app/assistant/assistant-start.module.css";
+import type { PointerEvent } from "react";
 
-const STARTER_QUESTIONS_FA: { category: string; icon: string; questions: string[] }[] = [
+const starters = [
   {
-    category: "کروماتوگرافی",
-    icon: "📊",
-    questions: [
-      "تفاوت GC-FID و GC-TCD در آنالیز گاز طبیعی چیست؟",
-      "علت نوسان baseline در کروماتوگراف چیست و چطور رفع می‌شود؟",
-    ],
+    tone: "equipment",
+    Icon: Microscope,
+    fa: "انتخاب تجهیزات آزمایشگاهی",
+    en: "Choose laboratory equipment",
+    detailFa: "از نیاز آزمون تا انتخاب روش و دستگاه مناسب",
+    detailEn: "Match your test requirements to a method and instrument",
+    questionFa: "برای اندازه‌گیری جیوه در نفت خام، چه روش و تجهیزی مناسب است؟",
+    questionEn: "Which method and instrument are suitable for measuring mercury in crude oil?",
   },
   {
-    category: "کاتالیست",
-    icon: "⚗️",
-    questions: [
-      "کاتالیست مناسب فرایند ریفرمینگ نفتا چه ویژگی‌هایی دارد؟",
-      "روش ارزیابی فعالیت کاتالیست هیدروکراکینگ چیست؟",
-    ],
+    tone: "results",
+    Icon: ChartNoAxesCombined,
+    fa: "تحلیل نتایج آزمایشگاهی",
+    en: "Analyze laboratory results",
+    detailFa: "داده‌های لازم برای بررسی تکرارپذیری",
+    detailEn: "Identify what you need to assess repeatability",
+    questionFa: "برای بررسی تکرارپذیری نتایج یک آزمون آزمایشگاهی چه داده‌هایی لازم است؟",
+    questionEn: "What data do I need to assess the repeatability of a laboratory test?",
   },
   {
-    category: "استانداردها",
-    icon: "📋",
-    questions: [
-      "استاندارد ASTM D5453 برای اندازه‌گیری سولفور را توضیح دهید",
-      "برای تعیین آروماتیک‌ها در بنزین کدام استاندارد ASTM مناسب است؟",
-    ],
+    tone: "chemistry",
+    Icon: FlaskConical,
+    fa: "مواد شیمیایی و کاتالیست‌ها",
+    en: "Explore chemicals and catalysts",
+    detailFa: "معیارهای مقایسهٔ کاتالیست‌های ریفرمینگ",
+    detailEn: "Compare naphtha reforming catalysts",
+    questionFa: "برای مقایسهٔ کاتالیست‌های ریفرمینگ نفتا چه مشخصاتی را بررسی کنم؟",
+    questionEn: "What specifications should I check when comparing naphtha reforming catalysts?",
   },
   {
-    category: "تجهیزات",
-    icon: "🔬",
-    questions: [
-      "برای اندازه‌گیری جیوه در نفت خام چه دستگاهی پیشنهاد می‌کنید؟",
-      "تفاوت XRF و ICP-OES در آنالیز عنصری چیست؟",
-    ],
+    tone: "comparison",
+    Icon: GitCompare,
+    fa: "مقایسهٔ مشخصات فنی تجهیزات",
+    en: "Compare instrument specifications",
+    detailFa: "آماده‌سازی نمونه و کاربرد XRF و ICP-OES",
+    detailEn: "Compare sample prep for XRF and ICP-OES",
+    questionFa: "XRF و ICP-OES را از نظر آماده‌سازی نمونه و کاربرد در آنالیز عنصری مقایسه کنید.",
+    questionEn: "Compare XRF and ICP-OES in terms of sample preparation and elemental analysis applications.",
+  },
+  {
+    tone: "industry",
+    Icon: Factory,
+    fa: "کاربرد صنعتی در نفت و پتروشیمی",
+    en: "Explore oil and petrochemical applications",
+    detailFa: "آزمون‌های کنترل کیفیت سوخت در پالایشگاه",
+    detailEn: "Explore refinery fuel quality tests",
+    questionFa: "برای پایش کیفیت سوخت در پالایشگاه چه آزمون‌هایی رایج‌اند و هرکدام چه کاربردی دارند؟",
+    questionEn: "Which tests are commonly used to monitor fuel quality in a refinery, and what does each test measure?",
   },
 ];
 
-const STARTER_QUESTIONS_EN: { category: string; icon: string; questions: string[] }[] = [
-  {
-    category: "Chromatography",
-    icon: "📊",
-    questions: [
-      "What is the difference between GC-FID and GC-TCD in natural gas analysis?",
-      "What causes baseline fluctuation in chromatography, and how can it be fixed?",
-    ],
-  },
-  {
-    category: "Catalyst",
-    icon: "⚗️",
-    questions: [
-      "What properties should a suitable naphtha reforming catalyst have?",
-      "How is hydrocracking catalyst activity evaluated?",
-    ],
-  },
-  {
-    category: "Standards",
-    icon: "📋",
-    questions: [
-      "Explain ASTM D5453 for sulfur measurement.",
-      "Which ASTM standard is suitable for determining aromatics in gasoline?",
-    ],
-  },
-  {
-    category: "Equipment",
-    icon: "🔬",
-    questions: [
-      "Which device do you recommend for measuring mercury in crude oil?",
-      "What is the difference between XRF and ICP-OES in elemental analysis?",
-    ],
-  },
-];
+function moveSpotlight(event: PointerEvent<HTMLButtonElement>) {
+  if (event.pointerType === "touch") return;
+  const bounds = event.currentTarget.getBoundingClientRect();
+  event.currentTarget.style.setProperty("--spot-x", `${event.clientX - bounds.left}px`);
+  event.currentTarget.style.setProperty("--spot-y", `${event.clientY - bounds.top}px`);
+}
 
-export default function StarterQuestions({ onSelect }: { onSelect: (q: string) => void }) {
-  const { locale, dir } = useI18n();
+function SpectrumIllustration() {
+  return (
+    <svg viewBox="0 0 288 130" className={styles.spectrum} aria-hidden="true" focusable="false">
+      <path d="M0 25h288M0 50h288M0 75h288M0 100h288M25 0v130M70 0v130M115 0v130M160 0v130M205 0v130M250 0v130" fill="none" stroke="currentColor" opacity=".17" />
+      <path d="M0 104h33c10 0 16-3 23-13l10-16c4-7 9-7 13 0l9 17c3 6 8 5 11-2l14-31c4-8 7-8 10 0l10 23c4 10 12 10 17 0l21-52c4-10 9-10 13 0l18 52c4 10 12 12 18 2l9-14c5-7 10-7 14 0l12 21c5 8 12 13 26 13h7" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="178" cy="23" r="4" fill="currentColor" />
+      <path d="M178 32v76" stroke="currentColor" strokeDasharray="3 5" opacity=".55" />
+    </svg>
+  );
+}
+
+export default function StarterQuestions({ onSelect }: { onSelect: () => void }) {
+  const { locale } = useI18n();
   const isEn = locale === "en";
-  const starterQuestions = locale === "en" ? STARTER_QUESTIONS_EN : STARTER_QUESTIONS_FA;
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  const allQuestions = starterQuestions.flatMap((c) => c.questions);
-  const displayQuestions =
-    activeCategory
-      ? (starterQuestions.find((c) => c.category === activeCategory)?.questions ?? [])
-      : allQuestions.slice(0, 4);
 
   return (
-    <div className="mt-8 w-full max-w-3xl px-1 md:px-0" dir={dir}>
-      <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-xs font-bold text-slate-400 ml-1">{isEn ? "Topic:" : "موضوع:"}</span>
-        {starterQuestions.map((cat) => (
-          <button
-            key={cat.category}
-            onClick={() => setActiveCategory(activeCategory === cat.category ? null : cat.category)}
-            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
-              activeCategory === cat.category
-                ? "bg-violet-100 text-violet-700"
-                : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
-            }`}
+    <section className={styles.topics} aria-label={isEn ? "Suggested questions" : "پرسش‌های پیشنهادی"}>
+      <h3 className="artin-workspace-label mb-3">{isEn ? "Start with a topic" : "از یک موضوع شروع کنید"}</h3>
+      <p className="-mt-1 mb-3 text-xs leading-6">
+        {isEn ? "Choose a topic to insert an editable draft." : "یک موضوع انتخاب کنید تا متن پیشنهادی در کادر پیام قرار بگیرد."}
+      </p>
+      <div className={styles.topicGrid}>
+        {starters.map(({ tone, Icon, fa, en, detailFa, detailEn, questionFa, questionEn }) => (
+          <ThreadPrimitive.Suggestion
+            key={en}
+            type="button"
+            prompt={isEn ? questionEn : questionFa}
+            onClick={onSelect}
+            data-tone={tone}
+            onPointerMove={moveSpotlight}
+            aria-label={isEn ? en : fa}
+            className={`artin-motion-card ${styles.topic}`}
           >
-            {cat.icon} {cat.category}
-          </button>
+            {tone === "equipment" ? <SpectrumIllustration /> : (
+              <Icon size={88} className={styles.topicArt} strokeWidth={1} aria-hidden="true" />
+            )}
+            <span className={styles.topicBadge}><Icon size={17} aria-hidden="true" /></span>
+            <span className={styles.topicCopy}>
+              <strong>{isEn ? en : fa}</strong>
+              <small>{isEn ? detailEn : detailFa}</small>
+            </span>
+            <span className={styles.topicAction}><CornerDownLeft size={15} aria-hidden="true" /></span>
+          </ThreadPrimitive.Suggestion>
         ))}
       </div>
-
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        {displayQuestions.map((q, i) => (
-          <button
-            key={i}
-            onClick={() => onSelect(q)}
-            className={`group flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-800 ${
-              isEn ? "text-left" : "text-right"
-            }`}
-          >
-            <svg
-              className={`mt-0.5 shrink-0 text-slate-300 transition group-hover:text-violet-400 ${isEn ? "" : "rotate-180"}`}
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <span className={`min-w-0 flex-1 leading-6 ${isEn ? "text-left" : "text-right"}`}>{q}</span>
-          </button>
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }

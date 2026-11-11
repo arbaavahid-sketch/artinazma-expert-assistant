@@ -151,6 +151,8 @@ def compound(value, section='identity'):
                             headers={'Retry-After':str(error.retry_after if isinstance(error,ReferenceBusy) else 10)}) from None
     finally:
         if token:
-            try:gate.release(token)
-            except sqlite3.Error:pass
+            try:
+                gate.release(token)
+            except sqlite3.Error:
+                pass
         _slots.release()

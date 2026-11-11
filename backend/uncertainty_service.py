@@ -43,7 +43,8 @@ class MeasurementModel(BaseModel):
     @field_validator("kind")
     @classmethod
     def registered_kind(cls,value):
-        if value not in MODEL_REGISTRY:raise ValueError("Unknown registered measurement model")
+        if value not in MODEL_REGISTRY:
+            raise ValueError("Unknown registered measurement model")
         return value
 
 
@@ -159,7 +160,8 @@ def calculate_budget(request: BudgetRequest):
     if request.coverage_mode == 'automatic':
         factor, effective, table_df, degrees = automatic_coverage(request, contributions, combined)
         expanded = factor * combined
-        if not math.isfinite(expanded):raise ValueError('Calculation exceeds the supported numeric range')
+        if not math.isfinite(expanded):
+            raise ValueError('Calculation exceeds the supported numeric range')
         coverage_metadata = {'coverage_method':'welch-satterthwaite',
             'coverage_probability':request.coverage_probability,
             'effective_degrees_of_freedom':effective if math.isfinite(effective) else None,

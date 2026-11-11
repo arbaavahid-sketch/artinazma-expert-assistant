@@ -28,7 +28,8 @@ def test_new_materials_preserve_distinct_periods_and_annotations():
 
 
 def test_review_reports_removal_and_exact_changed_limit_without_mutating_baseline():
-    baseline=copy.deepcopy(catalog()); proposed=candidate()
+    baseline=copy.deepcopy(catalog())
+    proposed=candidate()
     proposed['records'].pop()
     proposed['records'][0]['limits'][0]['raw']='TWA 201 ppm (test candidate only)'
     result=review(baseline,proposed)
@@ -49,19 +50,26 @@ def test_review_reports_removal_and_exact_changed_limit_without_mutating_baselin
     lambda d:d['records'][0].update(checkedOn='2026-11-08'),
 ])
 def test_invalid_candidate_never_validates(mutation):
-    proposed=candidate();mutation(proposed)
-    with pytest.raises(ValueError):validate_snapshot(proposed)
+    proposed=candidate()
+    mutation(proposed)
+    with pytest.raises(ValueError):
+        validate_snapshot(proposed)
 
 
 def test_review_requires_new_version_and_rejects_identity_reassignment():
-    with pytest.raises(ValueError):review(catalog(),copy.deepcopy(catalog()))
-    proposed=candidate();proposed['records'][0]['cas']='64-18-6'
-    with pytest.raises(ValueError,match='identity changed'):review(catalog(),proposed)
+    with pytest.raises(ValueError):
+        review(catalog(),copy.deepcopy(catalog()))
+    proposed=candidate()
+    proposed['records'][0]['cas']='64-18-6'
+    with pytest.raises(ValueError,match='identity changed'):
+        review(catalog(),proposed)
 
 
 def test_cli_only_writes_report_and_rejects_active_file_as_report(tmp_path):
     script=Path(__file__).resolve().parents[1]/'eval'/'review_occupational_snapshot.py'
-    base=tmp_path/'base.json';new=tmp_path/'candidate.json';report=tmp_path/'report.json'
+    base=tmp_path/'base.json'
+    new=tmp_path/'candidate.json'
+    report=tmp_path/'report.json'
     base.write_text(json.dumps(catalog()),encoding='utf-8')
     new.write_text(json.dumps(candidate()),encoding='utf-8')
     original=base.read_bytes()

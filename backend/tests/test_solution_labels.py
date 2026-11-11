@@ -23,11 +23,16 @@ def test_label(kind,locale):
 @pytest.mark.parametrize('change',['empty','result','kind','oversize'])
 def test_invalid(change):
     d=example()
-    if change=='empty':d['label']['solutionId']=''
-    if change=='result':d['report']['expectedMass']=1
-    if change=='kind':d['kind']='commercial'
-    if change=='oversize':d['label']['notes']='x'*301
-    with pytest.raises(ValueError):build_solution_label_pdf(SolutionLabelReport.model_validate(d))
+    if change=='empty':
+        d['label']['solutionId']=''
+    if change=='result':
+        d['report']['expectedMass']=1
+    if change=='kind':
+        d['kind']='commercial'
+    if change=='oversize':
+        d['label']['notes']='x'*301
+    with pytest.raises(ValueError):
+        build_solution_label_pdf(SolutionLabelReport.model_validate(d))
 
 
 def test_endpoint():
@@ -35,10 +40,14 @@ def test_endpoint():
     from fastapi.testclient import TestClient
     from routes.uncertainty import router
     from utils.deps import limiter
-    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router)
+    app=FastAPI()
+    app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"}
+    app.state.limiter=limiter
+    app.include_router(router)
     with TestClient(app) as client:
         r=client.post('/uncertainty/solution-label.pdf',json=example())
         assert r.status_code==200 and r.content.startswith(b'%PDF-')
         assert r.headers['cache-control']=='no-store'
-        d=example();d['html']='not accepted'
+        d=example()
+        d['html']='not accepted'
         assert client.post('/uncertainty/solution-label.pdf',json=d).status_code==422

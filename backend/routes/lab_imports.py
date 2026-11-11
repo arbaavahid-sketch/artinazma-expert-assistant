@@ -54,7 +54,8 @@ def from_analysis(request: Request, response: Response, payload: FromAnalysis, c
     # Only an owned persisted analysis can select a local upload. No URL fetching.
     if not isinstance(url, str) or not url.startswith('/uploads/') or Path(url).name != url.removeprefix('/uploads/'):
         raise HTTPException(404, detail='Source file not found')
-    root = Path('uploads').resolve();path = (root/Path(url).name).resolve()
+    root = Path('uploads').resolve()
+    path = (root/Path(url).name).resolve()
     if path.parent != root or not path.is_file():
         raise HTTPException(404, detail='Source file not found')
     try:
@@ -77,7 +78,9 @@ def get_import(key: str, response: Response, customer=Depends(get_current_custom
 @router.get('/{key}/source')
 def source(key: str, customer=Depends(get_current_customer)):
     try:
-        body = service.load_import(key, customer['customer_id']);root = service.ROOT.resolve();path = (root/body['storage_name']).resolve()
+        body = service.load_import(key, customer['customer_id'])
+        root = service.ROOT.resolve()
+        path = (root/body['storage_name']).resolve()
         if path.parent != root or not path.is_file():
             raise LookupError('Source file not found')
         return FileResponse(path, filename=body['fileName'], media_type='application/octet-stream', headers={'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'})

@@ -121,6 +121,11 @@ describe("assistant markdown cleanup", () => {
 });
 
 describe("shouldShowRelatedDeviceCards", () => {
+  it.each(["سلام!", "Hello", "خلاصه‌تر کن", "Make it shorter", "تبدیل به جدول"])(
+    "does not suggest equipment for %s even in equipment mode",
+    (message) => expect(shouldShowRelatedDeviceCards(message, "equipment")).toBe(false),
+  );
+
   it("always shows cards when domain is equipment", () => {
     expect(shouldShowRelatedDeviceCards("هر متنی", "equipment")).toBe(true);
   });

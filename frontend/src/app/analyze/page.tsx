@@ -4,6 +4,8 @@ import {reportFontCSS} from '@/lib/report-font';
 import { useState } from "react";
 import { apiUrl, backendRequestUrl, getCsrfToken } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import WorkspaceSectionHeader from "@/components/WorkspaceSectionHeader";
+import styles from "@/components/workspace-pages.module.css";
 import {
   AlertCircle,
   Beaker,
@@ -491,111 +493,44 @@ ${htmlBody}
   }
 
   return (
-    <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8" dir={dir}>
+    <section className={styles.page} dir={dir}>
       <div className="mx-auto max-w-7xl">
-        <div className="brand-panel hero-grid-bg mb-6 overflow-hidden rounded-[34px]">
-          <div className="bg-gradient-to-l from-emerald-50/80 via-white/80 to-blue-50/50 p-6 md:p-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <div className="brand-kicker mb-4 border-emerald-200 bg-emerald-50 text-emerald-700">
-                  <FlaskConical size={17} />
-                  Artin Test Analyzer
-                </div>
+        <WorkspaceSectionHeader icon={FlaskConical}
+          label={isEn ? "Laboratory data" : "داده‌های آزمایشگاهی"}
+          title={isEn ? "Specialized test file analysis with Artin" : "تحلیل تخصصی فایل تست با آرتین"}
+          description={isEn ? "Add your files, describe the sample and review the analysis in the same workspace." : "فایل‌ها را اضافه کنید، اطلاعات نمونه را بنویسید و نتیجه را در همین صفحه ببینید."}
+        >
+          <ul className="mt-3 flex flex-wrap gap-2" aria-label={isEn ? "Supported formats" : "فرمت‌های قابل تحلیل"}>
+            {["PDF", "Excel", "CSV", "JPG", "PNG"].map((format) => (
+              <li key={format} className={styles.chip} dir="ltr">{format}</li>
+            ))}
+          </ul>
+        </WorkspaceSectionHeader>
 
-                <h1 className="text-3xl font-black leading-[1.55] text-slate-950 md:text-4xl">
-                  {isEn ? "Specialized test file analysis with Artin" : "تحلیل تخصصی فایل تست با آرتین"}
-                </h1>
-
-                <p className="mt-4 max-w-4xl leading-8 text-slate-600">
-                  {isEn
-                    ? "Upload a test file, lab report, or raw data so Artin can review it based on the test type and provide technical notes, likely issues, and next-step suggestions."
-                    : "فایل تست، گزارش آزمایشگاهی یا داده خام را آپلود کنید تا آرتین بر اساس نوع آزمون، داده‌ها را بررسی و نکات فنی، خطاهای احتمالی و پیشنهاد اقدام بعدی را ارائه کند."}
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
-                <div className="rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-sm">
-                  <div className="text-sm font-bold text-slate-500">
-                    {isEn ? "Supported formats" : "فرمت‌های قابل تحلیل"}
-                  </div>
-                  <div className="mt-2 font-black text-slate-950">
-                    PDF، Excel، CSV، JPG، PNG
-                  </div>
-                </div>
-                <div className="rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-sm">
-                  <div className="text-sm font-bold text-slate-500">
-                    {isEn ? "Suggested output" : "خروجی پیشنهادی"}
-                  </div>
-                  <div className="mt-2 font-black text-slate-950">
-                    {isEn ? "Technical analysis and next action" : "تحلیل فنی و اقدام بعدی"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-6 xl:grid-cols-[430px_1fr]">
+        <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)]">
           <aside className="space-y-6">
-            <div className="brand-card rounded-[30px] p-6">
+            <div className={`${styles.panel} p-4 sm:p-5`}>
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                   <UploadCloud size={25} />
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">
-                    {isEn ? "Analysis information" : "اطلاعات تحلیل"}
+                  <h2 className="text-xl">
+                    {isEn ? "Files and sample details" : "فایل‌ها و مشخصات نمونه"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className={`${styles.muted} mt-1 text-sm`}>
                     {isEn ? "Specify the test type and sample notes." : "نوع تست و توضیحات نمونه را مشخص کنید."}
                   </p>
                 </div>
               </div>
 
-              <label className="mb-2 block text-sm font-bold text-slate-700">
-                {allImages ? (isEn ? "Image type" : "نوع تصویر") : (isEn ? "Test or report type" : "نوع تست یا گزارش")}
-              </label>
-
-              {allImages ? (
-                <select value={imageType} onChange={(e) => setImageType(e.target.value)}
-                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
-                  {imageTypes.map((item) => (
-                    <option key={item.value} value={item.value}>{item[locale]}</option>
-                  ))}
-                </select>
-              ) : (
-                <select value={testType} onChange={(e) => setTestType(e.target.value)}
-                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
-                  {testTypes.map((item) => (
-                    <option key={item.value} value={item.value}>{item[locale]}</option>
-                  ))}
-                </select>
-              )}
-
-              <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
-                {isEn ? "Optional note about the sample or test conditions" : "توضیح اختیاری درباره نمونه یا شرایط تست"}
-              </label>
-              <textarea
-                value={userNote}
-                onChange={(e) => setUserNote(e.target.value)}
-                className="ui-textarea h-28 resize-none rounded-2xl p-4 leading-8 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
-                placeholder={isEn ? "Example: The sample is LPG and the goal is checking sulfur compounds..." : "مثلاً: نمونه LPG است، هدف بررسی ترکیبات گوگردی است..."}
-              />
-
-              <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
-                {isEn ? "File or image" : "فایل یا تصویر"}
-                <span className="mx-2 font-normal text-slate-400">{isEn ? "(up to 5 files)" : "(تا ۵ فایل)"}</span>
-              </label>
-
               <div
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
-                className={`relative rounded-[26px] border-2 border-dashed p-5 text-center transition ${
-                  isDragging ? "border-emerald-400 bg-emerald-50 scale-[1.01]"
-                  : "border-slate-300 bg-slate-50/80 hover:border-emerald-300 hover:bg-emerald-50/60"
-                }`}
+                className={`${styles.dropZone} text-center`}
+                data-dragging={isDragging}
               >
                 <label className="group block cursor-pointer">
                   <input
@@ -603,15 +538,15 @@ ${htmlBody}
                     accept=".xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.webp"
                     multiple
                     onChange={(e) => e.target.files && addFiles(e.target.files)}
-                    className="hidden"
+                    className="sr-only"
                   />
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm transition group-hover:scale-105">
                     <UploadCloud size={26} />
                   </div>
-                  <div className="font-black text-slate-950">
+                  <div className="font-bold">
                     {isDragging ? (isEn ? "Drop files..." : "رها کنید…") : (isEn ? "Select files or drop them here" : "فایل‌ها را انتخاب یا اینجا رها کنید")}
                   </div>
-                  <div className="mt-1 text-sm text-slate-500">
+                  <div className={`${styles.muted} mt-1 text-sm`}>
                     {isEn ? "PDF, Excel, CSV, or image — up to 5 files together" : "PDF، Excel، CSV یا تصویر — تا ۵ فایل با هم"}
                   </div>
                 </label>
@@ -652,6 +587,37 @@ ${htmlBody}
                 </div>
               )}
 
+              <label htmlFor="analysis-kind" className="mb-2 mt-4 block text-sm font-bold">
+                {allImages ? (isEn ? "Image type" : "نوع تصویر") : (isEn ? "Test or report type" : "نوع تست یا گزارش")}
+              </label>
+
+              {allImages ? (
+                <select id="analysis-kind" value={imageType} onChange={(e) => setImageType(e.target.value)}
+                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
+                  {imageTypes.map((item) => (
+                    <option key={item.value} value={item.value}>{item[locale]}</option>
+                  ))}
+                </select>
+              ) : (
+                <select id="analysis-kind" value={testType} onChange={(e) => setTestType(e.target.value)}
+                  className="ui-select rounded-2xl p-4 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]">
+                  {testTypes.map((item) => (
+                    <option key={item.value} value={item.value}>{item[locale]}</option>
+                  ))}
+                </select>
+              )}
+
+              <label htmlFor="analysis-note" className="mb-2 mt-5 block text-sm font-bold">
+                {isEn ? "Optional note about the sample or test conditions" : "توضیح اختیاری درباره نمونه یا شرایط تست"}
+              </label>
+              <textarea
+                id="analysis-note"
+                value={userNote}
+                onChange={(e) => setUserNote(e.target.value)}
+                className="ui-textarea h-28 resize-none rounded-2xl p-4 leading-8 focus:border-emerald-600 focus:shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"
+                placeholder={isEn ? "Example: The sample is LPG and the goal is checking sulfur compounds..." : "مثلاً: نمونه LPG است، هدف بررسی ترکیبات گوگردی است..."}
+              />
+
               <button
                 onClick={uploadFile}
                 disabled={loading || !files.length}
@@ -665,12 +631,15 @@ ${htmlBody}
               </button>
             </div>
 
-            <div className="brand-card rounded-[30px] p-6">
-              <div className="mb-4 flex items-center gap-3">
+            <details className={`${styles.panel} p-4 sm:p-5`}>
+              <summary className="cursor-pointer text-sm font-bold">
+                {isEn ? "Tips for more accurate analysis" : "نکات تحلیل دقیق‌تر"}
+              </summary>
+              <div className="mt-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                   <ShieldCheck size={21} />
                 </div>
-                <h3 className="text-lg font-black text-slate-950">
+                <h3 className="text-lg">
                   {isEn ? "Tips for more accurate analysis" : "نکات بهتر برای تحلیل دقیق‌تر"}
                 </h3>
               </div>
@@ -689,10 +658,10 @@ ${htmlBody}
                   {isEn ? "For final decisions, review the result against real laboratory conditions." : "برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی شود."}
                 </div>
               </div>
-            </div>
+            </details>
           </aside>
 
-          <div className="brand-card rounded-[30px] p-6">
+          <div className={`${styles.panel} min-w-0 self-start p-4 sm:p-5`}>
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-700">
@@ -700,10 +669,10 @@ ${htmlBody}
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">
+                  <h2 className="text-xl">
                     {isEn ? "Analysis result" : "نتیجه تحلیل"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className={`${styles.muted} mt-1 text-sm`}>
                     {isEn ? "Artin's specialized output will appear here after file analysis." : "خروجی تخصصی آرتین بعد از تحلیل فایل اینجا نمایش داده می‌شود."}
                   </p>
                 </div>
@@ -737,20 +706,20 @@ ${htmlBody}
             </div>
 
             {!fileAnalysis && !loading && (
-              <div className="flex min-h-[520px] items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-slate-50/80 p-8 text-center">
+              <div className={styles.empty}>
                 <div>
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-emerald-700 shadow-sm">
-                    <UploadCloud size={32} />
+                    <FileText size={30} aria-hidden="true" />
                   </div>
 
-                  <h3 className="text-lg font-black text-slate-950">
+                  <h3 className="text-lg">
                     {isEn ? "No analysis has been run yet" : "هنوز تحلیلی انجام نشده است"}
                   </h3>
 
                   <p className="mt-3 max-w-md leading-8 text-slate-500">
                     {isEn
-                      ? "Select a test type, upload a file, and start the specialized analysis."
-                      : "ابتدا نوع تست را انتخاب کنید، فایل را آپلود کنید و روی شروع تحلیل تخصصی بزنید."}
+                      ? "Add your files and start the analysis. The report and export controls will appear here."
+                      : "فایل‌ها را اضافه کنید و تحلیل را شروع کنید. گزارش و گزینه‌های دریافت آن اینجا نمایش داده می‌شوند."}
                   </p>
                 </div>
               </div>

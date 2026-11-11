@@ -1,4 +1,6 @@
 "use client";
+
+import { ActionBarPrimitive, ComposerPrimitive, useAuiState } from "@assistant-ui/react";
 /**
  * کامپوننت حباب پیام — استخراج‌شده از assistant/page.tsx
  */
@@ -9,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import {
   Check,
   Copy,
+  Pencil,
   ExternalLink,
   FileText,
   ImageIcon,
@@ -28,7 +31,6 @@ import {
   VolumeX,
   Wrench,
 } from "lucide-react";
-import LibraryResourceCards from '@/components/LibraryResourceCards';
 import Tooltip from "@/components/Tooltip";
 import RelatedDeviceCards from "@/app/assistant/RelatedDeviceCards";
 import { useI18n } from "@/lib/i18n";
@@ -229,9 +231,21 @@ interface MessageBubbleProps {
   feedbackValue?: string;
   onSpeak: (text: string, index: number) => void;
   isSpeaking?: boolean;
-  onEdit: (index: number, newText: string) => void;
-  onRegenerate?: () => void;
+  canEdit?: boolean;
   canRegenerate?: boolean;
+}
+
+function AssistantCopyButton({ isEn, className }: { isEn: boolean; className: string }) {
+  const copied = useAuiState((state) => state.message.isCopied);
+  const label = copied ? (isEn ? "Copied" : "کپی شد") : (isEn ? "Copy" : "کپی");
+
+  return (
+    <Tooltip label={label} position="top">
+      <ActionBarPrimitive.Copy className={className} aria-label={label} title={label}>
+        {copied ? <Check size={15} /> : <Copy size={15} />}
+      </ActionBarPrimitive.Copy>
+    </Tooltip>
+  );
 }
 
 function MessageBubble({
@@ -247,15 +261,12 @@ function MessageBubble({
   feedbackValue,
   onSpeak,
   isSpeaking,
-  onEdit,
-  onRegenerate,
+  canEdit,
   canRegenerate,
 }: MessageBubbleProps) {
   const { locale, dir } = useI18n();
   const isEn = locale === "en";
-  const [copied, setCopied] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(item.content);
+  const isEditing = useAuiState((state) => state.message.composer.isEditing);
   const [showFeedbackMenu, setShowFeedbackMenu] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -302,12 +313,6 @@ function MessageBubble({
     };
   }, [showFeedbackMenu, showActionsMenu, showShareMenu]);
 
-  function handleCopy(text: string) {
-    onCopy(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  }
-
   function getSharePayload() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     const title = isEn ? "ArtinAzma Expert Assistant" : "دستیار تخصصی آرتین آزما";
@@ -345,7 +350,7 @@ function MessageBubble({
     setShowShareMenu(false);
 
     if (target === "copy") {
-      handleCopy(payload.textWithLink);
+      onCopy(payload.textWithLink);
       return;
     }
 
@@ -366,7 +371,6 @@ function MessageBubble({
   }
 
   const actionLabels = {
-    copy: copied ? (isEn ? "Copied" : "کپی شد") : (isEn ? "Copy" : "کپی"),
     speak: isSpeaking
       ? isEn
         ? "Stop"
@@ -394,14 +398,14 @@ function MessageBubble({
 
   return (
     <div
-      className={`group flex w-full ${isUser ? "justify-end" : "justify-start"}`}
-      dir="ltr"
+      className={`artin-message group flex w-full ${isUser ? "justify-end" : "justify-start"}`}
+      dir={dir}
     >
       <div
         className={`flex min-w-0 gap-2 sm:gap-3 ${
             isUser
-              ? "max-w-[88%] flex-row-reverse sm:max-w-[88%]"
-              : "w-full max-w-full flex-row-reverse sm:w-auto sm:max-w-[88%]"
+              ? "max-w-[88%]"
+              : "w-full"
         }`}
       >
         {!isUser && (
@@ -415,7 +419,7 @@ function MessageBubble({
         <div
           className={`min-w-0 shadow-sm ${
             isUser
-              ? "max-w-[760px] rounded-[20px] bg-blue-700 px-3.5 py-2.5 text-white sm:rounded-[26px] sm:px-5 sm:py-4"
+              ? "artin-user-message max-w-[760px] rounded-[20px] bg-blue-700 px-3.5 py-2.5 text-white sm:rounded-[26px] sm:px-5 sm:py-4"
               : "ai-message-card w-full"
           }`}
         >
@@ -424,7 +428,7 @@ function MessageBubble({
             style={{ fontFamily }}
             className={
               isUser
-                ? "whitespace-pre-wrap break-words text-right text-sm leading-7 [overflow-wrap:anywhere] sm:text-base sm:leading-8"
+                ? "whitespace-pre-wrap break-words text-start text-sm leading-7 [overflow-wrap:anywhere] sm:text-base sm:leading-8"
                 : direction === "rtl"
                   ? "ai-markdown rtl-markdown"
                   : "ai-markdown ltr-markdown"
@@ -432,59 +436,35 @@ function MessageBubble({
           >
             {isUser ? (
               isEditing ? (
-                <div className="flex flex-col gap-2" dir={dir}>
-                  <textarea
-                    className="w-full rounded-xl bg-white/20 p-2 text-sm text-white placeholder-white/60 outline-none ring-2 ring-white/40 focus:ring-white/70 resize-none"
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        if (editText.trim()) {
-                          onEdit(index, editText.trim());
-                          setIsEditing(false);
-                        }
-                      }
-                      if (e.key === "Escape") {
-                        setEditText(item.content);
-                        setIsEditing(false);
-                      }
-                    }}
-                    rows={Math.max(2, editText.split("\n").length)}
+                <ComposerPrimitive.Root className="flex flex-col gap-2" dir={dir}>
+                  <ComposerPrimitive.Input
+                    className="w-full resize-none rounded-xl bg-white/20 p-2 text-sm text-white outline-none ring-2 ring-white/40 focus:ring-white/70"
+                    aria-label={isEn ? "Edit message" : "ویرایش پیام"}
+                    minRows={2}
                     autoFocus
                     dir={dir}
                   />
                   <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => { setEditText(item.content); setIsEditing(false); }}
-                      className="rounded-lg px-3 py-1 text-xs text-white/70 hover:text-white"
-                    >
+                    <ComposerPrimitive.Cancel className="rounded-lg px-3 py-1 text-xs text-white/70 hover:text-white">
                       {isEn ? "Cancel" : "انصراف"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (editText.trim()) {
-                          onEdit(index, editText.trim());
-                          setIsEditing(false);
-                        }
-                      }}
-                      className="rounded-lg bg-white/20 px-3 py-1 text-xs font-bold text-white hover:bg-white/30"
-                    >
+                    </ComposerPrimitive.Cancel>
+                    <ComposerPrimitive.Send className="rounded-lg bg-white/20 px-3 py-1 text-xs font-bold text-white hover:bg-white/30">
                       {isEn ? "Resend ↵" : "ارسال مجدد ↵"}
-                    </button>
+                    </ComposerPrimitive.Send>
                   </div>
-                </div>
+                </ComposerPrimitive.Root>
               ) : (
                 <div className="group/edit relative">
                   <span>{displayContent}</span>
-                  <button
-                    onClick={() => { setEditText(item.content); setIsEditing(true); }}
-                    className="mr-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-white/50 opacity-0 transition hover:bg-white/20 hover:text-white group-hover/edit:opacity-100"
-                    title={isEn ? "Edit message" : "ویرایش پیام"}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                    {isEn ? "Edit" : "ویرایش"}
-                  </button>
+                  {canEdit && !item.attachment && (
+                    <ActionBarPrimitive.Edit
+                      className="ms-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-white/80 transition hover:bg-white/20 hover:text-white sm:opacity-0 sm:group-hover/edit:opacity-100 sm:focus-visible:opacity-100"
+                      title={isEn ? "Edit message" : "ویرایش پیام"}
+                    >
+                      <Pencil size={10} aria-hidden="true" />
+                      {isEn ? "Edit" : "ویرایش"}
+                    </ActionBarPrimitive.Edit>
+                  )}
                 </div>
               )
             ) : (
@@ -514,6 +494,11 @@ function MessageBubble({
                   ),
                   strong: ({ children }) => (
                     <strong className="ai-md-strong">{children}</strong>
+                  ),
+                  pre: ({ children }) => (
+                    <pre className="ai-md-pre" dir="ltr" tabIndex={0} aria-label={isEn ? "Code block" : "بلوک کد"}>
+                      {children}
+                    </pre>
                   ),
                   code: ({ children }) => (
                     <code className="ai-md-code">{children}</code>
@@ -549,7 +534,7 @@ function MessageBubble({
                     );
                   },
                   table: ({ children }) => (
-                    <div className="ai-md-table-wrap">
+                    <div className="ai-md-table-wrap" tabIndex={0} role="region" aria-label={isEn ? "Answer table" : "جدول پاسخ"}>
                       <table className="ai-md-table">{children}</table>
                     </div>
                   ),
@@ -608,7 +593,6 @@ function MessageBubble({
               images={item.resource_images}
             />
           )}
-          {!isUser && <LibraryResourceCards value={item.library_resources} en={isEn}/>}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {toolsEnabled && !isUser && !loading && onQuote && showQuoteCta(item) && (
             <button
@@ -620,20 +604,11 @@ function MessageBubble({
             </button>
           )}
           {toolsEnabled && !isUser && !loading && (
-            <div
+            <ActionBarPrimitive.Root
               ref={actionBarRef}
-              className="mt-1 flex flex-wrap items-center gap-0.5 opacity-100 transition-opacity sm:mt-2 sm:gap-1"
+              className="artin-message-actions mt-1 flex flex-wrap items-center gap-0.5 transition-opacity sm:mt-2 sm:gap-1"
             >
-              <Tooltip label={actionLabels.copy} position="top">
-                <button
-                  onClick={() => handleCopy(displayContent)}
-                  className={actionButtonClass}
-                  aria-label={actionLabels.copy}
-                  title={actionLabels.copy}
-                >
-                  {copied ? <Check size={15} /> : <Copy size={15} />}
-                </button>
-              </Tooltip>
+              <AssistantCopyButton isEn={isEn} className={actionButtonClass} />
               <Tooltip label={isEn ? "Helpful" : "مفید بود"} position="top">
                 <button
                   onClick={() => onFeedback(item.question_id, "up")}
@@ -832,18 +807,15 @@ function MessageBubble({
                       <span>{actionLabels.sources}</span>
                       <ListChecks size={15} />
                     </button>
-                    {canRegenerate && onRegenerate && (
-                      <button
-                        onClick={() => {
-                          setShowActionsMenu(false);
-                          onRegenerate();
-                        }}
+                    {canRegenerate && (
+                      <ActionBarPrimitive.Reload
+                        onClick={() => setShowActionsMenu(false)}
                         className={menuActionClass}
                         role="menuitem"
                       >
                         <span>{actionLabels.regenerate}</span>
                         <RotateCcw size={15} />
-                      </button>
+                      </ActionBarPrimitive.Reload>
                     )}
                     <button
                       onClick={() => {
@@ -859,7 +831,7 @@ function MessageBubble({
                   </div>
                 )}
               </div>
-            </div>
+            </ActionBarPrimitive.Root>
           )}
         </div>
       </div>

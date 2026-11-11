@@ -11,6 +11,8 @@ import { ExternalLink, Package, Search, Send } from "lucide-react";
 import { products, PRODUCT_CATEGORIES, categorizeProduct } from "@/lib/products-catalog";
 import productImages from "@/lib/product-images.json";
 import { useI18n } from "@/lib/i18n";
+import WorkspaceSectionHeader from "@/components/WorkspaceSectionHeader";
+import styles from "@/components/workspace-pages.module.css";
 
 const imageMap = productImages as Record<string, string>;
 
@@ -30,63 +32,69 @@ export default function ProductsPage() {
   }, [query, category]);
 
   return (
-    <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8" dir={dir}>
-      <div className="mx-auto max-w-7xl">
-        <div className="brand-panel hero-grid-bg mb-6 overflow-hidden rounded-[34px]">
-          <div className="bg-gradient-to-l from-blue-50/85 via-white/80 to-slate-50/70 p-6 md:p-8 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-            <h1 className="text-2xl font-black text-slate-900 md:text-3xl dark:text-slate-100">
-              {isEn ? "Product catalog" : "کاتالوگ محصولات"}
-            </h1>
-            <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-400">
-              {isEn
-                ? `Browse all ${products.length} ArtinAzma products and request a quote for any item.`
-                : `مرور همه‌ی ${products.length} محصول آرتین آزما و استعلام قیمت هر مورد.`}
-            </p>
-
-            <div className="mt-5 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <Search size={17} className="shrink-0 text-slate-400" aria-hidden="true" />
+    <section className={styles.page} dir={dir}>
+      <div className="mx-auto max-w-7xl space-y-5">
+        <WorkspaceSectionHeader icon={Package}
+          label={isEn ? "ArtinAzma equipment" : "تجهیزات آرتین آزما"}
+          title={isEn ? "Product catalog" : "کاتالوگ محصولات"}
+          description={isEn ? "Search by instrument or model, then open its specifications or request a quote." : "نام تجهیز یا مدل را جست‌وجو کنید، مشخصاتش را ببینید یا استعلام قیمت بگیرید."}
+        />
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[12.5rem_minmax(0,1fr)] lg:items-start">
+          <aside className={`${styles.panel} p-4`} aria-label={isEn ? "Product filters" : "فیلتر محصولات"}>
+            <h2 className="mb-2 text-sm">{isEn ? "Filter catalog" : "فیلتر کاتالوگ"}</h2>
+            <div className="relative flex items-center">
+              <Search size={16} className={`${styles.muted} pointer-events-none absolute start-3`} aria-hidden="true" />
               <input
+                type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={isEn ? "Search products..." : "جستجوی محصول..."}
                 aria-label={isEn ? "Search products" : "جستجوی محصول"}
-                className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+                className="ui-input min-h-11 min-w-0 !ps-9"
               />
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2 lg:grid">
               {[{ key: "all", fa: "همه", en: "All" }, ...PRODUCT_CATEGORIES].map((cat) => (
                 <button
                   key={cat.key}
+                  type="button"
+                  aria-pressed={category === cat.key}
                   onClick={() => setCategory(cat.key)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                  className={`min-h-10 rounded-lg px-3 py-2 text-start text-xs font-bold transition ${
                     category === cat.key
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300"
+                      ? "bg-blue-700 text-white"
+                      : `${styles.muted} hover:bg-[var(--work-tint)]`
                   }`}
                 >
                   {isEn ? cat.en : cat.fa}
                 </button>
               ))}
             </div>
+          </aside>
+          <section className="min-w-0" aria-label={isEn ? "Product results" : "نتایج محصولات"}>
+            <p role="status" className={`${styles.muted} mb-3 text-sm`}>
+              {new Intl.NumberFormat(locale).format(filtered.length)} {isEn ? "products" : "محصول"}
+            </p>
+            {filtered.length === 0 ? (
+          <div className={styles.empty}>
+            <Package size={28} className={styles.accent} aria-hidden="true" />
+            <h2 className="text-base">{isEn ? "No products matched your search." : "محصولی با جستجوی شما پیدا نشد."}</h2>
+            <button type="button" className="ui-btn ui-btn-ghost min-h-11 px-4" onClick={() => { setQuery(""); setCategory("all"); }}>
+              {isEn ? "Clear filters" : "پاک کردن فیلترها"}
+            </button>
           </div>
-        </div>
-
-        {filtered.length === 0 ? (
-          <p className="py-16 text-center text-sm text-slate-400">
-            {isEn ? "No products matched your search." : "محصولی با جستجوی شما پیدا نشد."}
-          </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((product) => {
               const quoteHref = `/customer-request?type=price-inquiry&item=${encodeURIComponent(product.title)}`;
               const image = imageMap[product.slug];
               return (
                 <div
                   key={product.slug}
-                  className="flex flex-col justify-between rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
+                  className={`${styles.tile} !flex flex-col`}
                 >
-                  <div className="mb-3 flex h-32 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800">
+                  <div className="mb-2 flex h-40 items-center justify-center overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-200">
                     {image ? (
                       <img
                         src={image}
@@ -107,9 +115,9 @@ export default function ProductsPage() {
                     )}
                   </div>
 
-                  <div className="mb-3 text-sm font-black leading-6 text-slate-900 dark:text-slate-100">
+                  <h3 className="mb-3 flex-1 text-sm font-bold leading-6" dir="auto">
                     {product.title}
-                  </div>
+                  </h3>
 
                   <div className="flex items-center gap-2">
                     <Link
@@ -134,6 +142,8 @@ export default function ProductsPage() {
             })}
           </div>
         )}
+          </section>
+        </div>
       </div>
     </section>
   );

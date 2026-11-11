@@ -17,11 +17,14 @@ export default function LabWorkbench({en,hasDraft,identity,workflowTitle,onNew,o
  const pages=Math.max(1,Math.ceil(matches.length/7)),current=Math.min(page,pages-1),rows=matches.slice(current*7,current*7+7),Arrow=en?ArrowRight:ArrowLeft;
  const format=(v:number)=>new Intl.NumberFormat(en?'en':'fa').format(v);
  const kinds={numeric:t('مدل پایهٔ عددی','Numeric base model'),qualitative:t('کیفی / رده‌ای','Qualitative / ordinal'),sampling:t('نمونه‌برداری','Sampling'),custom:t('مدل اختصاصی','Custom model')};
+ const tools = [
+   ['quick', Gauge, t('محاسبات سریع','Quick calculations'), t('تبدیل واحد و محاسبات مستقل','Conversions and independent tools')],
+   ['materials', Atom, t('مواد و عناصر','Chemicals & elements'), t('هویت، خواص و منابع ماده','Identity, properties and sources')],
+   ['validation', ListChecks, t('صحه‌گذاری و کنترل کیفیت','Validation & QC'), t('مطالعات دقت، بایاس و کالیبراسیون','Precision, bias and calibration')],
+   ['advanced', ClipboardList, t('تحلیل عدم‌قطعیت','Uncertainty analysis'), t('مونت‌کارلو و قاعدهٔ تصمیم','Monte Carlo and decision rules')],
+ ] as const;
  return <div className={s.workbench}>
   <header className={s.welcome}><div className={s.welcomeContent}><span className={s.eyebrow}>ARTIN · LABORATORY WORKSPACE</span><h1>{t('میز کار آزمایشگاه','Laboratory workbench')}</h1><p>{t('آزمون را انتخاب کنید؛ داده‌ها، محاسبه و گزارش را در همان پرونده پیش ببرید.','Select a method and keep its data, calculations and report together.')}</p><div className={s.welcomeActions}><button onClick={onNew} aria-label={t('پروندهٔ جدید','New project')} className={s.primary} type="button"><Plus size={17} aria-hidden="true"/>{t('شروع آزمون جدید','Start a new test')}</button><button onClick={onOpen} className={s.secondary} type="button"><FolderOpen size={17} aria-hidden="true"/>{t('ادامه از فایل','Continue from a file')}</button></div></div><div className={s.welcomeMedia}><LaboratoryArtwork en={en} requestedMotion/></div></header>
-  <div className={s.metrics} aria-label={t('دامنهٔ بانک آزمون','Method bank coverage')}>
-   {[[bank.length,t('روش در بانک','Methods in bank'),BookOpen],[profileCounts.numeric,t('مدل پایهٔ عددی','Numeric base models'),Gauge],[profileCounts.qualitative,t('آزمون کیفی و رده‌ای','Qualitative methods'),ListChecks],[profileCounts.sampling,t('روش نمونه‌برداری','Sampling method'),ClipboardList]].map(([count,label,Icon])=>{const Mark=Icon as typeof BookOpen;return <div key={String(label)}><Mark size={18} aria-hidden="true"/><strong>{format(Number(count))}</strong><span>{String(label)}</span></div>;})}
-  </div>
   <div className={s.layout}>
    <section className={s.catalog} aria-label={t('انتخاب روش آزمون','Select a test method')}>
     <div className={s.panelHeading}><div><h2>{t('بانک روش‌های آزمون','Method library')}</h2></div><span className={s.count}>{format(matches.length)} {t('روش','methods')}</span></div>
@@ -35,8 +38,30 @@ export default function LabWorkbench({en,hasDraft,identity,workflowTitle,onNew,o
    </section>
    <aside className={s.side}>
     <section className={s.project}><div className={s.projectTop}><span className={s.local}><i/>{t('در این نشست','This session')}</span></div><h2>{t('پروندهٔ جاری','Current project')}</h2>{hasDraft?<><div className={s.projectIdentity}><span><ClipboardList size={22} aria-hidden="true"/></span><h3>{identity.title||t('پروندهٔ بدون عنوان','Untitled project')}</h3></div><dl><div><dt>{t('شناسهٔ نمونه','Sample ID')}</dt><dd>{identity.sample||t('ثبت نشده','Not recorded')}</dd></div><div><dt>{t('مسیر آزمون','Workflow')}</dt><dd>{workflowTitle}</dd></div></dl><button type="button" className={s.projectContinue} onClick={onContinue}>{t('ادامهٔ کار روی پرونده','Continue this project')}<Arrow size={17} aria-hidden="true"/></button></>:<><div className={s.emptyProject}><FolderOpen size={30} strokeWidth={1.3} aria-hidden="true"/><h3>{t('پرونده‌ای باز نشده است','No project is open')}</h3><p>{t('یک روش از بانک انتخاب کنید یا فایل پروندهٔ قبلی را باز کنید.','Choose a method from the library or open an existing project file.')}</p></div><button type="button" className={s.projectContinue} onClick={onOpen}>{t('باز کردن فایل پرونده','Open a project file')}<Arrow size={17} aria-hidden="true"/></button></>}<p className={s.storageNote}>{t('ذخیرهٔ خودکار فعال نیست؛ پیش از خروج فایل پرونده را نگه دارید.','Autosave is off. Save a project file before leaving.')}</p></section>
-    <section className={s.resources}><h2>{t('ابزارهای همراه','Lab resources')}</h2>{([['materials',Atom,t('مواد و عناصر','Chemicals & elements'),t('هویت، خواص و منابع ماده','Identity, properties and sources')],['validation',ListChecks,t('صحه‌گذاری و کنترل کیفیت','Validation & QC'),t('مطالعات دقت، بایاس و کالیبراسیون','Precision, bias and calibration')],['advanced',Gauge,t('تحلیل عدم‌قطعیت','Uncertainty analysis'),t('مونت‌کارلو و قاعدهٔ تصمیم','Monte Carlo and decision rules')],['quick',ClipboardList,t('محاسبات سریع','Quick calculations'),t('تبدیل واحد و محاسبات مستقل','Conversions and independent tools')]] as const).map(([key,Icon,title,description])=><button key={key} type="button" onClick={()=>onSection(key)}><span className={s.resourceIcon}><Icon size={18} aria-hidden="true"/></span><span><strong>{title}</strong><small>{description}</small></span><ArrowUpRight size={15} aria-hidden="true"/></button>)}</section>
    </aside>
+  </div>
+  <section className={s.tools} aria-labelledby="workbench-tools">
+    <h2 id="workbench-tools">{t('ابزارهای آزمایشگاه','Lab tools')}</h2>
+    <div className={s.toolGrid}>
+      {tools.map(([key, Icon, title, description]) => (
+        <button key={key} type="button" className={`artin-motion-card ${s.toolTile}`} onClick={() => onSection(key)}>
+          <span className={s.resourceIcon}><Icon size={18} aria-hidden="true" /></span>
+          <ArrowUpRight size={15} className={s.toolArrow} aria-hidden="true" />
+          <strong>{title}</strong>
+          <small>{description}</small>
+        </button>
+      ))}
+    </div>
+  </section>
+  <div className={s.metrics} aria-label={t('دامنهٔ بانک آزمون','Method bank coverage')}>
+    {([
+      [bank.length, t('روش در بانک','Methods in bank'), BookOpen],
+      [profileCounts.numeric, t('مدل پایهٔ عددی','Numeric base models'), Gauge],
+      [profileCounts.qualitative, t('آزمون کیفی و رده‌ای','Qualitative methods'), ListChecks],
+      [profileCounts.sampling, t('روش نمونه‌برداری','Sampling method'), ClipboardList],
+    ] as const).map(([count, label, Icon]) => (
+      <div key={label}><Icon size={18} aria-hidden="true" /><strong>{format(count)}</strong><span>{label}</span></div>
+    ))}
   </div>
  </div>;
 }

@@ -1,4 +1,6 @@
 "use client";
+import { AssistantRuntimeProvider, MessagePrimitive, ThreadPrimitive, generateId, useExternalStoreRuntime } from "@assistant-ui/react";
+import type { AttachmentAdapter, CreateAppendMessage, ThreadMessageLike } from "@assistant-ui/react";
 import { useEffect, useRef, useState, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,7 +22,9 @@ import {
 import { findRelatedDevices } from "@/lib/device-assets";
 import {
   shouldShowRelatedDeviceCards,
+  isNonEquipmentTurn,
   cleanAssistantOutput,
+  cleanMarkdownText,
   normalizeSuggestedQuestions,
   testTypes,
   imageTypes,
@@ -34,7 +38,6 @@ const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: fal
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTTS } from "@/hooks/useTTS";
 import { useExportChat } from "@/hooks/useExportChat";
-import { useStagedImage } from "@/hooks/useStagedImage";
 import { useScrollToBottom } from "@/hooks/useScrollToBottom";
 import { useCustomerChatSession } from "@/hooks/useCustomerChatSession";
 import StarterQuestions from "@/components/StarterQuestions";
@@ -49,13 +52,38 @@ import type {
 } from "@/lib/chat-types";
 
 import RateLimitBanner from "@/app/assistant/RateLimitBanner";
-import AssistantWelcome from "@/app/assistant/AssistantWelcome";
 import AssistantQuickActions from "@/app/assistant/AssistantQuickActions";
 import DropOverlay from "@/app/assistant/DropOverlay";
 import ScrollToBottomButton from "@/app/assistant/ScrollToBottomButton";
 import ChatComposer from "@/app/assistant/ChatComposer";
-import HeroComposer from "@/app/assistant/HeroComposer";
+import AssistantStart from "@/app/assistant/AssistantStart";
 const LabChatLauncher = dynamic(() => import("@/app/calculators/workspace/LabAssistant"), { ssr: false });
+
+const imageAttachmentAdapter: AttachmentAdapter = {
+  accept: "image/*",
+  async add({ file }) {
+    return {
+      id: generateId(),
+      type: "image",
+      name: file.name,
+      contentType: file.type,
+      file,
+      status: { type: "requires-action", reason: "composer-send" },
+    };
+  },
+  async send(attachment) {
+    // The existing analysis endpoint accepts the original File in FormData.
+    return { ...attachment, status: { type: "complete" }, content: [] };
+  },
+  async remove() {},
+};
+
+function convertChatMessage(item: ChatMessage): ThreadMessageLike {
+  return {
+    role: item.role,
+    content: [{ type: "text", text: item.role === "assistant" ? cleanMarkdownText(item.content) : item.content }],
+  };
+}
 
 type AnalysisResponse = Record<string, unknown> & {
   ai_analysis?: string;
@@ -121,7 +149,6 @@ function AssistantPageInner() {
   const { locale, dir } = useI18n();
   const isEn = locale === "en";
   const sessionIdParam = searchParams.get("session_id");
-  const [message, setMessage] = useState("");
   const [domain, setDomain] = useState("auto");
   const [responseMode, setResponseMode] = useState("auto");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -146,17 +173,7 @@ function AssistantPageInner() {
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const [rateLimitTotal, setRateLimitTotal] = useState(60);
-  const {
-    stagedImage,
-    stagedImageUrl,
-    isDragOver,
-    stageImageFile,
-    clearStagedImage,
-    handlePaste,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-  } = useStagedImage();
+  const [isDragOver, setIsDragOver] = useState(false);
   const { speakingIndex, ttsNote, setTtsNote, speakMessage } = useTTS();
   const [canUndo, setCanUndo] = useState(false);
   const { showExportMenu, setShowExportMenu, exportChat, exportChatWord, exportChatText } = useExportChat(messages);
@@ -179,7 +196,6 @@ function AssistantPageInner() {
   };
   const abortControllerRef = useRef<AbortController | null>(null);
   const abortIntentRef = useRef<"undo" | "stop" | null>(null);
-  const lastPromptRef = useRef<{ actual: string; visible: string } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedMsgRef = useRef<string>("");
   const {
@@ -203,24 +219,15 @@ function AssistantPageInner() {
   });
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const draftMessageRef = useRef("");
+  const imageSelectionRef = useRef(0);
 
   function syncComposerMessage(value: string) {
-    draftMessageRef.current = value;
-    if (chatInputRef.current && chatInputRef.current.value !== value) {
-      chatInputRef.current.value = value;
-    }
-    setMessage(value);
-  }
-
-  function handleComposerMessageChange(value: string) {
-    draftMessageRef.current = value;
-    setMessage(value);
+    runtime.thread.composer.setText(value);
   }
 
   const { voiceState, toggleVoice, isSupported: isVoiceSupported } = useVoiceInput(
     (transcript) => {
-      const currentText = chatInputRef.current?.value || draftMessageRef.current || message;
+      const currentText = chatInputRef.current?.value ?? runtime.thread.composer.getState().text;
       syncComposerMessage(currentText ? `${currentText} ${transcript}` : transcript);
     }
   );
@@ -303,15 +310,6 @@ ${cleanAnswer}`,
     sendMessage(prompts[action], visibleMessages[action]);
   }
 
-  // Undo send — abort in-flight request and restore message
-  // Edit & Retry: truncate history to before the edited message, re-send
-  function handleEditMessage(msgIndex: number, newText: string) {
-    // Keep only messages before this user message
-    const history = messages.slice(0, msgIndex);
-    setMessages(history);
-    sendMessage(newText, newText);
-  }
-
   // «ثبت استعلام قیمت» از زیر یک پاسخ: سؤالِ کاربرِ همان گفتگو را به‌عنوان موضوع در
   // فرم درخواست پیش‌پُر می‌کند — از همان مکانیزم query paramِ موجودِ فرم (type + item).
   function startQuoteRequest(assistantIndex: number) {
@@ -347,7 +345,6 @@ ${cleanAnswer}`,
     if (!abortControllerRef.current) return;
     abortIntentRef.current = "stop";
     abortControllerRef.current.abort();
-    abortControllerRef.current = null;
     if (undoTimerRef.current) {
       clearTimeout(undoTimerRef.current);
       undoTimerRef.current = null;
@@ -355,18 +352,20 @@ ${cleanAnswer}`,
     setCanUndo(false);
   }
 
-  function regenerateLastResponse() {
-    if (loading) return;
-    const lastPrompt = lastPromptRef.current;
-    if (!lastPrompt) return;
+  async function regenerateLastResponse(parentId: string | null): Promise<void> {
+    const promptIndex = messages.length - 2;
+    const prompt = messages[promptIndex];
+    if (prompt?.role !== "user" || prompt.attachment || messages.at(-1)?.role !== "assistant") return;
+    if (runtime.thread.getMessageByIndex(promptIndex).getState().id !== parentId) return;
+    await sendMessage(prompt.actualPrompt || prompt.content, prompt.content, messages.slice(0, promptIndex));
+  }
 
-    const lastAssistantIndex = [...messages].reverse().findIndex((item) => item.role === "assistant");
-    if (lastAssistantIndex === -1) return;
-    const indexFromStart = messages.length - 1 - lastAssistantIndex;
-    const baseMessages = messages.slice(0, Math.max(0, indexFromStart - 1));
-    setMessages(baseMessages);
-
-    sendMessage(lastPrompt.actual, lastPrompt.visible, baseMessages);
+  async function editMessage(item: Exclude<CreateAppendMessage, string>): Promise<void> {
+    const index = runtime.thread.getState().messages.findIndex((message) => message.id === item.sourceId);
+    const original = messages[index];
+    if (original?.role !== "user" || original.attachment) return;
+    const prompt = item.content.map((part) => part.type === "text" ? part.text : "").join("").trim();
+    await sendMessage(prompt, prompt, messages.slice(0, index));
   }
 
 
@@ -484,37 +483,24 @@ ${cleanAnswer}`,
     }, 18);
   }
 
-  async function sendMessage(customMessage?: string, displayMessage?: string, historyOverride?: ChatMessage[]) {
-    if (loading) return;
-    // If there's a staged image, route to image analysis instead
-    if (stagedImage && !customMessage) {
-      const imgFile = stagedImage;
-      const note = (chatInputRef.current?.value ?? message).trim();
-      clearStagedImage();
-      syncComposerMessage("");
-      uploadAndAnalyzeImage(imgFile, note, "general");
-      return;
-    }
-
-    const liveInputMessage = chatInputRef.current?.value ?? "";
-    const finalMessage = customMessage || liveInputMessage || message;
+  async function sendMessage(finalMessage: string, displayMessage?: string, historyOverride?: ChatMessage[]) {
+    if (loading || guestOutOfQuestions || rateLimitCountdown > 0) return;
     const visibleMessage = displayMessage || finalMessage;
 
     if (!finalMessage.trim()) return;
 
-    if (guestOutOfQuestions) return;
-
     const previousMessages = historyOverride || messages;
     const userId = getOrCreateUserId();
-    lastPromptRef.current = { actual: finalMessage, visible: visibleMessage };
 
     const userMessage: ChatMessage = {
       role: "user",
       content: visibleMessage,
+      actualPrompt: displayMessage ? finalMessage : undefined,
     };
 
     abortIntentRef.current = null;
-    abortControllerRef.current = new AbortController();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     if (undoTimerRef.current) {
       clearTimeout(undoTimerRef.current);
@@ -536,18 +522,6 @@ ${cleanAnswer}`,
 
     // Undo window: 5 seconds before Artin responds
     undoTimerRef.current = setTimeout(() => { setCanUndo(false); }, 5000);
-
-    const customerSessionId = await ensureCustomerSession(visibleMessage);
-
-    await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
-      domain,
-      response_mode: responseMode,
-      actual_prompt: displayMessage ? finalMessage : undefined,
-    });
-
-    if (abortIntentRef.current === "undo") {
-      return;
-    }
 
     const activeCustomer = customer;
 
@@ -571,11 +545,20 @@ ${cleanAnswer}`,
     let finalAssistantMsg: ChatMessage = { role: "assistant", content: "" };
 
     try {
+      const customerSessionId = await ensureCustomerSession(visibleMessage);
+      controller.signal.throwIfAborted();
+      await saveCustomerChatMessage(customerSessionId, "user", visibleMessage, {
+        domain,
+        response_mode: responseMode,
+        actual_prompt: displayMessage ? finalMessage : undefined,
+      });
+      controller.signal.throwIfAborted();
+
       const res = await fetch(apiUrl("/chat/stream"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyPayload),
-        signal: abortControllerRef.current?.signal,
+        signal: controller.signal,
       });
 
       if (res.status === 401 || res.status === 403) {
@@ -645,7 +628,7 @@ ${cleanAnswer}`,
               ]);
             } else if (event.type === "done") {
               const finalContent = cleanAssistantOutput(accumulatedText);
-              const relatedDevices = shouldShowRelatedDeviceCards(finalMessage, domain)
+              const relatedDevices = shouldShowRelatedDeviceCards(visibleMessage, domain)
                 ? findRelatedDevices(finalMessage, finalContent, 2)
                 : [];
               finalAssistantMsg = {
@@ -683,7 +666,6 @@ ${cleanAnswer}`,
       setLoading(false);
       setCanUndo(false);
       if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
-      abortControllerRef.current = null;
       void metaData; // suppress unused warning
 
       // پیشنهاد سوالات مرتبط (non-blocking)
@@ -706,7 +688,7 @@ ${cleanAnswer}`,
           .catch(() => {});
       }
     } catch (error) {
-      console.error("CHAT ERROR:", error);
+      if (abortControllerRef.current !== controller) return;
       const aborted =
         (error instanceof DOMException && error.name === "AbortError") ||
         (error instanceof Error && error.name === "AbortError");
@@ -714,9 +696,10 @@ ${cleanAnswer}`,
         return;
       }
       if (aborted && abortIntentRef.current === "stop") {
+        const stoppedLabel = isEn ? "Response stopped." : "پاسخ متوقف شد.";
         const stoppedContent = accumulatedText.trim()
-          ? `${accumulatedText}\n\n_پاسخ متوقف شد._`
-          : "پاسخ متوقف شد.";
+          ? `${accumulatedText}\n\n_${stoppedLabel}_`
+          : stoppedLabel;
         setMessages([
           ...previousMessages,
           userMessage,
@@ -724,6 +707,7 @@ ${cleanAnswer}`,
         ]);
         return;
       }
+      console.error("CHAT ERROR:", error);
       const isOffline = !navigator.onLine;
       setMessages([
         ...previousMessages,
@@ -736,13 +720,15 @@ ${cleanAnswer}`,
         },
       ]);
     } finally {
-      setLoading(false);
-      setCanUndo(false);
-      abortControllerRef.current = null;
-      abortIntentRef.current = null;
-      if (undoTimerRef.current) {
-        clearTimeout(undoTimerRef.current);
-        undoTimerRef.current = null;
+      if (abortControllerRef.current === controller) {
+        setLoading(false);
+        setCanUndo(false);
+        abortControllerRef.current = null;
+        abortIntentRef.current = null;
+        if (undoTimerRef.current) {
+          clearTimeout(undoTimerRef.current);
+          undoTimerRef.current = null;
+        }
       }
     }
   }
@@ -751,25 +737,61 @@ ${cleanAnswer}`,
     savedMsgRef.current = "";
     setMessages([]);
     syncComposerMessage("");
+    imageSelectionRef.current++;
+    void runtime.thread.composer.clearAttachments();
     setShowTools(false);
     setActiveSessionId(null);
     router.replace("/assistant");
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-    // Ctrl+Enter or Cmd+Enter also sends
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      sendMessage();
+  const runtime = useExternalStoreRuntime({
+    messages,
+    isRunning: loading,
+    isSendDisabled: guestOutOfQuestions,
+    adapters: { attachments: customer ? imageAttachmentAdapter : undefined },
+    onCancel: async () => { stopStreaming(); },
+    onEdit: editMessage,
+    onReload: regenerateLastResponse,
+    convertMessage: convertChatMessage,
+    onNew: async (item) => {
+      if (loading || guestOutOfQuestions) return;
+      const prompt = item.content.map((part) => part.type === "text" ? part.text : "").join("");
+      const attachment = item.attachments?.[0];
+      if (attachment?.file && customer) {
+        const type = item.metadata.custom?.analysisType;
+        const analysisType = typeof type === "string" ? type : "general";
+        if (attachment.type === "image") {
+          await uploadAndAnalyzeImage(attachment.file, prompt.trim(), analysisType);
+        } else {
+          await uploadAndAnalyzeFile(attachment.file, prompt, analysisType);
+        }
+      } else {
+        await sendMessage(prompt);
+      }
+    },
+  });
+
+  async function stageImage(file: File) {
+    if (!customer || !file.type.startsWith("image/")) return;
+    const selection = ++imageSelectionRef.current;
+    const composer = runtime.thread.composer;
+    await composer.clearAttachments();
+    if (selection === imageSelectionRef.current) await composer.addAttachment(file);
+  }
+
+  function handleImagePaste(event: React.ClipboardEvent) {
+    const image = Array.from(event.clipboardData.items)
+      .find((item) => item.type.startsWith("image/"))?.getAsFile()
+      ?? Array.from(event.clipboardData.files).find((file) => file.type.startsWith("image/"));
+    if (image) {
+      event.preventDefault();
+      void stageImage(image);
     }
   }
 
-  async function uploadAndAnalyzeFile(file: File) {
+  async function uploadAndAnalyzeFile(file: File, note: string, testType: string) {
     if (!customer) { router.push("/customer-register"); return; }
+    setLoading(true);
     setShowTools(false);
 
     const userMessage: ChatMessage = {
@@ -778,8 +800,8 @@ ${cleanAnswer}`,
       attachment: {
         name: file.name,
         kind: "file",
-        analysisType: getTestTypeLabel(chatTestType),
-        note: chatUserNote,
+        analysisType: getTestTypeLabel(testType),
+        note,
         status: "analyzing",
       },
     };
@@ -798,13 +820,12 @@ ${cleanAnswer}`,
       },
     );
     setMessages([...previousMessages, userMessage]);
-    setLoading(true);
 
     const _fileCustomer = customer || getSavedCustomer();
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("test_type", chatTestType);
-    formData.append("user_note", chatUserNote);
+    formData.append("test_type", testType);
+    formData.append("user_note", note);
     formData.append("user_id", _fileCustomer ? `customer_${_fileCustomer.id}` : getOrCreateUserId());
     if (_fileCustomer) formData.append("customer_id", String(_fileCustomer.id));
 
@@ -817,11 +838,11 @@ ${cleanAnswer}`,
       const data = await readAnalysisResponse(res);
 
       const relatedDevices = shouldShowRelatedDeviceCards(
-        `${file.name}\n${chatUserNote}`,
+        `${file.name}\n${note}`,
         domain,
       )
         ? findRelatedDevices(
-            `${file.name}\n${chatUserNote}`,
+            `${file.name}\n${note}`,
             data.ai_analysis || data.error || "",
             2,
           )
@@ -869,12 +890,11 @@ ${cleanAnswer}`,
     }
   }
 
-  async function uploadAndAnalyzeImage(file: File, noteOverride?: string, typeOverride?: string) {
+  async function uploadAndAnalyzeImage(file: File, note: string, imgType: string) {
     if (!customer) { router.push("/customer-register"); return; }
+    setLoading(true);
     setShowTools(false);
 
-    const note = noteOverride !== undefined ? noteOverride : chatImageNote;
-    const imgType = typeOverride || chatImageType;
     const previewUrl = URL.createObjectURL(file);
 
     const userMessage: ChatMessage = {
@@ -904,7 +924,6 @@ ${cleanAnswer}`,
       },
     );
     setMessages([...previousMessages, userMessage]);
-    setLoading(true);
 
     const _imgCustomer = customer || getSavedCustomer();
     const formData = new FormData();
@@ -998,11 +1017,27 @@ ${cleanAnswer}`,
 
     e.target.value = "";
   }
-  function confirmFileAnalysis() {
-    if (!pendingFile) return;
+  function appendAnalysis(file: File, type: "image" | "document", analysisType: string, note: string) {
+    runtime.thread.append({
+      role: "user",
+      content: note ? [{ type: "text", text: note }] : [],
+      attachments: [{
+        id: generateId(),
+        type,
+        name: file.name,
+        contentType: file.type,
+        file,
+        status: { type: "complete" },
+        content: [],
+      }],
+      metadata: { custom: { analysisType } },
+    });
+  }
 
+  function confirmFileAnalysis() {
+    if (!pendingFile || loading) return;
     setShowFileOptions(false);
-    uploadAndAnalyzeFile(pendingFile);
+    appendAnalysis(pendingFile, "document", chatTestType, chatUserNote);
     setPendingFile(null);
   }
 
@@ -1014,10 +1049,10 @@ ${cleanAnswer}`,
   }
 
   function confirmImageAnalysis() {
-    if (!pendingImage) return;
+    if (!pendingImage || loading) return;
 
     setShowImageOptions(false);
-    uploadAndAnalyzeImage(pendingImage);
+    appendAnalysis(pendingImage, "image", chatImageType, chatImageNote);
     setPendingImage(null);
   }
 
@@ -1096,12 +1131,62 @@ ${cleanAnswer}`,
       </section>
     );
   }
+  const composer = (
+    <ChatComposer
+      welcome={messages.length === 0 && !loading}
+      rateLimitActive={rateLimitCountdown > 0}
+      toolsEnabled={!!customer}
+      isEn={isEn}
+      showTools={showTools}
+      onToggleTools={() => setShowTools((prev) => !prev)}
+      onToolSelect={handleToolClick}
+      isDragOver={isDragOver}
+      onStageImage={(file) => { void stageImage(file); }}
+      chatInputRef={chatInputRef}
+      onPaste={handleImagePaste}
+      isVoiceSupported={!!customer && isVoiceSupported}
+      onToggleVoice={toggleVoice}
+      voiceState={voiceState}
+      loading={loading}
+    />
+  );
+  const startContent = (
+    <>
+      <RateLimitBanner countdown={rateLimitCountdown} total={rateLimitTotal} isEn={isEn} />
+      {guestOutOfQuestions ? (
+        <div className="w-full max-w-xl">
+          {needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} appMode={appMode} />}
+        </div>
+      ) : composer}
+      {customer && (
+        <AssistantQuickActions
+          isEn={isEn}
+          onUpload={() => handleToolClick("upload")}
+          onRequest={() => handleToolClick("customer-request")}
+        />
+      )}
+    </>
+  );
+  const starterQuestions = !guestOutOfQuestions && (
+    <StarterQuestions onSelect={() => chatInputRef.current?.focus()} />
+  );
+
   return (
+    <AssistantRuntimeProvider runtime={runtime}>
+    <ThreadPrimitive.Root asChild>
     <section
-      className={`relative flex h-full max-h-screen min-w-0 flex-col overflow-hidden bg-[#ffffff] transition-colors ${isDragOver ? "ring-2 ring-inset ring-blue-400 bg-blue-50/30" : ""}`}
-      onDragOver={(e) => { e.preventDefault(); if (customer) handleDragOver(e); }}
-      onDragLeave={handleDragLeave}
-      onDrop={(e) => { e.preventDefault(); if (customer) handleDrop(e); }}
+      className={`artin-workspace relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-colors ${isDragOver ? "ring-2 ring-inset ring-blue-400 bg-blue-50/30" : ""}`}
+      onDragOver={(event) => {
+        event.preventDefault();
+        if (customer && Array.from(event.dataTransfer.types).includes("Files")) setIsDragOver(true);
+      }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        setIsDragOver(false);
+        const file = event.dataTransfer.files[0];
+        if (file) void stageImage(file);
+      }}
     >
       {searchParams.get('lab')==='1'&&<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-slate-100 px-3 py-2"><span className="text-xs text-slate-500">{isEn?'Attached laboratory project':'پروندهٔ منتقل‌شده از آزمایشگاه'}</span><ApprovedCustomerGate><LabChatLauncher en={isEn}/></ApprovedCustomerGate><Link className="text-xs underline" href="/assistant">{isEn?'Return to general chat':'بازگشت به چت عمومی'}</Link></div>}
       <DropOverlay show={isDragOver} isEn={isEn} />
@@ -1167,8 +1252,8 @@ ${cleanAnswer}`,
         </div>
       )}
 
-      <header className="shrink-0 border-b border-slate-100 bg-white">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
+      <header className="artin-workspace-header shrink-0 border-b">
+        <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
           <div className="flex items-center gap-2.5">
             <img
               src="/images/artin-avatar.png"
@@ -1178,16 +1263,17 @@ ${cleanAnswer}`,
                 e.currentTarget.style.display = "none";
               }}
             />
-            <span className="text-[14px] font-bold text-slate-800 sm:text-[15px]">{isEn ? "Artin" : "آرتین"}</span>
+            <span className="text-[14px] font-bold text-[var(--foreground)] sm:text-[15px]">{isEn ? "Artin AI" : "آرتین AI"}</span>
             <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 sm:text-[11px]">
               {isEn ? "Online" : "آنلاین"}
             </span>
           </div>
 
-          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
             {!customer&&<><Link href="/customer-login?next=/assistant" className="shrink-0 rounded-lg bg-blue-700 px-3 py-2 text-xs font-bold text-white">{isEn?"Sign in":"ورود به حساب"}</Link><Link href="/customer-register" className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">{isEn?"Register":"ثبت‌نام"}</Link></>}
             {/* Domain + mode — visible on desktop, hidden on mobile */}
             <select
+              aria-label={isEn ? "Question domain" : "حوزهٔ پرسش"}
               disabled={!customer}
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
@@ -1203,6 +1289,7 @@ ${cleanAnswer}`,
               <option value="analysis">{domainLabels.analysis}</option>
             </select>
             <select
+              aria-label={isEn ? "Response style" : "سبک پاسخ"}
               disabled={!customer}
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
@@ -1215,9 +1302,13 @@ ${cleanAnswer}`,
             </select>
             {/* Mobile settings toggle — only on mobile */}
             <button
+              type="button"
               disabled={!customer}
               onClick={() => setShowMobileSettings((v) => !v)}
-              title={isEn ? "Settings" : "تنظیمات"}
+              aria-label={isEn ? "Chat settings" : "تنظیمات گفتگو"}
+              aria-expanded={showMobileSettings}
+              aria-controls={showMobileSettings ? "artin-mobile-chat-settings" : undefined}
+              title={isEn ? "Chat settings" : "تنظیمات گفتگو"}
               className={`flex h-8 w-8 items-center justify-center rounded-xl border transition md:hidden ${
                 showMobileSettings
                   ? "border-blue-300 bg-blue-50 text-blue-600"
@@ -1281,14 +1372,16 @@ ${cleanAnswer}`,
 
       {/* Mobile settings panel — slides in below header on small screens */}
       {showMobileSettings && (
-        <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-3 md:hidden" dir={dir}>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-xs font-bold text-slate-500">{isEn ? "Domain:" : "حوزه:"}</label>
+        <div id="artin-mobile-chat-settings" className="artin-motion-panel shrink-0 border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 py-3 md:hidden" dir={dir}>
+          <div className="grid grid-cols-2 items-start gap-x-2 gap-y-1.5">
+            <label htmlFor="artin-mobile-domain" className="text-xs font-semibold">{isEn ? "Question domain" : "حوزهٔ پرسش"}</label>
+            <label htmlFor="artin-mobile-response-mode" className="text-xs font-semibold">{isEn ? "Response style" : "سبک پاسخ"}</label>
             <select
+              id="artin-mobile-domain"
               disabled={!customer}
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="min-h-10 min-w-0 rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-2 text-xs"
             >
               <option value="auto">{domainLabels.auto}</option>
               <option value="catalyst">{domainLabels.catalyst}</option>
@@ -1299,12 +1392,12 @@ ${cleanAnswer}`,
               <option value="troubleshooting">{domainLabels.troubleshooting}</option>
               <option value="analysis">{domainLabels.analysis}</option>
             </select>
-            <label className="text-xs font-bold text-slate-500">{isEn ? "Answer:" : "پاسخ:"}</label>
             <select
+              id="artin-mobile-response-mode"
               disabled={!customer}
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="min-h-10 min-w-0 rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-2 text-xs"
             >
               <option value="auto">{responseModeLabels.auto}</option>
               <option value="brief">{responseModeLabels.brief}</option>
@@ -1315,9 +1408,13 @@ ${cleanAnswer}`,
         </div>
       )}
 
-      <div
+      <ThreadPrimitive.Viewport
         ref={scrollContainerRef}
         onScroll={handleChatScroll}
+        autoScroll={false}
+        scrollToBottomOnRunStart={false}
+        scrollToBottomOnInitialize={false}
+        scrollToBottomOnThreadSwitch={false}
         className="min-h-0 flex-1 overflow-y-auto"
       >
         {loadingSavedSession && (
@@ -1325,82 +1422,54 @@ ${cleanAnswer}`,
             {isEn ? "Loading saved conversation..." : "در حال بارگذاری گفتگوی ذخیره‌شده..."}
           </div>
         )}
-        <div className="mx-auto w-full max-w-6xl px-2 pb-3 pt-3 sm:px-3 sm:pb-4 sm:pt-4 md:px-6 md:pb-6 md:pt-6">
+        <div className="mx-auto w-full max-w-5xl px-3 pb-3 pt-3 sm:px-3 sm:pb-4 sm:pt-4 md:px-6 md:pb-6 md:pt-6">
           {messages.length === 0 && !loading ? (
-            <div className="mx-auto flex min-h-[calc(100vh-130px)] max-w-4xl flex-col items-center justify-center px-4 text-center">
-              <AssistantWelcome isEn={isEn} />
-
-              <RateLimitBanner countdown={rateLimitCountdown} total={rateLimitTotal} isEn={isEn} />
-
-              {/* A guest who spent their allowance on a previous visit lands
-                  here with an empty conversation — show the card, not a
-                  composer that would swallow whatever they type. */}
-              {guestOutOfQuestions ? (
-                <div className="w-full max-w-xl">
-                  {needsContact ? <GuestContactCard isEn={isEn} onDone={() => setGuestIdentified(true)} /> : <GuestRegistrationCard isEn={isEn} appMode={appMode} />}
-                </div>
-              ) : (
-              <HeroComposer
-                toolsEnabled={!!customer}
-                showTools={showTools}
-                onToggleTools={() => setShowTools((prev) => !prev)}
-                onToolSelect={handleToolClick}
-                chatInputRef={chatInputRef}
-                message={message}
-                onMessageChange={handleComposerMessageChange}
-                onKeyDown={handleKeyDown}
-                isVoiceSupported={!!customer && isVoiceSupported}
-                onToggleVoice={toggleVoice}
-                voiceState={voiceState}
-                loading={loading}
-                onStop={stopStreaming}
-                onSend={() => sendMessage()}
-                rateLimitActive={rateLimitCountdown > 0}
-              />
-              )}
-
-              {customer && <AssistantQuickActions
-                isEn={isEn}
-                onUpload={() => handleToolClick("upload")}
-                onRequest={() => handleToolClick("customer-request")}
-              />}
-
-              {/* سوال‌های پیشنهادی آماده — وقتی سهمیه تمام شده بی‌اثرند */}
-              {!guestOutOfQuestions && (
-                <StarterQuestions onSelect={(q) => sendMessage(q, q)} />
-              )}
-            </div>
+            <AssistantStart isEn={isEn} suggestions={starterQuestions}>
+              {startContent}
+            </AssistantStart>
           ) : (
             <div
-              className="mx-auto w-full max-w-5xl space-y-2 pb-3 sm:space-y-4 md:space-y-6"
+              className="mx-auto w-full max-w-[780px] space-y-6 pb-3 sm:space-y-8"
               role="log"
               aria-live="polite"
               aria-relevant="additions text"
               aria-label={isEn ? "Conversation" : "گفتگو"}
             >
-              {messages.map((item, index) => (
-                <div key={index}><MessageBubble
-                  toolsEnabled={!!customer}
-                  item={item}
-                  index={index}
-                  loading={loading}
-                  onCopy={copyText}
-                  onRequest={() => router.push("/customer-request")}
-                  onQuote={() => startQuoteRequest(index)}
-                  onQuickAction={sendQuickAction}
-                  onFeedback={sendAnswerFeedback}
-                  feedbackValue={
-                    item.question_id
-                      ? feedbackStatus[item.question_id]
-                      : undefined
-                  }
-                  onSpeak={speakMessage}
-                  isSpeaking={speakingIndex === index}
-                  onEdit={handleEditMessage}
-                  onRegenerate={regenerateLastResponse}
-                  canRegenerate={!loading && item.role === "assistant" && index === messages.length - 1}
-                />{item.role==='assistant'&&item.question_id&&['file-analysis','image-analysis'].includes(item.detected_domain??'')&&<Link href={`/laboratory-imports?analysis=${item.question_id}`} className="mx-4 my-2 inline-flex rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">{isEn?'Review file data and calculate':'بررسی داده‌های این فایل و اجرای محاسبه'}</Link>}</div>
-              ))}
+              <ThreadPrimitive.Messages>
+                {({ message: { index } }) => {
+                  const item = messages[index];
+                  if (!item) return null;
+                  const prompt = messages[index - 1];
+                  return (
+                    <MessagePrimitive.Root>
+                      <MessageBubble
+                        toolsEnabled={!!customer}
+                        item={item.relatedDevices?.length && prompt?.role === "user" &&
+                          isNonEquipmentTurn(prompt.content) ? { ...item, relatedDevices: undefined } : item}
+                        index={index}
+                        loading={loading}
+                        onCopy={copyText}
+                        onRequest={() => router.push("/customer-request")}
+                        onQuote={() => startQuoteRequest(index)}
+                        onQuickAction={sendQuickAction}
+                        onFeedback={sendAnswerFeedback}
+                        feedbackValue={item.question_id ? feedbackStatus[item.question_id] : undefined}
+                        onSpeak={speakMessage}
+                        isSpeaking={speakingIndex === index}
+                        canEdit={!loading && rateLimitCountdown === 0 && !guestOutOfQuestions}
+                        canRegenerate={!loading && rateLimitCountdown === 0 && item.role === "assistant" &&
+                          index === messages.length - 1 && prompt?.role === "user" && !prompt.attachment}
+                      />
+                      {item.role === "assistant" && item.question_id &&
+                        ["file-analysis", "image-analysis"].includes(item.detected_domain ?? "") && (
+                          <Link href={`/laboratory-imports?analysis=${item.question_id}`} className="mx-4 my-2 inline-flex rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">
+                            {isEn ? "Review file data and calculate" : "بررسی داده‌های این فایل و اجرای محاسبه"}
+                          </Link>
+                        )}
+                    </MessagePrimitive.Root>
+                  );
+                }}
+              </ThreadPrimitive.Messages>
 
               {/* دروازه مهمان: یا سؤال تجاری پرسیده، یا سهمیه رایگانش تمام شده */}
               {guestOutOfQuestions && (
@@ -1480,7 +1549,7 @@ ${cleanAnswer}`,
             </div>
           )}
         </div>
-      </div>
+      </ThreadPrimitive.Viewport>
       <ScrollToBottomButton
         show={showScrollBtn && messages.length > 0}
         onClick={scrollToBottom}
@@ -1491,31 +1560,11 @@ ${cleanAnswer}`,
           silently swallows what the visitor types. The contact card above is
           the way forward, and it comes back the moment they fill it in. */}
       {messages.length > 0 && !guestOutOfQuestions && (
-        <ChatComposer
-          toolsEnabled={!!customer}
-          isEn={isEn}
-          showTools={showTools}
-          onToggleTools={() => setShowTools((prev) => !prev)}
-          onToolSelect={handleToolClick}
-          isDragOver={isDragOver}
-          stagedImage={stagedImage}
-          stagedImageUrl={stagedImageUrl}
-          onClearStagedImage={clearStagedImage}
-          onStageImage={(file) => { if (customer) stageImageFile(file); }}
-          chatInputRef={chatInputRef}
-          message={message}
-          onMessageChange={handleComposerMessageChange}
-          onKeyDown={handleKeyDown}
-          onPaste={(e) => { if (customer) handlePaste(e); else if (e.clipboardData.files.length) e.preventDefault(); }}
-          isVoiceSupported={!!customer && isVoiceSupported}
-          onToggleVoice={toggleVoice}
-          voiceState={voiceState}
-          loading={loading}
-          onStop={stopStreaming}
-          onSend={() => sendMessage()}
-        />
+        composer
       )}
     </section>
+    </ThreadPrimitive.Root>
+    </AssistantRuntimeProvider>
   );
 }
 

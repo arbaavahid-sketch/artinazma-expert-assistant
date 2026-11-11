@@ -35,12 +35,14 @@ def test_additional_component_correlations_and_invalid_targets(monkeypatch):
     assert answer['simulation']['standard_uncertainty']==pytest.approx(.15,rel=.05)
     for targets in [[2],[],[0,0]]:
         data['measurement_model']['additional_targets']=targets
-        with pytest.raises(ValueError):calculate_budget(BudgetRequest(**data))
+        with pytest.raises(ValueError):
+            calculate_budget(BudgetRequest(**data))
 
 @pytest.mark.parametrize('kind',list(MODEL_REGISTRY))
 def test_every_registered_model_accepts_additional_components(kind,monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    definition=MODEL_REGISTRY[kind];nominal=definition['example']
+    definition=MODEL_REGISTRY[kind]
+    nominal=definition['example']
     value,base=model_at_nominal(kind,nominal)
     indices=definition.get('uncertain_indices',list(range(len(nominal))))
     targets=([0] if indices else [])+[-1]
@@ -55,13 +57,17 @@ def test_every_registered_model_accepts_additional_components(kind,monkeypatch):
 
 @pytest.mark.parametrize("kind",list(MODEL_REGISTRY))
 def test_registered_equation_gradient_against_finite_difference(kind):
-    definition=MODEL_REGISTRY[kind];nominal=definition['example']
+    definition=MODEL_REGISTRY[kind]
+    nominal=definition['example']
     result,gradient=model_at_nominal(kind,nominal)
     assert math.isfinite(result)
     indices=definition.get('uncertain_indices',list(range(len(nominal))))
     for position,index in enumerate(indices):
         h=max(abs(nominal[index]),.01)*1e-4
-        plus=list(nominal);minus=list(nominal);plus[index]+=h;minus[index]-=h
+        plus=list(nominal)
+        minus=list(nominal)
+        plus[index]+=h
+        minus[index]-=h
         high=evaluate_tree(definition['expression'],plus)
         low=evaluate_tree(definition['expression'],minus)
         independent=(high-low)/(2*h)
@@ -70,7 +76,8 @@ def test_registered_equation_gradient_against_finite_difference(kind):
 @pytest.mark.parametrize("kind",list(MODEL_REGISTRY))
 def test_every_registered_model_runs_full_equation_monte_carlo(kind,monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    definition=MODEL_REGISTRY[kind];nominal=definition['example']
+    definition=MODEL_REGISTRY[kind]
+    nominal=definition['example']
     measured,sensitivities=model_at_nominal(kind,nominal)
     indices=definition.get('uncertain_indices',list(range(len(nominal))))
     uncertainties=[max(abs(nominal[i]),1)*1e-7 for i in indices]+[1e-7]*definition['extra_count']
@@ -92,13 +99,17 @@ def test_external_reference_examples_and_units():
     assert model_at_nominal('freeAcid',[10,.1,.1,5,60.052,1])[0]==pytest.approx(1.1890296)
     # EPA AP-42 worked example: gasoline RVP12, slope3, 68.9°F ~7.50 psia.
     assert model_at_nominal('trueVaporRefined',[12,3,68.9])[0]/6.894757293168==pytest.approx(7.50,abs=.02)
-    rho=850.;water=.001;ash=.0001;sulfur=.01
+    rho=850.
+    water=.001
+    ash=.0001
+    sulfur=.01
     assert model_at_nominal('heatGross',[rho,.1,.01,1])[0]==pytest.approx((51.916-8.792e-6*rho*rho)*(1-water-ash-sulfur)+9.420*sulfur)
 
 def test_vi_and_ndm_reselect_piecewise_relations_for_every_draw():
     matrix=np.array([[60.,8.8,0.,0.],[100.,9.,0.,0.],[10000.,80.,0.,0.]])
     answers=evaluate_model_samples('viscosityIndex',matrix)
-    for index,row in enumerate(matrix):assert answers[index]==pytest.approx(model_at_nominal('viscosityIndex',row[:2].tolist())[0])
+    for index,row in enumerate(matrix):
+        assert answers[index]==pytest.approx(model_at_nominal('viscosityIndex',row[:2].tolist())[0])
     inputs=np.array([[1.475,.851,300.,0.,0.,0.],[1.4749,.851,300.,0.,0.,0.],[1.4751,.851,300.,0.,0.,0.]])
     ca=evaluate_model_samples('ndmCA',inputs)
     expected=[12.2,12.2+670*2.51*(-.0001),12.2+430*2.51*.0001]
@@ -108,13 +119,17 @@ def test_static_assets_are_identical_and_unknown_models_are_rejected():
     root=Path(__file__).resolve().parents[2]
     for backend,front in [('measurement_model_registry.json','measurement-registry.json'),('viscosity_index_reference.json','viscosity-index-reference.json')]:
         assert json.loads((root/'backend'/backend).read_text(encoding='utf-8'))==json.loads((root/'frontend/src/app/calculators'/front).read_text(encoding='utf-8'))
-    with pytest.raises(ValueError):model_at_nominal('__import__',[1])
-    with pytest.raises(ValueError):model_at_nominal('viscosityIndex',[40,1.9])
-    with pytest.raises(ValueError):model_at_nominal('heatGross',[1200,0,0,0])
+    with pytest.raises(ValueError):
+        model_at_nominal('__import__',[1])
+    with pytest.raises(ValueError):
+        model_at_nominal('viscosityIndex',[40,1.9])
+    with pytest.raises(ValueError):
+        model_at_nominal('heatGross',[1200,0,0,0])
 
 def test_nonlinear_combustion_mean_and_applicability_warning(monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    nominal=[850.,0.,0.,0.];measured,coefficients=model_at_nominal('heatGross',nominal)
+    nominal=[850.,0.,0.,0.]
+    measured,coefficients=model_at_nominal('heatGross',nominal)
     result=calculate_budget(BudgetRequest(measured=measured,coverage=2,measurement_model={'kind':'heatGross','nominals':nominal},
        components=[{'name':str(i),'value':80 if i==0 else 0,'sensitivity':c} for i,c in enumerate(coefficients)],simulation={'samples':50000,'seed':42}))
     expected=measured-8.792e-6*80**2

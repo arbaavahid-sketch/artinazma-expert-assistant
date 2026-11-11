@@ -1,8 +1,7 @@
 import json
 import math
 import pytest
-from laboratory_chat import LabTools, LaboratorySnapshot, ask_laboratory, editable_fields, revision
-from schemas.models import ChatHistoryMessage
+from laboratory_chat import LabTools, LaboratorySnapshot, ask_laboratory, revision
 
 
 def snapshot():

@@ -260,7 +260,7 @@ export default function CustomerRequestDetailPage() {
   }
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8">
+    <section className="min-h-full bg-[var(--background)] px-6 py-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
           <Link

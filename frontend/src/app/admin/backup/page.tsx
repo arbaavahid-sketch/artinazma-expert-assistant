@@ -122,7 +122,7 @@ export default function BackupPage() {
   const totalSizeKb = backups.reduce((sum, b) => sum + b.size_kb, 0);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">

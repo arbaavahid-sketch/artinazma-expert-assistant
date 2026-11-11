@@ -100,7 +100,7 @@ RDKit با درخواست کاربر دوباره ثبت شد: [وب‌سایت 
 
 ## بانک هویت نصب‌شده و ترجمه، ۵ نوامبر ۲۰۲۶
 
-بانک مرورپذیر فعلی از دو فایل `chemical identifiers pubchem small.tsv` و `chemical identifiers pubchem large.tsv` در بستهٔ موجود chemicals 1.5.2 ساخته شد: ۷۳٬۱۶۲ CID یکتا. فقط هویت و نام‌ها وارد شدند. عدد جرم مولی این فایل‌ها به مدل تهیهٔ محلول منتقل نشده است. منشأ هر ردیف در SQLite ثبت است. مشخصات نسخه، checksum بسته و متن مجوز MIT بسته در `CHEMICAL_CATALOG_SOURCE.json` نگهداری می‌شود؛ این مجوز به معنی تغییر حقوق تأمین‌کنندگان دادهٔ اصلی PubChem نیست.
+بانک مرورپذیر فعلی از دو فایل `chemical identifiers pubchem small.tsv` و `chemical identifiers pubchem large.tsv` در بستهٔ موجود chemicals 1.5.2 ساخته شد: ۷۳٬۱۶۲ CID یکتا. فقط هویت و نام‌ها وارد شدند. عدد جرم مولی این فایل‌ها به مدل تهیهٔ محلول منتقل نشده است. منشأ هر ردیف در SQLite ثبت است. مشخصات نسخه، checksum بسته و متن مجوز MIT بسته در [فرادادهٔ فهرست مواد](../backend/data/CHEMICAL_CATALOG_SOURCE.json) کنار snapshot نگهداری می‌شود؛ این مجوز به معنی تغییر حقوق تأمین‌کنندگان دادهٔ اصلی PubChem نیست.
 
 snapshot همراه محصول: `backend/data/chemical-identities-v1.jsonl.gz`. ساخت دستی: `backend/venv/Scripts/python.exe backend/eval/build_chemical_catalog.py` از ریشهٔ پروژه. اگر فایل runtime در `backend/storage/chemical_catalog.sqlite3` نباشد، سرویس آن را از snapshot همراه محصول می‌سازد. بانک نصب‌شده کل PubChem نیست؛ API عمومی برای جست‌وجوی تکمیلی و دریافت خواص باقی است.
 

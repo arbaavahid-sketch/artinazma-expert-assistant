@@ -51,7 +51,8 @@ def test_edits_and_exclusions_are_explicit_and_audited():
     result = service.confirm_import(preview['id'], 7, request)
     assert result['edits'] == [{'row': 3, 'column': 'c0', 'before': 'ND', 'after': '10.0'}]
     assert service.load_import(preview['id'], 7)['tables'][0]['rows'][1]['cells'] == ['ND']
-    request.edits = {};request.rows = [2, 4]
+    request.edits = {}
+    request.rows = [2, 4]
     result2 = service.confirm_import(preview['id'], 7, request)
     assert result2['result']['n'] == 2
     assert result2['id'] != result['id']
@@ -100,7 +101,8 @@ def test_calibration_assumptions_and_units():
 
 
 def test_image_extraction_is_unverified_and_missing_cells_require_review():
-    stream = io.BytesIO();Image.new('RGB', (40, 40), 'white').save(stream, format='PNG')
+    stream = io.BytesIO()
+    Image.new('RGB', (40, 40), 'white').save(stream, format='PNG')
     def transport(payload):
         assert payload['store'] is False and payload['text']['format']['strict'] is True
         text = json.dumps({'tables': [{'label': 'Printed table', 'page': 1, 'columns': ['mass'], 'rows': [['1.0'], [None]]}], 'warnings': ['Unreadable cell']})
@@ -120,7 +122,8 @@ def test_routes_require_account_and_enforce_ownership(monkeypatch):
     from routes.lab_imports import router
     from utils.deps import limiter
     monkeypatch.setattr(limiter, 'enabled', False)
-    app = FastAPI();app.include_router(router)
+    app = FastAPI()
+    app.include_router(router)
     with TestClient(app) as client:
         assert client.post('/laboratory/imports', files={'file': ('a.csv', b'a\n1\n2')}).status_code == 401
         app.dependency_overrides[get_current_customer] = lambda: {'customer_id': 7}
@@ -144,10 +147,14 @@ def test_from_analysis_checks_owner_and_only_local_source(monkeypatch, tmp_path)
     from utils.deps import limiter
     import repositories.questions_repo as questions
     monkeypatch.setattr(limiter, 'enabled', False)
-    monkeypatch.chdir(tmp_path);(tmp_path/'uploads').mkdir();(tmp_path/'uploads/data.csv').write_bytes(b'a\n1\n2')
+    monkeypatch.chdir(tmp_path)
+    (tmp_path/'uploads').mkdir()
+    (tmp_path/'uploads/data.csv').write_bytes(b'a\n1\n2')
     metadata = {'customer_id': 7, 'analysis_type': 'file', 'file_url': '/uploads/data.csv', 'file_name': 'source.csv'}
     monkeypatch.setattr(questions, 'get_question_by_id', lambda _: {'metadata': metadata})
-    app = FastAPI();app.include_router(router);app.dependency_overrides[get_current_customer] = lambda: {'customer_id': 7}
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_customer] = lambda: {'customer_id': 7}
     with TestClient(app) as client:
         assert client.post('/laboratory/imports/from-analysis', json={'question_id': 1}).status_code == 200
         metadata['customer_id'] = 8

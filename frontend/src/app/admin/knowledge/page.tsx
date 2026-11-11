@@ -674,106 +674,98 @@ export default function KnowledgePage() {
   }, [testResults]);
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-3 py-6 sm:px-6 sm:py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-3 py-6 sm:px-6 sm:py-8" dir={dir}>
       <div className="mx-auto max-w-7xl min-w-0">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
-            <div className="mb-6 flex justify-end">
-              <LanguageSwitcher variant="purple" />
+        <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-soft)] pb-5">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--color-success-bg)] text-[var(--color-success-text)]">
+                <Database size={21} aria-hidden="true" />
+              </span>
+              <h1 className="text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">
+                {isEn ? "ArtinAzma Private Knowledge Base" : "بانک دانش اختصاصی آرتین آزما"}
+              </h1>
             </div>
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
-                  <Database size={17} />
-                  {isEn ? "Artin Knowledge Management" : "مدیریت بانک دانش آرتین"}
-                </div>
-
-                <h1 className="text-3xl font-black text-slate-900">
-                  {isEn ? "ArtinAzma Private Knowledge Base" : "بانک دانش اختصاصی آرتین آزما"}
-                </h1>
-
-                <p className="mt-4 max-w-4xl leading-8 text-slate-600">
-                  {isEn
-                    ? "Upload approved training files, catalogs, standards, application notes, and FAQs, then review Artin's search quality."
-                    : "فایل‌های آموزشی، کاتالوگ‌ها، استانداردها، اپلیکیشن‌نوت‌ها و FAQهای تاییدشده را وارد بانک دانش کنید و کیفیت جست‌وجوی آرتین را بررسی کنید."}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  value={driveMaxFiles}
-                  onChange={(e) => setDriveMaxFiles(Number(e.target.value))}
-                  disabled={syncingDrive}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none disabled:opacity-50"
-                >
-                  <option value={10}>{isEn ? "10 files" : "۱۰ فایل"}</option>
-                  <option value={20}>{isEn ? "20 files" : "۲۰ فایل"}</option>
-                  <option value={50}>{isEn ? "50 files" : "۵۰ فایل"}</option>
-                  <option value={100}>{isEn ? "100 files" : "۱۰۰ فایل"}</option>
-                  <option value={200}>{isEn ? "200 files" : "۲۰۰ فایل"}</option>
-                  <option value={500}>{isEn ? "500 files" : "۵۰۰ فایل"}</option>
-                  <option value={1000}>{isEn ? "1000 files" : "۱۰۰۰ فایل"}</option>
-                  <option value={2000}>{isEn ? "2000 files" : "۲۰۰۰ فایل"}</option>
-                  <option value={5000}>{isEn ? "5000 files" : "۵۰۰۰ فایل"}</option>
-                  <option value={10000}>{isEn ? "10000 files" : "۱۰۰۰۰ فایل"}</option>
-                </select>
-
-                <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
-                  <input
-                    type="checkbox"
-                    checked={forceDriveResync}
-                    disabled={syncingDrive}
-                    onChange={(e) => setForceDriveResync(e.target.checked)}
-                  />
-                  {isEn ? "Full rebuild" : "بازسازی کامل"}
-                </label>
-
-                <button
-                  onClick={syncGoogleDrive}
-                  disabled={syncingDrive}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
-                >
-                  <RefreshCw
-                    size={18}
-                    className={syncingDrive ? "animate-spin" : ""}
-                  />
-                  {syncingDrive
-                    ? (isEn ? "Syncing..." : "در حال همگام‌سازی...")
-                    : (isEn ? "Sync Google Drive" : "همگام‌سازی Google Drive")}
-                </button>
-
-                <button
-                  onClick={() => {
-                    const a = document.createElement("a");
-                    a.href = adminUrl("/admin/knowledge/export-csv");
-                    a.download = "knowledge_base.csv";
-                    a.click();
-                  }}
-                  disabled={!stats || stats.total_files === 0}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
-                >
-                  <Download size={18} />
-                  {isEn ? "Download CSV" : "دانلود CSV"}
-                </button>
-
-                <button
-                  onClick={loadKnowledgeStats}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                >
-                  <RefreshCw size={18} />
-                  {isEn ? "Refresh status" : "بروزرسانی وضعیت"}
-                </button>
-              </div>
-            </div>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+              {isEn ? "Manage reference files, sync Google Drive, and review search quality." : "فایل‌های مرجع را مدیریت کنید، Google Drive را همگام کنید و کیفیت جست‌وجو را بررسی کنید."}
+            </p>
           </div>
+          <LanguageSwitcher variant="purple" />
+        </header>
+
+        <div role="group" aria-label={isEn ? "Knowledge base actions" : "عملیات بانک دانش"} className="mb-5 flex flex-wrap items-center gap-2">
+          <select
+            aria-label={isEn ? "Maximum Drive files" : "حداکثر تعداد فایل‌های Drive"}
+            value={driveMaxFiles}
+            onChange={(e) => setDriveMaxFiles(Number(e.target.value))}
+            disabled={syncingDrive}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none disabled:opacity-50"
+          >
+            <option value={10}>{isEn ? "10 files" : "۱۰ فایل"}</option>
+            <option value={20}>{isEn ? "20 files" : "۲۰ فایل"}</option>
+            <option value={50}>{isEn ? "50 files" : "۵۰ فایل"}</option>
+            <option value={100}>{isEn ? "100 files" : "۱۰۰ فایل"}</option>
+            <option value={200}>{isEn ? "200 files" : "۲۰۰ فایل"}</option>
+            <option value={500}>{isEn ? "500 files" : "۵۰۰ فایل"}</option>
+            <option value={1000}>{isEn ? "1000 files" : "۱۰۰۰ فایل"}</option>
+            <option value={2000}>{isEn ? "2000 files" : "۲۰۰۰ فایل"}</option>
+            <option value={5000}>{isEn ? "5000 files" : "۵۰۰۰ فایل"}</option>
+            <option value={10000}>{isEn ? "10000 files" : "۱۰۰۰۰ فایل"}</option>
+          </select>
+
+          <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
+            <input
+              type="checkbox"
+              checked={forceDriveResync}
+              disabled={syncingDrive}
+              onChange={(e) => setForceDriveResync(e.target.checked)}
+            />
+            {isEn ? "Full rebuild" : "بازسازی کامل"}
+          </label>
+
+          <button
+            onClick={syncGoogleDrive}
+            disabled={syncingDrive}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+          >
+            <RefreshCw
+              size={18}
+              className={syncingDrive ? "animate-spin" : ""}
+            />
+            {syncingDrive
+              ? (isEn ? "Syncing..." : "در حال همگام‌سازی...")
+              : (isEn ? "Sync Google Drive" : "همگام‌سازی Google Drive")}
+          </button>
+
+          <button
+            onClick={() => {
+              const a = document.createElement("a");
+              a.href = adminUrl("/admin/knowledge/export-csv");
+              a.download = "knowledge_base.csv";
+              a.click();
+            }}
+            disabled={!stats || stats.total_files === 0}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
+          >
+            <Download size={18} />
+            {isEn ? "Download CSV" : "دانلود CSV"}
+          </button>
+
+          <button
+            onClick={loadKnowledgeStats}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <RefreshCw size={18} />
+            {isEn ? "Refresh status" : "بروزرسانی وضعیت"}
+          </button>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
             <div className="text-sm font-bold text-slate-500">
               {isEn ? "File count" : "تعداد فایل‌ها"}
             </div>
-            <div className="mt-2 text-3xl font-black text-slate-900">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-slate-900">
               {stats?.total_files || 0}
             </div>
           </div>
@@ -1498,7 +1490,8 @@ export default function KnowledgePage() {
                     })}
                   </div>
 
-                  <div className="hidden overflow-x-auto 2xl:block">
+                  <div className="hidden overflow-x-auto 2xl:block" tabIndex={0} role="region"
+                    aria-label={isEn ? "Knowledge files table" : "جدول فایل‌های بانک دانش"}>
                   <table className="min-w-[980px] w-full border-collapse text-right text-sm">
                     <thead className="sticky top-0 bg-slate-50">
                       <tr className="border-b border-slate-200 text-slate-600">

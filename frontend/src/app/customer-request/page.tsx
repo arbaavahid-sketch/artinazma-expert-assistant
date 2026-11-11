@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { apiUrl } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import PrivacyConsent from "@/components/PrivacyConsent";
+import WorkspaceSectionHeader from "@/components/WorkspaceSectionHeader";
+import styles from "@/components/workspace-pages.module.css";
 import {
   Building2,
   CheckCircle2,
@@ -208,9 +210,9 @@ export default function CustomerRequestPage() {
     }
   }
 
-  const benefits = isEn
-    ? ["Initial review by a technical expert", "Structured information for follow-up", "Suitable for equipment, materials, catalysts, and test analysis"]
-    : ["بررسی اولیه توسط کارشناس فنی", "ثبت منظم اطلاعات برای پیگیری بعدی", "مناسب انتخاب دستگاه، مواد، کاتالیست و تحلیل تست"];
+  const followUpSteps = isEn
+    ? ["Submit the request", "Technical review", "Expert follow-up"]
+    : ["ثبت درخواست", "بررسی فنی", "پیگیری کارشناس"];
 
   const usefulInfo = isEn
     ? ["Sample or process type", "Required range or sensitivity", "Instrument model, brand, or test method", "Issue, error, or final test goal"]
@@ -218,58 +220,35 @@ export default function CustomerRequestPage() {
   const activeSmartFields = smartQuoteFields[requestType] || [];
 
   return (
-    <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-8" dir={dir}>
+    <section className={styles.page} dir={dir}>
       <div className="mx-auto max-w-7xl">
-        <div className="brand-panel hero-grid-bg mb-6 overflow-hidden rounded-[34px]">
-          <div className="bg-gradient-to-l from-blue-50/85 via-white/80 to-slate-50/70 p-6 md:p-8">
-            <div className="grid gap-6 lg:grid-cols-[1fr_390px] lg:items-center">
-              <div>
-                <div className="brand-kicker mb-4">
-                  <ClipboardList size={17} />
-                  {isEn ? "Contact an ArtinAzma expert" : "ارتباط با کارشناس آرتین آزما"}
-                </div>
+        <WorkspaceSectionHeader icon={ClipboardList}
+          label={isEn ? "Contact an ArtinAzma expert" : "ارتباط با کارشناس آرتین آزما"}
+          title={isEn ? "Consultation and quote requests" : "درخواست مشاوره و استعلام"}
+          description={isEn ? "Choose a request type and tell the expert what you need reviewed." : "نوع درخواست را انتخاب کنید و بنویسید کارشناس چه موردی را بررسی کند."}
+        />
 
-                <h1 className="text-3xl font-black leading-[1.55] text-slate-950 md:text-4xl">
-                  {isEn ? "Submit a consultation or follow-up request" : "ثبت درخواست مشاوره یا پیگیری تخصصی"}
-                </h1>
-
-                <p className="mt-4 max-w-4xl leading-8 text-slate-600">
-                  {isEn
-                    ? "If you need a more precise review for equipment selection, chemicals, catalysts, test analysis, troubleshooting, or price inquiry, submit your request so ArtinAzma experts can follow up accurately."
-                    : "اگر برای انتخاب دستگاه، مواد شیمیایی، کاتالیست، تحلیل تست، عیب‌یابی یا استعلام قیمت نیاز به بررسی دقیق‌تر دارید، اطلاعات درخواست را ثبت کنید تا کارشناسان آرتین آزما مسیر پیگیری را دقیق‌تر شروع کنند."}
-                </p>
-
-                <div className="mt-5 flex flex-wrap gap-2.5">
-                  {benefits.map((item) => (
-                    <span key={item} className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-4 py-2 text-xs font-black text-slate-700 shadow-sm">
-                      <CheckCircle2 size={15} className="text-emerald-600" />
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <InfoTile icon={<Mail size={17} />} label={isEn ? "Official company email" : "ایمیل رسمی شرکت"} value="info@artinazma.net" />
-                <InfoTile icon={<Clock3 size={17} />} label={isEn ? "Follow-up path" : "مسیر پیگیری"} value={isEn ? "Submit request, technical review, expert contact" : "ثبت درخواست، بررسی فنی، تماس کارشناس"} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-          <div className="brand-card rounded-[30px] p-6">
+        <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,29%)] lg:items-start">
+          <div className={`${styles.panel} min-w-0 p-4 sm:p-6`}>
             <div className="mb-6 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-700/20">
                 <MessageSquareText size={24} strokeWidth={1.8} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-slate-950">{isEn ? "Request form" : "فرم درخواست"}</h2>
-                <p className="mt-1 text-sm text-slate-500">{isEn ? "Starred fields are required." : "موارد ستاره‌دار برای ثبت درخواست الزامی هستند."}</p>
+                <h2 className="text-xl">{isEn ? "Request form" : "فرم درخواست"}</h2>
+                <p className={`${styles.muted} mt-1 text-sm`}>{isEn ? "Starred fields are required." : "موارد ستاره‌دار برای ثبت درخواست الزامی هستند."}</p>
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <label htmlFor="request-type" className="mb-2 block text-sm font-bold">{isEn ? "Request type" : "نوع درخواست"}</label>
+            <select id="request-type" value={requestType} onChange={(e) => setRequestType(e.target.value)} className="ui-select w-full rounded-xl p-3">
+              {requestTypes.map((type) => (
+                <option key={type.value} value={type.value}>{type[locale]}</option>
+              ))}
+            </select>
+
+            <fieldset className="mt-5 grid gap-4 border-t border-[var(--work-line)] pt-3 md:grid-cols-2">
+              <legend className={`${styles.accent} pe-2 text-sm font-bold`}>{isEn ? "Contact information" : "اطلاعات تماس"}</legend>
               <Field label={isEn ? "Full name *" : "نام و نام خانوادگی *"} icon={<UserRound size={18} />} iconSide={iconSide}>
                 <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={`ui-input rounded-2xl py-4 ${inputPadding}`} placeholder={isEn ? "Full name" : "نام کامل"} />
               </Field>
@@ -282,14 +261,7 @@ export default function CustomerRequestPage() {
               <Field label={isEn ? "Email" : "ایمیل"} icon={<Mail size={18} />} iconSide={iconSide}>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`ui-input rounded-2xl py-4 ${inputPadding}`} placeholder="email@example.com" dir="ltr" />
               </Field>
-            </div>
-
-            <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">{isEn ? "Request type" : "نوع درخواست"}</label>
-            <select value={requestType} onChange={(e) => setRequestType(e.target.value)} className="ui-select rounded-2xl p-4">
-              {requestTypes.map((type) => (
-                <option key={type.value} value={type.value}>{type[locale]}</option>
-              ))}
-            </select>
+            </fieldset>
 
             {activeSmartFields.length > 0 && (
               <div className="mt-5 rounded-[24px] border border-blue-100 bg-blue-50/70 p-4">
@@ -343,11 +315,11 @@ export default function CustomerRequestPage() {
               </div>
             )}
 
-            <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">{isEn ? "Request subject" : "موضوع درخواست"}</label>
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} className="ui-input rounded-2xl p-4" placeholder={isEn ? "Example: Selecting an instrument for sulfur analysis in LPG" : "مثلاً: انتخاب دستگاه برای آنالیز سولفور در LPG"} />
+            <label htmlFor="request-subject" className="mb-2 mt-5 block text-sm font-bold">{isEn ? "Request subject" : "موضوع درخواست"}</label>
+            <input id="request-subject" value={subject} onChange={(e) => setSubject(e.target.value)} className="ui-input rounded-2xl p-4" placeholder={isEn ? "Example: Selecting an instrument for sulfur analysis in LPG" : "مثلاً: انتخاب دستگاه برای آنالیز سولفور در LPG"} />
 
-            <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">{isEn ? "Request details *" : "توضیحات درخواست *"}</label>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} className="ui-textarea h-40 rounded-2xl p-4 leading-8" placeholder={isEn ? "Enter sample type, application, issue, device model, measurement range, test file details, or any important technical information..." : "نوع نمونه، کاربرد، مشکل، مدل دستگاه، محدوده اندازه‌گیری، فایل تست یا هر اطلاعات فنی مهم را وارد کنید..."} />
+            <label htmlFor="request-details" className="mb-2 mt-5 block text-sm font-bold">{isEn ? "Request details *" : "توضیحات درخواست *"}</label>
+            <textarea id="request-details" value={message} onChange={(e) => setMessage(e.target.value)} className="ui-textarea h-40 rounded-2xl p-4 leading-8" placeholder={isEn ? "Enter sample type, application, issue, device model, measurement range, test file details, or any important technical information..." : "نوع نمونه، کاربرد، مشکل، مدل دستگاه، محدوده اندازه‌گیری، فایل تست یا هر اطلاعات فنی مهم را وارد کنید..."} />
 
             <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-slate-600">
               {isEn ? "Selected request type:" : "نوع درخواست انتخاب‌شده:"} <span className="font-black text-blue-700">{typeLabel(requestType)}</span>
@@ -374,18 +346,21 @@ export default function CustomerRequestPage() {
             </button>
           </div>
 
-          <aside className="space-y-5">
-            <div className="brand-card rounded-[30px] p-6">
-              <h2 className="text-xl font-black text-slate-950">{isEn ? "When should I submit a request?" : "چه زمانی درخواست ثبت کنم؟"}</h2>
-              <p className="mt-3 leading-8 text-slate-600">
-                {isEn
-                  ? "When you need precise equipment suggestions, material or catalyst selection, test report review, troubleshooting, price inquiry, or expert follow-up."
-                  : "وقتی نیاز به پیشنهاد دقیق دستگاه، انتخاب ماده یا کاتالیست، بررسی گزارش تست، عیب‌یابی دستگاه، استعلام قیمت یا پیگیری کارشناسی دارید."}
-              </p>
+          <aside className="space-y-3">
+            <div className={`${styles.tile} ${styles.featureTile}`}>
+              <h2 className="flex items-center gap-2 text-lg"><Clock3 size={17} aria-hidden="true" />{isEn ? "What happens next?" : "بعد از ثبت درخواست"}</h2>
+              <ol className="mt-2 grid gap-2 text-sm">
+                {followUpSteps.map((step, index) => (
+                  <li key={step} className="flex items-center gap-2">
+                    <span className={styles.chip}>{new Intl.NumberFormat(locale).format(index + 1)}</span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
             </div>
-            <div className="brand-card rounded-[30px] p-6">
-              <h2 className="text-lg font-black text-slate-950">{isEn ? "Useful information for the expert" : "اطلاعات مفید برای کارشناس"}</h2>
-              <ul className="mt-4 space-y-3 text-sm font-bold text-slate-600">
+            <div className={`${styles.panel} p-4`}>
+              <h2 className="text-base">{isEn ? "Useful information for the expert" : "اطلاعات مفید برای کارشناس"}</h2>
+              <ul className={`${styles.muted} mt-3 space-y-2 text-sm`}>
                 {usefulInfo.map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <CheckCircle2 size={15} className="text-emerald-600" />
@@ -394,12 +369,12 @@ export default function CustomerRequestPage() {
                 ))}
               </ul>
             </div>
-            <div className="brand-card rounded-[30px] p-6">
-              <h2 className="text-lg font-black text-slate-950">{isEn ? "Direct contact" : "راه ارتباط مستقیم"}</h2>
-              <div className="mt-4 space-y-3 text-sm text-slate-600">
-                <div><span className="font-black text-slate-950">{isEn ? "Phone:" : "تلفن:"}</span> 02191008898</div>
-                <div><span className="font-black text-slate-950">{isEn ? "WhatsApp:" : "واتساپ:"}</span> 09906060910</div>
-                <div><span className="font-black text-slate-950">{isEn ? "Email:" : "ایمیل:"}</span> info@artinazma.net</div>
+            <div className={`${styles.panel} p-4`}>
+              <h2 className="text-base">{isEn ? "Direct contact" : "راه ارتباط مستقیم"}</h2>
+              <div className={`${styles.muted} mt-3 grid gap-2 text-sm`}>
+                <div>{isEn ? "Phone" : "تلفن"} <a className={styles.accent} href="tel:02191008898"><bdi>02191008898</bdi></a></div>
+                <div>{isEn ? "WhatsApp" : "واتساپ"} <bdi>09906060910</bdi></div>
+                <div>{isEn ? "Email" : "ایمیل"} <a className={styles.accent} href="mailto:info@artinazma.net"><bdi>info@artinazma.net</bdi></a></div>
               </div>
             </div>
           </aside>
@@ -411,21 +386,12 @@ export default function CustomerRequestPage() {
 
 function Field({ label, icon, iconSide, children }: { label: string; icon: ReactNode; iconSide: string; children: ReactNode }) {
   return (
-    <div>
-      <label className="mb-2 block text-sm font-bold text-slate-700">{label}</label>
-      <div className="relative">
-        <span className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`}>{icon}</span>
+    <label>
+      <span className="mb-2 block text-sm font-bold">{label}</span>
+      <span className="relative block">
+        <span className={`pointer-events-none absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`} aria-hidden="true">{icon}</span>
         {children}
-      </div>
-    </div>
-  );
-}
-
-function InfoTile({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-[24px] border border-white/80 bg-white/95 p-5 shadow-sm">
-      <div className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-500">{icon}{label}</div>
-      <div className="font-black text-slate-950">{value}</div>
-    </div>
+      </span>
+    </label>
   );
 }

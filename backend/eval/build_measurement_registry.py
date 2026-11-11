@@ -121,14 +121,19 @@ special("coolantWater",[titr_fields[0],titr_fields[1],field("تیتر واقعی
  {"fa":"برای کنسانترهٔ کولانت با روش KF حجمی است؛ نتیجه درصد جرمی است. بلانک و رانش نباید دو بار کسر شوند. آزادسازی آب، تداخل ماتریس و استانداردسازی تیتر در بودجه لازم‌اند؛ این مدل درصد حجمی آب را نمی‌دهد.","en":"Volumetric KF for coolant concentrate, reported as mass percent. Do not subtract blank or drift twice. Include water release, matrix interference and titer standardization. This is not volume-percent water."},
  "https://store.astm.org/d1123-22.html","Volumetric KF mass-balance model; confirm D1123 procedure / SOP",[ge(A),ge(B),gt(C),gt(D)],sample=[gt(C),gt(D)],outputs="% mass")
 
-dn=s(A,.85); bb=s(exp(m(-3.5,dn)),1);t10=s(B,215);t50=s(C,260);t90=s(D,310)
+dn=s(A,.85)
+bb=s(exp(m(-3.5,dn)),1)
+t10=s(B,215)
+t50=s(C,260)
+t90=s(D,310)
 cetane=a(45.2,m(.0892,t10),m(a(.131,m(.901,bb)),t50),m(s(.0523,m(.420,bb)),t90),m(.00049,s(p(t10,2),p(t90,2))),m(107,bb),m(60,p(bb,2)))
 special("cetaneA",[field("چگالی در ۱۵°C","Density at 15°C","g/mL","اگر kg/m³ دارید بر ۱۰۰۰ تقسیم کنید.","Divide kg/m³ by 1000."),field("دمای بازیافت ۱۰٪ در فشار مرجع","10% recovery temperature at reference pressure","°C","از D86 با تصحیح فشار طبق روش.","From D86 with the method pressure correction."),field("دمای بازیافت ۵۰٪","50% recovery temperature","°C","از همان منحنی تقطیر.","From the same distillation curve."),field("دمای بازیافت ۹۰٪","90% recovery temperature","°C","از همان منحنی؛ ترتیب دماها باید صعودی باشد.","Use the same curve with ascending recovery temperatures.")],cetane,[.8537,212,261.4,311.4],"شاخص ستان چهارمتغیره، رویهٔ A","Four-variable cetane index, procedure A","CCI = 45.2 + 0.0892T10N + (0.131+0.901B)T50N + (0.0523−0.420B)T90N + 0.00049(T10N²−T90N²) + 107B + 60B²",
  {"fa":"B=exp[−3.5(ρ−0.85)]−1 و دماهای نرمال‌شده به‌ترتیب T10−215، T50−260 و T90−310 هستند. برآورد رویهٔ A برای سوخت نفتی است، نه عدد ستان اندازه‌گیری‌شده و نه سوخت دارای افزایندهٔ ستان/بیودیزل. بایاس مدل باید جدا ارزیابی شود.","en":"B=exp[−3.5(ρ−0.85)]−1; normalized temperatures are T10−215, T50−260 and T90−310. Procedure A estimates petroleum-fuel cetane index, not measured cetane number; do not apply it to cetane-improver/biodiesel blends. Assess model discrepancy separately."},
  "https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1016IFV.TXT","ASTM D4737 procedure A as reproduced by EPA; confirm fuel class",[gt(A),gt(B),ge(C,B),ge(D,C)],sample=[gt(A),gt(B),ge(C,B),ge(D,C)],outputs="Cetane index")
 
 rvp,sl,temp=A,B,C
-root=p(sl,.5); aa=s(s(15.64,m(1.854,root)),m(s(.8742,m(.3280,root)),log(rvp)))
+root=p(sl,.5)
+aa=s(s(15.64,m(1.854,root)),m(s(.8742,m(.3280,root)),log(rvp)))
 bb2=s(s(8742,m(1042,root)),m(s(1049,m(179.4,root)),log(rvp)))
 special("trueVaporRefined",[field("فشار بخار رید مطلق","Absolute Reid vapor pressure","psia","فشار مطلق ۱ تا ۲۰ psia برای فرآوردهٔ پالایش‌شدهٔ مناسب رابطه.","Absolute RVP 1–20 psia for an applicable refined stock."),field("شیب D86 در ۱۰٪ تبخیر","D86 slope at 10% evaporated","°F/vol%","از (T15−T5)/10 با دماهای °F به دست می‌آید.","Calculate (T15−T5)/10 with temperatures in °F."),field("دمای سطح مایع","Liquid surface temperature","°F","دمای خود مایع؛ نه دمای هوای محیط.","Use liquid, not ambient-air, temperature.")],m(6.894757293168,exp(s(aa,d(bb2,a(temp,459.67))))),[12,3,68.9],"فشار بخار واقعی فرآوردهٔ پالایش‌شده، EPA","Refined-stock true vapor pressure, EPA","P(kPa abs) = 6.894757293168 × exp[A − B/(T°F+459.67)]",
  {"fa":"A=15.64−1.854√S−(0.8742−0.3280√S)ln(RVP)، B=8742−1042√S−(1049−179.4√S)ln(RVP). رابطهٔ EPA برای فرآوردهٔ سبک پالایش‌شده است، نه نفت خام یا هر مخلوط دلخواه. خطای همبستگی تجربی باید جدا به بودجه اضافه شود.","en":"A=15.64−1.854√S−(0.8742−0.3280√S)ln(RVP); B=8742−1042√S−(1049−179.4√S)ln(RVP). EPA correlation for applicable light refined stocks, not crude oil or arbitrary mixtures. Include empirical-correlation discrepancy in the budget."},
@@ -136,10 +141,12 @@ special("trueVaporRefined",[field("فشار بخار رید مطلق","Absolute 
 
 # n-d-M is multi-output: every output shares the same four physical inputs.
 n,den,mw,sul=A,B,C,D
-vv=s(m(2.51,s(n,1.475)),s(den,.851));ww=s(s(den,.851),m(1.11,s(n,1.475)))
+vv=s(m(2.51,s(n,1.475)),s(den,.851))
+ww=s(s(den,.851),m(1.11,s(n,1.475)))
 ca=a(m(choose(ge(vv),430,670),vv),d(3660,mw))
 cr=a(m(choose(ge(ww),820,1440),ww),m(-3,sul),d(choose(ge(ww),10000,10600),mw))
-cn=s(cr,ca);cp=s(100,cr)
+cn=s(cr,ca)
+cp=s(100,cr)
 ra=a(.44,m(choose(ge(vv),.055,.080),mw,vv))
 rt=a(1.33,m(choose(ge(ww),.146,.180),mw,s(ww,m(.005,sul))))
 rn=s(rt,ra)
@@ -166,17 +173,21 @@ if wheel.exists():
         ref={"source":"chemicals 1.5.2, chemicals.viscosity", "reference":"https://chemicals.readthedocs.io/chemicals.viscosity.html#chemicals.viscosity.viscosity_index", "source_sha256":hashlib.sha256(source.encode()).hexdigest(),"license":licence,**arrays}
 else:
     ref=json.loads(target.read_text(encoding="utf-8"))
-ll=["interp","L",B];hh=["interp","H",B]
+ll=["interp","L",B]
+hh=["interp","H",B]
 vi=choose(ge(A,hh),m(100,d(s(ll,A),s(ll,hh))),a(100,d(s(p(10,d(log(d(hh,A)),log(B))),1),.00715)))
 special("viscosityIndex",[field("گرانروی کینماتیکی در ۴۰°C","Kinematic viscosity at 40°C","mm²/s","از D445 یا روش مجاز در ۴۰°C.","Use D445 or an applicable method at 40°C."),field("گرانروی کینماتیکی در ۱۰۰°C","Kinematic viscosity at 100°C","mm²/s","حداقل ۲ mm²/s؛ L و H خودکار از مرجع یا رابطه محاسبه می‌شوند.","At least 2 mm²/s; L and H are obtained automatically from reference data or equations.")],vi,[73.3,8.86],"شاخص گرانروی با جدول L/H خودکار","Viscosity index with automatic L/H reference","VI = 100(L−U)/(L−H) if U≥H; otherwise VI=100+(10^[ln(H/U)/ln(Y)]−1)/0.00715",
  {"fa":"برای Y از ۲ تا ۷۰، L/H از دادهٔ مرجع با درون‌یابی خطی و برای Y>۷۰ از روابط درجهٔ دو به دست می‌آیند. مونت‌کارلو جدول و شاخهٔ VI را در هر نمونه دوباره محاسبه می‌کند. نتیجه برای انتشار عدم‌قطعیت گرد نمی‌شود؛ دادهٔ مرجع و ویرایش روش در گزارش ثبت شوند.","en":"For Y=2–70, L/H use linearly interpolated reference data; above 70, quadratic equations apply. Monte Carlo re-evaluates lookup and the VI branch for every draw. Propagation uses unrounded VI; record the reference dataset and method edition."},ref["reference"],"Chemicals 1.5.2 data / D2270-10(2016) equation basis",[gt(A),ge(B,2)],sample=[gt(A),ge(B,2)],outputs="VI")
 
 examples={"density":[50,50],"gcExtraction":[110,10,10,50,2,10,80],"viscosity":[.1,100],"residue":[.2,10],"loss":[10,9],"corrected":[25,-.2],"diluted":[5,1,10],"dynamic":[10,850],"kinematicFromDynamic":[8.5,850],"relativeDensity":[850,998.2],"volumetricTitration":[10,1,.1,1,25],"acidBaseNumber":[2,.1,.1,5,56.1],"pycnometer":[20,45,49.94,998.2],"volumePercent":[.5,100],"ratioPercent":[60,80],"solubility":[.1,2],"transmission":[50,100],"absorbance":[50],"apiGravity":[.85],"kfCoulometric":[120,20,1],"kfVolumetric":[.5,.02,5,1],"gcNormalization":[20,1,80],"indicationError":[10.2,10],"relativeError":[10.2,10],"inverseCalibration":[110,10,10,2],"moistureWet":[10,15,14],"moistureDry":[10,15,14],"spikeRecovery":[15,5,10],"massConcentrationTitration":[10,.1,.01,100.09,1,50],"forceArea":[10000,100],"electricalResistance":[5,.1],"porosity":[1500,2500],"linearExpansion":[.000012,1000,20],"standardPreparation":[100.28,99.99,100,0,0,.00021],"naohStandardization":[.3888,100,204.2212,18.64,0,0,0],"balance":[50],"typeA":[50]}
-for key,example in examples.items():REGISTRY[key]["example"]=example
+for key,example in examples.items():
+    REGISTRY[key]["example"]=example
 assets={ROOT/"backend/measurement_model_registry.json":REGISTRY,FRONT/"measurement-registry.json":REGISTRY,target:ref,FRONT/"viscosity-index-reference.json":ref}
 for path,value in assets.items():
     data=json.dumps(value,ensure_ascii=False,indent=2)+"\n"
     if "--check" in sys.argv:
-        if path.read_text(encoding="utf-8")!=data:raise SystemExit(f"Generated registry is stale: {path}")
-    else:path.write_text(data,encoding="utf-8")
+        if path.read_text(encoding="utf-8")!=data:
+            raise SystemExit(f"Generated registry is stale: {path}")
+    else:
+        path.write_text(data,encoding="utf-8")
 print(f"Verified {len(REGISTRY)} registered equations" if "--check" in sys.argv else f"Generated {len(REGISTRY)} registered equations")

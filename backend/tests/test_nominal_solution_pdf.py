@@ -23,23 +23,32 @@ def test_report(locale):
 
 @pytest.mark.parametrize('change',[{'purity':'101'},{'volume':'0'},{'concentration':'-1'},{'puritySource':''},{'purity':'98'}])
 def test_invalid(change):
-    d=example();d['inputs'].update(change)
-    with pytest.raises(ValueError):build_nominal_solution_pdf(NominalSolutionReport.model_validate(d))
+    d=example()
+    d['inputs'].update(change)
+    with pytest.raises(ValueError):
+        build_nominal_solution_pdf(NominalSolutionReport.model_validate(d))
 
 
 def test_hydrate_not_double_counted_and_manual_source():
-    d=example();d['reagent']=None;d['material'].update(molarMass='249.68',waters=5,chemicalForm='Pentahydrate',formula='CuSO4.5H2O',cid=24463)
+    d=example()
+    d['reagent']=None
+    d['material'].update(molarMass='249.68',waters=5,chemicalForm='Pentahydrate',formula='CuSO4.5H2O',cid=24463)
     d['expectedMass']=.1*.1*249.68/0.99
     assert recompute_nominal(NominalSolutionReport.model_validate(d))==pytest.approx(d['expectedMass'])
     d['expectedMass']+=1
-    with pytest.raises(ValueError):recompute_nominal(NominalSolutionReport.model_validate(d))
+    with pytest.raises(ValueError):
+        recompute_nominal(NominalSolutionReport.model_validate(d))
 
 
 def test_snapshot_mismatch_and_long_sources():
     for key,value in [('lot',''),('certificate','Other'),('purityBasis','v/v')]:
-        d=example();d['reagent'][key]=value
-        with pytest.raises(ValueError):recompute_nominal(NominalSolutionReport.model_validate(d))
-    d=example();d['reagent']=None;d['inputs']['puritySource']='Hypothetical long source - '*60
+        d=example()
+        d['reagent'][key]=value
+        with pytest.raises(ValueError):
+            recompute_nominal(NominalSolutionReport.model_validate(d))
+    d=example()
+    d['reagent']=None
+    d['inputs']['puritySource']='Hypothetical long source - '*60
     assert build_nominal_solution_pdf(NominalSolutionReport.model_validate(d)).startswith(b'%PDF-')
 
 
@@ -48,11 +57,15 @@ def test_endpoint():
     from fastapi.testclient import TestClient
     from routes.uncertainty import router
     from utils.deps import limiter
-    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router)
+    app=FastAPI()
+    app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"}
+    app.state.limiter=limiter
+    app.include_router(router)
     with TestClient(app) as client:
         r=client.post('/uncertainty/nominal-solution-report.pdf',json=example())
         assert r.status_code==200 and r.content.startswith(b'%PDF-')
         assert r.headers['cache-control']=='no-store' and r.headers['x-content-type-options']=='nosniff'
         for extra in [{'expectedMass':1},{'html':'not allowed'}]:
-            d=example();d.update(extra)
+            d=example()
+            d.update(extra)
             assert client.post('/uncertainty/nominal-solution-report.pdf',json=d).status_code==422

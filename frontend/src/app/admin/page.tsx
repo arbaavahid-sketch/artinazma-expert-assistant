@@ -22,7 +22,6 @@ const adminCards = [
     title: { fa: "استفاده از محاسبات", en: "Calculation Usage" },
     description: { fa: "مشاهدهٔ کاربر، ابزار، زمان و وضعیت محاسبات آزمایشگاهی.", en: "See who used each laboratory calculator, when, and its outcome." },
     Icon: Calculator,
-    className: "bg-cyan-800 text-white",
   },
   {
     href: "/admin/dashboard",
@@ -32,7 +31,6 @@ const adminCards = [
       en: "Overview of questions, requests, the knowledge base, and system status.",
     },
     Icon: BarChart3,
-    className: "bg-purple-700 text-white",
   },
   {
     href: "/admin/knowledge",
@@ -42,7 +40,6 @@ const adminCards = [
       en: "Add approved catalogs, standards, application notes, and FAQs.",
     },
     Icon: Database,
-    className: "bg-blue-700 text-white",
   },
   {
     href: "/admin/questions",
@@ -52,7 +49,6 @@ const adminCards = [
       en: "Review, improve, approve, and convert strong answers into internal knowledge.",
     },
     Icon: FileQuestion,
-    className: "bg-slate-800 text-white",
   },
   {
     href: "/admin/requests",
@@ -62,7 +58,6 @@ const adminCards = [
       en: "Track consultation, equipment, catalyst, and quotation requests.",
     },
     Icon: Inbox,
-    className: "bg-emerald-700 text-white",
   },
   {
     href: "/admin/settings",
@@ -72,7 +67,6 @@ const adminCards = [
       en: "Check the backend, OpenAI connection, local fallback, and knowledge statistics.",
     },
     Icon: Settings2,
-    className: "bg-zinc-700 text-white",
   },
 ];
 
@@ -113,10 +107,10 @@ export default function AdminPage() {
   const arrowClass = isEn ? "rotate-180" : "";
 
   return (
-    <section className="min-h-full bg-[#f7f7f8] px-6 py-8" dir={dir}>
+    <section className="min-h-full bg-[var(--background)] px-4 py-6 sm:px-6 sm:py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+        <header className="mb-6 border-b border-[var(--border-soft)] pb-5">
+          <div>
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
@@ -128,11 +122,11 @@ export default function AdminPage() {
                   {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
                 </div>
 
-                <h1 className="text-3xl font-black text-slate-900">
+                <h1 className="text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">
                   {isEn ? "Artin Assistant Management" : "مدیریت دستیار آرتین"}
                 </h1>
 
-                <p className="mt-4 max-w-4xl leading-8 text-slate-600">
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300">
                   {isEn
                     ? "Use this area to manage the knowledge base, review user questions, approve answers, follow up on customer requests, and monitor system health."
                     : "این بخش برای مدیریت بانک دانش، بررسی سوالات کاربران، تایید پاسخ‌ها، پیگیری درخواست‌های مشتریان و پایش وضعیت سیستم استفاده می‌شود."}
@@ -148,9 +142,9 @@ export default function AdminPage() {
               </Link>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+        <nav aria-label={isEn ? "Management sections" : "بخش‌های مدیریت"} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {adminCards.map((card) => {
             const Icon = card.Icon;
 
@@ -158,26 +152,20 @@ export default function AdminPage() {
               <Link
                 key={card.href}
                 href={card.href}
-                className={`group rounded-[30px] p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md ${card.className}`}
+                className="group flex items-start gap-3 rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 transition-colors hover:border-teal-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
               >
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
-                  <Icon size={25} strokeWidth={1.8} />
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--color-success-bg)] text-[var(--color-success-text)]">
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold">{card.title[locale]}</h2>
+                  <p className="mt-1 text-sm leading-7 text-slate-600 dark:text-slate-300">{card.description[locale]}</p>
                 </div>
-
-                <div className="text-xl font-black">{card.title[locale]}</div>
-
-                <div className="mt-3 min-h-[84px] text-sm leading-7 opacity-90">
-                  {card.description[locale]}
-                </div>
-
-                <div className="mt-5 inline-flex items-center gap-2 text-sm font-bold opacity-90 transition group-hover:gap-3">
-                  {isEn ? "Open section" : "ورود به بخش"}
-                  <ArrowLeft size={16} className={arrowClass} />
-                </div>
+                <ArrowLeft size={17} className={`mt-2 shrink-0 text-[var(--color-success-text)] ${arrowClass}`} aria-hidden="true" />
               </Link>
             );
           })}
-        </div>
+        </nav>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">

@@ -33,6 +33,7 @@ export type ResourceImage = {
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+  actualPrompt?: string;
   library_resources?: LibraryResources;
   sources?: Source[];
   detected_domain?: string;
@@ -64,6 +65,7 @@ export type SavedChatMessage = {
   role: "user" | "assistant";
   content: string;
   metadata?: {
+    actual_prompt?: string;
     library_resources?: LibraryResources;
     sources?: Source[];
     detected_domain?: string;

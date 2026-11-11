@@ -80,13 +80,15 @@ def safe_summary(value):
 
 
 def record(who, tool, status, execution, source, summary=None, duration_ms=None, event_id=None, title=''):
-    if not who:return
+    if not who:
+        return
     key = str(uuid.uuid4())
     if tool.startswith('chat-'):
         from laboratory_chat import CATALOG
         kind=tool[5:]
         entry=CATALOG['models'].get(kind)
-        if entry:title=entry['fa']
+        if entry:
+            title=entry['fa']
     labels = NAMES.get(tool, (title[:120] or tool[:120], title[:120] or tool[:120]))
     dedupe = who['actor_key']+':'+(event_id or key)
     with connection() as conn:
@@ -101,15 +103,19 @@ def filters(q='', status='', execution='', actor_kind='', since='', until=''):
     clauses, args = [], []
     for column, value in [('status', status), ('execution', execution), ('actor_kind', actor_kind)]:
         if value:
-            clauses.append(column+'=?');args.append(value)
+            clauses.append(column+'=?')
+            args.append(value)
     if q:
         escaped = q.strip().casefold().replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
         columns = ['full_name','email','phone','tool','title','title_en']
-        clauses.append('('+' OR '.join(f"lower({c}) LIKE ? ESCAPE '\\'" for c in columns)+')');args.extend(['%'+escaped+'%']*len(columns))
+        clauses.append('('+' OR '.join(f"lower({c}) LIKE ? ESCAPE '\\'" for c in columns)+')')
+        args.extend(['%'+escaped+'%']*len(columns))
     if since:
-        clauses.append('created_at>=?');args.append(since)
+        clauses.append('created_at>=?')
+        args.append(since)
     if until:
-        clauses.append('created_at<?');args.append(until)
+        clauses.append('created_at<?')
+        args.append(until)
     return (' WHERE '+' AND '.join(clauses) if clauses else ''), args
 
 
@@ -131,7 +137,9 @@ def list_activity(limit=25, offset=0, **query):
         rows = [dict(r) for r in conn.execute('SELECT * FROM calculation_activity'+where+' ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?', [*args,limit,offset]).fetchall()]
     for r in rows:
         r['visitor_label'] = r['actor_key'].removeprefix('visitor:')[:10] if r['customer_id'] is None else None
-        r.pop('actor_key');r.pop('dedupe_key');r['summary'] = json.loads(r.pop('summary_json'))
+        r.pop('actor_key')
+        r.pop('dedupe_key')
+        r['summary'] = json.loads(r.pop('summary_json'))
     return {'items': rows, 'summary': stats(where, args), 'limit': limit, 'offset': offset}
 
 
@@ -144,7 +152,8 @@ class CalculationActivityRoute(APIRoute):
             tool = SERVER_PATHS.get(path)
             source = 'calculator'
             if re.fullmatch(r'/laboratory/imports/[a-f0-9]{32}/(?:confirm|recalculate)', path):
-                tool = 'file-confirm' if path.endswith('/confirm') else 'file-recalculate';source = 'file_import'
+                tool = 'file-confirm' if path.endswith('/confirm') else 'file-recalculate'
+                source = 'file_import'
             chat = path == '/chat/laboratory'
             if request.method != 'POST' or not (tool or chat):
                 return await original(request)

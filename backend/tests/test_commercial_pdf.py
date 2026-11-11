@@ -25,14 +25,19 @@ def test_report(locale):
 
 @pytest.mark.parametrize('change',[{'massPercent':'101'},{'density':'0'},{'sameSpecies':False},{'target':'20'},{'densitySource':''},{'massPercent':'49'},{'percentSource':'other'}])
 def test_invalid(change):
-    d=example();d['commercial'].update(change)
-    with pytest.raises(ValueError):build_commercial_pdf(CommercialReport.model_validate(d))
+    d=example()
+    d['commercial'].update(change)
+    with pytest.raises(ValueError):
+        build_commercial_pdf(CommercialReport.model_validate(d))
 
 
 def test_mismatch_units_and_unlinked():
-    d=example();d['expectedAliquot']=1
-    with pytest.raises(ValueError):build_commercial_pdf(CommercialReport.model_validate(d))
-    d=example();d['commercial'].update(volume='.1',volumeUnit='L',reagent=None)
+    d=example()
+    d['expectedAliquot']=1
+    with pytest.raises(ValueError):
+        build_commercial_pdf(CommercialReport.model_validate(d))
+    d=example()
+    d['commercial'].update(volume='.1',volumeUnit='L',reagent=None)
     assert recompute_commercial(CommercialReport.model_validate(d))[1]==pytest.approx(6.4084)
 
 
@@ -41,21 +46,29 @@ def test_endpoint():
     from fastapi.testclient import TestClient
     from routes.uncertainty import router
     from utils.deps import limiter
-    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router)
+    app=FastAPI()
+    app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"}
+    app.state.limiter=limiter
+    app.include_router(router)
     with TestClient(app) as client:
         r=client.post('/uncertainty/commercial-report.pdf',json=example())
         assert r.status_code==200 and r.content.startswith(b'%PDF-')
         assert r.headers['cache-control']=='no-store'
         assert r.headers['x-content-type-options']=='nosniff'
-        d=example();d['html']='not accepted'
+        d=example()
+        d['html']='not accepted'
         assert client.post('/uncertainty/commercial-report.pdf',json=d).status_code==422
-        d=example();d['expectedAliquot']=1
+        d=example()
+        d['expectedAliquot']=1
         assert client.post('/uncertainty/commercial-report.pdf',json=d).status_code==422
 
 
 def test_long_sources_and_invalid_snapshot():
-    d=example();d['commercial']['densitySource']='Long source - ' * 120
+    d=example()
+    d['commercial']['densitySource']='Long source - ' * 120
     assert build_commercial_pdf(CommercialReport.model_validate(d)).startswith(b'%PDF-')
     for key,value in [('lot',''),('purityBasis','v/v'),('certificate','Other CoA')]:
-        d=example();d['commercial']['reagent'][key]=value
-        with pytest.raises(ValueError):build_commercial_pdf(CommercialReport.model_validate(d))
+        d=example()
+        d['commercial']['reagent'][key]=value
+        with pytest.raises(ValueError):
+            build_commercial_pdf(CommercialReport.model_validate(d))

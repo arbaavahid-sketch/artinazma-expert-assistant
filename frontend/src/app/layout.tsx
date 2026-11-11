@@ -39,6 +39,46 @@ const jsonLd = {
   sameAs: ["https://artinazma.net"],
 };
 
+const registerServiceWorker = `
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+
+    function register() {
+      var serviceWorker = navigator.serviceWorker;
+      var hadController = Boolean(serviceWorker.controller);
+      serviceWorker.addEventListener('controllerchange', function () {
+        if (!serviceWorker.controller) return;
+        // The first install claims the open page. Reload only for an update.
+        if (!hadController) {
+          hadController = true;
+          return;
+        }
+        if (!sessionStorage.getItem('artin_sw_reloaded')) {
+          sessionStorage.setItem('artin_sw_reloaded', '1');
+          window.location.reload();
+        }
+      });
+
+      serviceWorker.register('/sw.js').then(function (registration) {
+        if (registration.update) registration.update().catch(function () {});
+        if (registration.waiting) registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        registration.addEventListener('updatefound', function () {
+          var worker = registration.installing;
+          if (!worker) return;
+          worker.addEventListener('statechange', function () {
+            if (worker.state === 'installed' && serviceWorker.controller) {
+              worker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+      }).catch(function () {});
+    }
+
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -72,10 +112,7 @@ export default function RootLayout({
         <Script
           id="sw-register"
           strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html:
-              "if('serviceWorker'in navigator){window.addEventListener('load',function(){var reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(reloaded)return;reloaded=true;if(!sessionStorage.getItem('artin_sw_reloaded')){sessionStorage.setItem('artin_sw_reloaded','1');window.location.reload();}});navigator.serviceWorker.register('/sw.js').then(function(r){if(r.update)r.update();if(r.waiting)r.waiting.postMessage({type:'SKIP_WAITING'});r.addEventListener('updatefound',function(){var w=r.installing;if(!w)return;w.addEventListener('statechange',function(){if(w.state==='installed'&&navigator.serviceWorker.controller){w.postMessage({type:'SKIP_WAITING'});}});});}).catch(function(){})})}",
-          }}
+          dangerouslySetInnerHTML={{ __html: registerServiceWorker }}
         />
         <Script
           id="ld-json"

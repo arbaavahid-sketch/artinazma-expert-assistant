@@ -99,7 +99,8 @@ def test_file_and_chat_calculations_are_recorded_without_counting_reference_chat
 
 def test_filters_pagination_and_summary_use_same_selection(client):
     customer(client)
-    for _ in range(3):client.post('/calculation-activity',json=event())
+    for _ in range(3):
+        client.post('/calculation-activity',json=event())
     client.post('/calculation-activity',json=event(status='error',tool='precision'))
     result=client.get('/admin/calculation-activity?q=qa%40example.invalid&status=success&limit=2&offset=2',headers=admin()).json()
     assert len(result['items'])==1 and result['summary']['total']==3 and result['summary']['errors']==0

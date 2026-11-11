@@ -202,7 +202,8 @@ def build_physical_pdf(payload: PhysicalReport):
     result, keys, raws = recompute_report(payload)
     d, run = payload.data, payload.run
     en = payload.locale == 'en'
-    t = lambda fa, english: english if en else fa
+    def t(fa, english):
+        return english if en else fa
     pdf = ReportPDF(en)
     pdf.add_page()
     pdf.line(t('گزارش چگالی' if payload.kind == 'density' else 'گزارش توزین مستقیم',
@@ -235,17 +236,22 @@ def build_physical_pdf(payload: PhysicalReport):
     pdf.add_page(orientation='L')
     pdf.line(t('داده‌های خام و بودجه عدم‌قطعیت','Raw data and uncertainty budget'),True,15)
     kinds={'standard':t('استاندارد u','Standard u'),'certificate':'U/k','resolution':'d/sqrt(12)','repeatability':'s/sqrt(n)','rectangular':'a/sqrt(3)','triangular':'a/sqrt(6)'}
-    rows=[];long_sources=[]
+    rows=[]
+    long_sources=[]
     for key,raw,item in zip(keys,raws,result['components']):
         source=raw.source
         if len(source)>180:
-            long_sources.append(source);source=source[:130]+' ... '+t('منبع کامل ','Full source ')+str(len(long_sources))
+            long_sources.append(source)
+            source=source[:130]+' ... '+t('منبع کامل ','Full source ')+str(len(long_sources))
         nominal=getattr(d.inputs,key).nominal if isinstance(d,DensityData) else '-'
         rows.append([names[key],nominal,kinds[raw.kind],raw.value,raw.divisor or '-',f'{item["standard_uncertainty"]:.8g}',f'{item["sensitivity"]:.8g}',f'{abs(item["contribution"]):.8g}',source])
     pdf.data_table([t('کمیت و واحد','Quantity/unit'),t('مقدار','Nominal'),t('نوع','Type'),t('عدد خام','Raw value'),'k / n','u','c',f'|c*u| ({unit})',t('منبع','Source')],rows,[34,18,24,22,15,25,25,28,51],(1,3,4,5,6,7))
     if long_sources:
-        pdf.add_page(orientation='P');pdf.line(t('متن کامل منابع','Full sources'),True,13)
-        for i,source in enumerate(long_sources,1):pdf.line(t('منبع ','Source ')+str(i),True);pdf.line(source)
+        pdf.add_page(orientation='P')
+        pdf.line(t('متن کامل منابع','Full sources'),True,13)
+        for i,source in enumerate(long_sources,1):
+            pdf.line(t('منبع ','Source ')+str(i),True)
+            pdf.line(source)
     with pdf.unbreakable() as section:
         section.line(t('فرض‌ها و محدوده', 'Assumptions and scope'), True, 13)
         section.line(t('استقلال منابع و نبود دوباره‌شماری توسط واردکننده داده تأیید شده است. k=2 تضمین پوشش دقیق ۹۵٪ نیست. این گزارش تصمیم انطباق یا تأیید روش نیست.',

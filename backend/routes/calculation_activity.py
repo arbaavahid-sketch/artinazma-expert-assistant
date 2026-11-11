@@ -1,4 +1,3 @@
-import re
 from datetime import datetime, timezone
 from typing import Literal
 from fastapi import APIRouter, Depends, Request, Response, Query, HTTPException
@@ -50,5 +49,6 @@ def activity_list(response: Response, q: str = Query(default='',max_length=120),
         raise HTTPException(422, 'Date filters must include a UTC offset')
     if since and until and since >= until:
         raise HTTPException(422, 'The end of the date range must follow its start')
-    stamp = lambda value: value.astimezone(timezone.utc).isoformat(timespec='milliseconds') if value else ''
+    def stamp(value):
+        return value.astimezone(timezone.utc).isoformat(timespec='milliseconds') if value else ''
     return service.list_activity(limit, offset, q=q, status=status, execution=execution, actor_kind=actor_kind, since=stamp(since), until=stamp(until))

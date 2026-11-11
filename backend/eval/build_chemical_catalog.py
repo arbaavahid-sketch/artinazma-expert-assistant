@@ -11,10 +11,11 @@ import zipfile
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'output/uncertainty-review/chemicals-1.5.2-py3-none-any.whl'
-TARGET = ROOT / 'backend/storage/chemical_catalog.sqlite3'
-BUNDLE = ROOT / 'backend/data/chemical-identities-v1.jsonl.gz'
+BACKEND = Path(__file__).resolve().parents[1]
+SOURCE = BACKEND.parent / 'output/uncertainty-review/chemicals-1.5.2-py3-none-any.whl'
+TARGET = BACKEND / 'storage/chemical_catalog.sqlite3'
+BUNDLE = BACKEND / 'data/chemical-identities-v1.jsonl.gz'
+NOTICE = BUNDLE.with_name('CHEMICAL_CATALOG_SOURCE.json')
 
 
 def build(source=SOURCE, target=TARGET, write_notice=True):
@@ -31,7 +32,7 @@ def build(source=SOURCE, target=TARGET, write_notice=True):
     if source is None or not source.exists():
         with gzip.open(BUNDLE,'rt',encoding='utf-8') as bundle:
             db.executemany('INSERT INTO compounds(cid,cas,formula,name,iupac,search_text,source_file) VALUES(?,?,?,?,?,?,?)',(json.loads(line) for line in bundle))
-        metadata=json.loads((ROOT/'docs/CHEMICAL_CATALOG_SOURCE.json').read_text(encoding='utf-8'))
+        metadata=json.loads(NOTICE.read_text(encoding='utf-8'))
         license_text=metadata['license']
     else:
       with zipfile.ZipFile(source) as archive:
@@ -63,9 +64,8 @@ def build(source=SOURCE, target=TARGET, write_notice=True):
                 bundle.write(json.dumps(row,ensure_ascii=False)+'\n')
     db.close()
     temp.replace(target)
-    notice = ROOT / 'docs/CHEMICAL_CATALOG_SOURCE.json'
     if write_notice:
-        notice.write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')
+        NOTICE.write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')
     return metadata
 
 

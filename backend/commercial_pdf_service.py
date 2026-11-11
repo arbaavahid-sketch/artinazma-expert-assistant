@@ -72,7 +72,8 @@ def recompute_commercial(payload):
 def build_commercial_pdf(payload):
     stock, aliquot, product_mass, volume = recompute_commercial(payload)
     en = payload.locale == 'en'
-    t = lambda fa, english: english if en else fa
+    def t(fa, english):
+        return english if en else fa
     d = payload.commercial
     pdf = ReportPDF(en)
     pdf.add_page()

@@ -1,0 +1,131 @@
+.page {
+  --work-ink: #152540;
+  --work-muted: #485872;
+  --work-line: #dce3f0;
+  --work-paper: #fff;
+  --work-accent: #2454a4;
+  --work-tint: #eef4ff;
+  --work-focus: #3475cf;
+  min-block-size: 100%;
+  background: var(--background);
+  color: var(--work-ink);
+  padding: clamp(.85rem, 3vw, 2rem);
+}
+
+:global(.dark) .page {
+  --work-ink: #f2f6ff;
+  --work-muted: #b6c6df;
+  --work-line: #364259;
+  --work-paper: #1a2233;
+  --work-accent: #a9c8ff;
+  --work-tint: #222f47;
+  --work-focus: #a9c8ff;
+}
+
+.page :focus-visible { outline: 2px solid var(--work-focus); outline-offset: 3px; }
+.masthead {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--work-line);
+  border-radius: 1.4rem;
+  background: var(--work-paper);
+}
+
+.masthead::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--work-accent) 23%, transparent) 1px, transparent 1.25px) 0 0 / 16px 16px,
+    radial-gradient(ellipse at 78% 23%, var(--work-tint), transparent 73%);
+  mask-image: linear-gradient(110deg, transparent 30%, black);
+  pointer-events: none;
+}
+
+.masthead:dir(rtl)::before { mask-image: linear-gradient(250deg, transparent 30%, black); }
+.eyebrow { display: inline-flex; align-items: center; gap: .45rem; font-size: .78rem; font-weight: 750; color: var(--work-accent); }
+.masthead h1 { margin-block: .45rem .3rem; line-height: 1.45; font-size: clamp(1.45rem, 3vw, 2.25rem); }
+.masthead p { max-inline-size: 66ch; color: var(--work-muted); font-size: .875rem; line-height: 1.9; }
+.panel { background: var(--work-paper); border: 1px solid var(--work-line); border-radius: 1.25rem; }
+.muted { color: var(--work-muted); }
+.accent { color: var(--work-accent); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .25rem .65rem;
+  border-radius: .65rem;
+  background: var(--work-tint);
+  color: var(--work-accent);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.tileGrid { display: grid; gap: .75rem; }
+.tile {
+  position: relative;
+  display: grid;
+  gap: .35rem;
+  align-content: start;
+  min-inline-size: 0;
+  overflow: hidden;
+  padding: 1rem;
+  border: 1px solid var(--work-line);
+  border-radius: 1rem;
+  background: var(--work-paper);
+}
+.tile:hover { border-color: var(--work-focus); }
+.tileIcon {
+  display: grid;
+  place-items: center;
+  inline-size: 2.35rem;
+  block-size: 2.35rem;
+  border-radius: .75rem;
+  background: var(--work-tint);
+  color: var(--work-accent);
+}
+.tile strong { line-height: 1.6; }
+.tile p { font-size: .82rem; line-height: 1.8; color: var(--work-muted); }
+.featureTile {
+  --work-ink: #fff;
+  --work-muted: #dce9ff;
+  --work-accent: #dce9ff;
+  --work-tint: #ffffff1c;
+  color: var(--work-ink);
+  background: radial-gradient(circle at 10% 0%, #3a6fba, transparent 58%), linear-gradient(130deg, #142d60, #204c92);
+}
+.tileArrow { position: absolute; inset-block-start: 1rem; inset-inline-end: 1rem; color: var(--work-accent); }
+.tileArrow:dir(rtl) { transform: scaleX(-1); }
+
+.dropZone {
+  padding: 1rem;
+  border: 1px dashed var(--work-focus);
+  border-radius: 1rem;
+  background: var(--work-tint);
+  color: var(--work-ink);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.dropZone[data-dragging="true"] { background: color-mix(in srgb, var(--work-focus) 12%, var(--work-tint)); }
+.dropZone:focus-within, .dropZone[data-dragging="true"] { outline: 2px solid var(--work-focus); outline-offset: 2px; }
+.empty {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: .7rem;
+  min-block-size: 15rem;
+  padding: 1.25rem;
+  border: 1px dashed var(--work-line);
+  border-radius: 1rem;
+  background: var(--work-tint);
+  text-align: center;
+}
+.empty p { max-inline-size: 47ch; color: var(--work-muted); font-size: .875rem; line-height: 1.85; }
+
+@media (min-width: 40rem) { .tileGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 75rem) {
+  .tileGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tileGrid > .featureTile { grid-column: span 2; }
+}

@@ -7,7 +7,6 @@ import statistics
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from measurement_models import MODEL_REGISTRY, model_at_nominal

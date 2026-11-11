@@ -11,7 +11,8 @@ from utils.deps import limiter
 
 
 def example(kind='density', locale='fa', long=False):
-    raw = lambda value, kind='standard', divisor='': dict(value=value, kind=kind, divisor=divisor, source='مثال فرضی منبع مستقل - Hypothetical source')
+    def raw(value, kind='standard', divisor=''):
+        return dict(value=value, kind=kind, divisor=divisor, source='مثال فرضی منبع مستقل - Hypothetical source')
     identity = dict(title='مثال فرضی آزمایشگاه - Hypothetical laboratory', sample='S-01', sop='LAB-01', edition='1', matrix='Test')
     if kind == 'density':
         data = dict(modelVersion=1, inputs=dict(mass=dict(nominal='۵۰', uncertainty=raw('.01')),
@@ -56,21 +57,31 @@ def test_long_persian_content_wraps_across_pages(monkeypatch):
 def test_export_rejects_tampered_or_incomplete_run(monkeypatch,change):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
     p=example()
-    if change=='measured':p['run']['measured']=3
-    elif change=='snapshot':p['identity']['title']='edited'
-    elif change=='engine':p['run']['engine']='unknown'
-    elif change=='conditions':p['data']['conditions']=''
-    else:p['data']['inputs']['mass']['uncertainty']['source']=''
-    with pytest.raises(ValueError):recompute_report(PhysicalReport.model_validate(p))
+    if change=='measured':
+        p['run']['measured']=3
+    elif change=='snapshot':
+        p['identity']['title']='edited'
+    elif change=='engine':
+        p['run']['engine']='unknown'
+    elif change=='conditions':
+        p['data']['conditions']=''
+    else:
+        p['data']['inputs']['mass']['uncertainty']['source']=''
+    with pytest.raises(ValueError):
+        recompute_report(PhysicalReport.model_validate(p))
 
 
 def test_pdf_endpoint_headers_and_bad_request(monkeypatch):
     monkeypatch.setenv('UNCERTAINTY_ENGINE','builtin')
-    app=FastAPI(); app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"};app.state.limiter=limiter;app.include_router(router)
+    app=FastAPI()
+    app.dependency_overrides[get_current_customer]=lambda: {"customer_id":7,"email":"unit@example.invalid"}
+    app.state.limiter=limiter
+    app.include_router(router)
     client=TestClient(app)
     response=client.post('/uncertainty/physical-report.pdf',json=example())
     assert response.status_code==200 and response.headers['content-type']=='application/pdf'
     assert response.headers['cache-control']=='no-store'
     assert response.content.startswith(b'%PDF-')
-    p=example();p['run']['expanded']=999
+    p=example()
+    p['run']['expanded']=999
     assert client.post('/uncertainty/physical-report.pdf',json=p).status_code==422

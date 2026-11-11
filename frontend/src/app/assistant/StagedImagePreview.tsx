@@ -1,23 +1,28 @@
+import { AttachmentPrimitive } from "@assistant-ui/react";
 import { X as XIcon } from "lucide-react";
+import { useCallback } from "react";
 
 /**
  * Preview strip for an image the user has staged (pasted/selected) but not yet
  * sent. Presentational — renders nothing unless an image is staged.
  */
 type StagedImagePreviewProps = {
-  image: File | null;
-  imageUrl: string;
-  onClear: () => void;
+  image: File;
   isEn: boolean;
 };
 
-export default function StagedImagePreview({ image, imageUrl, onClear, isEn }: StagedImagePreviewProps) {
-  if (!image) return null;
+export default function StagedImagePreview({ image, isEn }: StagedImagePreviewProps) {
+  const previewRef = useCallback((element: HTMLImageElement | null) => {
+    if (!element) return;
+    const url = URL.createObjectURL(image);
+    element.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [image]);
 
   return (
-    <div className="flex items-center gap-3 border-b border-slate-100 px-3 py-2">
+    <AttachmentPrimitive.Root className="flex items-center gap-3 border-b border-slate-100 px-3 py-2">
       <img
-        src={imageUrl}
+        ref={previewRef}
         alt={isEn ? "Image preview" : "پیش‌نمایش عکس"}
         className="h-12 w-12 rounded-xl border border-slate-200 object-cover shadow-sm"
       />
@@ -29,12 +34,13 @@ export default function StagedImagePreview({ image, imageUrl, onClear, isEn }: S
             : "عکس آماده ارسال — پیام خود را بنویسید یا مستقیم ارسال کنید"}
         </div>
       </div>
-      <button
-        onClick={onClear}
+      <AttachmentPrimitive.Remove
+        type="button"
+        aria-label={isEn ? "Remove attached image" : "برداشتن عکس پیوست"}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
       >
         <XIcon size={14} />
-      </button>
-    </div>
+      </AttachmentPrimitive.Remove>
+    </AttachmentPrimitive.Root>
   );
 }
