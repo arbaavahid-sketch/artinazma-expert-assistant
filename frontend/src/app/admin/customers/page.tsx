@@ -91,10 +91,10 @@ function formatDate(value?: string, locale = "fa") {
 }
 
 function getActionToneClass(tone?: string) {
-  if (tone === "urgent") return "border-red-100 bg-red-50 text-red-700";
-  if (tone === "warning") return "border-amber-100 bg-amber-50 text-amber-700";
-  if (tone === "success") return "border-emerald-100 bg-emerald-50 text-emerald-700";
-  return "border-blue-100 bg-blue-50 text-blue-700";
+  if (tone === "urgent") return "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]";
+  if (tone === "warning") return "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
+  if (tone === "success") return "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
+  return "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]";
 }
 
 function getRequestStatusLabel(status: string, locale = "fa") {
@@ -268,7 +268,7 @@ function AdminCustomersContent() {
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="ui-card mb-6 overflow-hidden rounded-[36px] shadow-sm">
-          <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
+          <div className="bg-gradient-to-l from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
@@ -278,37 +278,37 @@ function AdminCustomersContent() {
                   <Users size={28} strokeWidth={1.8} />
                 </div>
                 <div>
-                  <div className="mb-1 text-sm font-bold text-blue-700">
+                  <div className="mb-1 text-sm font-bold text-[var(--color-info-text)]">
                     {isEn ? "Admin Panel" : "پنل ادمین"}
                   </div>
-                  <h1 className="text-3xl font-black text-slate-900">
+                  <h1 className="text-3xl font-black text-[var(--foreground)]">
                     {isEn ? "Customer Management" : "مدیریت مشتریان"}
                   </h1>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="rounded-2xl bg-blue-50 px-5 py-3 text-center">
-                  <div className="text-2xl font-black text-blue-700">
+                <div className="rounded-2xl bg-[var(--color-info-bg)] px-5 py-3 text-center">
+                  <div className="text-2xl font-black text-[var(--color-info-text)]">
                     {total}
                   </div>
-                  <div className="mt-1 text-xs font-bold text-blue-500">
+                  <div className="mt-1 text-xs font-bold text-[var(--color-info-text)]">
                     {isEn ? "Total customers" : "کل مشتریان"}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-5 py-3 text-center">
-                  <div className="text-2xl font-black text-slate-700">
+                <div className="rounded-2xl bg-[var(--surface-soft)] px-5 py-3 text-center">
+                  <div className="text-2xl font-black text-[var(--text-muted)]">
                     {customers.reduce((s, c) => s + c.session_count, 0)}
                   </div>
-                  <div className="mt-1 text-xs font-bold text-slate-500">
+                  <div className="mt-1 text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "Total sessions" : "کل جلسات"}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-5 py-3 text-center">
-                  <div className="text-2xl font-black text-slate-700">
+                <div className="rounded-2xl bg-[var(--surface-soft)] px-5 py-3 text-center">
+                  <div className="text-2xl font-black text-[var(--text-muted)]">
                     {customers.reduce((s, c) => s + c.message_count, 0)}
                   </div>
-                  <div className="mt-1 text-xs font-bold text-slate-500">
+                  <div className="mt-1 text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "Total messages" : "کل پیام‌ها"}
                   </div>
                 </div>
@@ -333,19 +333,19 @@ function AdminCustomersContent() {
           {/* Customer list */}
           <div className="ui-card rounded-[32px] p-6 shadow-sm">
             {/* Search */}
-            <div className="mb-5 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <Search size={16} className="shrink-0 text-slate-400" />
+            <div className="mb-5 flex items-center gap-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3">
+              <Search size={16} className="shrink-0 text-[var(--text-subtle)]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={isEn ? "Search by name, email, or company..." : "جستجو بر اساس نام، ایمیل یا شرکت..."}
-                className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)] outline-none"
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="shrink-0 text-slate-400 hover:text-slate-600"
+                  className="shrink-0 text-[var(--text-subtle)] hover:text-[var(--text-muted)]"
                 >
                   <X size={15} />
                 </button>
@@ -360,10 +360,10 @@ function AdminCustomersContent() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="ui-empty rounded-3xl p-10">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-400 shadow-sm">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[var(--surface)] text-[var(--text-subtle)] shadow-sm">
                   <Users size={26} strokeWidth={1.8} />
                 </div>
-                <h3 className="mt-4 text-base font-black text-slate-700">
+                <h3 className="mt-4 text-base font-black text-[var(--text-muted)]">
                   {search
                     ? (isEn ? "No results found" : "نتیجه‌ای یافت نشد")
                     : (isEn ? "No customers have registered yet" : "هنوز مشتری‌ای ثبت نشده")}
@@ -371,7 +371,7 @@ function AdminCustomersContent() {
                 {search && (
                   <button
                     onClick={() => setSearch("")}
-                    className="mt-3 text-sm font-bold text-blue-700 hover:underline"
+                    className="mt-3 text-sm font-bold text-[var(--color-info-text)] hover:underline"
                   >
                     {isEn ? "Clear search" : "پاک کردن جستجو"}
                   </button>
@@ -392,50 +392,50 @@ function AdminCustomersContent() {
                     }}
                     className={`w-full rounded-2xl border p-4 text-right transition ${
                       selected?.id === c.id
-                        ? "border-blue-200 bg-blue-50"
-                        : "border-slate-200 bg-slate-50 hover:border-blue-100 hover:bg-white hover:shadow-sm"
+                        ? "border-[var(--color-info-border)] bg-[var(--color-info-bg)]"
+                        : "border-[var(--border-soft)] bg-[var(--surface-soft)] hover:border-[var(--color-info-border)] hover:bg-[var(--surface)] hover:shadow-sm"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-black text-slate-900">
+                          <span className="truncate text-sm font-black text-[var(--foreground)]">
                             {c.full_name}
                           </span>
                           {c.is_blocked && (
-                            <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-600">
+                            <span className="shrink-0 rounded-full bg-[var(--color-danger-bg)] px-2 py-0.5 text-[10px] font-black text-[var(--color-danger-text)]">
                               {isEn ? "Blocked" : "بلاک"}
                             </span>
                           )}
                           {(c.approval_status || "approved") === "pending" && (
-                            <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                            <span className="shrink-0 rounded-full bg-[var(--color-warning-bg)] px-2 py-0.5 text-[10px] font-black text-[var(--color-warning-text)]">
                               {isEn ? "Pending approval" : "در انتظار تأیید"}
                             </span>
                           )}
                           {c.approval_status === "rejected" && (
-                            <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-black text-slate-600">
+                            <span className="shrink-0 rounded-full bg-[var(--border-soft)] px-2 py-0.5 text-[10px] font-black text-[var(--text-muted)]">
                               {isEn ? "Rejected" : "رد شده"}
                             </span>
                           )}
                         </div>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                        <div className="mt-1 flex items-center gap-2 text-xs text-[var(--text-subtle)]">
                           <Mail size={12} />
                           <span className="truncate">{c.email}</span>
                           {c.company && (
                             <>
-                              <span className="text-slate-300">·</span>
+                              <span className="text-[var(--text-subtle)]">·</span>
                               <Building2 size={12} />
                               <span className="truncate">{c.company}</span>
                             </>
                           )}
                         </div>
                         {c.last_message_preview && (
-                          <p className="mt-1 line-clamp-1 text-xs text-slate-400 italic">
+                          <p className="mt-1 line-clamp-1 text-xs text-[var(--text-subtle)] italic">
                             {c.last_message_preview}
                           </p>
                         )}
                       </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-slate-500">
+                      <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-[var(--text-subtle)]">
                         <div className="flex items-center gap-2">
                           <span className="flex items-center gap-1">
                             <MessageSquareText size={12} />
@@ -447,7 +447,7 @@ function AdminCustomersContent() {
                           </span>
                         </div>
                         {c.last_active && (
-                          <span className="flex items-center gap-1 text-emerald-600">
+                          <span className="flex items-center gap-1 text-[var(--color-success-text)]">
                             <Clock3 size={11} />
                             {formatDate(c.last_active, locale)}
                           </span>
@@ -465,87 +465,87 @@ function AdminCustomersContent() {
             {selected ? (
               <div>
                 <div className="mb-6 flex items-center gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-blue-100 text-xl font-black text-blue-700">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-[var(--color-info-bg)] text-xl font-black text-[var(--color-info-text)]">
                     {selected.full_name.charAt(0)}
                   </div>
                   <div>
-                    <div className="text-lg font-black text-slate-900">
+                    <div className="text-lg font-black text-[var(--foreground)]">
                       {selected.full_name}
                     </div>
-                    <div className="mt-1 text-xs font-bold text-slate-500">
+                    <div className="mt-1 text-xs font-bold text-[var(--text-subtle)]">
                       {isEn ? "ID" : "شناسه"}: #{selected.id}
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                    <Mail className="mt-0.5 shrink-0 text-blue-700" size={16} />
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
+                    <Mail className="mt-0.5 shrink-0 text-[var(--color-info-text)]" size={16} />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Email" : "ایمیل"}
                       </div>
-                      <div className="mt-1 break-all text-sm font-bold text-slate-900">
+                      <div className="mt-1 break-all text-sm font-bold text-[var(--foreground)]">
                         {selected.email}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
                     <Phone
-                      className="mt-0.5 shrink-0 text-blue-700"
+                      className="mt-0.5 shrink-0 text-[var(--color-info-text)]"
                       size={16}
                     />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Phone" : "شماره تماس"}
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
+                      <div className="mt-1 text-sm font-bold text-[var(--foreground)]">
                         {selected.phone || (isEn ? "Not registered" : "ثبت نشده")}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
                     <Building2
-                      className="mt-0.5 shrink-0 text-blue-700"
+                      className="mt-0.5 shrink-0 text-[var(--color-info-text)]"
                       size={16}
                     />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Company / Organization" : "شرکت / سازمان"}
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
+                      <div className="mt-1 text-sm font-bold text-[var(--foreground)]">
                         {selected.company || (isEn ? "Not registered" : "ثبت نشده")}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
                     <Clock3
-                      className="mt-0.5 shrink-0 text-blue-700"
+                      className="mt-0.5 shrink-0 text-[var(--color-info-text)]"
                       size={16}
                     />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Join date" : "تاریخ عضویت"}
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
+                      <div className="mt-1 text-sm font-bold text-[var(--foreground)]">
                         {formatDate(selected.created_at, locale)}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
                     <ShieldCheck
-                      className="mt-0.5 shrink-0 text-blue-700"
+                      className="mt-0.5 shrink-0 text-[var(--color-info-text)]"
                       size={16}
                     />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Access status" : "وضعیت دسترسی"}
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
+                      <div className="mt-1 text-sm font-bold text-[var(--foreground)]">
                         {(selected.approval_status || "approved") === "pending"
                           ? (isEn ? "Pending admin approval" : "در انتظار تأیید ادمین")
                           : selected.approval_status === "rejected"
@@ -555,16 +555,16 @@ function AdminCustomersContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
                     <MessageSquareText
-                      className="mt-0.5 shrink-0 text-emerald-600"
+                      className="mt-0.5 shrink-0 text-[var(--color-success-text)]"
                       size={16}
                     />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Last activity" : "آخرین فعالیت"}
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
+                      <div className="mt-1 text-sm font-bold text-[var(--foreground)]">
                         {selected.last_active ? formatDate(selected.last_active, locale) : (isEn ? "No messages yet" : "هنوز پیامی ندارد")}
                       </div>
                     </div>
@@ -572,34 +572,34 @@ function AdminCustomersContent() {
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-blue-50 p-4 text-center">
-                    <div className="text-3xl font-black text-blue-700">
+                  <div className="rounded-2xl bg-[var(--color-info-bg)] p-4 text-center">
+                    <div className="text-3xl font-black text-[var(--color-info-text)]">
                       {selected.session_count}
                     </div>
-                    <div className="mt-1 text-xs font-bold text-blue-500">
+                    <div className="mt-1 text-xs font-bold text-[var(--color-info-text)]">
                       {isEn ? "Chat sessions" : "جلسه گفتگو"}
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-4 text-center">
-                    <div className="text-3xl font-black text-slate-700">
+                  <div className="rounded-2xl bg-[var(--surface-soft)] p-4 text-center">
+                    <div className="text-3xl font-black text-[var(--text-muted)]">
                       {selected.message_count}
                     </div>
-                    <div className="mt-1 text-xs font-bold text-slate-500">
+                    <div className="mt-1 text-xs font-bold text-[var(--text-subtle)]">
                       {isEn ? "Sent messages" : "پیام ارسالی"}
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50/40 p-4">
+                <div className="mt-5 rounded-3xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/40 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <Sparkles size={17} className="text-blue-700" />
-                      <h3 className="text-sm font-black text-slate-900">
+                      <Sparkles size={17} className="text-[var(--color-info-text)]" />
+                      <h3 className="text-sm font-black text-[var(--foreground)]">
                         {isEn ? "Smart Customer Summary" : "خلاصه هوشمند مشتری"}
                       </h3>
                     </div>
                     {summaryLoading && (
-                      <span className="text-xs font-bold text-slate-400">
+                      <span className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Analyzing..." : "در حال تحلیل..."}
                       </span>
                     )}
@@ -608,27 +608,27 @@ function AdminCustomersContent() {
                   {customerSummary ? (
                     <div className="space-y-3">
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="rounded-2xl bg-white p-3 text-center">
-                          <div className="text-xl font-black text-slate-900">
+                        <div className="rounded-2xl bg-[var(--surface)] p-3 text-center">
+                          <div className="text-xl font-black text-[var(--foreground)]">
                             {customerSummary.summary.total_requests}
                           </div>
-                          <div className="mt-1 text-[11px] font-bold text-slate-500">
+                          <div className="mt-1 text-[11px] font-bold text-[var(--text-subtle)]">
                             {isEn ? "Requests" : "درخواست"}
                           </div>
                         </div>
-                        <div className="rounded-2xl bg-white p-3 text-center">
-                          <div className="text-xl font-black text-amber-700">
+                        <div className="rounded-2xl bg-[var(--surface)] p-3 text-center">
+                          <div className="text-xl font-black text-[var(--color-warning-text)]">
                             {customerSummary.summary.open_requests}
                           </div>
-                          <div className="mt-1 text-[11px] font-bold text-slate-500">
+                          <div className="mt-1 text-[11px] font-bold text-[var(--text-subtle)]">
                             {isEn ? "Open" : "باز"}
                           </div>
                         </div>
-                        <div className="rounded-2xl bg-white p-3 text-center">
-                          <div className="text-xl font-black text-red-700">
+                        <div className="rounded-2xl bg-[var(--surface)] p-3 text-center">
+                          <div className="text-xl font-black text-[var(--color-danger-text)]">
                             {customerSummary.summary.overdue_follow_ups}
                           </div>
-                          <div className="mt-1 text-[11px] font-bold text-slate-500">
+                          <div className="mt-1 text-[11px] font-bold text-[var(--text-subtle)]">
                             {isEn ? "Overdue" : "عقب‌افتاده"}
                           </div>
                         </div>
@@ -649,23 +649,23 @@ function AdminCustomersContent() {
                       </div>
 
                       {customerSummary.summary.latest_request && (
-                        <div className="rounded-2xl bg-white p-3">
-                          <div className="mb-2 text-xs font-black text-slate-500">
+                        <div className="rounded-2xl bg-[var(--surface)] p-3">
+                          <div className="mb-2 text-xs font-black text-[var(--text-subtle)]">
                             {isEn ? "Latest related request" : "آخرین درخواست مرتبط"}
                           </div>
-                          <div className="truncate text-sm font-black text-slate-900">
+                          <div className="truncate text-sm font-black text-[var(--foreground)]">
                             #{customerSummary.summary.latest_request.id}{" "}
                             {customerSummary.summary.latest_request.subject || (isEn ? "No subject" : "بدون موضوع")}
                           </div>
                           <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold">
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                            <span className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-[var(--text-muted)]">
                               {getRequestStatusLabel(customerSummary.summary.latest_request.status, locale)}
                             </span>
-                            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
+                            <span className="rounded-full bg-[var(--color-info-bg)] px-2.5 py-1 text-[var(--color-info-text)]">
                               {getPriorityLabel(customerSummary.summary.latest_request.priority, locale)}
                             </span>
                             {customerSummary.summary.latest_request.follow_up_at && (
-                              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">
+                              <span className="rounded-full bg-[var(--color-warning-bg)] px-2.5 py-1 text-[var(--color-warning-text)]">
                                 {formatDate(customerSummary.summary.latest_request.follow_up_at, locale)}
                               </span>
                             )}
@@ -674,7 +674,7 @@ function AdminCustomersContent() {
                       )}
                     </div>
                   ) : (
-                    <div className="rounded-2xl bg-white p-4 text-center text-xs font-bold text-slate-500">
+                    <div className="rounded-2xl bg-[var(--surface)] p-4 text-center text-xs font-bold text-[var(--text-subtle)]">
                       {summaryLoading
                         ? (isEn ? "Preparing summary..." : "در حال آماده‌سازی خلاصه...")
                         : (isEn ? "No summary is available for this customer." : "خلاصه‌ای برای این مشتری در دسترس نیست.")}
@@ -686,10 +686,10 @@ function AdminCustomersContent() {
                 <div className="mt-5">
                   <button
                     onClick={() => setShowSessions(!showSessions)}
-                    className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+                    className="flex w-full items-center justify-between rounded-2xl bg-[var(--surface-soft)] px-4 py-3 text-sm font-bold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)]"
                   >
                     <span className="flex items-center gap-2">
-                      <MessageSquareText size={15} className="text-blue-600" />
+                      <MessageSquareText size={15} className="text-[var(--color-info-text)]" />
                       {isEn ? `Chat sessions (${selected.session_count})` : `جلسات گفتگو (${selected.session_count})`}
                     </span>
                     {showSessions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -704,29 +704,29 @@ function AdminCustomersContent() {
                           ))}
                         </div>
                       ) : sessions.length === 0 ? (
-                        <div className="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-500">
+                        <div className="rounded-xl bg-[var(--surface-soft)] p-4 text-center text-xs text-[var(--text-subtle)]">
                           {isEn ? "No sessions have been registered yet" : "هنوز جلسه‌ای ثبت نشده"}
                         </div>
                       ) : (
                         sessions.map((s) => (
                           <div
                             key={s.id}
-                            className="rounded-xl border border-slate-100 bg-white p-3 transition hover:border-blue-100 hover:shadow-sm"
+                            className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] p-3 transition hover:border-[var(--color-info-border)] hover:shadow-sm"
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="truncate text-xs font-black text-slate-800">
+                              <span className="truncate text-xs font-black text-[var(--foreground)]">
                                 {s.title || (isEn ? "Untitled" : "بدون عنوان")}
                               </span>
-                              <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                              <span className="shrink-0 rounded-full bg-[var(--color-info-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-info-text)]">
                                 {isEn ? `${s.message_count} messages` : `${s.message_count} پیام`}
                               </span>
                             </div>
                             {s.first_user_message && (
-                              <p className="mt-1.5 line-clamp-2 text-[11px] leading-5 text-slate-500 italic">
+                              <p className="mt-1.5 line-clamp-2 text-[11px] leading-5 text-[var(--text-subtle)] italic">
                                 {s.first_user_message}
                               </p>
                             )}
-                            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-400">
+                            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--text-subtle)]">
                               <Clock3 size={10} />
                               {formatDate(s.created_at, locale)}
                               {s.last_message_at && s.last_message_at !== s.created_at && (
@@ -762,7 +762,7 @@ function AdminCustomersContent() {
                       setNotifyStatus(null);
                       setNotifyModal(true);
                     }}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 transition hover:bg-amber-100"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-4 py-3 text-sm font-bold text-[var(--color-warning-text)] transition hover:bg-[var(--color-warning-bg)]"
                   >
                     <Bell size={15} />
                     {isEn ? "In-app notification" : "اعلان داخل اپ"}
@@ -772,7 +772,7 @@ function AdminCustomersContent() {
                     <button
                       onClick={() => setApproval(selected, "approved")}
                       disabled={approvingId === selected.id}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-3 text-sm font-bold text-[var(--color-success-text)] transition hover:bg-[var(--color-success-bg)] disabled:opacity-50"
                     >
                       <ShieldCheck size={15} />
                       {approvingId === selected.id ? "..." : (isEn ? "Approve access" : "تأیید ورود")}
@@ -783,7 +783,7 @@ function AdminCustomersContent() {
                     <button
                       onClick={() => setApproval(selected, "rejected")}
                       disabled={approvingId === selected.id}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-bold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] disabled:opacity-50"
                     >
                       <ShieldOff size={15} />
                       {approvingId === selected.id ? "..." : (isEn ? "Reject access" : "رد دسترسی")}
@@ -795,8 +795,8 @@ function AdminCustomersContent() {
                     disabled={blockingId === selected.id}
                     className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition disabled:opacity-50 ${
                       selected.is_blocked
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                        : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                        ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border border-[var(--color-success-border)] hover:bg-[var(--color-success-bg)]"
+                        : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] border border-[var(--color-danger-border)] hover:bg-[var(--color-danger-bg)]"
                     }`}
                   >
                     {selected.is_blocked ? <ShieldCheck size={15} /> : <ShieldOff size={15} />}
@@ -809,20 +809,20 @@ function AdminCustomersContent() {
                 </div>
 
                 {selected.is_blocked && (
-                  <div className="mt-3 rounded-2xl bg-red-50 border border-red-100 p-3 text-xs font-bold text-red-700 text-center">
+                  <div className="mt-3 rounded-2xl bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] p-3 text-xs font-bold text-[var(--color-danger-text)] text-center">
                     {isEn ? "This account is blocked; the customer cannot sign in." : "⛔ این حساب مسدود است — مشتری نمی‌تواند وارد شود."}
                   </div>
                 )}
               </div>
             ) : (
               <div className="ui-empty rounded-3xl p-10">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-400 shadow-sm">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[var(--surface)] text-[var(--text-subtle)] shadow-sm">
                   <Users size={26} strokeWidth={1.8} />
                 </div>
-                <h3 className="mt-4 text-sm font-black text-slate-600">
+                <h3 className="mt-4 text-sm font-black text-[var(--text-muted)]">
                   {isEn ? "Select a customer" : "یک مشتری را انتخاب کنید"}
                 </h3>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[var(--text-subtle)]">
                   {isEn ? "Click a customer name to view details." : "برای مشاهده جزئیات، روی نام مشتری کلیک کنید."}
                 </p>
               </div>
@@ -834,24 +834,24 @@ function AdminCustomersContent() {
       {/* Email Modal */}
       {emailModal && selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-[32px] bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+          <div className="w-full max-w-lg rounded-[32px] bg-[var(--surface)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-soft)] p-6">
               <div>
-                <h2 className="text-lg font-black text-slate-900">{isEn ? "Send Email" : "ارسال ایمیل"}</h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <h2 className="text-lg font-black text-[var(--foreground)]">{isEn ? "Send Email" : "ارسال ایمیل"}</h2>
+                <p className="mt-1 text-sm text-[var(--text-subtle)]">
                   {isEn ? "To" : "به"}: {selected.full_name} — {selected.email}
                 </p>
               </div>
               <button
                 onClick={() => setEmailModal(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-subtle)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-muted)]"
               >
                 <X size={18} />
               </button>
             </div>
             <div className="space-y-4 p-6">
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">{isEn ? "Subject" : "موضوع"}</label>
+                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">{isEn ? "Subject" : "موضوع"}</label>
                 <input
                   type="text"
                   value={emailSubject}
@@ -861,7 +861,7 @@ function AdminCustomersContent() {
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">{isEn ? "Email body" : "متن ایمیل"}</label>
+                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">{isEn ? "Email body" : "متن ایمیل"}</label>
                 <textarea
                   value={emailBody}
                   onChange={(e) => setEmailBody(e.target.value)}
@@ -886,7 +886,7 @@ function AdminCustomersContent() {
                   {isEn ? "Cancel" : "انصراف"}
                 </button>
               </div>
-              <p className="text-xs text-slate-400 text-center">
+              <p className="text-xs text-[var(--text-subtle)] text-center">
                 {isEn
                   ? "This button opens your email client with the filled information."
                   : "این دکمه کلاینت ایمیل شما را با اطلاعات پر‌شده باز می‌کند."}
@@ -899,15 +899,15 @@ function AdminCustomersContent() {
       {/* Notify Modal */}
       {notifyModal && selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-[32px] bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+          <div className="w-full max-w-lg rounded-[32px] bg-[var(--surface)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-soft)] p-6">
               <div>
-                <h2 className="text-lg font-black text-slate-900">{isEn ? "Send In-App Notification" : "ارسال اعلان داخل اپ"}</h2>
-                <p className="mt-1 text-sm text-slate-500">{isEn ? "For" : "برای"}: {selected.full_name}</p>
+                <h2 className="text-lg font-black text-[var(--foreground)]">{isEn ? "Send In-App Notification" : "ارسال اعلان داخل اپ"}</h2>
+                <p className="mt-1 text-sm text-[var(--text-subtle)]">{isEn ? "For" : "برای"}: {selected.full_name}</p>
               </div>
               <button
                 onClick={() => setNotifyModal(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--text-subtle)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-muted)]"
               >
                 <X size={18} />
               </button>
@@ -915,18 +915,18 @@ function AdminCustomersContent() {
             <div className="space-y-4 p-6">
               {notifyStatus && (
                 <div className={`rounded-2xl p-4 text-sm font-bold ${
-                  notifyStatus.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                  notifyStatus.ok ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
                 }`}>
                   {notifyStatus.text}
                 </div>
               )}
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">{isEn ? "Message text" : "متن پیام"}</label>
+                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">{isEn ? "Message text" : "متن پیام"}</label>
                 <textarea
                   value={notifyMessage}
                   onChange={(e) => setNotifyMessage(e.target.value)}
                   rows={4}
-                  className="w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm leading-7 outline-none transition focus:border-amber-500"
+                  className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm leading-7 outline-none transition focus:border-amber-500"
                   placeholder={isEn ? "Notification message for the customer..." : "پیام اعلان برای مشتری..."}
                 />
               </div>
@@ -941,7 +941,7 @@ function AdminCustomersContent() {
                 </button>
                 <button
                   onClick={() => setNotifyModal(false)}
-                  className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="rounded-2xl border border-[var(--border-soft)] px-5 py-3 text-sm font-bold text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
                 >
                   {isEn ? "Cancel" : "انصراف"}
                 </button>

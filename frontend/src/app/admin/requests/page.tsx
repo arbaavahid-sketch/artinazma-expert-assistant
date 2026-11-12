@@ -55,29 +55,29 @@ const REQUEST_PRIORITIES = [
     value: "low",
     label: "کم",
     labelEn: "Low",
-    badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
-    selectClass: "border-slate-200 bg-slate-50 text-slate-700",
+    badgeClass: "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]",
+    selectClass: "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)]",
   },
   {
     value: "normal",
     label: "عادی",
     labelEn: "Normal",
-    badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
-    selectClass: "border-blue-100 bg-blue-50 text-blue-700",
+    badgeClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
+    selectClass: "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]",
   },
   {
     value: "high",
     label: "بالا",
     labelEn: "High",
-    badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
-    selectClass: "border-amber-100 bg-amber-50 text-amber-700",
+    badgeClass: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]",
+    selectClass: "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]",
   },
   {
     value: "urgent",
     label: "فوری",
     labelEn: "Urgent",
-    badgeClass: "bg-red-50 text-red-700 border-red-100",
-    selectClass: "border-red-100 bg-red-50 text-red-700",
+    badgeClass: "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] border-[var(--color-danger-border)]",
+    selectClass: "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]",
   },
 ] as const;
 
@@ -122,10 +122,10 @@ const REQUEST_WORKFLOW = [
     labelEn: "New",
     actionLabel: "شروع بررسی",
     actionLabelEn: "Start review",
-    badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
-    filterClass: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+    badgeClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
+    filterClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] hover:bg-[var(--color-info-bg)]",
     activeClass: "bg-blue-600 text-white",
-    cardClass: "border-blue-200 bg-blue-50/40 hover:bg-blue-50",
+    cardClass: "border-[var(--color-info-border)] bg-[var(--color-info-bg)]/40 hover:bg-[var(--color-info-bg)]",
   },
   {
     value: "reviewing",
@@ -133,10 +133,10 @@ const REQUEST_WORKFLOW = [
     labelEn: "Reviewing",
     actionLabel: "ارسال به قیمت‌گذاری",
     actionLabelEn: "Send to pricing",
-    badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
-    filterClass: "bg-amber-50 text-amber-700 hover:bg-amber-100",
+    badgeClass: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]",
+    filterClass: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] hover:bg-[var(--color-warning-bg)]",
     activeClass: "bg-amber-500 text-white",
-    cardClass: "border-amber-200 bg-amber-50/40 hover:bg-amber-50",
+    cardClass: "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)]/40 hover:bg-[var(--color-warning-bg)]",
   },
   {
     value: "pricing",
@@ -144,10 +144,10 @@ const REQUEST_WORKFLOW = [
     labelEn: "Pricing",
     actionLabel: "ثبت ارسال پیشنهاد",
     actionLabelEn: "Mark proposal sent",
-    badgeClass: "bg-purple-50 text-purple-700 border-purple-100",
-    filterClass: "bg-purple-50 text-purple-700 hover:bg-purple-100",
+    badgeClass: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800",
+    filterClass: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40",
     activeClass: "bg-purple-600 text-white",
-    cardClass: "border-purple-200 bg-purple-50/30 hover:bg-purple-50",
+    cardClass: "border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40/30 hover:bg-purple-50 dark:hover:bg-purple-950/40",
   },
   {
     value: "sent",
@@ -155,10 +155,10 @@ const REQUEST_WORKFLOW = [
     labelEn: "Sent",
     actionLabel: "بستن درخواست",
     actionLabelEn: "Close request",
-    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    filterClass: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+    badgeClass: "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]",
+    filterClass: "bg-[var(--color-success-bg)] text-[var(--color-success-text)] hover:bg-[var(--color-success-bg)]",
     activeClass: "bg-emerald-600 text-white",
-    cardClass: "border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50",
+    cardClass: "border-[var(--color-success-border)] bg-[var(--color-success-bg)]/30 hover:bg-[var(--color-success-bg)]",
   },
   {
     value: "closed",
@@ -166,10 +166,10 @@ const REQUEST_WORKFLOW = [
     labelEn: "Closed",
     actionLabel: "بازگشایی",
     actionLabelEn: "Reopen",
-    badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
-    filterClass: "bg-slate-50 text-slate-500 hover:bg-slate-100",
+    badgeClass: "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]",
+    filterClass: "bg-[var(--surface-soft)] text-[var(--text-subtle)] hover:bg-[var(--surface-soft)]",
     activeClass: "bg-slate-500 text-white",
-    cardClass: "border-slate-200 bg-slate-50 hover:bg-white",
+    cardClass: "border-[var(--border-soft)] bg-[var(--surface-soft)] hover:bg-[var(--surface)]",
   },
 ] as const;
 
@@ -496,7 +496,7 @@ export default function AdminRequestsPage() {
                 {isEn ? "Customer Requests" : "درخواست‌های مشتریان"}
               </h1>
             </div>
-            <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-sm leading-7 text-[var(--text-muted)] dark:text-[var(--text-subtle)]">
               {isEn ? "Review inquiries and track their status." : "درخواست‌ها را بررسی و وضعیت پیگیری آن‌ها را ثبت کنید."}
             </p>
           </div>
@@ -510,66 +510,66 @@ export default function AdminRequestsPage() {
         </header>
 
         <div className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">
+          <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] p-3 sm:p-4 shadow-sm">
+            <div className="text-sm font-bold text-[var(--text-subtle)]">
               {isEn ? "Total requests" : "کل درخواست‌ها"}
             </div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-slate-900">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
               {requests.length}
             </div>
           </div>
 
-          <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 sm:p-4">
-            <div className="text-sm font-bold text-blue-700">{isEn ? "New" : "جدید"}</div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-blue-700">
+          <div className="rounded-xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-3 sm:p-4">
+            <div className="text-sm font-bold text-[var(--color-info-text)]">{isEn ? "New" : "جدید"}</div>
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--color-info-text)]">
               {statusCounts.new}
             </div>
           </div>
 
-          <div className="rounded-xl border border-amber-100 bg-amber-50 p-3 sm:p-4">
-            <div className="text-sm font-bold text-amber-700">
+          <div className="rounded-xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] p-3 sm:p-4">
+            <div className="text-sm font-bold text-[var(--color-warning-text)]">
               {isEn ? "Reviewing" : "در حال بررسی"}
             </div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-amber-700">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--color-warning-text)]">
               {statusCounts.reviewing}
             </div>
           </div>
 
-          <div className="rounded-xl border border-purple-100 bg-purple-50 p-3 sm:p-4">
-            <div className="text-sm font-bold text-purple-700">
+          <div className="rounded-xl border border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 p-3 sm:p-4">
+            <div className="text-sm font-bold text-purple-700 dark:text-purple-300">
               {isEn ? "Pricing" : "قیمت‌گذاری"}
             </div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-purple-700">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-purple-700 dark:text-purple-300">
               {statusCounts.pricing}
             </div>
           </div>
 
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 sm:p-4">
-            <div className="text-sm font-bold text-emerald-700">{isEn ? "Sent" : "ارسال‌شده"}</div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-emerald-700">
+          <div className="rounded-xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] p-3 sm:p-4">
+            <div className="text-sm font-bold text-[var(--color-success-text)]">{isEn ? "Sent" : "ارسال‌شده"}</div>
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--color-success-text)]">
               {statusCounts.sent}
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-            <div className="text-sm font-bold text-slate-600">{isEn ? "Closed" : "بسته‌شده"}</div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-slate-600">
+          <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3 sm:p-4">
+            <div className="text-sm font-bold text-[var(--text-muted)]">{isEn ? "Closed" : "بسته‌شده"}</div>
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--text-muted)]">
               {statusCounts.closed}
             </div>
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           {/* ─── Search bar ─────────────────────────────────────── */}
           <div className="mb-4 relative">
             <Search
               size={18}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-subtle)]"
             />
             <input
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-4 pr-11 outline-none transition focus:border-purple-500 focus:bg-white"
+              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] py-3.5 pl-4 pr-11 outline-none transition focus:border-purple-500 focus:bg-[var(--surface)]"
               placeholder={isEn ? "Search by name, company, phone, subject, or request text..." : "جستجو در نام، شرکت، شماره، موضوع یا متن درخواست..."}
             />
           </div>
@@ -581,7 +581,7 @@ export default function AdminRequestsPage() {
                 value: "all",
                 label: isEn ? "All" : "همه",
                 count: requests.length,
-                cls: "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                cls: "bg-[var(--surface-soft)] text-[var(--text-muted)] hover:bg-[var(--border-soft)]",
                 active: "bg-slate-800 text-white",
               },
               ...REQUEST_WORKFLOW.map((item) => ({
@@ -598,7 +598,7 @@ export default function AdminRequestsPage() {
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${statusFilter === value ? active : cls}`}
               >
                 {label}
-                <span className={`rounded-full px-2 py-0.5 text-xs font-black ${statusFilter === value ? "bg-white/20" : "bg-white"}`}>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-black ${statusFilter === value ? "bg-white/20" : "bg-[var(--surface)]"}`}>
                   {count}
                 </span>
               </button>
@@ -606,15 +606,15 @@ export default function AdminRequestsPage() {
           </div>
 
           <div className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+            <label className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--text-subtle)]">
                 <Flag size={15} />
                 {isEn ? "Priority" : "اولویت"}
               </span>
               <select
                 value={priorityFilter}
                 onChange={(event) => setPriorityFilter(event.target.value as "all" | RequestPriorityValue)}
-                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+                className="w-full bg-transparent text-sm font-black text-[var(--foreground)] outline-none"
               >
                 <option value="all">{isEn ? "All priorities" : "همه اولویت‌ها"}</option>
                 {REQUEST_PRIORITIES.map((priority) => (
@@ -625,15 +625,15 @@ export default function AdminRequestsPage() {
               </select>
             </label>
 
-            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+            <label className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--text-subtle)]">
                 <CalendarDays size={15} />
                 {isEn ? "Follow-up date" : "موعد پیگیری"}
               </span>
               <select
                 value={followUpFilter}
                 onChange={(event) => setFollowUpFilter(event.target.value as FollowUpFilterValue)}
-                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+                className="w-full bg-transparent text-sm font-black text-[var(--foreground)] outline-none"
               >
                 {FOLLOW_UP_FILTERS.map((filter) => (
                   <option key={filter.value} value={filter.value}>
@@ -643,15 +643,15 @@ export default function AdminRequestsPage() {
               </select>
             </label>
 
-            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+            <label className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--text-subtle)]">
                 <UserRound size={15} />
                 {isEn ? "Owner" : "مسئول پیگیری"}
               </span>
               <select
                 value={assignmentFilter}
                 onChange={(event) => setAssignmentFilter(event.target.value as AssignmentFilterValue)}
-                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+                className="w-full bg-transparent text-sm font-black text-[var(--foreground)] outline-none"
               >
                 {ASSIGNMENT_FILTERS.map((filter) => (
                   <option key={filter.value} value={filter.value}>
@@ -661,15 +661,15 @@ export default function AdminRequestsPage() {
               </select>
             </label>
 
-            <label className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+            <label className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3">
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--text-subtle)]">
                 <ArrowDownUp size={15} />
                 {isEn ? "Sort" : "مرتب‌سازی"}
               </span>
               <select
                 value={sortMode}
                 onChange={(event) => setSortMode(event.target.value as RequestSortValue)}
-                className="w-full bg-transparent text-sm font-black text-slate-800 outline-none"
+                className="w-full bg-transparent text-sm font-black text-[var(--foreground)] outline-none"
               >
                 {REQUEST_SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -680,21 +680,21 @@ export default function AdminRequestsPage() {
             </label>
           </div>
 
-          <div className="mb-5 text-sm font-bold text-slate-500">
+          <div className="mb-5 text-sm font-bold text-[var(--text-subtle)]">
             {isEn
               ? `Showing ${filteredRequests.length} of ${requests.length} requests`
               : `نمایش ${filteredRequests.length} درخواست از ${requests.length} درخواست`}
           </div>
 
           {message && (
-            <div className="mb-5 flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 text-emerald-700">
+            <div className="mb-5 flex items-center gap-2 rounded-2xl bg-[var(--color-success-bg)] p-4 text-[var(--color-success-text)]">
               <CheckCircle2 size={18} />
               {message}
             </div>
           )}
 
           {loading ? (
-            <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-8 text-center text-[var(--text-subtle)]">
               {isEn ? "Loading requests..." : "در حال دریافت درخواست‌ها..."}
             </div>
           ) : filteredRequests.length > 0 ? (
@@ -712,7 +712,7 @@ export default function AdminRequestsPage() {
                   <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-700">
+                        <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-sm font-black text-[var(--text-muted)]">
                           #{item.id}
                         </span>
 
@@ -724,7 +724,7 @@ export default function AdminRequestsPage() {
                           {getStatusLabel(item.status, locale)}
                         </span>
 
-                        <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                        <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
                           {getTypeLabel(item.request_type, locale)}
                         </span>
 
@@ -736,24 +736,24 @@ export default function AdminRequestsPage() {
                         </span>
                       </div>
 
-                      <h2 className="mt-3 text-xl font-black text-slate-900">
+                      <h2 className="mt-3 text-xl font-black text-[var(--foreground)]">
                         {item.subject || (isEn ? "No subject" : "بدون موضوع")}
                       </h2>
 
-                      <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+                      <div className="mt-2 flex items-center gap-2 text-sm text-[var(--text-subtle)]">
                         <Clock3 size={15} />
                         {isEn ? "Created at" : "ثبت شده در"} {formatDate(item.created_at, locale)}
                       </div>
 
                       {(item.assigned_to || item.follow_up_at) && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[var(--text-subtle)]">
                           {item.assigned_to && (
-                            <span className="rounded-full bg-white px-3 py-1">
+                            <span className="rounded-full bg-[var(--surface)] px-3 py-1">
                               {isEn ? "Owner" : "مسئول"}: {item.assigned_to}
                             </span>
                           )}
                           {item.follow_up_at && (
-                            <span className="rounded-full bg-white px-3 py-1">
+                            <span className="rounded-full bg-[var(--surface)] px-3 py-1">
                               {isEn ? "Follow-up" : "پیگیری"}: {formatDate(item.follow_up_at, locale)}
                             </span>
                           )}
@@ -782,7 +782,7 @@ export default function AdminRequestsPage() {
                       {false && item.status === "new" && (
                         <button
                           onClick={() => updateStatus(item.id, "in_progress")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100 border border-amber-100"
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--color-warning-bg)] px-4 py-2 text-sm font-bold text-[var(--color-warning-text)] transition hover:bg-[var(--color-warning-bg)] border border-[var(--color-warning-border)]"
                         >
                           <PlayCircle size={15} />
                           {isEn ? "Start follow-up" : "شروع پیگیری"}
@@ -791,7 +791,7 @@ export default function AdminRequestsPage() {
                       {false && item.status === "in_progress" && (
                         <button
                           onClick={() => updateStatus(item.id, "done")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 border border-emerald-100"
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--color-success-bg)] px-4 py-2 text-sm font-bold text-[var(--color-success-text)] transition hover:bg-[var(--color-success-bg)] border border-[var(--color-success-border)]"
                         >
                           <CheckCircle2 size={15} />
                           {isEn ? "Done" : "انجام شد"}
@@ -800,7 +800,7 @@ export default function AdminRequestsPage() {
                       {false && item.status !== "closed" && (
                         <button
                           onClick={() => updateStatus(item.id, "closed")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500 transition hover:bg-slate-200"
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-subtle)] transition hover:bg-[var(--border-soft)]"
                         >
                           <XCircle size={15} />
                           {isEn ? "Close" : "بستن"}
@@ -809,7 +809,7 @@ export default function AdminRequestsPage() {
                       {false && item.status === "closed" && (
                         <button
                           onClick={() => updateStatus(item.id, "new")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-50 px-3 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-100"
+                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--color-info-bg)] px-3 py-2 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)]"
                         >
                           {isEn ? "Reopen" : "بازگشایی"}
                         </button>
@@ -819,16 +819,16 @@ export default function AdminRequestsPage() {
 
                   <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
                     <div className="space-y-3">
-                      <div className="rounded-2xl bg-white p-4">
-                        <div className="mb-3 text-sm font-black text-slate-900">
+                      <div className="rounded-2xl bg-[var(--surface)] p-4">
+                        <div className="mb-3 text-sm font-black text-[var(--foreground)]">
                           {isEn ? "Customer information" : "اطلاعات مشتری"}
                         </div>
 
-                        <div className="space-y-3 text-sm leading-7 text-slate-600">
+                        <div className="space-y-3 text-sm leading-7 text-[var(--text-muted)]">
                           <div className="flex items-start gap-2">
                             <UserRound
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700"
+                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
                             />
                             <span>{item.full_name || "-"}</span>
                           </div>
@@ -836,7 +836,7 @@ export default function AdminRequestsPage() {
                           <div className="flex items-start gap-2">
                             <Building2
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700"
+                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
                             />
                             <span>{item.company || "-"}</span>
                           </div>
@@ -844,7 +844,7 @@ export default function AdminRequestsPage() {
                           <div className="flex items-start gap-2">
                             <Phone
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700"
+                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
                             />
                             <span>{item.phone || "-"}</span>
                           </div>
@@ -852,7 +852,7 @@ export default function AdminRequestsPage() {
                           <div className="flex items-start gap-2">
                             <Mail
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700"
+                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
                             />
                             <span className="break-all">
                               {item.email || "-"}
@@ -861,13 +861,13 @@ export default function AdminRequestsPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-2xl bg-white p-4">
-                        <div className="mb-3 flex items-center gap-2 text-sm font-black text-slate-900">
-                          <Flag size={16} className="text-purple-700" />
+                      <div className="rounded-2xl bg-[var(--surface)] p-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-black text-[var(--foreground)]">
+                          <Flag size={16} className="text-purple-700 dark:text-purple-300" />
                           {isEn ? "Internal follow-up" : "پیگیری داخلی"}
                         </div>
 
-                        <label className="mb-2 block text-xs font-bold text-slate-500">
+                        <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
                           {isEn ? "Priority" : "اولویت"}
                         </label>
                         <select
@@ -882,39 +882,39 @@ export default function AdminRequestsPage() {
                           ))}
                         </select>
 
-                        <label className="mb-2 block text-xs font-bold text-slate-500">
+                        <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
                           {isEn ? "Internal note" : "یادداشت داخلی"}
                         </label>
                         <textarea
                           value={crmDrafts[item.id]?.internal_note ?? item.internal_note ?? ""}
                           onChange={(event) => updateCrmDraft(item.id, { internal_note: event.target.value })}
                           rows={4}
-                          className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm leading-7 text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
+                          className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3 text-sm leading-7 text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
                           placeholder={isEn ? "Example: contacted the customer; needs a GC proforma..." : "مثلا: با مشتری تماس گرفته شد، نیاز به پیش‌فاکتور GC دارد..."}
                         />
 
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                           <div>
-                            <label className="mb-2 block text-xs font-bold text-slate-500">
+                            <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
                               {isEn ? "Owner" : "مسئول پیگیری"}
                             </label>
                             <input
                               value={crmDrafts[item.id]?.assigned_to ?? item.assigned_to ?? ""}
                               onChange={(event) => updateCrmDraft(item.id, { assigned_to: event.target.value })}
-                              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
+                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
                               placeholder={isEn ? "Example: Sales team" : "مثلا: واحد فروش"}
                             />
                           </div>
 
                           <div>
-                            <label className="mb-2 block text-xs font-bold text-slate-500">
+                            <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
                               {isEn ? "Next follow-up" : "پیگیری بعدی"}
                             </label>
                             <input
                               type="date"
                               value={crmDrafts[item.id]?.follow_up_at ?? item.follow_up_at ?? ""}
                               onChange={(event) => updateCrmDraft(item.id, { follow_up_at: event.target.value })}
-                              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 outline-none transition focus:border-purple-400 focus:bg-white"
+                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
                             />
                           </div>
                         </div>
@@ -932,18 +932,18 @@ export default function AdminRequestsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl bg-white p-4">
-                      <div className="mb-3 text-sm font-black text-slate-900">
+                    <div className="rounded-2xl bg-[var(--surface)] p-4">
+                      <div className="mb-3 text-sm font-black text-[var(--foreground)]">
                         {isEn ? "Request text" : "متن درخواست"}
                       </div>
 
-                      <div className="whitespace-pre-wrap leading-8 text-slate-700">
+                      <div className="whitespace-pre-wrap leading-8 text-[var(--text-muted)]">
                         {item.message || "-"}
                       </div>
 
                       {!!item.updates?.length && (
-                        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                          <div className="mb-3 text-sm font-black text-blue-800">
+                        <div className="mt-4 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/60 p-4">
+                          <div className="mb-3 text-sm font-black text-[var(--color-info-text)]">
                             {isEn ? "Customer follow-up notes" : "توضیحات تکمیلی مشتری"} ({item.updates.length})
                           </div>
 
@@ -951,7 +951,7 @@ export default function AdminRequestsPage() {
                             {item.updates.map((update) => (
                               <div
                                 key={update.id}
-                                className="rounded-2xl bg-white p-3 text-sm leading-7 text-slate-700"
+                                className="rounded-2xl bg-[var(--surface)] p-3 text-sm leading-7 text-[var(--text-muted)]"
                               >
                                 <div className="whitespace-pre-wrap">
                                   {update.message}
@@ -961,13 +961,13 @@ export default function AdminRequestsPage() {
                                     href={apiUrl(update.file_url)}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="mt-2 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-50"
+                                    className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[var(--surface-soft)] px-3 py-2 text-xs font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)]"
                                   >
                                     <FileText size={14} />
                                     {update.file_name || (isEn ? "Attached file" : "فایل پیوست")}
                                   </a>
                                 )}
-                                <div className="mt-2 text-xs font-bold text-slate-400">
+                                <div className="mt-2 text-xs font-bold text-[var(--text-subtle)]">
                                   {formatDate(update.created_at, locale)}
                                 </div>
                               </div>
@@ -977,7 +977,7 @@ export default function AdminRequestsPage() {
                       )}
 
                       {item.updated_at && (
-                        <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs text-slate-500">
+                        <div className="mt-4 rounded-2xl bg-[var(--surface-soft)] p-3 text-xs text-[var(--text-subtle)]">
                           {isEn ? "Last updated" : "آخرین بروزرسانی"}: {formatDate(item.updated_at, locale)}
                         </div>
                       )}
@@ -988,7 +988,7 @@ export default function AdminRequestsPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-10 text-center text-[var(--text-subtle)]">
               {isEn ? "No requests matched this filter or search." : "درخواستی با این فیلتر یا جستجو پیدا نشد."}
             </div>
           )}

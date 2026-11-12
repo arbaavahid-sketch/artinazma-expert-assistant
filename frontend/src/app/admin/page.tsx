@@ -117,7 +117,7 @@ export default function AdminPage() {
 
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
                   <ShieldCheck size={17} />
                   {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
                 </div>
@@ -126,7 +126,7 @@ export default function AdminPage() {
                   {isEn ? "Artin Assistant Management" : "مدیریت دستیار آرتین"}
                 </h1>
 
-                <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-muted)] dark:text-[var(--text-subtle)]">
                   {isEn
                     ? "Use this area to manage the knowledge base, review user questions, approve answers, follow up on customer requests, and monitor system health."
                     : "این بخش برای مدیریت بانک دانش، بررسی سوالات کاربران، تایید پاسخ‌ها، پیگیری درخواست‌های مشتریان و پایش وضعیت سیستم استفاده می‌شود."}
@@ -135,7 +135,7 @@ export default function AdminPage() {
 
               <Link
                 href="/admin-logout"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-5 py-3 text-sm font-bold text-[var(--color-danger-text)] transition hover:bg-[var(--color-danger-bg)]"
               >
                 <LogOut size={18} />
                 {isEn ? "Log out" : "خروج از ادمین"}
@@ -159,7 +159,7 @@ export default function AdminPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <h2 className="font-semibold">{card.title[locale]}</h2>
-                  <p className="mt-1 text-sm leading-7 text-slate-600 dark:text-slate-300">{card.description[locale]}</p>
+                  <p className="mt-1 text-sm leading-7 text-[var(--text-muted)] dark:text-[var(--text-subtle)]">{card.description[locale]}</p>
                 </div>
                 <ArrowLeft size={17} className={`mt-2 shrink-0 text-[var(--color-success-text)] ${arrowClass}`} aria-hidden="true" />
               </Link>
@@ -168,17 +168,17 @@ export default function AdminPage() {
         </nav>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
                 <Sparkles size={24} />
               </div>
 
               <div>
-                <h2 className="text-xl font-black text-slate-900">
+                <h2 className="text-xl font-black text-[var(--foreground)]">
                   {isEn ? "Suggested Artin Quality Workflow" : "روند پیشنهادی مدیریت کیفیت آرتین"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-[var(--text-subtle)]">
                   {isEn
                     ? "Follow this path regularly to improve answer quality."
                     : "برای بهتر شدن پاسخ‌ها، این مسیر را منظم انجام دهید."}
@@ -188,11 +188,11 @@ export default function AdminPage() {
 
             <div className="grid gap-3 md:grid-cols-4">
               {qualitySteps.map((step) => (
-                <div key={step.title.en} className="rounded-3xl bg-slate-50 p-4">
-                  <div className="mb-2 text-sm font-black text-slate-900">
+                <div key={step.title.en} className="rounded-3xl bg-[var(--surface-soft)] p-4">
+                  <div className="mb-2 text-sm font-black text-[var(--foreground)]">
                     {step.title[locale]}
                   </div>
-                  <p className="text-sm leading-7 text-slate-600">
+                  <p className="text-sm leading-7 text-[var(--text-muted)]">
                     {step.body[locale]}
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-purple-100 bg-purple-50 p-6 text-purple-950">
+          <div className="rounded-[32px] border border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 p-6 text-purple-950 dark:text-purple-300">
             <h2 className="text-xl font-black">
               {isEn ? "Management Note" : "نکته مدیریتی"}
             </h2>

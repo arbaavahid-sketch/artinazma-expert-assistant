@@ -7,6 +7,9 @@
 :root {
   --background: #f7f5ef;
   --foreground: #111827;
+  /* Secondary text: body copy and labels, then hints and placeholders. */
+  --text-muted: #3d4a5c;
+  --text-subtle: #64748b;
   --brand-navy: #0f172a;
   --brand-blue: #1d4ed8;
   --brand-blue-dark: #1e3a8a;
@@ -55,6 +58,8 @@
 .dark {
   --background: #0d1117;
   --foreground: #e2e8f0;
+  --text-muted: #c2cbd6;
+  --text-subtle: #8b949e;
   --brand-navy: #e2e8f0;
   /* Lift the accent a step brighter so it stays vivid on the dark surface. */
   --brand-accent: #3b82f6;

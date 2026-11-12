@@ -106,24 +106,24 @@ export default function AdminGlobalSearch() {
           setOpen(true);
           setTimeout(() => inputRef.current?.focus(), 50);
         }}
-        className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400 shadow-sm transition hover:border-purple-200 hover:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+        className="flex w-full items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-subtle)] shadow-sm transition hover:border-purple-200 dark:hover:border-purple-800 hover:bg-[var(--surface)] dark:border-slate-700 dark:bg-slate-800 dark:text-[var(--text-subtle)]"
       >
         <Search size={15} />
         <span className="flex-1 text-right">{isEn ? "Search..." : "جستجو..."}</span>
-        <kbd className="hidden rounded-lg border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-400 dark:border-slate-600 dark:bg-slate-700 sm:inline">
+        <kbd className="hidden rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-subtle)] dark:border-slate-600 dark:bg-slate-700 sm:inline">
           Ctrl K
         </kbd>
       </button>
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full z-[200] mt-2 w-80 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+        <div className="absolute right-0 top-full z-[200] mt-2 w-80 overflow-hidden rounded-3xl border border-[var(--border-soft)] bg-[var(--surface)] shadow-2xl dark:border-slate-700 dark:bg-slate-900">
           {/* Input */}
-          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+          <div className="flex items-center gap-2 border-b border-[var(--border-soft)] px-4 py-3 dark:border-slate-700">
             {loading ? (
-              <Loader2 size={16} className="shrink-0 animate-spin text-purple-500" />
+              <Loader2 size={16} className="shrink-0 animate-spin text-purple-500 dark:text-purple-300" />
             ) : (
-              <Search size={16} className="shrink-0 text-slate-400" />
+              <Search size={16} className="shrink-0 text-[var(--text-subtle)]" />
             )}
             <input
               ref={inputRef}
@@ -131,14 +131,14 @@ export default function AdminGlobalSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={isEn ? "Search questions, customers, requests..." : "جستجو در سوالات، مشتریان، درخواست‌ها..."}
-              className="flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+              className="flex-1 bg-transparent text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--text-subtle)] dark:text-slate-100"
               autoComplete="off"
             />
             {query && (
               <button
                 onClick={() => { setQuery(""); setResults(EMPTY); inputRef.current?.focus(); }}
                 aria-label={isEn ? "Clear search" : "پاک کردن جستجو"}
-                className="shrink-0 text-xs text-slate-400 hover:text-slate-600"
+                className="shrink-0 text-xs text-[var(--text-subtle)] hover:text-[var(--text-muted)]"
               >
                 <span aria-hidden="true">✕</span>
               </button>
@@ -148,11 +148,11 @@ export default function AdminGlobalSearch() {
           {/* Results */}
           <div className="max-h-80 overflow-y-auto">
             {query.length < 2 ? (
-              <p className="px-4 py-6 text-center text-xs text-slate-400">
+              <p className="px-4 py-6 text-center text-xs text-[var(--text-subtle)]">
                 {isEn ? "Enter at least 2 characters" : "حداقل ۲ کاراکتر وارد کنید"}
               </p>
             ) : !loading && totalResults === 0 ? (
-              <p className="px-4 py-6 text-center text-xs text-slate-400">
+              <p className="px-4 py-6 text-center text-xs text-[var(--text-subtle)]">
                 {isEn ? "No results found" : "نتیجه‌ای یافت نشد"}
               </p>
             ) : (
@@ -160,7 +160,7 @@ export default function AdminGlobalSearch() {
                 {/* Questions */}
                 {results.questions.length > 0 && (
                   <div className="mb-2">
-                    <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-slate-400">
+                    <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-[var(--text-subtle)]">
                       <FileQuestion size={11} />
                       {isEn ? "Questions" : "سوالات"}
                     </div>
@@ -170,10 +170,10 @@ export default function AdminGlobalSearch() {
                         onClick={() => navigate(`/admin/questions/${q.id}`)}
                         className="flex w-full items-start gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-purple-50 dark:hover:bg-purple-950"
                       >
-                        <span className="mt-0.5 shrink-0 rounded-lg bg-purple-100 px-1.5 py-0.5 text-[10px] font-black text-purple-700">
+                        <span className="mt-0.5 shrink-0 rounded-lg bg-purple-100 dark:bg-purple-900/40 px-1.5 py-0.5 text-[10px] font-black text-purple-700 dark:text-purple-300">
                           #{q.id}
                         </span>
-                        <span className="line-clamp-2 text-xs text-slate-700 dark:text-slate-300">
+                        <span className="line-clamp-2 text-xs text-[var(--text-muted)] dark:text-[var(--text-subtle)]">
                           {q.question}
                         </span>
                       </button>
@@ -184,7 +184,7 @@ export default function AdminGlobalSearch() {
                 {/* Customers */}
                 {results.customers.length > 0 && (
                   <div className="mb-2">
-                    <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-slate-400">
+                    <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-[var(--text-subtle)]">
                       <Users size={11} />
                       {isEn ? "Customers" : "مشتریان"}
                     </div>
@@ -192,16 +192,16 @@ export default function AdminGlobalSearch() {
                       <button
                         key={c.id}
                         onClick={() => navigate(`/admin/customers`)}
-                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-blue-50 dark:hover:bg-blue-950"
+                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-[var(--color-info-bg)] dark:hover:bg-blue-950"
                       >
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-info-bg)] text-xs font-black text-[var(--color-info-text)]">
                           {c.full_name?.[0] || "?"}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-200">
+                          <p className="truncate text-xs font-bold text-[var(--foreground)] dark:text-slate-200">
                             {c.full_name}
                           </p>
-                          <p className="truncate text-[10px] text-slate-400">{c.email || c.company}</p>
+                          <p className="truncate text-[10px] text-[var(--text-subtle)]">{c.email || c.company}</p>
                         </div>
                       </button>
                     ))}
@@ -211,7 +211,7 @@ export default function AdminGlobalSearch() {
                 {/* Requests */}
                 {results.requests.length > 0 && (
                   <div>
-                    <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-slate-400">
+                    <div className="mb-1 flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase text-[var(--text-subtle)]">
                       <Inbox size={11} />
                       {isEn ? "Requests" : "درخواست‌ها"}
                     </div>
@@ -219,12 +219,12 @@ export default function AdminGlobalSearch() {
                       <button
                         key={r.id}
                         onClick={() => navigate(`/admin/requests`)}
-                        className="flex w-full items-start gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                        className="flex w-full items-start gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-[var(--color-success-bg)] dark:hover:bg-emerald-950"
                       >
-                        <span className="mt-0.5 shrink-0 rounded-lg bg-emerald-100 px-1.5 py-0.5 text-[10px] font-black text-emerald-700">
+                        <span className="mt-0.5 shrink-0 rounded-lg bg-[var(--color-success-bg)] px-1.5 py-0.5 text-[10px] font-black text-[var(--color-success-text)]">
                           #{r.id}
                         </span>
-                        <span className="line-clamp-1 text-xs text-slate-700 dark:text-slate-300">
+                        <span className="line-clamp-1 text-xs text-[var(--text-muted)] dark:text-[var(--text-subtle)]">
                           {r.full_name} — {r.subject || (isEn ? "Request" : "درخواست")}
                         </span>
                       </button>

@@ -85,38 +85,38 @@ export default function CustomerLoginPage() {
   return (
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center">
-        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-slate-200 shadow-sm lg:grid-cols-[1fr_430px]">
+        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-[var(--border-soft)] shadow-sm lg:grid-cols-[1fr_430px]">
           <div className="p-8 lg:p-12">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher />
             </div>
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
               <LogIn size={17} />
               {isEn ? "Customer Login" : "ورود مشتری"}
             </div>
 
-            <h1 className="text-3xl font-black leading-[1.5] text-slate-900 md:text-4xl">
+            <h1 className="text-3xl font-black leading-[1.5] text-[var(--foreground)] md:text-4xl">
               {isEn ? "Log in to your ArtinAzma account" : "ورود به حساب کاربری آرتین آزما"}
             </h1>
 
-            <p className="mt-4 max-w-2xl leading-8 text-slate-600">
+            <p className="mt-4 max-w-2xl leading-8 text-[var(--text-muted)]">
               {isEn
                 ? "Sign in to use Artin, view previous conversations, submit consultation requests, and continue communication with experts."
                 : "برای استفاده از آرتین، مشاهده گفتگوهای قبلی، ثبت درخواست مشاوره و ادامه ارتباط با کارشناسان، وارد حساب خود شوید."}
             </p>
 
-            <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm leading-7 text-slate-700">
+            <div className="mt-6 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/80 p-4 text-sm leading-7 text-[var(--text-muted)]">
               <div className="flex items-start gap-3">
-                <ShieldCheck size={20} className="mt-1 shrink-0 text-blue-700" />
+                <ShieldCheck size={20} className="mt-1 shrink-0 text-[var(--color-info-text)]" />
                 <p>
-                  <span className="font-bold text-slate-800">
+                  <span className="font-bold text-[var(--foreground)]">
                     {isEn ? "Privacy notice: " : "اطلاعیه حریم خصوصی: "}
                   </span>
                   {isEn
                     ? "Email and password are used only for secure account login, session management, support, and request follow-up. Before logging in or registering, review the "
                     : "ایمیل و رمز عبور فقط برای ورود امن به حساب، مدیریت نشست، پشتیبانی و پیگیری درخواست‌ها استفاده می‌شود. پیش از ورود یا ثبت‌نام، متن "}
-                  <Link href="/privacy" className="font-bold text-blue-700 underline-offset-4 hover:underline">
+                  <Link href="/privacy" className="font-bold text-[var(--color-info-text)] underline-offset-4 hover:underline">
                     {isEn ? "Privacy Policy" : "سیاست حفظ حریم خصوصی"}
                   </Link>
                   {isEn ? "." : " را مطالعه کنید."}
@@ -126,14 +126,14 @@ export default function CustomerLoginPage() {
 
             <div className="mt-8 space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">
+                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                   {isEn ? "Email" : "ایمیل"}
                 </label>
 
                 <div className="relative">
                   <Mail
                     size={18}
-                    className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`}
+                    className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-[var(--text-subtle)]`}
                   />
                   <input
                     type="email"
@@ -147,14 +147,14 @@ export default function CustomerLoginPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">
+                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                   {isEn ? "Password" : "رمز عبور"}
                 </label>
 
                 <div className="relative">
                   <LockKeyhole
                     size={18}
-                    className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`}
+                    className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-[var(--text-subtle)]`}
                   />
                   <input
                     type="password"
@@ -171,7 +171,7 @@ export default function CustomerLoginPage() {
             </div>
 
             {message && (
-              <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
+              <div className="mt-5 rounded-2xl bg-[var(--color-warning-bg)] p-4 text-sm leading-7 text-[var(--color-warning-text)]">
                 {message}
               </div>
             )}
@@ -188,17 +188,17 @@ export default function CustomerLoginPage() {
             <div className="mt-4 text-center">
               <Link
                 href="/forgot-password"
-                className="text-sm font-bold text-slate-500 hover:text-blue-700"
+                className="text-sm font-bold text-[var(--text-subtle)] hover:text-[var(--color-info-text)]"
               >
                 {isEn ? "Forgot your password?" : "رمز عبور را فراموش کرده‌اید؟"}
               </Link>
             </div>
 
-            <div className="mt-4 text-center text-sm text-slate-600">
+            <div className="mt-4 text-center text-sm text-[var(--text-muted)]">
               {isEn ? "Don't have an account?" : "حساب کاربری ندارید؟"}{" "}
               <Link
                 href="/customer-register"
-                className="inline-flex items-center gap-1 font-bold text-blue-700"
+                className="inline-flex items-center gap-1 font-bold text-[var(--color-info-text)]"
               >
                 {isEn ? "Register as customer" : "ثبت‌نام مشتری"}
                 <UserPlus size={15} />
@@ -206,9 +206,9 @@ export default function CustomerLoginPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center bg-gradient-to-b from-blue-50 via-white to-slate-50 p-8">
+          <div className="flex items-center justify-center bg-gradient-to-b from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="ui-card w-full max-w-md rounded-[32px] p-6 text-center shadow-sm">
-              <div className="mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-[34px] bg-slate-50 p-3">
+              <div className="mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-[34px] bg-[var(--surface-soft)] p-3">
                 <img
                   src="/images/artin-avatar.png"
                   alt="Artin"
@@ -216,24 +216,24 @@ export default function CustomerLoginPage() {
                 />
               </div>
 
-              <div className="text-xl font-black text-slate-900">
+              <div className="text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Artin, your technical assistant" : "آرتین، دستیار تخصصی شما"}
               </div>
 
-              <p className="mt-3 leading-8 text-slate-600">
+              <p className="mt-3 leading-8 text-[var(--text-muted)]">
                 {isEn
                   ? "For technical questions, test analysis, equipment, chemicals, catalysts, and ArtinAzma-related topics."
                   : "برای سوالات فنی، تحلیل تست، تجهیزات، مواد شیمیایی، کاتالیست‌ها و موضوعات مرتبط با آرتین آزما."}
               </p>
 
               <div className="mt-5 grid gap-3 text-start text-sm">
-                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
-                  <ShieldCheck size={18} className="text-blue-700" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
+                  <ShieldCheck size={18} className="text-[var(--color-info-text)]" />
                   {isEn ? "Your conversations are saved in your account." : "گفتگوهای شما در حسابتان ذخیره می‌شود."}
                 </div>
 
-                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
-                  <Sparkles size={18} className="text-blue-700" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
+                  <Sparkles size={18} className="text-[var(--color-info-text)]" />
                   {isEn ? "Specialized answers based on Artin's knowledge base." : "پاسخ‌گویی تخصصی بر اساس بانک دانش آرتین."}
                 </div>
               </div>

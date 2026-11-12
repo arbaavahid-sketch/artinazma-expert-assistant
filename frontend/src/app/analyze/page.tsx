@@ -93,7 +93,7 @@ function AnalysisRenderer({ text }: { text: string }) {
     const parts = raw.split(/(\*\*[^*]+\*\*)/g);
     return parts.map((p, idx) =>
       p.startsWith("**") && p.endsWith("**")
-        ? <strong key={idx} className="font-black text-slate-900">{p.slice(2, -2)}</strong>
+        ? <strong key={idx} className="font-black text-[var(--foreground)]">{p.slice(2, -2)}</strong>
         : p
     );
   }
@@ -106,7 +106,7 @@ function AnalysisRenderer({ text }: { text: string }) {
 
     // Horizontal rule
     if (/^[-─═]{3,}$/.test(line.trim())) {
-      elements.push(<hr key={i} className="my-4 border-slate-200" />);
+      elements.push(<hr key={i} className="my-4 border-[var(--border-soft)]" />);
       i++; continue;
     }
 
@@ -115,10 +115,10 @@ function AnalysisRenderer({ text }: { text: string }) {
     if (hMatch) {
       const level = hMatch[1].length;
       const cls = level === 1
-        ? "text-xl font-black text-slate-900 mt-5 mb-2 border-b border-slate-200 pb-1"
+        ? "text-xl font-black text-[var(--foreground)] mt-5 mb-2 border-b border-[var(--border-soft)] pb-1"
         : level === 2
-        ? "text-lg font-black text-slate-800 mt-4 mb-1"
-        : "text-base font-black text-slate-700 mt-3 mb-1";
+        ? "text-lg font-black text-[var(--foreground)] mt-4 mb-1"
+        : "text-base font-black text-[var(--text-muted)] mt-3 mb-1";
       elements.push(<div key={i} className={cls}>{parseInline(hMatch[2])}</div>);
       i++; continue;
     }
@@ -133,12 +133,12 @@ function AnalysisRenderer({ text }: { text: string }) {
         i++;
       }
       elements.push(
-        <div key={`tbl-${i}`} className="my-4 overflow-x-auto rounded-2xl border border-slate-200">
+        <div key={`tbl-${i}`} className="my-4 overflow-x-auto rounded-2xl border border-[var(--border-soft)]">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-slate-100">
+              <tr className="bg-[var(--surface-soft)]">
                 {headers.map((h, hi) => (
-                  <th key={hi} className="px-4 py-2.5 text-right font-black text-slate-700 border-b border-slate-200">
+                  <th key={hi} className="px-4 py-2.5 text-right font-black text-[var(--text-muted)] border-b border-[var(--border-soft)]">
                     {h}
                   </th>
                 ))}
@@ -146,9 +146,9 @@ function AnalysisRenderer({ text }: { text: string }) {
             </thead>
             <tbody>
               {rows.map((row, ri) => (
-                <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-slate-50/70"}>
+                <tr key={ri} className={ri % 2 === 0 ? "bg-[var(--surface)]" : "bg-[var(--surface-soft)]/70"}>
                   {row.map((cell, ci) => (
-                    <td key={ci} className="px-4 py-2.5 text-right text-slate-700 border-b border-slate-100">
+                    <td key={ci} className="px-4 py-2.5 text-right text-[var(--text-muted)] border-b border-[var(--border-soft)]">
                       {parseInline(cell)}
                     </td>
                   ))}
@@ -171,7 +171,7 @@ function AnalysisRenderer({ text }: { text: string }) {
       elements.push(
         <ul key={`ul-${i}`} className="my-2 space-y-1 pr-4">
           {items.map((item, ii) => (
-            <li key={ii} className="flex gap-2 text-slate-700 leading-8">
+            <li key={ii} className="flex gap-2 text-[var(--text-muted)] leading-8">
               <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
               <span>{parseInline(item)}</span>
             </li>
@@ -191,8 +191,8 @@ function AnalysisRenderer({ text }: { text: string }) {
       elements.push(
         <ol key={`ol-${i}`} className="my-2 space-y-1 pr-4">
           {items.map((item, ii) => (
-            <li key={ii} className="flex gap-2 text-slate-700 leading-8">
-              <span className="shrink-0 font-black text-emerald-700">{ii + 1}.</span>
+            <li key={ii} className="flex gap-2 text-[var(--text-muted)] leading-8">
+              <span className="shrink-0 font-black text-[var(--color-success-text)]">{ii + 1}.</span>
               <span>{parseInline(item)}</span>
             </li>
           ))}
@@ -203,7 +203,7 @@ function AnalysisRenderer({ text }: { text: string }) {
 
     // Normal paragraph
     elements.push(
-      <p key={i} className="leading-9 text-slate-700">{parseInline(line)}</p>
+      <p key={i} className="leading-9 text-[var(--text-muted)]">{parseInline(line)}</p>
     );
     i++;
   }
@@ -511,7 +511,7 @@ ${htmlBody}
           <aside className="space-y-6">
             <div className={`${styles.panel} p-4 sm:p-5`}>
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-success-bg)] text-[var(--color-success-text)]">
                   <UploadCloud size={25} />
                 </div>
 
@@ -540,7 +540,7 @@ ${htmlBody}
                     onChange={(e) => e.target.files && addFiles(e.target.files)}
                     className="sr-only"
                   />
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm transition group-hover:scale-105">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--color-success-text)] shadow-sm transition group-hover:scale-105">
                     <UploadCloud size={26} />
                   </div>
                   <div className="font-bold">
@@ -556,7 +556,7 @@ ${htmlBody}
               {imagePreviews.filter(Boolean).length > 0 && (
                 <div className={`mt-3 grid gap-2 ${imagePreviews.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                   {imagePreviews.map((src, i) => src && (
-                    <div key={i} className="overflow-hidden rounded-[18px] border border-emerald-100 bg-emerald-50">
+                    <div key={i} className="overflow-hidden rounded-[18px] border border-[var(--color-success-border)] bg-[var(--color-success-bg)]">
                       <img src={src} alt={`preview-${i}`} className="max-h-36 w-full object-contain" />
                     </div>
                   ))}
@@ -567,18 +567,18 @@ ${htmlBody}
               {files.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {files.map((f, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                    <div key={i} className="flex items-center gap-3 rounded-2xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-3">
                       {isImageFile(f)
-                        ? <ImageIcon size={18} className="shrink-0 text-emerald-700" />
-                        : <FileSpreadsheet size={18} className="shrink-0 text-emerald-700" />
+                        ? <ImageIcon size={18} className="shrink-0 text-[var(--color-success-text)]" />
+                        : <FileSpreadsheet size={18} className="shrink-0 text-[var(--color-success-text)]" />
                       }
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-black text-slate-950">{f.name}</div>
-                        <div className="text-xs text-slate-500">{formatFileSize(f.size)}</div>
+                        <div className="truncate text-sm font-black text-[var(--foreground)]">{f.name}</div>
+                        <div className="text-xs text-[var(--text-subtle)]">{formatFileSize(f.size)}</div>
                       </div>
                       <button
                         onClick={() => removeFile(i)}
-                        className="shrink-0 rounded-xl p-1 text-slate-400 hover:bg-white hover:text-red-500"
+                        className="shrink-0 rounded-xl p-1 text-[var(--text-subtle)] hover:bg-[var(--surface)] hover:text-red-500"
                       >
                         ✕
                       </button>
@@ -636,7 +636,7 @@ ${htmlBody}
                 {isEn ? "Tips for more accurate analysis" : "نکات تحلیل دقیق‌تر"}
               </summary>
               <div className="mt-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                   <ShieldCheck size={21} />
                 </div>
                 <h3 className="text-lg">
@@ -644,17 +644,17 @@ ${htmlBody}
                 </h3>
               </div>
 
-              <div className="space-y-3 text-sm leading-7 text-slate-600">
-                <div className="rounded-2xl bg-slate-50 p-3">
+              <div className="space-y-3 text-sm leading-7 text-[var(--text-muted)]">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "Write the sample type, matrix, and test goal in the notes." : "نوع نمونه، ماتریس و هدف آزمون را در توضیحات بنویسید."}
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "For instrument photos, choose the proper image type from the menu above." : "برای عکس دستگاه، نوع تصویر مناسب را از منوی بالا انتخاب کنید."}
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "If the file is a chromatogram or QC file, add the instrument type and test method." : "اگر فایل کروماتوگرام یا QC است، نوع دستگاه و روش آزمون را اضافه کنید."}
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "For final decisions, review the result against real laboratory conditions." : "برای تصمیم نهایی، نتیجه باید با شرایط واقعی آزمایشگاه بررسی شود."}
                 </div>
               </div>
@@ -664,7 +664,7 @@ ${htmlBody}
           <div className={`${styles.panel} min-w-0 self-start p-4 sm:p-5`}>
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--text-muted)]">
                   <FileText size={25} />
                 </div>
 
@@ -682,7 +682,7 @@ ${htmlBody}
                 <div className="flex gap-2">
                   <button
                     onClick={copyResult}
-                    className={`ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm transition-all ${copied ? "text-emerald-700" : ""}`}
+                    className={`ui-btn ui-btn-ghost gap-2 rounded-2xl px-4 py-2 text-sm transition-all ${copied ? "text-[var(--color-success-text)]" : ""}`}
                   >
                     {copied ? <CheckCircle2 size={16} /> : <ClipboardCopy size={16} />}
                     {copied ? (isEn ? "Copied!" : "کپی شد!") : (isEn ? "Copy" : "کپی")}
@@ -708,7 +708,7 @@ ${htmlBody}
             {!fileAnalysis && !loading && (
               <div className={styles.empty}>
                 <div>
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-emerald-700 shadow-sm">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-[var(--surface)] text-[var(--color-success-text)] shadow-sm">
                     <FileText size={30} aria-hidden="true" />
                   </div>
 
@@ -716,7 +716,7 @@ ${htmlBody}
                     {isEn ? "No analysis has been run yet" : "هنوز تحلیلی انجام نشده است"}
                   </h3>
 
-                  <p className="mt-3 max-w-md leading-8 text-slate-500">
+                  <p className="mt-3 max-w-md leading-8 text-[var(--text-subtle)]">
                     {isEn
                       ? "Add your files and start the analysis. The report and export controls will appear here."
                       : "فایل‌ها را اضافه کنید و تحلیل را شروع کنید. گزارش و گزینه‌های دریافت آن اینجا نمایش داده می‌شوند."}
@@ -726,22 +726,22 @@ ${htmlBody}
             )}
 
             {loading && (
-              <div className="flex min-h-[520px] items-center justify-center rounded-[28px] bg-slate-50 p-8 text-center">
+              <div className="flex min-h-[520px] items-center justify-center rounded-[28px] bg-[var(--surface-soft)] p-8 text-center">
                 <div className="w-full max-w-sm">
-                  <Loader2 size={34} className="mx-auto mb-5 animate-spin text-emerald-700" />
-                  <h3 className="text-lg font-black text-slate-950">
+                  <Loader2 size={34} className="mx-auto mb-5 animate-spin text-[var(--color-success-text)]" />
+                  <h3 className="text-lg font-black text-[var(--foreground)]">
                     {isEn ? "Artin is analyzing..." : "آرتین در حال تحلیل است…"}
                   </h3>
                   {progressLabel && (
-                    <p className="mt-1 text-sm text-slate-500">{progressLabel}</p>
+                    <p className="mt-1 text-sm text-[var(--text-subtle)]">{progressLabel}</p>
                   )}
                   {uploadPercent > 0 && uploadPercent < 100 && (
                     <div className="mt-4">
-                      <div className="mb-1 flex justify-between text-xs font-bold text-slate-500">
+                      <div className="mb-1 flex justify-between text-xs font-bold text-[var(--text-subtle)]">
                         <span>{isEn ? "File upload" : "آپلود فایل"}</span>
                         <span>{uploadPercent}%</span>
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--border-soft)]">
                         <div
                           className="h-full rounded-full bg-emerald-500 transition-all duration-200"
                           style={{ width: `${uploadPercent}%` }}
@@ -755,24 +755,24 @@ ${htmlBody}
                         key={i}
                         className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
                           i < progressStep
-                            ? "bg-emerald-50 text-emerald-700"
+                            ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
                             : i === progressStep
-                            ? "bg-white text-slate-900 shadow-sm"
-                            : "text-slate-400"
+                            ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
+                            : "text-[var(--text-subtle)]"
                         }`}
                       >
                         <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
                           i < progressStep
                             ? "bg-emerald-600 text-white"
                             : i === progressStep
-                            ? "bg-slate-900 text-white"
-                            : "bg-slate-200 text-slate-400"
+                            ? "bg-[var(--foreground)] text-[var(--background)]"
+                            : "bg-[var(--border-soft)] text-[var(--text-subtle)]"
                         }`}>
                           {i < progressStep ? "✓" : i + 1}
                         </span>
                         {step}
                         {i === progressStep && (
-                          <Loader2 size={14} className="mr-auto animate-spin text-emerald-600" />
+                          <Loader2 size={14} className="mr-auto animate-spin text-[var(--color-success-text)]" />
                         )}
                       </div>
                     ))}
@@ -783,12 +783,12 @@ ${htmlBody}
 
             {fileAnalysis && (
               <>
-                {analysisSources.map(source=><a className="my-3 block rounded-xl border border-blue-200 bg-blue-50 p-4 font-bold text-blue-800" key={source.id} href={`/laboratory-imports?analysis=${source.id}`}>{isEn?'Review data and calculate':'بررسی داده‌ها و اجرای محاسبه'} · {source.name}</a>)}
+                {analysisSources.map(source=><a className="my-3 block rounded-xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-4 font-bold text-[var(--color-info-text)]" key={source.id} href={`/laboratory-imports?analysis=${source.id}`}>{isEn?'Review data and calculate':'بررسی داده‌ها و اجرای محاسبه'} · {source.name}</a>)}
                 <div
                   className={`rounded-[28px] border p-6 leading-9 shadow-inner ${
                     resultType === "error"
-                      ? "border-red-100 bg-red-50 text-red-700"
-                      : "border-slate-200 bg-slate-50/90 text-slate-800"
+                      ? "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
+                      : "border-[var(--border-soft)] bg-[var(--surface-soft)]/90 text-[var(--foreground)]"
                   }`}
                 >
                   <div className="mb-4 flex items-center gap-2 text-sm font-black">
@@ -799,35 +799,35 @@ ${htmlBody}
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 size={18} className="text-emerald-700" />
+                        <CheckCircle2 size={18} className="text-[var(--color-success-text)]" />
                         {isEn ? "Analysis is ready" : "تحلیل آماده شد"}
                       </>
                     )}
                   </div>
                   {resultType === "error"
-                    ? <p className="leading-9 text-red-700">{fileAnalysis}</p>
+                    ? <p className="leading-9 text-[var(--color-danger-text)]">{fileAnalysis}</p>
                     : <AnalysisRenderer text={fileAnalysis} />
                   }
                 </div>
 
                 {resultType === "success" && (
-                  <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5">
+                  <div className="mt-6 rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5">
                     <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-success-bg)] text-[var(--color-success-text)]">
                         <MessageSquare size={20} />
                       </div>
                       <div>
-                        <div className="font-black text-slate-950">{isEn ? "Follow-up question" : "سوال پیگیری"}</div>
-                        <div className="text-sm text-slate-500">{isEn ? "Ask Artin about this result" : "درباره این نتیجه از آرتین بپرسید"}</div>
+                        <div className="font-black text-[var(--foreground)]">{isEn ? "Follow-up question" : "سوال پیگیری"}</div>
+                        <div className="text-sm text-[var(--text-subtle)]">{isEn ? "Ask Artin about this result" : "درباره این نتیجه از آرتین بپرسید"}</div>
                       </div>
                     </div>
 
                     {followUpHistory.map((item, i) => (
                       <div key={i} className="mb-4 space-y-2">
-                        <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700">
+                        <div className="rounded-2xl bg-[var(--surface-soft)] px-4 py-3 text-sm font-bold text-[var(--text-muted)]">
                           {item.q}
                         </div>
-                        <div className="whitespace-pre-wrap rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-8 text-slate-800">
+                        <div className="whitespace-pre-wrap rounded-2xl bg-[var(--color-success-bg)] px-4 py-3 text-sm leading-8 text-[var(--foreground)]">
                           {item.a}
                         </div>
                       </div>
@@ -862,7 +862,7 @@ ${htmlBody}
           </div>
         </div>
 
-        <div className="mt-6 rounded-[26px] border border-blue-100 bg-blue-50/90 p-5 text-sm leading-8 text-blue-900 shadow-sm">
+        <div className="mt-6 rounded-[26px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/90 p-5 text-sm leading-8 text-[var(--color-info-text)] shadow-sm">
           {isEn
             ? "This file is used only for temporary analysis and is not added to ArtinAzma's internal knowledge base unless an expert later approves and registers it."
             : "این فایل فقط برای تحلیل موقت استفاده می‌شود و به بانک دانش داخلی آرتین آزما اضافه نمی‌شود، مگر اینکه کارشناس بعداً آن را تایید و ثبت کند."}

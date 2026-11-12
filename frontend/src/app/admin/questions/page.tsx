@@ -98,11 +98,11 @@ function getStatusLabel(status: string, locale: "fa" | "en" = "fa") {
 
 function getStatusClass(status: string) {
   if (status === "approved")
-    return "bg-emerald-50 text-emerald-700 border-emerald-100";
+    return "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]";
   if (status === "needs_edit")
-    return "bg-amber-50 text-amber-700 border-amber-100";
-  if (status === "rejected") return "bg-red-50 text-red-700 border-red-100";
-  return "bg-slate-100 text-slate-700 border-slate-200";
+    return "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]";
+  if (status === "rejected") return "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] border-[var(--color-danger-border)]";
+  return "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]";
 }
 
 function getDomainLabel(domain: string, locale: "fa" | "en" = "fa") {
@@ -441,21 +441,21 @@ export default function QuestionsPage() {
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+        <div className="mb-6 overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
+          <div className="bg-gradient-to-l from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
                   <FileQuestion size={17} />
                   {isEn ? "Artin Answer Quality" : "پایش کیفیت پاسخ‌های آرتین"}
                 </div>
-                <h1 className="text-3xl font-black text-slate-900">
+                <h1 className="text-3xl font-black text-[var(--foreground)]">
                   {isEn ? "User Questions" : "سوالات کاربران"}
                 </h1>
-                <p className="mt-4 max-w-3xl leading-8 text-slate-600">
+                <p className="mt-4 max-w-3xl leading-8 text-[var(--text-muted)]">
                   {isEn
                     ? "Review registered user questions, detected domains, expert review status, and user ratings."
                     : "سوالات ثبت‌شده کاربران، حوزه تشخیص داده‌شده، وضعیت بررسی کارشناسی و امتیاز کاربران در این بخش نمایش داده می‌شود."}
@@ -466,7 +466,7 @@ export default function QuestionsPage() {
                 <button
                   onClick={() => downloadExport("csv")}
                   disabled={questions.length === 0 || exporting !== null}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-5 py-3 text-sm font-bold text-[var(--color-success-text)] shadow-sm transition hover:bg-[var(--color-success-bg)] disabled:opacity-40"
                 >
                   <Download size={18} />
                   {exporting === "csv"
@@ -479,7 +479,7 @@ export default function QuestionsPage() {
                 <button
                   onClick={() => downloadExport("pdf")}
                   disabled={questions.length === 0 || exporting !== null}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-bold text-rose-700 shadow-sm transition hover:bg-rose-100 disabled:opacity-40"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-5 py-3 text-sm font-bold text-[var(--color-danger-text)] shadow-sm transition hover:bg-rose-100 disabled:opacity-40"
                 >
                   <Download size={18} />
                   {exporting === "pdf"
@@ -492,7 +492,7 @@ export default function QuestionsPage() {
                 <button
                   onClick={loadQuestions}
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-5 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)] disabled:opacity-50"
                 >
                   <RefreshCw
                     size={18}
@@ -507,46 +507,46 @@ export default function QuestionsPage() {
 
         {/* Stats */}
         <div className="mb-6 grid gap-4 md:grid-cols-5">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">{isEn ? "Total questions" : "کل سوالات"}</div>
-            <div className="mt-2 text-3xl font-black text-slate-900">
+          <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-sm">
+            <div className="text-sm font-bold text-[var(--text-subtle)]">{isEn ? "Total questions" : "کل سوالات"}</div>
+            <div className="mt-2 text-3xl font-black text-[var(--foreground)]">
               {globalStats?.total_questions ?? questions.length}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-            <div className="text-sm font-bold text-slate-600">
+          <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface-soft)] p-5">
+            <div className="text-sm font-bold text-[var(--text-muted)]">
               {isEn ? "Pending review" : "در انتظار بررسی"}
             </div>
-            <div className="mt-2 text-3xl font-black text-slate-700">
+            <div className="mt-2 text-3xl font-black text-[var(--text-muted)]">
               {globalStats?.status_counts?.pending ?? pendingCount}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
-            <div className="text-sm font-bold text-emerald-700">{isEn ? "Approved" : "تایید شده"}</div>
-            <div className="mt-2 text-3xl font-black text-emerald-700">
+          <div className="rounded-[28px] border border-[var(--color-success-border)] bg-[var(--color-success-bg)] p-5">
+            <div className="text-sm font-bold text-[var(--color-success-text)]">{isEn ? "Approved" : "تایید شده"}</div>
+            <div className="mt-2 text-3xl font-black text-[var(--color-success-text)]">
               {globalStats?.status_counts?.approved ?? approvedCount}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
-            <div className="text-sm font-bold text-amber-700">
+          <div className="rounded-[28px] border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] p-5">
+            <div className="text-sm font-bold text-[var(--color-warning-text)]">
               {isEn ? "Needs edit" : "نیازمند اصلاح"}
             </div>
-            <div className="mt-2 text-3xl font-black text-amber-700">
+            <div className="mt-2 text-3xl font-black text-[var(--color-warning-text)]">
               {globalStats?.status_counts?.needs_edit ?? needsEditCount}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">{isEn ? "User ratings" : "امتیاز کاربران"}</div>
+          <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-sm">
+            <div className="text-sm font-bold text-[var(--text-subtle)]">{isEn ? "User ratings" : "امتیاز کاربران"}</div>
             <div className="mt-2 flex items-center gap-3">
-              <span className="flex items-center gap-1 text-lg font-black text-emerald-600">
+              <span className="flex items-center gap-1 text-lg font-black text-[var(--color-success-text)]">
                 <ThumbsUp size={16} />
                 {globalStats?.rating_counts?.up ?? upCount}
               </span>
-              <span className="text-slate-300">|</span>
+              <span className="text-[var(--text-subtle)]">|</span>
               <span className="flex items-center gap-1 text-lg font-black text-red-500">
                 <ThumbsDown size={16} />
                 {globalStats?.rating_counts?.down ?? downCount}
@@ -556,19 +556,19 @@ export default function QuestionsPage() {
         </div>
 
         {/* Search + Filters */}
-        <div className="mb-4 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="flex flex-col gap-3">
             {/* Search + filter toggle row */}
             <div className="flex gap-3">
               <div className="relative flex-1">
                 <Search
                   size={18}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-subtle)]"
                 />
                 <input
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
+                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
                   placeholder={isEn ? "Search question text, domain, ID, or status..." : "جستجو در متن سوال، حوزه، شناسه یا وضعیت..."}
                 />
               </div>
@@ -577,8 +577,8 @@ export default function QuestionsPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`relative inline-flex items-center gap-2 rounded-2xl border px-5 py-3 text-sm font-bold transition ${
                   showFilters || activeFilterCount > 0
-                    ? "border-purple-300 bg-purple-50 text-purple-700"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300"
+                    : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
                 }`}
               >
                 <Filter size={17} />
@@ -593,7 +593,7 @@ export default function QuestionsPage() {
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3 text-sm font-bold text-[var(--color-danger-text)] transition hover:bg-[var(--color-danger-bg)]"
                 >
                   <X size={16} />
                   {isEn ? "Clear" : "پاک‌کردن"}
@@ -603,16 +603,16 @@ export default function QuestionsPage() {
 
             {/* Expandable filter panel */}
             {showFilters && (
-              <div className="grid gap-3 rounded-2xl bg-slate-50 p-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 rounded-2xl bg-[var(--surface-soft)] p-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Status */}
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                  <label className="mb-1 block text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "Review status" : "وضعیت بررسی"}
                   </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
                   >
                     {statusOptions.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -624,13 +624,13 @@ export default function QuestionsPage() {
 
                 {/* Domain */}
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                  <label className="mb-1 block text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "Domain" : "حوزه تخصصی"}
                   </label>
                   <select
                     value={domainFilter}
                     onChange={(e) => setDomainFilter(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
                   >
                     {domainOptions.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -642,13 +642,13 @@ export default function QuestionsPage() {
 
                 {/* Rating */}
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                  <label className="mb-1 block text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "User rating" : "امتیاز کاربر"}
                   </label>
                   <select
                     value={ratingFilter}
                     onChange={(e) => setRatingFilter(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
                   >
                     {ratingOptions.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -660,7 +660,7 @@ export default function QuestionsPage() {
 
                 {/* Date range */}
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-500">
+                  <label className="mb-1 block text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "Date range" : "بازه تاریخ"}
                   </label>
                   <div className="flex gap-2">
@@ -668,14 +668,14 @@ export default function QuestionsPage() {
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                      className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
                       title={isEn ? "From date" : "از تاریخ"}
                     />
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                      className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
                       title={isEn ? "To date" : "تا تاریخ"}
                     />
                   </div>
@@ -686,16 +686,16 @@ export default function QuestionsPage() {
         </div>
 
         {/* Questions list */}
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             {/* Select-all checkbox */}
             <button
               onClick={toggleSelectAll}
-              className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-purple-700 transition"
+              className="flex items-center gap-2 text-sm font-bold text-[var(--text-subtle)] hover:text-purple-700 dark:hover:text-purple-300 transition"
               title={pagedQuestions.every((q) => selectedIds.has(q.id)) ? (isEn ? "Deselect all" : "لغو انتخاب همه") : (isEn ? "Select this page" : "انتخاب همه صفحه")}
             >
               {pagedQuestions.length > 0 && pagedQuestions.every((q) => selectedIds.has(q.id)) ? (
-                <CheckSquare2 size={18} className="text-purple-600" />
+                <CheckSquare2 size={18} className="text-purple-600 dark:text-purple-300" />
               ) : (
                 <Square size={18} />
               )}
@@ -704,39 +704,39 @@ export default function QuestionsPage() {
 
             {/* Bulk action toolbar */}
             {selectedIds.size > 0 && (
-              <div className="flex items-center gap-2 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2">
-                <span className="text-xs font-black text-purple-700">
+              <div className="flex items-center gap-2 rounded-2xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 px-4 py-2">
+                <span className="text-xs font-black text-purple-700 dark:text-purple-300">
                   {isEn ? `${selectedIds.size} selected` : `${selectedIds.size} انتخاب شده`}
                 </span>
                 <span className="text-purple-200">|</span>
                 {bulkProcessing ? (
-                  <Loader2 size={16} className="animate-spin text-purple-500" />
+                  <Loader2 size={16} className="animate-spin text-purple-500 dark:text-purple-300" />
                 ) : (
                   <>
                     <button
                       onClick={() => bulkReview("approved")}
-                      className="flex items-center gap-1 rounded-xl bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200"
+                      className="flex items-center gap-1 rounded-xl bg-[var(--color-success-bg)] px-3 py-1.5 text-xs font-bold text-[var(--color-success-text)] transition hover:bg-emerald-200"
                     >
                       <CheckCircle2 size={13} />
                       {isEn ? "Approve" : "تایید"}
                     </button>
                     <button
                       onClick={() => bulkReview("needs_edit")}
-                      className="flex items-center gap-1 rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-200"
+                      className="flex items-center gap-1 rounded-xl bg-[var(--color-warning-bg)] px-3 py-1.5 text-xs font-bold text-[var(--color-warning-text)] transition hover:bg-amber-200"
                     >
                       <AlertCircle size={13} />
                       {isEn ? "Edit" : "اصلاح"}
                     </button>
                     <button
                       onClick={() => bulkReview("rejected")}
-                      className="flex items-center gap-1 rounded-xl bg-red-100 px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-200"
+                      className="flex items-center gap-1 rounded-xl bg-[var(--color-danger-bg)] px-3 py-1.5 text-xs font-bold text-[var(--color-danger-text)] transition hover:bg-red-200"
                     >
                       <XCircle size={13} />
                       {isEn ? "Reject" : "رد"}
                     </button>
                     <button
                       onClick={() => setSelectedIds(new Set())}
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-[var(--text-subtle)] hover:text-[var(--text-muted)]"
                       title={isEn ? "Clear selection" : "لغو انتخاب"}
                     >
                       <X size={15} />
@@ -748,7 +748,7 @@ export default function QuestionsPage() {
           </div>
 
           {loading ? (
-            <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-8 text-center text-[var(--text-subtle)]">
               {isEn ? "Loading questions..." : "در حال دریافت سوالات..."}
             </div>
           ) : filteredQuestions.length > 0 ? (
@@ -757,10 +757,10 @@ export default function QuestionsPage() {
                 <Link
                   key={item.id}
                   href={`/admin/questions/${item.id}`}
-                  className={`group block rounded-[28px] border p-5 transition hover:border-purple-200 hover:bg-white hover:shadow-sm ${
+                  className={`group block rounded-[28px] border p-5 transition hover:border-purple-200 dark:hover:border-purple-800 hover:bg-[var(--surface)] hover:shadow-sm ${
                     selectedIds.has(item.id)
-                      ? "border-purple-300 bg-purple-50"
-                      : "border-slate-200 bg-slate-50"
+                      ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40"
+                      : "border-[var(--border-soft)] bg-[var(--surface-soft)]"
                   }`}
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -770,14 +770,14 @@ export default function QuestionsPage() {
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
                     >
                       {selectedIds.has(item.id) ? (
-                        <CheckSquare2 size={18} className="text-purple-600" />
+                        <CheckSquare2 size={18} className="text-purple-600 dark:text-purple-300" />
                       ) : (
-                        <Square size={18} className="text-slate-300 group-hover:text-slate-400" />
+                        <Square size={18} className="text-[var(--text-subtle)] group-hover:text-[var(--text-subtle)]" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-700">
+                        <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-sm font-black text-[var(--text-muted)]">
                           #{item.id}
                         </span>
 
@@ -789,25 +789,25 @@ export default function QuestionsPage() {
                           {getStatusLabel(item.expert_status, locale)}
                         </span>
 
-                        <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                        <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
                           {getDomainLabel(item.detected_domain, locale)}
                         </span>
 
                         {item.user_rating === "up" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success-bg)] px-3 py-1 text-xs font-bold text-[var(--color-success-text)]">
                             <ThumbsUp size={12} />
                             {isEn ? "Liked" : "پسندیده شده"}
                           </span>
                         )}
                         {item.user_rating === "down" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger-bg)] px-3 py-1 text-xs font-bold text-[var(--color-danger-text)]">
                             <ThumbsDown size={12} />
                             {isEn ? "Disliked" : "نپسندیده شده"}
                           </span>
                         )}
                       </div>
 
-                      <div className="line-clamp-2 text-base font-bold leading-8 text-slate-900 group-hover:text-purple-700">
+                      <div className="line-clamp-2 text-base font-bold leading-8 text-[var(--foreground)] group-hover:text-purple-700 dark:group-hover:text-purple-300">
                         {item.question}
                       </div>
 
@@ -824,7 +824,7 @@ export default function QuestionsPage() {
                             src={apiUrl(item.metadata.image_url)}
                             alt={item.metadata.image_type_label || "تصویر"}
                             loading="lazy"
-                            className="max-h-40 rounded-xl border border-slate-200 object-contain"
+                            className="max-h-40 rounded-xl border border-[var(--border-soft)] object-contain"
                           />
                         </a>
                       )}
@@ -835,48 +835,48 @@ export default function QuestionsPage() {
                           target="_blank"
                           rel="noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-1.5 text-xs font-bold text-[var(--text-muted)]"
                         >
                           📄 {item.metadata.file_name || (isEn ? "Attached file" : "فایل ارسالی")}
                         </a>
                       )}
 
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-bold">
-                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
                           intent: {getIntentLabel(item.metadata, locale)}
                         </span>
                         <span
                           className={`rounded-full border px-2.5 py-1 ${
                             item.metadata?.customer_id || item.metadata?.user_id?.startsWith("customer_")
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                              : "border-slate-200 bg-slate-50 text-slate-500"
+                              ? "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                              : "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-subtle)]"
                           }`}
                           title={item.metadata?.customer_email || item.metadata?.user_id || ""}
                         >
                           {isEn ? "asker" : "پرسنده"}: {getAskerLabel(item.metadata, locale)}
                         </span>
-                        <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-blue-700">
+                        <span className="rounded-full border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-2.5 py-1 text-[var(--color-info-text)]">
                           search: {item.metadata?.search_mode || "-"}
                         </span>
                         <span className={`rounded-full border px-2.5 py-1 ${
                           item.metadata?.web_search_used
-                            ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                            : "border-slate-200 bg-white text-slate-500"
+                            ? "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                            : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-subtle)]"
                         }`}>
                           web: {item.metadata?.web_search_used ? "on" : "off"}
                         </span>
-                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
                           sources: {item.metadata?.source_count ?? 0}
                         </span>
-                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
                           score: {formatScore(item.metadata?.best_score)}
                         </span>
-                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
                           time: {formatMs(item.metadata?.response_time_ms)}
                         </span>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[var(--text-subtle)]">
                         <span className="inline-flex items-center gap-1">
                           <Clock3 size={14} />
                           {formatDate(item.created_at, locale)}
@@ -893,7 +893,7 @@ export default function QuestionsPage() {
 
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       {reviewingId === item.id ? (
-                        <Loader2 size={18} className="animate-spin text-slate-400" />
+                        <Loader2 size={18} className="animate-spin text-[var(--text-subtle)]" />
                       ) : (
                         <div className="flex gap-1.5" onClick={(e) => e.preventDefault()}>
                           <button
@@ -901,8 +901,8 @@ export default function QuestionsPage() {
                             title={isEn ? "Approve" : "تایید"}
                             className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                               item.expert_status === "approved"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-white text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200"
+                                ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                                : "bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success-text)] border border-[var(--border-soft)]"
                             }`}
                           >
                             <CheckCircle2 size={13} />
@@ -913,8 +913,8 @@ export default function QuestionsPage() {
                             title={isEn ? "Needs edit" : "نیازمند اصلاح"}
                             className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                               item.expert_status === "needs_edit"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-700 border border-slate-200"
+                                ? "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]"
+                                : "bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--color-warning-bg)] hover:text-[var(--color-warning-text)] border border-[var(--border-soft)]"
                             }`}
                           >
                             <AlertCircle size={13} />
@@ -925,8 +925,8 @@ export default function QuestionsPage() {
                             title={isEn ? "Reject" : "رد"}
                             className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                               item.expert_status === "rejected"
-                                ? "bg-red-100 text-red-600"
-                                : "bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200"
+                                ? "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
+                                : "bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--color-danger-bg)] hover:text-[var(--color-danger-text)] border border-[var(--border-soft)]"
                             }`}
                           >
                             <XCircle size={13} />
@@ -934,7 +934,7 @@ export default function QuestionsPage() {
                           </button>
                         </div>
                       )}
-                      <span className="text-xs text-purple-600 group-hover:underline">
+                      <span className="text-xs text-purple-600 dark:text-purple-300 group-hover:underline">
                         {isEn ? "View details ->" : "مشاهده جزئیات ←"}
                       </span>
                     </div>
@@ -943,7 +943,7 @@ export default function QuestionsPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-10 text-center text-[var(--text-subtle)]">
               {isEn ? "No questions matched this filter or search." : "سوالی با این فیلتر یا جستجو پیدا نشد."}
             </div>
           )}
@@ -954,7 +954,7 @@ export default function QuestionsPage() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ›
               </button>
@@ -974,7 +974,7 @@ export default function QuestionsPage() {
                 }, [])
                 .map((p, idx) =>
                   p === "…" ? (
-                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-400">
+                    <span key={`ellipsis-${idx}`} className="px-1 text-[var(--text-subtle)]">
                       …
                     </span>
                   ) : (
@@ -983,8 +983,8 @@ export default function QuestionsPage() {
                       onClick={() => setCurrentPage(p as number)}
                       className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-bold shadow-sm transition ${
                         currentPage === p
-                          ? "border-purple-300 bg-purple-600 text-white"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-purple-50 hover:text-purple-700"
+                          ? "border-purple-300 dark:border-purple-800 bg-purple-600 text-white"
+                          : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300"
                       }`}
                     >
                       {p}
@@ -995,12 +995,12 @@ export default function QuestionsPage() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-purple-50 hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ‹
               </button>
 
-              <span className="mr-2 text-sm text-slate-500">
+              <span className="mr-2 text-sm text-[var(--text-subtle)]">
                 {isEn ? `Page ${currentPage} of ${totalPages}` : `صفحه ${currentPage} از ${totalPages}`}
               </span>
             </div>

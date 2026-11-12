@@ -9,8 +9,8 @@ type LanguageSwitcherProps = {
 };
 
 const activeColorClass = {
-  blue: "text-blue-700",
-  purple: "text-purple-700",
+  blue: "text-[var(--color-info-text)]",
+  purple: "text-purple-700 dark:text-purple-300",
 };
 
 function IranFlag() {
@@ -18,7 +18,7 @@ function IranFlag() {
     <svg
       aria-hidden="true"
       viewBox="0 0 32 20"
-      className="block h-5 w-8 overflow-hidden rounded-[5px] border border-slate-200 shadow-sm"
+      className="block h-5 w-8 overflow-hidden rounded-[5px] border border-[var(--border-soft)] shadow-sm"
     >
       {/* استایل flat: سبز روشن، سفید، قرمز ملایم + نوارهای کنگره‌ایِ سفید */}
       <rect width="32" height="20" fill="#f5f5f5" />
@@ -56,7 +56,7 @@ function UkFlag() {
   return (
     <span
       aria-hidden="true"
-      className="block h-5 w-8 overflow-hidden rounded-[5px] border border-slate-200 shadow-sm"
+      className="block h-5 w-8 overflow-hidden rounded-[5px] border border-[var(--border-soft)] shadow-sm"
       style={{
         background:
           "linear-gradient(27deg, transparent 0 44%, #ffffff 44% 48%, #c8102e 48% 52%, #ffffff 52% 56%, transparent 56% 100%), linear-gradient(153deg, transparent 0 44%, #ffffff 44% 48%, #c8102e 48% 52%, #ffffff 52% 56%, transparent 56% 100%), linear-gradient(to right, transparent 0 38%, #ffffff 38% 44%, #c8102e 44% 56%, #ffffff 56% 62%, transparent 62% 100%), linear-gradient(to bottom, transparent 0 34%, #ffffff 34% 42%, #c8102e 42% 58%, #ffffff 58% 66%, transparent 66% 100%), #012169",
@@ -78,7 +78,7 @@ export function LanguageSwitcher({ variant = "blue", size = "default", className
     : "min-w-14 rounded-xl px-3 py-2";
 
   return (
-    <div className={`inline-flex bg-slate-100 font-bold text-slate-600 ${containerClass} ${className}`}>
+    <div className={`inline-flex bg-[var(--surface-soft)] font-bold text-[var(--text-muted)] ${containerClass} ${className}`}>
       <button
         type="button"
         onClick={() => setLocale("fa")}
@@ -86,7 +86,7 @@ export function LanguageSwitcher({ variant = "blue", size = "default", className
         aria-label={isEn ? "Switch to Persian" : "تغییر به فارسی"}
         title={isEn ? "Persian" : "فارسی"}
         className={`${buttonClass} text-lg leading-none transition-colors ${
-          locale === "fa" ? `bg-white ${activeClass} shadow-sm` : "hover:bg-white/70 hover:text-slate-900"
+          locale === "fa" ? `bg-[var(--surface)] ${activeClass} shadow-sm` : "hover:bg-[var(--surface)]/70 hover:text-[var(--foreground)]"
         }`}
       >
         <IranFlag />
@@ -98,7 +98,7 @@ export function LanguageSwitcher({ variant = "blue", size = "default", className
         aria-label={isEn ? "Switch to English" : "تغییر به انگلیسی"}
         title={isEn ? "English" : "انگلیسی"}
         className={`${buttonClass} text-lg leading-none transition-colors ${
-          locale === "en" ? `bg-white ${activeClass} shadow-sm` : "hover:bg-white/70 hover:text-slate-900"
+          locale === "en" ? `bg-[var(--surface)] ${activeClass} shadow-sm` : "hover:bg-[var(--surface)]/70 hover:text-[var(--foreground)]"
         }`}
       >
         <UkFlag />

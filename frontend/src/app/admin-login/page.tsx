@@ -75,36 +75,36 @@ export default function AdminLoginPage() {
   return (
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center">
-        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-slate-200 shadow-sm lg:grid-cols-[1fr_420px]">
+        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-[var(--border-soft)] shadow-sm lg:grid-cols-[1fr_420px]">
           <div className="p-8 lg:p-12">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
               <ShieldCheck size={17} />
               {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
             </div>
 
-            <h1 className="text-3xl font-black leading-[1.5] text-slate-900 md:text-4xl">
+            <h1 className="text-3xl font-black leading-[1.5] text-[var(--foreground)] md:text-4xl">
               {isEn ? "Admin Login" : "ورود ادمین"}
             </h1>
 
-            <p className="mt-4 max-w-2xl leading-8 text-slate-600">
+            <p className="mt-4 max-w-2xl leading-8 text-[var(--text-muted)]">
               {isEn
                 ? "Enter the admin password to access the dashboard, knowledge base, user questions, and customer requests."
                 : "برای دسترسی به داشبورد، بانک دانش، سوالات کاربران و درخواست‌های مشتریان، رمز ادمین را وارد کنید."}
             </p>
 
             <div className="mt-8">
-              <label className="mb-2 block text-sm font-bold text-slate-700">
+              <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                 {isEn ? "Admin password" : "رمز ادمین"}
               </label>
 
               <div className="relative">
                 <LockKeyhole
                   size={18}
-                  className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`}
+                  className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-[var(--text-subtle)]`}
                 />
 
                 <input
@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
             </div>
 
             {error && (
-              <div className="mt-5 rounded-2xl bg-red-50 p-4 text-sm leading-7 text-red-700">
+              <div className="mt-5 rounded-2xl bg-[var(--color-danger-bg)] p-4 text-sm leading-7 text-[var(--color-danger-text)]">
                 {error}
               </div>
             )}
@@ -135,35 +135,35 @@ export default function AdminLoginPage() {
             </button>
           </div>
 
-          <div className="flex items-center justify-center bg-gradient-to-b from-purple-50 via-white to-slate-50 p-8">
+          <div className="flex items-center justify-center bg-gradient-to-b from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="ui-card w-full max-w-md rounded-[32px] p-6 shadow-sm">
-              <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[34px] bg-purple-50 text-purple-700">
+              <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[34px] bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
                 <KeyRound size={42} strokeWidth={1.7} />
               </div>
 
-              <div className="text-center text-xl font-black text-slate-900">
+              <div className="text-center text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Artin Internal Management" : "مدیریت داخلی آرتین"}
               </div>
 
-              <p className="mt-3 text-center leading-8 text-slate-600">
+              <p className="mt-3 text-center leading-8 text-[var(--text-muted)]">
                 {isEn
                   ? "This area is for managing the knowledge base, reviewing answer quality, and following up on customer requests."
                   : "این بخش مخصوص مدیریت بانک دانش، بررسی پاسخ‌ها و پیگیری درخواست‌های مشتریان است."}
               </p>
 
               <div className="mt-5 grid gap-3 text-sm">
-                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
-                  <LayoutDashboard size={18} className="text-purple-700" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
+                  <LayoutDashboard size={18} className="text-purple-700 dark:text-purple-300" />
                   {isEn ? "Management dashboard" : "داشبورد مدیریتی"}
                 </div>
 
-                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
-                  <Database size={18} className="text-purple-700" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
+                  <Database size={18} className="text-purple-700 dark:text-purple-300" />
                   {isEn ? "Knowledge base management" : "مدیریت بانک دانش"}
                 </div>
 
-                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
-                  <Sparkles size={18} className="text-purple-700" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
+                  <Sparkles size={18} className="text-purple-700 dark:text-purple-300" />
                   {isEn ? "Artin answer quality monitoring" : "پایش کیفیت پاسخ‌های آرتین"}
                 </div>
               </div>

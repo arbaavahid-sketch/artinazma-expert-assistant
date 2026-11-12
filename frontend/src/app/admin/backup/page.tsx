@@ -124,22 +124,22 @@ export default function BackupPage() {
   return (
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-4xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
+        <div className="mb-6 overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
+          <div className="bg-gradient-to-l from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher />
             </div>
 
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
                   <ShieldCheck size={17} />
                   {isEn ? "Data Backups" : "پشتیبان‌گیری از داده‌ها"}
                 </div>
-                <h1 className="text-3xl font-black text-slate-900">
+                <h1 className="text-3xl font-black text-[var(--foreground)]">
                   {isEn ? "Backup Management" : "مدیریت نسخه‌های پشتیبان"}
                 </h1>
-                <p className="mt-4 max-w-2xl leading-8 text-slate-600">
+                <p className="mt-4 max-w-2xl leading-8 text-[var(--text-muted)]">
                   {isEn
                     ? "Create a full SQLite database backup, then download or delete it when needed."
                     : "یک نسخه کامل از دیتابیس SQLite بگیرید و در صورت نیاز آن را دانلود یا حذف کنید."}
@@ -165,7 +165,7 @@ export default function BackupPage() {
                 <button
                   onClick={loadBackups}
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-5 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)] disabled:opacity-50"
                 >
                   <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
                   {isEn ? "Refresh" : "بروزرسانی"}
@@ -179,8 +179,8 @@ export default function BackupPage() {
           <div
             className={`mb-6 rounded-[28px] border p-5 text-sm font-bold leading-8 ${
               message.ok
-                ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                : "border-red-100 bg-red-50 text-red-700"
+                ? "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                : "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
             }`}
           >
             {message.text}
@@ -188,36 +188,36 @@ export default function BackupPage() {
         )}
 
         <div className="mb-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">
+          <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-sm">
+            <div className="text-sm font-bold text-[var(--text-subtle)]">
               {isEn ? "Backup count" : "تعداد نسخه‌های پشتیبان"}
             </div>
-            <div className="mt-2 text-3xl font-black text-slate-900">{backups.length}</div>
+            <div className="mt-2 text-3xl font-black text-[var(--foreground)]">{backups.length}</div>
           </div>
-          <div className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
-            <div className="text-sm font-bold text-blue-700">
+          <div className="rounded-[28px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-5">
+            <div className="text-sm font-bold text-[var(--color-info-text)]">
               {isEn ? "Total file size" : "حجم کل فایل‌ها"}
             </div>
-            <div className="mt-2 text-3xl font-black text-blue-700">
+            <div className="mt-2 text-3xl font-black text-[var(--color-info-text)]">
               {formatSize(totalSizeKb)}
             </div>
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
-            <Database size={20} className="text-blue-600" />
-            <h2 className="text-xl font-black text-slate-900">
+            <Database size={20} className="text-[var(--color-info-text)]" />
+            <h2 className="text-xl font-black text-[var(--foreground)]">
               {isEn ? "Backup Files" : "فایل‌های پشتیبان"}
             </h2>
           </div>
 
           {loading ? (
-            <div className="rounded-3xl bg-slate-50 p-8 text-center text-slate-500">
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-8 text-center text-[var(--text-subtle)]">
               {isEn ? "Loading..." : "در حال بارگذاری..."}
             </div>
           ) : backups.length === 0 ? (
-            <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-10 text-center text-[var(--text-subtle)]">
               {isEn
                 ? "No backup files yet. Create the first backup."
                 : "هنوز هیچ نسخه پشتیبانی وجود ندارد. اولین پشتیبان را بگیرید."}
@@ -227,13 +227,13 @@ export default function BackupPage() {
               {backups.map((backup) => (
                 <div
                   key={backup.file_name}
-                  className="flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-slate-50 p-5 md:flex-row md:items-center md:justify-between"
+                  className="flex flex-col gap-4 rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface-soft)] p-5 md:flex-row md:items-center md:justify-between"
                 >
                   <div>
-                    <div className="font-black text-slate-900">{backup.file_name}</div>
-                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
+                    <div className="font-black text-[var(--foreground)]">{backup.file_name}</div>
+                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-[var(--text-subtle)]">
                       <span>{formatDate(backup.created_at, locale)}</span>
-                      <span className="font-bold text-slate-600">
+                      <span className="font-bold text-[var(--text-muted)]">
                         {formatSize(backup.size_kb)}
                       </span>
                     </div>
@@ -242,7 +242,7 @@ export default function BackupPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => downloadBackup(backup.file_name)}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-2 text-xs font-bold text-[var(--color-success-text)] transition hover:bg-[var(--color-success-bg)]"
                     >
                       <Download size={15} />
                       {isEn ? "Download" : "دانلود"}
@@ -250,7 +250,7 @@ export default function BackupPage() {
                     <button
                       onClick={() => deleteBackup(backup.file_name)}
                       disabled={deletingFile === backup.file_name}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-2 text-xs font-bold text-[var(--color-danger-text)] transition hover:bg-[var(--color-danger-bg)] disabled:opacity-50"
                     >
                       <Trash2 size={15} />
                       {deletingFile === backup.file_name

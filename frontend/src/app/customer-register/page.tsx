@@ -87,18 +87,18 @@ export default function CustomerRegisterPage() {
   return (
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center">
-        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-slate-200 shadow-sm lg:grid-cols-[1fr_430px]">
+        <div className="ui-card grid w-full overflow-hidden rounded-[40px] border-[var(--border-soft)] shadow-sm lg:grid-cols-[1fr_430px]">
           <div className="p-8 lg:p-12">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
               <UserPlus size={17} />
               {isEn ? "Customer Registration" : "ثبت‌نام مشتری"}
             </div>
 
-            <h1 className="text-3xl font-black leading-[1.5] text-slate-900 md:text-4xl">
+            <h1 className="text-3xl font-black leading-[1.5] text-[var(--foreground)] md:text-4xl">
               {isEn ? "Create a customer account" : "ساخت حساب کاربری مشتری"}
             </h1>
 
-            <p className="mt-4 max-w-2xl leading-8 text-slate-600">
+            <p className="mt-4 max-w-2xl leading-8 text-[var(--text-muted)]">
               {isEn
                 ? "Create an account to save your Artin conversations and review previous questions, requests, and follow-up paths later."
                 : "با ساخت حساب، گفتگوهای شما با آرتین ذخیره می‌شود و می‌توانید سوالات قبلی، درخواست‌ها و مسیر پیگیری خود را بعداً مشاهده کنید."}
@@ -148,7 +148,7 @@ export default function CustomerRegisterPage() {
             <PrivacyConsent checked={privacyAccepted} onChange={setPrivacyAccepted} context="register" />
 
             {message && (
-              <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
+              <div className="mt-5 rounded-2xl bg-[var(--color-warning-bg)] p-4 text-sm leading-7 text-[var(--color-warning-text)]">
                 {message}
               </div>
             )}
@@ -158,39 +158,39 @@ export default function CustomerRegisterPage() {
               <ArrowLeft size={18} />
             </button>
 
-            <div className="mt-6 text-center text-sm text-slate-600">
+            <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
               {isEn ? "Already registered?" : "قبلاً ثبت‌نام کرده‌اید؟"}{" "}
-              <Link href="/customer-login" className="inline-flex items-center gap-1 font-bold text-blue-700">
+              <Link href="/customer-login" className="inline-flex items-center gap-1 font-bold text-[var(--color-info-text)]">
                 {isEn ? "Customer login" : "ورود مشتری"}
                 <LogIn size={15} />
               </Link>
             </div>
           </div>
 
-          <div className="flex items-center justify-center bg-gradient-to-b from-blue-50 via-white to-slate-50 p-8">
+          <div className="flex items-center justify-center bg-gradient-to-b from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="ui-card w-full max-w-md rounded-[32px] p-6 text-center shadow-sm">
-              <div className="mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-[34px] bg-slate-50 p-3">
+              <div className="mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-[34px] bg-[var(--surface-soft)] p-3">
                 <img src="/images/artin-avatar.png" alt={isEn ? "Artin" : "آرتین"} className="h-full w-full rounded-full object-cover" />
               </div>
 
-              <div className="text-xl font-black text-slate-900">
+              <div className="text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Artin, your technical assistant" : "آرتین، دستیار تخصصی شما"}
               </div>
 
-              <p className="mt-3 leading-8 text-slate-600">
+              <p className="mt-3 leading-8 text-[var(--text-muted)]">
                 {isEn
                   ? "Your account keeps conversations, analyses, and technical requests organized and easy to follow."
                   : "حساب کاربری شما کمک می‌کند گفتگوها، تحلیل‌ها و درخواست‌های فنی مرتب و قابل پیگیری بمانند."}
               </p>
 
               <div className="mt-5 grid gap-3 text-start text-sm">
-                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
-                  <ShieldCheck size={18} className="text-blue-700" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
+                  <ShieldCheck size={18} className="text-[var(--color-info-text)]" />
                   {isEn ? "Access saved conversations" : "دسترسی به گفتگوهای ذخیره‌شده"}
                 </div>
 
-                <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 font-bold text-slate-700">
-                  <Sparkles size={18} className="text-blue-700" />
+                <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
+                  <Sparkles size={18} className="text-[var(--color-info-text)]" />
                   {isEn ? "Better follow-up for technical requests" : "پیگیری بهتر درخواست‌های فنی"}
                 </div>
               </div>
@@ -215,9 +215,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-slate-700">{label}</label>
+      <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">{label}</label>
       <div className="relative">
-        <span className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`}>{icon}</span>
+        <span className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-[var(--text-subtle)]`}>{icon}</span>
         {children}
       </div>
     </div>

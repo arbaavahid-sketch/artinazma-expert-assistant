@@ -97,11 +97,11 @@ function getRequestStatusLabel(status: string, isEn: boolean) {
 }
 
 function getRequestStatusClass(status: string) {
-  if (status === "closed") return "bg-slate-100 text-slate-600";
-  if (status === "sent") return "bg-emerald-50 text-emerald-700";
-  if (status === "pricing") return "bg-purple-50 text-purple-700";
-  if (status === "reviewing") return "bg-amber-50 text-amber-700";
-  return "bg-blue-50 text-blue-700";
+  if (status === "closed") return "bg-[var(--surface-soft)] text-[var(--text-muted)]";
+  if (status === "sent") return "bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
+  if (status === "pricing") return "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300";
+  if (status === "reviewing") return "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
+  return "bg-[var(--color-info-bg)] text-[var(--color-info-text)]";
 }
 
 function latinizePersianName(name: string) {
@@ -475,10 +475,10 @@ export default function CustomerDashboardPage() {
     return (
       <section className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6">
         <div className="ui-card rounded-[32px] p-8 text-center shadow-sm">
-          <div className="text-lg font-black text-slate-900">
+          <div className="text-lg font-black text-[var(--foreground)]">
             {isEn ? "Checking your account..." : "در حال بررسی حساب کاربری..."}
           </div>
-          <div className="mt-3 text-sm text-slate-500">
+          <div className="mt-3 text-sm text-[var(--text-subtle)]">
             {isEn ? "Please wait a moment." : "لطفاً چند لحظه صبر کنید."}
           </div>
         </div>
@@ -528,7 +528,7 @@ export default function CustomerDashboardPage() {
                       markNotificationsRead(customer.id);
                     }
                   }}
-                  className="relative inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:px-4"
+                  className="relative inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)] sm:px-4"
                 >
                   <Bell size={18} />
                   {isEn ? "Notifications" : "اعلان‌ها"}
@@ -557,7 +557,7 @@ export default function CustomerDashboardPage() {
 
                 <button
                   onClick={logout}
-                  className="ui-btn ui-btn-danger inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl border border-red-200 px-3 py-3 text-sm sm:px-5"
+                  className="ui-btn ui-btn-danger inline-flex min-w-0 items-center justify-center gap-2 rounded-2xl border border-[var(--color-danger-border)] px-3 py-3 text-sm sm:px-5"
                 >
                   <LogOut size={18} />
                   {isEn ? "Logout" : "خروج"}
@@ -568,21 +568,21 @@ export default function CustomerDashboardPage() {
 
           {/* Notifications panel */}
           {showNotifications && (
-            <div className="border-t border-blue-100 bg-blue-50 px-8 py-5">
+            <div className="border-t border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-8 py-5">
               <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-bold text-blue-700">
+                <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-info-text)]">
                   <Bell size={16} />
                   {isEn ? "Messages from the ArtinAzma team" : "پیام‌های تیم آرتین آزما"}
                 </div>
                 <button
                   onClick={() => setShowNotifications(false)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-[var(--text-subtle)] hover:text-[var(--text-muted)]"
                 >
                   <X size={16} />
                 </button>
               </div>
               {notifications.length === 0 ? (
-                <div className="rounded-2xl bg-white px-5 py-4 text-center text-sm text-slate-500">
+                <div className="rounded-2xl bg-[var(--surface)] px-5 py-4 text-center text-sm text-[var(--text-subtle)]">
                   {isEn ? "You have not received any messages from our team." : "پیامی از تیم ما دریافت نکرده‌اید."}
                 </div>
               ) : (
@@ -592,18 +592,18 @@ export default function CustomerDashboardPage() {
                       key={n.id}
                       className={`rounded-2xl border px-5 py-3 text-sm leading-7 ${
                         n.is_read
-                          ? "border-slate-100 bg-white text-slate-600"
-                          : "border-blue-200 bg-white font-bold text-slate-800"
+                          ? "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)]"
+                          : "border-[var(--color-info-border)] bg-[var(--surface)] font-bold text-[var(--foreground)]"
                       }`}
                     >
                       <div>{n.message}</div>
-                      <div className="mt-1 text-xs text-slate-400">
+                      <div className="mt-1 text-xs text-[var(--text-subtle)]">
                         {new Intl.DateTimeFormat("fa-IR", {
                           dateStyle: "short",
                           timeStyle: "short",
                         }).format(new Date(n.created_at + "Z"))}
                         {!n.is_read && (
-                          <span className="mr-2 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                          <span className="mr-2 inline-block rounded-full bg-[var(--color-info-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-info-text)]">
                             {isEn ? "New" : "جدید"}
                           </span>
                         )}
@@ -666,7 +666,7 @@ export default function CustomerDashboardPage() {
                 <h2 className="text-xl">
                   {isEn ? "My conversations" : "گفتگوهای من"}
                 </h2>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-[var(--text-subtle)]">
                   {isEn ? "Click any conversation to continue it." : "برای ادامه هر گفتگو، روی آن کلیک کنید."}
                 </p>
               </div>
@@ -676,7 +676,7 @@ export default function CustomerDashboardPage() {
                   <button
                     onClick={deleteAllSessions}
                     disabled={clearingAllSessions}
-                    className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-center text-sm"
+                    className="ui-btn ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-danger-border)] px-4 py-3 text-center text-sm"
                   >
                     <Trash2 size={16} />
                     {clearingAllSessions ? (isEn ? "Deleting..." : "در حال حذف...") : (isEn ? "Delete all conversations" : "حذف همه گفتگوها")}
@@ -694,20 +694,20 @@ export default function CustomerDashboardPage() {
 
             {sessions.length > 1 && (
               <div className="mb-4 space-y-3">
-                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <Search size={16} className="shrink-0 text-slate-400" />
+                <div className="flex items-center gap-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3">
+                  <Search size={16} className="shrink-0 text-[var(--text-subtle)]" />
                   <input
                     type="text"
                     value={sessionSearch}
                     onChange={(e) => setSessionSearch(e.target.value)}
                     placeholder={isEn ? "Search conversation titles and message text..." : "جستجو در عنوان و متن پیام‌های گفتگو..."}
-                    className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                    className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)] outline-none"
                   />
-                  {historySearchLoading && <Loader2 size={15} className="shrink-0 animate-spin text-blue-500" />}
+                  {historySearchLoading && <Loader2 size={15} className="shrink-0 animate-spin text-[var(--color-info-text)]" />}
                   {sessionSearch && (
                     <button
                       onClick={() => setSessionSearch("")}
-                      className="shrink-0 text-slate-400 hover:text-slate-600"
+                      className="shrink-0 text-[var(--text-subtle)] hover:text-[var(--text-muted)]"
                     >
                       <X size={15} />
                     </button>
@@ -715,8 +715,8 @@ export default function CustomerDashboardPage() {
                 </div>
 
                 {sessionSearch.trim().length >= 2 && (
-                  <div className="rounded-3xl border border-blue-100 bg-blue-50/50 p-3">
-                    <div className="mb-2 text-xs font-black text-blue-700">
+                  <div className="rounded-3xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/50 p-3">
+                    <div className="mb-2 text-xs font-black text-[var(--color-info-text)]">
                       {isEn ? "Results inside messages" : "نتیجه‌های داخل پیام‌ها"}
                     </div>
                     {historySearchResults.length > 0 ? (
@@ -725,27 +725,27 @@ export default function CustomerDashboardPage() {
                           <Link
                             key={result.message_id}
                             href={`/assistant?session_id=${result.session_id}`}
-                            className="artin-motion-card block rounded-2xl border border-blue-100 bg-white p-3 hover:border-blue-200"
+                            className="artin-motion-card block rounded-2xl border border-[var(--color-info-border)] bg-[var(--surface)] p-3 hover:border-[var(--color-info-border)]"
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className="font-black text-slate-800">
+                              <div className="font-black text-[var(--foreground)]">
                                 {result.session_title || (isEn ? "New conversation" : "گفتگوی جدید")}
                               </div>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
+                              <span className="rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-xs font-bold text-[var(--text-subtle)]">
                                 {result.role === "user" ? (isEn ? "You" : "شما") : (isEn ? "Artin" : "آرتین")}
                               </span>
                             </div>
-                            <p className="mt-2 max-h-14 overflow-hidden text-sm leading-7 text-slate-600">
+                            <p className="mt-2 max-h-14 overflow-hidden text-sm leading-7 text-[var(--text-muted)]">
                               {result.snippet}
                             </p>
-                            <div className="mt-1 text-xs text-slate-400">
+                            <div className="mt-1 text-xs text-[var(--text-subtle)]">
                               {formatDate(result.created_at, locale)}
                             </div>
                           </Link>
                         ))}
                       </div>
                     ) : (
-                      <div className="rounded-2xl bg-white p-4 text-sm text-slate-500">
+                      <div className="rounded-2xl bg-[var(--surface)] p-4 text-sm text-[var(--text-subtle)]">
                         {historySearchLoading ? (isEn ? "Searching..." : "در حال جستجو...") : (isEn ? "No message matched this phrase." : "پیامی با این عبارت پیدا نشد.")}
                       </div>
                     )}
@@ -759,7 +759,7 @@ export default function CustomerDashboardPage() {
               </div>
             )}
             {loading ? (
-              <div className="rounded-3xl bg-slate-50 p-6">
+              <div className="rounded-3xl bg-[var(--surface-soft)] p-6">
                 <div className="ui-skeleton h-5 w-44" />
                 <div className="mt-4 space-y-3">
                   <div className="ui-skeleton h-16 w-full rounded-2xl" />
@@ -783,7 +783,7 @@ export default function CustomerDashboardPage() {
                   <Link
                     key={session.id}
                     href={`/assistant?session_id=${session.id}`}
-                    className="artin-motion-card group block rounded-3xl border border-slate-200 bg-slate-50 p-5 hover:border-blue-200 hover:bg-white"
+                    className="artin-motion-card group block rounded-3xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-5 hover:border-[var(--color-info-border)] hover:bg-[var(--surface)]"
                   >
                     <div className="flex flex-col gap-2">
                       {/* Title / Rename row */}
@@ -798,7 +798,7 @@ export default function CustomerDashboardPage() {
                                 if (e.key === "Enter") renameSession(session.id);
                                 if (e.key === "Escape") { setRenamingSessionId(null); setRenameValue(""); }
                               }}
-                              className="flex-1 rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-300"
+                              className="flex-1 rounded-xl border border-[var(--color-info-border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-bold text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-300"
                               maxLength={120}
                             />
                             <button
@@ -810,14 +810,14 @@ export default function CustomerDashboardPage() {
                             </button>
                             <button
                               onClick={() => { setRenamingSessionId(null); setRenameValue(""); }}
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-subtle)] transition hover:bg-[var(--surface-soft)]"
                             >
                               <X size={13} />
                             </button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <div className="truncate text-base font-black text-slate-900 group-hover:text-blue-700">
+                            <div className="truncate text-base font-black text-[var(--foreground)] group-hover:text-[var(--color-info-text)]">
                               {session.title || (isEn ? "New conversation" : "گفتگوی جدید")}
                             </div>
                             <button
@@ -827,7 +827,7 @@ export default function CustomerDashboardPage() {
                                 setRenamingSessionId(session.id);
                                 setRenameValue(session.title || "");
                               }}
-                              className="shrink-0 rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
+                              className="shrink-0 rounded-lg p-1 text-[var(--text-subtle)] opacity-0 transition hover:bg-[var(--surface-soft)] hover:text-[var(--text-muted)] group-hover:opacity-100"
                               title={isEn ? "Rename" : "تغییر نام"}
                             >
                               <Pencil size={13} />
@@ -836,7 +836,7 @@ export default function CustomerDashboardPage() {
                         )}
 
                         {session.last_message_preview && renamingSessionId !== session.id && (
-                          <p className="mt-1 truncate text-sm leading-6 text-slate-500">
+                          <p className="mt-1 truncate text-sm leading-6 text-[var(--text-subtle)]">
                             {session.last_message_preview}
                           </p>
                         )}
@@ -844,13 +844,13 @@ export default function CustomerDashboardPage() {
 
                       {/* Bottom row: date/count + action buttons */}
                       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                        <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs text-slate-400">
+                        <div className="flex min-w-0 flex-wrap items-center gap-3 text-xs text-[var(--text-subtle)]">
                           <span className="flex items-center gap-1">
                             <Clock3 size={13} />
                             {formatDate(session.updated_at || session.created_at, locale)}
                           </span>
                           {(session.message_count ?? 0) > 0 && (
-                            <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-600">
+                            <span className="flex items-center gap-1 rounded-full bg-[var(--color-info-bg)] px-2 py-0.5 font-bold text-[var(--color-info-text)]">
                               <Hash size={11} />
                               {session.message_count} {isEn ? "messages" : "پیام"}
                             </span>
@@ -865,7 +865,7 @@ export default function CustomerDashboardPage() {
                                 e.stopPropagation();
                                 exportSessionPDF(session);
                               }}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-blue-700"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-subtle)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--color-info-text)]"
                             >
                               <Download size={15} />
                             </button>
@@ -879,7 +879,7 @@ export default function CustomerDashboardPage() {
                                 deleteOneSession(session.id);
                               }}
                               disabled={deletingSessionId === session.id}
-                              className="inline-flex h-10 min-w-[76px] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-black text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                              className="inline-flex h-10 min-w-[76px] items-center justify-center gap-1.5 rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-3 text-xs font-black text-[var(--color-danger-text)] transition hover:bg-[var(--color-danger-bg)] disabled:opacity-50"
                             >
                               {deletingSessionId === session.id ? (
                                 <Loader2 size={15} className="animate-spin" />
@@ -890,7 +890,7 @@ export default function CustomerDashboardPage() {
                             </button>
                           </Tooltip>
 
-                          <span className="inline-flex items-center rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                          <span className="inline-flex items-center rounded-xl bg-[var(--color-info-bg)] px-3 py-1.5 text-xs font-bold text-[var(--color-info-text)]">
                             {isEn ? "Continue" : "ادامه ←"}
                           </span>
                         </div>
@@ -901,18 +901,18 @@ export default function CustomerDashboardPage() {
               </div>
             ) : (
               <div className="ui-empty rounded-3xl p-10">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-white text-slate-400 shadow-sm">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-[var(--surface)] text-[var(--text-subtle)] shadow-sm">
                   <Search size={26} strokeWidth={1.8} />
                 </div>
-                <h3 className="mt-4 text-base font-black text-slate-700">
+                <h3 className="mt-4 text-base font-black text-[var(--text-muted)]">
                   {isEn ? "No results found" : "نتیجه‌ای یافت نشد"}
                 </h3>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-[var(--text-subtle)]">
                   {isEn ? `No conversation matched "${sessionSearch}".` : `گفتگویی با عبارت «${sessionSearch}» پیدا نشد.`}
                 </p>
                 <button
                   onClick={() => setSessionSearch("")}
-                  className="mt-4 text-sm font-bold text-blue-700 hover:underline"
+                  className="mt-4 text-sm font-bold text-[var(--color-info-text)] hover:underline"
                 >
                   {isEn ? "Clear search" : "پاک کردن جستجو"}
                 </button>
@@ -920,15 +920,15 @@ export default function CustomerDashboardPage() {
             );
             })() : (
               <div className="ui-empty rounded-3xl p-10">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-blue-700 shadow-sm">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[var(--surface)] text-[var(--color-info-text)] shadow-sm">
                   <MessageSquareText size={30} strokeWidth={1.8} />
                 </div>
 
-                <h3 className="mt-5 text-lg font-black text-slate-900">
+                <h3 className="mt-5 text-lg font-black text-[var(--foreground)]">
                   {isEn ? "No conversations saved yet" : "هنوز گفتگویی ذخیره نشده است"}
                 </h3>
 
-                <p className="mt-3 leading-7 text-slate-500">
+                <p className="mt-3 leading-7 text-[var(--text-subtle)]">
                   {isEn
                     ? "Ask Artin your first question so the conversation is saved in your account."
                     : "اولین سوال خود را از آرتین بپرسید تا گفتگو در حساب شما ذخیره شود."}
@@ -946,7 +946,7 @@ export default function CustomerDashboardPage() {
           <aside className="min-w-0 space-y-6">
             <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-5 flex items-center justify-between gap-3">
-                <h2 className="text-xl font-black text-slate-900">
+                <h2 className="text-xl font-black text-[var(--foreground)]">
                   {isEn ? "Account information" : "اطلاعات حساب"}
                 </h2>
 
@@ -961,7 +961,7 @@ export default function CustomerDashboardPage() {
                 ) : (
                   <button
                     onClick={cancelProfileEdit}
-                    className="ui-btn ui-btn-ghost inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs text-slate-600"
+                    className="ui-btn ui-btn-ghost inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs text-[var(--text-muted)]"
                   >
                     <X size={15} />
                     {isEn ? "Cancel" : "انصراف"}
@@ -971,40 +971,40 @@ export default function CustomerDashboardPage() {
 
               {!editingProfile ? (
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                    <Mail className="mt-1 shrink-0 text-blue-700" size={18} />
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
+                    <Mail className="mt-1 shrink-0 text-[var(--color-info-text)]" size={18} />
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Email" : "ایمیل"}
                       </div>
-                      <div className="mt-1 break-words text-sm font-bold text-slate-900">
+                      <div className="mt-1 break-words text-sm font-bold text-[var(--foreground)]">
                         {customer.email}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                    <Phone className="mt-1 shrink-0 text-blue-700" size={18} />
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
+                    <Phone className="mt-1 shrink-0 text-[var(--color-info-text)]" size={18} />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Phone number" : "شماره تماس"}
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
+                      <div className="mt-1 text-sm font-bold text-[var(--foreground)]">
                         {customer.phone || (isEn ? "Not provided" : "ثبت نشده")}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4">
                     <Building2
-                      className="mt-1 shrink-0 text-blue-700"
+                      className="mt-1 shrink-0 text-[var(--color-info-text)]"
                       size={18}
                     />
                     <div>
-                      <div className="text-xs font-bold text-slate-500">
+                      <div className="text-xs font-bold text-[var(--text-subtle)]">
                         {isEn ? "Company" : "شرکت"}
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-900">
+                      <div className="mt-1 text-sm font-bold text-[var(--foreground)]">
                         {customer.company || (isEn ? "Not provided" : "ثبت نشده")}
                       </div>
                     </div>
@@ -1013,7 +1013,7 @@ export default function CustomerDashboardPage() {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block text-sm font-bold text-slate-700">
+                    <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                       {isEn ? "Full name" : "نام و نام خانوادگی"}
                     </label>
                     <input
@@ -1024,7 +1024,7 @@ export default function CustomerDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-bold text-slate-700">
+                    <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                       {isEn ? "Company / Organization" : "شرکت / سازمان"}
                     </label>
                     <input
@@ -1035,7 +1035,7 @@ export default function CustomerDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-bold text-slate-700">
+                    <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                       {isEn ? "Phone number" : "شماره تماس"}
                     </label>
                     <input
@@ -1063,10 +1063,10 @@ export default function CustomerDashboardPage() {
               )}
 
               {/* Password change */}
-              <div className="mt-5 border-t border-slate-100 pt-4">
+              <div className="mt-5 border-t border-[var(--border-soft)] pt-4">
                 <button
                   onClick={() => setShowChangePassword((v) => !v)}
-                  className="text-sm font-bold text-slate-500 transition hover:text-slate-800"
+                  className="text-sm font-bold text-[var(--text-subtle)] transition hover:text-[var(--foreground)]"
                 >
                   {showChangePassword ? (isEn ? "Close" : "▲ بستن") : (isEn ? "Change password" : "🔒 تغییر رمز عبور")}
                 </button>
@@ -1117,30 +1117,30 @@ export default function CustomerDashboardPage() {
             <div className="ui-card rounded-[32px] p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "My requests" : "درخواست‌های من"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[var(--text-subtle)]">
                     {isEn ? "Track submitted consultation and inquiry requests." : "وضعیت درخواست‌های ثبت‌شده خود را پیگیری کنید."}
                   </p>
                 </div>
-                <FileText size={22} className="shrink-0 text-blue-700" />
+                <FileText size={22} className="shrink-0 text-[var(--color-info-text)]" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-blue-50 p-4 text-center">
-                  <div className="text-2xl font-black text-blue-700">
+                <div className="rounded-2xl bg-[var(--color-info-bg)] p-4 text-center">
+                  <div className="text-2xl font-black text-[var(--color-info-text)]">
                     {customerRequests.length}
                   </div>
-                  <div className="mt-1 text-xs font-bold text-blue-600">
+                  <div className="mt-1 text-xs font-bold text-[var(--color-info-text)]">
                     {isEn ? "Total" : "کل"}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-amber-50 p-4 text-center">
-                  <div className="text-2xl font-black text-amber-700">
+                <div className="rounded-2xl bg-[var(--color-warning-bg)] p-4 text-center">
+                  <div className="text-2xl font-black text-[var(--color-warning-text)]">
                     {customerRequests.filter((item) => item.status !== "closed").length}
                   </div>
-                  <div className="mt-1 text-xs font-bold text-amber-600">
+                  <div className="mt-1 text-xs font-bold text-[var(--color-warning-text)]">
                     {isEn ? "Open" : "باز"}
                   </div>
                 </div>
@@ -1158,14 +1158,14 @@ export default function CustomerDashboardPage() {
                     <Link
                       key={item.id}
                       href={`/customer-dashboard/requests/${item.id}`}
-                      className="artin-motion-card block rounded-2xl border border-slate-100 bg-slate-50 p-3"
+                      className="artin-motion-card block rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-black text-slate-900">
+                          <div className="truncate text-sm font-black text-[var(--foreground)]">
                             {item.subject || (isEn ? "No subject" : "بدون موضوع")}
                           </div>
-                          <div className="mt-1 text-xs font-bold text-slate-400">
+                          <div className="mt-1 text-xs font-bold text-[var(--text-subtle)]">
                             #{item.id} · {formatDate(item.created_at, locale)}
                           </div>
                         </div>
@@ -1174,14 +1174,14 @@ export default function CustomerDashboardPage() {
                         </span>
                       </div>
                       {(item.assigned_to || item.follow_up_at) && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold text-slate-500">
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold text-[var(--text-subtle)]">
                           {item.assigned_to && (
-                            <span className="rounded-full bg-white px-2.5 py-1">
+                            <span className="rounded-full bg-[var(--surface)] px-2.5 py-1">
                               {isEn ? "Owner" : "مسئول"}: {item.assigned_to}
                             </span>
                           )}
                           {item.follow_up_at && (
-                            <span className="rounded-full bg-white px-2.5 py-1">
+                            <span className="rounded-full bg-[var(--surface)] px-2.5 py-1">
                               {isEn ? "Follow-up" : "پیگیری"}: {formatDate(item.follow_up_at, locale)}
                             </span>
                           )}
@@ -1190,7 +1190,7 @@ export default function CustomerDashboardPage() {
                     </Link>
                   ))
                 ) : (
-                  <div className="rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">
+                  <div className="rounded-2xl bg-[var(--surface-soft)] p-5 text-center text-sm text-[var(--text-subtle)]">
                     {isEn ? "No submitted requests yet." : "هنوز درخواستی ثبت نکرده‌اید."}
                   </div>
                 )}
@@ -1198,7 +1198,7 @@ export default function CustomerDashboardPage() {
 
               <Link
                 href="/customer-request"
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--color-info-text)] shadow-sm transition hover:bg-[var(--color-info-bg)]"
               >
                 <PhoneCall size={15} />
                 {isEn ? "Submit a new request" : "ثبت درخواست جدید"}

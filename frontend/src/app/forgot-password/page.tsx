@@ -48,16 +48,16 @@ export default function ForgotPasswordPage() {
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center">
         <div className="ui-card w-full rounded-[32px] p-8 shadow-sm lg:p-10">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--color-warning-bg)] px-4 py-2 text-sm font-bold text-[var(--color-warning-text)]">
             <KeyRound size={17} />
             {isEn ? "Password Recovery" : "بازیابی رمز عبور"}
           </div>
 
-          <h1 className="text-2xl font-black leading-[1.5] text-slate-900">
+          <h1 className="text-2xl font-black leading-[1.5] text-[var(--foreground)]">
             {isEn ? "Forgot password" : "فراموشی رمز عبور"}
           </h1>
 
-          <p className="mt-3 leading-8 text-slate-600">
+          <p className="mt-3 leading-8 text-[var(--text-muted)]">
             {isEn
               ? "Enter the email address you registered with. A password reset link will be sent to you."
               : "ایمیلی که با آن ثبت‌نام کرده‌اید را وارد کنید. لینک بازیابی رمز عبور برایتان ارسال می‌شود."}
@@ -66,9 +66,9 @@ export default function ForgotPasswordPage() {
           {!success ? (
             <>
               <div className="mt-6">
-                <label className="mb-2 block text-sm font-bold text-slate-700">{isEn ? "Email" : "ایمیل"}</label>
+                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">{isEn ? "Email" : "ایمیل"}</label>
                 <div className="relative">
-                  <Mail size={18} className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-slate-400`} />
+                  <Mail size={18} className={`absolute ${iconSide} top-1/2 -translate-y-1/2 text-[var(--text-subtle)]`} />
                   <input
                     type="email"
                     value={email}
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               {message && (
-                <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
+                <div className="mt-4 rounded-2xl bg-[var(--color-warning-bg)] p-4 text-sm leading-7 text-[var(--color-warning-text)]">
                   {message}
                 </div>
               )}
@@ -97,20 +97,20 @@ export default function ForgotPasswordPage() {
               </button>
             </>
           ) : (
-            <div className="mt-6 rounded-2xl bg-emerald-50 p-6 text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl">
+            <div className="mt-6 rounded-2xl bg-[var(--color-success-bg)] p-6 text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-success-bg)] text-2xl">
                 <Mail size={26} />
               </div>
-              <p className="leading-8 text-emerald-800">{message}</p>
-              <p className="mt-2 text-sm text-emerald-600">
+              <p className="leading-8 text-[var(--color-success-text)]">{message}</p>
+              <p className="mt-2 text-sm text-[var(--color-success-text)]">
                 {isEn ? "Check your inbox and spam folder." : "صندوق ایمیل خود (و پوشه اسپم) را بررسی کنید."}
               </p>
             </div>
           )}
 
-          <div className="mt-6 text-center text-sm text-slate-600">
+          <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
             {isEn ? "Remembered your password?" : "رمز عبور را به یاد آوردید؟"}{" "}
-            <Link href="/customer-login" className="inline-flex items-center gap-1 font-bold text-blue-700">
+            <Link href="/customer-login" className="inline-flex items-center gap-1 font-bold text-[var(--color-info-text)]">
               {isEn ? "Customer login" : "ورود مشتری"}
               <LogIn size={15} />
             </Link>

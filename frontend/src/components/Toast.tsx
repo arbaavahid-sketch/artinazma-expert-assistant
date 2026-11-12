@@ -77,27 +77,27 @@ function ToastBubble({
   > = {
     success: {
       icon: <CheckCircle2 size={16} className="shrink-0 text-emerald-500" />,
-      bg: "bg-white",
-      text: "text-slate-800",
-      border: "border-emerald-200",
+      bg: "bg-[var(--surface)]",
+      text: "text-[var(--foreground)]",
+      border: "border-[var(--color-success-border)]",
     },
     error: {
       icon: <XCircle size={16} className="shrink-0 text-red-500" />,
-      bg: "bg-white",
-      text: "text-slate-800",
-      border: "border-red-200",
+      bg: "bg-[var(--surface)]",
+      text: "text-[var(--foreground)]",
+      border: "border-[var(--color-danger-border)]",
     },
     warning: {
       icon: <AlertCircle size={16} className="shrink-0 text-amber-500" />,
-      bg: "bg-white",
-      text: "text-slate-800",
-      border: "border-amber-200",
+      bg: "bg-[var(--surface)]",
+      text: "text-[var(--foreground)]",
+      border: "border-[var(--color-warning-border)]",
     },
     info: {
-      icon: <Info size={16} className="shrink-0 text-blue-500" />,
-      bg: "bg-white",
-      text: "text-slate-800",
-      border: "border-blue-200",
+      icon: <Info size={16} className="shrink-0 text-[var(--color-info-text)]" />,
+      bg: "bg-[var(--surface)]",
+      text: "text-[var(--foreground)]",
+      border: "border-[var(--color-info-border)]",
     },
   };
 
@@ -114,7 +114,7 @@ function ToastBubble({
       <button
         onClick={() => onDismiss(item.id)}
         aria-label="بستن اعلان"
-        className="shrink-0 text-slate-300 hover:text-slate-500"
+        className="shrink-0 text-[var(--text-subtle)] hover:text-[var(--foreground)]"
       >
         <X size={14} aria-hidden="true" />
       </button>

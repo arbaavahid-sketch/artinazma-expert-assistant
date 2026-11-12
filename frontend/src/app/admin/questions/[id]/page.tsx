@@ -64,18 +64,18 @@ function getStatusLabel(status: string, locale = "fa") {
 
 function getStatusClass(status: string) {
   if (status === "approved") {
-    return "bg-emerald-50 text-emerald-700 border-emerald-100";
+    return "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]";
   }
 
   if (status === "needs_edit") {
-    return "bg-amber-50 text-amber-700 border-amber-100";
+    return "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]";
   }
 
   if (status === "rejected") {
-    return "bg-red-50 text-red-700 border-red-100";
+    return "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] border-[var(--color-danger-border)]";
   }
 
-  return "bg-slate-100 text-slate-700 border-slate-200";
+  return "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]";
 }
 
 function getDomainLabel(domain: string, locale = "fa") {
@@ -268,12 +268,12 @@ export default function QuestionDetailPage() {
   if (loading) {
     return (
       <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
-        <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto max-w-7xl rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-8 text-center shadow-sm">
           <RefreshCw
-            className="mx-auto mb-4 animate-spin text-purple-700"
+            className="mx-auto mb-4 animate-spin text-purple-700 dark:text-purple-300"
             size={28}
           />
-          <div className="font-bold text-slate-700">
+          <div className="font-bold text-[var(--text-muted)]">
             {isEn ? "Loading question details..." : "در حال دریافت اطلاعات سوال..."}
           </div>
         </div>
@@ -284,7 +284,7 @@ export default function QuestionDetailPage() {
   if (!question) {
     return (
       <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
-        <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto max-w-7xl rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-8 text-center shadow-sm">
           {isEn ? "Question not found." : "سوال موردنظر پیدا نشد."}
           <Link
             href="/admin/questions"
@@ -302,8 +302,8 @@ export default function QuestionDetailPage() {
   return (
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+        <div className="mb-6 overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
+          <div className="bg-gradient-to-l from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
@@ -311,14 +311,14 @@ export default function QuestionDetailPage() {
               <div>
                 <Link
                   href="/admin/questions"
-                  className="mb-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+                  className="mb-4 inline-flex items-center gap-2 rounded-full bg-[var(--surface)] px-4 py-2 text-sm font-bold text-[var(--text-muted)] shadow-sm hover:bg-[var(--surface-soft)]"
                 >
                   <ArrowRight size={17} />
                   {isEn ? "Back to questions" : "بازگشت به سوالات"}
                 </Link>
 
                 <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-700">
+                  <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-sm font-black text-[var(--text-muted)]">
                     {isEn ? "Question" : "سوال"} #{question.id}
                   </span>
 
@@ -330,16 +330,16 @@ export default function QuestionDetailPage() {
                     {getStatusLabel(question.expert_status, locale)}
                   </span>
 
-                  <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                  <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
                     {getDomainLabel(question.detected_domain, locale)}
                   </span>
                 </div>
 
-                <h1 className="text-3xl font-black text-slate-900">
+                <h1 className="text-3xl font-black text-[var(--foreground)]">
                   {isEn ? "User Question Review Details" : "جزئیات بررسی سوال کاربر"}
                 </h1>
 
-                <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
+                <div className="mt-4 flex flex-wrap gap-4 text-sm text-[var(--text-subtle)]">
                   <span className="inline-flex items-center gap-1">
                     <Clock3 size={15} />
                     {isEn ? "Created" : "ثبت"}: {formatDate(question.created_at, locale)}
@@ -356,7 +356,7 @@ export default function QuestionDetailPage() {
 
               <button
                 onClick={loadQuestion}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-5 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)]"
               >
                 <RefreshCw size={18} />
                 {isEn ? "Refresh" : "بروزرسانی"}
@@ -367,56 +367,56 @@ export default function QuestionDetailPage() {
 
         <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
           <div className="space-y-6">
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                   <MessageSquareText size={22} />
                 </div>
-                <h2 className="text-xl font-black text-slate-900">
+                <h2 className="text-xl font-black text-[var(--foreground)]">
                   {isEn ? "User Question" : "سوال کاربر"}
                 </h2>
               </div>
 
-              <div className="whitespace-pre-wrap rounded-3xl bg-slate-50 p-5 leading-8 text-slate-800">
+              <div className="whitespace-pre-wrap rounded-3xl bg-[var(--surface-soft)] p-5 leading-8 text-[var(--foreground)]">
                 {question.question}
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-700">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--text-muted)]">
                     <FileText size={22} />
                   </div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Artin's Initial Answer" : "پاسخ اولیه آرتین"}
                   </h2>
                 </div>
 
                 <button
                   onClick={() => copyText(question.answer)}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-2 text-sm font-bold text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
                 >
                   <Copy size={16} />
                   {isEn ? "Copy" : "کپی"}
                 </button>
               </div>
 
-              <div className="whitespace-pre-wrap rounded-3xl bg-slate-50 p-5 leading-8 text-slate-800">
+              <div className="whitespace-pre-wrap rounded-3xl bg-[var(--surface-soft)] p-5 leading-8 text-[var(--foreground)]">
                 {question.answer || (isEn ? "No answer has been registered." : "پاسخی ثبت نشده است.")}
               </div>
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
                   <Database size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Used Sources" : "منابع استفاده‌شده"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[var(--text-subtle)]">
                     {isEn
                       ? "Sources found in the knowledge base while answering."
                       : "منابعی که هنگام پاسخ‌گویی از بانک دانش پیدا شده‌اند."}
@@ -429,29 +429,29 @@ export default function QuestionDetailPage() {
                   {sources.map((source, index) => (
                     <div
                       key={index}
-                      className="rounded-3xl border border-slate-200 bg-slate-50 p-4"
+                      className="rounded-3xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4"
                     >
-                      <div className="font-black text-slate-900">
+                      <div className="font-black text-[var(--foreground)]">
                         {source.title || (isEn ? "Untitled" : "بدون عنوان")}
                       </div>
 
-                      <div className="mt-3 grid gap-2 text-sm leading-7 text-slate-600 md:grid-cols-3">
+                      <div className="mt-3 grid gap-2 text-sm leading-7 text-[var(--text-muted)] md:grid-cols-3">
                         <div>
-                          <span className="font-bold text-slate-900">
+                          <span className="font-bold text-[var(--foreground)]">
                             {isEn ? "File" : "فایل"}:
                           </span>{" "}
                           {source.file_name || "-"}
                         </div>
 
                         <div>
-                          <span className="font-bold text-slate-900">
+                          <span className="font-bold text-[var(--foreground)]">
                             {isEn ? "Category" : "دسته"}:
                           </span>{" "}
                           {source.category || "-"}
                         </div>
 
                         <div>
-                          <span className="font-bold text-slate-900">
+                          <span className="font-bold text-[var(--foreground)]">
                             {isEn ? "Score" : "امتیاز"}:
                           </span>{" "}
                           {typeof source.score === "number"
@@ -463,22 +463,22 @@ export default function QuestionDetailPage() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-3xl bg-slate-50 p-6 text-center text-slate-500">
+                <div className="rounded-3xl bg-[var(--surface-soft)] p-6 text-center text-[var(--text-subtle)]">
                   {isEn ? "No knowledge base source was found for this answer." : "برای این پاسخ منبعی از بانک دانش پیدا نشده است."}
                 </div>
               )}
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                   <Database size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Answer Quality Metadata" : "متادیتای کیفیت پاسخ"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[var(--text-subtle)]">
                     {isEn
                       ? "Response-route data for reviewing quality, sources, and search mode."
                       : "داده‌های مسیر پاسخ‌دهی برای بررسی کیفیت، منابع و حالت جستجو."}
@@ -500,12 +500,12 @@ export default function QuestionDetailPage() {
                 ].map(([label, value]) => (
                   <div
                     key={label}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4"
                   >
-                    <div className="text-xs font-bold uppercase text-slate-400">
+                    <div className="text-xs font-bold uppercase text-[var(--text-subtle)]">
                       {label}
                     </div>
-                    <div className="mt-2 break-words text-sm font-black text-slate-800">
+                    <div className="mt-2 break-words text-sm font-black text-[var(--foreground)]">
                       {value}
                     </div>
                   </div>
@@ -515,29 +515,29 @@ export default function QuestionDetailPage() {
           </div>
 
           <aside className="space-y-6">
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-success-bg)] text-[var(--color-success-text)]">
                   <BookOpenCheck size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Expert Review" : "بررسی کارشناس"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[var(--text-subtle)]">
                     {isEn ? "Approve, edit, or reject the answer." : "پاسخ را تایید، اصلاح یا رد کنید."}
                   </p>
                 </div>
               </div>
 
-              <label className="mb-2 block text-sm font-bold text-slate-700">
+              <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                 {isEn ? "Review status" : "وضعیت بررسی"}
               </label>
 
               <select
                 value={expertStatus}
                 onChange={(e) => setExpertStatus(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 bg-white p-4 outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 outline-none transition focus:border-purple-600"
               >
                 <option value="pending">{isEn ? "Pending review" : "در انتظار بررسی"}</option>
                 <option value="approved">{isEn ? "Approved" : "تایید شده"}</option>
@@ -545,29 +545,29 @@ export default function QuestionDetailPage() {
                 <option value="rejected">{isEn ? "Rejected" : "رد شده"}</option>
               </select>
 
-              <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
+              <label className="mb-2 mt-5 block text-sm font-bold text-[var(--text-muted)]">
                 {isEn ? "Expert revised answer" : "پاسخ اصلاح‌شده کارشناس"}
               </label>
 
               <textarea
                 value={reviewedAnswer}
                 onChange={(e) => setReviewedAnswer(e.target.value)}
-                className="h-72 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none transition focus:border-purple-600"
+                className="h-72 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 leading-8 outline-none transition focus:border-purple-600"
                 placeholder={isEn ? "Enter the final expert-approved answer here..." : "پاسخ نهایی و تاییدشده کارشناس را اینجا وارد کنید..."}
               />
 
-              <div className="mt-2 text-xs leading-6 text-slate-500">
+              <div className="mt-2 text-xs leading-6 text-[var(--text-subtle)]">
                 {isEn ? "If approved, this text can be added to the knowledge base." : "این متن در صورت تایید می‌تواند به بانک دانش اضافه شود."}
               </div>
 
-              <label className="mb-2 mt-5 block text-sm font-bold text-slate-700">
+              <label className="mb-2 mt-5 block text-sm font-bold text-[var(--text-muted)]">
                 {isEn ? "Internal expert note" : "یادداشت داخلی کارشناس"}
               </label>
 
               <textarea
                 value={expertNote}
                 onChange={(e) => setExpertNote(e.target.value)}
-                className="h-28 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 leading-8 outline-none transition focus:border-purple-600"
+                className="h-28 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 leading-8 outline-none transition focus:border-purple-600"
                 placeholder={isEn ? "Example: The answer is good, but the device model should be clarified for the customer." : "مثلاً: پاسخ خوب است اما برای مشتری باید مدل دستگاه دقیق‌تر مشخص شود."}
               />
 
@@ -584,8 +584,8 @@ export default function QuestionDetailPage() {
                 <div
                   className={`mt-4 rounded-2xl p-4 leading-7 ${
                     saveMessageType === "success"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-red-50 text-red-700"
+                      ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                      : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
                   }`}
                 >
                   {saveMessage}
@@ -593,22 +593,22 @@ export default function QuestionDetailPage() {
               )}
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                   <Database size={22} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900">
+                  <h2 className="text-lg font-black text-[var(--foreground)]">
                     {isEn ? "Add to Knowledge Base" : "افزودن به بانک دانش"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[var(--text-subtle)]">
                     {isEn ? "Only add approved answers to the knowledge base." : "فقط پاسخ تاییدشده را به بانک دانش اضافه کنید."}
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-3xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+              <div className="rounded-3xl bg-[var(--surface-soft)] p-4 text-sm leading-7 text-[var(--text-muted)]">
                 {isEn
                   ? "After the question status is saved as Approved, you can add the revised answer to the knowledge base for Artin to use in future answers."
                   : "وقتی وضعیت سوال روی «تایید شده» ذخیره شود، می‌توانید پاسخ اصلاح‌شده را وارد بانک دانش کنید تا آرتین در پاسخ‌های بعدی از آن استفاده کند."}
@@ -626,7 +626,7 @@ export default function QuestionDetailPage() {
               </button>
 
               {question.expert_status !== "approved" && (
-                <div className="mt-3 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
+                <div className="mt-3 rounded-2xl bg-[var(--color-warning-bg)] p-4 text-sm leading-7 text-[var(--color-warning-text)]">
                   {isEn
                     ? "To enable this button, first set the status to Approved and save the review."
                     : "برای فعال شدن این دکمه، ابتدا وضعیت را روی «تایید شده» بگذارید و بررسی را ذخیره کنید."}
@@ -637,8 +637,8 @@ export default function QuestionDetailPage() {
                 <div
                   className={`mt-4 rounded-2xl p-4 leading-7 ${
                     addKnowledgeType === "success"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-red-50 text-red-700"
+                      ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                      : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
                   }`}
                 >
                   {addKnowledgeMessage}
@@ -646,22 +646,22 @@ export default function QuestionDetailPage() {
               )}
             </div>
 
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-3 text-lg font-black text-slate-900">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
+              <h3 className="mb-3 text-lg font-black text-[var(--foreground)]">
                 {isEn ? "Suggested Review Flow" : "روند پیشنهادی بررسی"}
               </h3>
 
-              <div className="space-y-3 text-sm leading-7 text-slate-600">
-                <div className="rounded-2xl bg-slate-50 p-3">
+              <div className="space-y-3 text-sm leading-7 text-[var(--text-muted)]">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "1. Compare Artin's initial answer with the user's question." : "1. پاسخ اولیه آرتین را با سوال کاربر مقایسه کنید."}
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "2. Complete the revised answer if needed." : "2. اگر لازم بود پاسخ اصلاح‌شده را کامل‌تر کنید."}
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "3. Set the status to Approved or Needs edit." : "3. وضعیت را روی تایید شده یا نیازمند اصلاح بگذارید."}
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-3">
                   {isEn ? "4. Add the approved answer to the knowledge base." : "4. پاسخ تاییدشده را به بانک دانش اضافه کنید."}
                 </div>
               </div>

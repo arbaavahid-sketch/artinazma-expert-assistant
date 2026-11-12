@@ -60,7 +60,7 @@ function ResetPasswordInner() {
     return (
       <section className="min-h-full bg-[var(--background)] px-6 py-8">
         <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center">
-          <div className="text-slate-500">{isEn ? "Verifying link..." : "در حال بررسی لینک..."}</div>
+          <div className="text-[var(--text-subtle)]">{isEn ? "Verifying link..." : "در حال بررسی لینک..."}</div>
         </div>
       </section>
     );
@@ -71,9 +71,9 @@ function ResetPasswordInner() {
       <section className="min-h-full bg-[var(--background)] px-6 py-8">
         <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center">
           <div className="ui-card w-full rounded-[32px] p-8 text-center shadow-sm">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl">⚠️</div>
-            <h2 className="text-xl font-black text-slate-900">{isEn ? "Invalid Link" : "لینک نامعتبر"}</h2>
-            <p className="mt-3 leading-8 text-slate-600">{isEn ? "This reset link has expired or has already been used." : "این لینک بازیابی منقضی شده یا قبلاً استفاده شده است."}</p>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-danger-bg)] text-3xl">⚠️</div>
+            <h2 className="text-xl font-black text-[var(--foreground)]">{isEn ? "Invalid Link" : "لینک نامعتبر"}</h2>
+            <p className="mt-3 leading-8 text-[var(--text-muted)]">{isEn ? "This reset link has expired or has already been used." : "این لینک بازیابی منقضی شده یا قبلاً استفاده شده است."}</p>
             <Link href="/forgot-password" className="ui-btn ui-btn-primary mt-6 inline-flex gap-2 rounded-2xl px-6 py-3">
               {isEn ? "Request Again" : "درخواست مجدد"}
               <Arrow size={18} />
@@ -88,20 +88,20 @@ function ResetPasswordInner() {
     <section className="min-h-full bg-[var(--background)] px-6 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center">
         <div className="ui-card w-full rounded-[32px] p-8 shadow-sm lg:p-10">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--color-success-bg)] px-4 py-2 text-sm font-bold text-[var(--color-success-text)]">
             <ShieldCheck size={17} />
             {isEn ? "Change Password" : "تغییر رمز عبور"}
           </div>
 
-          <h1 className="text-2xl font-black leading-[1.5] text-slate-900">{isEn ? "New Password" : "رمز عبور جدید"}</h1>
+          <h1 className="text-2xl font-black leading-[1.5] text-[var(--foreground)]">{isEn ? "New Password" : "رمز عبور جدید"}</h1>
 
           {!success ? (
             <>
               <div className="mt-6 space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">{isEn ? "New Password" : "رمز عبور جدید"}</label>
+                  <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">{isEn ? "New Password" : "رمز عبور جدید"}</label>
                   <div className="relative">
-                    <LockKeyhole size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <LockKeyhole size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-subtle)]" />
                     <input
                       type="password"
                       value={newPassword}
@@ -112,9 +112,9 @@ function ResetPasswordInner() {
                   </div>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">{isEn ? "Confirm Password" : "تکرار رمز عبور"}</label>
+                  <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">{isEn ? "Confirm Password" : "تکرار رمز عبور"}</label>
                   <div className="relative">
-                    <LockKeyhole size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <LockKeyhole size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-subtle)]" />
                     <input
                       type="password"
                       value={confirmPassword}
@@ -128,7 +128,7 @@ function ResetPasswordInner() {
               </div>
 
               {message && (
-                <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">{message}</div>
+                <div className="mt-4 rounded-2xl bg-[var(--color-warning-bg)] p-4 text-sm leading-7 text-[var(--color-warning-text)]">{message}</div>
               )}
 
               <button onClick={handleReset} disabled={loading} className="ui-btn ui-btn-primary mt-6 inline-flex w-full gap-2 rounded-2xl px-5 py-4">
@@ -137,9 +137,9 @@ function ResetPasswordInner() {
               </button>
             </>
           ) : (
-            <div className="mt-6 rounded-2xl bg-emerald-50 p-6 text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl">&#10004;</div>
-              <p className="leading-8 text-emerald-800">{message}</p>
+            <div className="mt-6 rounded-2xl bg-[var(--color-success-bg)] p-6 text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-success-bg)] text-2xl">&#10004;</div>
+              <p className="leading-8 text-[var(--color-success-text)]">{message}</p>
               <Link href="/customer-login" className="ui-btn ui-btn-primary mt-4 inline-flex gap-2 rounded-2xl px-6 py-3">
                 {isEn ? "Log In" : "ورود به حساب"}
                 <LogIn size={18} />

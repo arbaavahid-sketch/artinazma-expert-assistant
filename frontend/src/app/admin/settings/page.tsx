@@ -52,18 +52,18 @@ function getAiStatusLabel(status: string, locale: string) {
 
 function getAiStatusClass(status: string) {
   if (status === "connected") {
-    return "border-emerald-100 bg-emerald-50 text-emerald-700";
+    return "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
   }
 
   if (status === "failed") {
-    return "border-red-100 bg-red-50 text-red-700";
+    return "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]";
   }
 
   if (status === "not_configured") {
-    return "border-amber-100 bg-amber-50 text-amber-700";
+    return "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
   }
 
-  return "border-slate-200 bg-slate-50 text-slate-700";
+  return "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)]";
 }
 
 function getCategoryLabel(category: string, locale: string) {
@@ -82,10 +82,10 @@ function getCategoryLabel(category: string, locale: string) {
 }
 
 function getHealthTone(check?: DeepHealthCheck) {
-  if (!check) return "border-slate-200 bg-slate-50 text-slate-600";
-  if (check.ok) return "border-emerald-100 bg-emerald-50 text-emerald-700";
-  if (check.status === "not_configured") return "border-amber-100 bg-amber-50 text-amber-700";
-  return "border-red-100 bg-red-50 text-red-700";
+  if (!check) return "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)]";
+  if (check.ok) return "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
+  if (check.status === "not_configured") return "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
+  return "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]";
 }
 
 function getHealthIcon(check?: DeepHealthCheck) {
@@ -385,23 +385,23 @@ export default function AdminSettingsPage() {
   return (
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 via-white to-slate-50 p-8">
+        <div className="mb-6 overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
+          <div className="bg-gradient-to-l from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
                   <Settings2 size={17} />
                   {isEn ? "Artin System Settings" : "تنظیمات سیستم آرتین"}
                 </div>
 
-                <h1 className="text-3xl font-black text-slate-900">
+                <h1 className="text-3xl font-black text-[var(--foreground)]">
                   {isEn ? "Connection, Knowledge Base, and Response Mode" : "وضعیت اتصال، بانک دانش و حالت پاسخ‌دهی"}
                 </h1>
 
-                <p className="mt-4 max-w-4xl leading-8 text-slate-600">
+                <p className="mt-4 max-w-4xl leading-8 text-[var(--text-muted)]">
                   {isEn
                     ? "Check backend status, OpenAI connectivity, local fallback, and ArtinAzma knowledge base statistics."
                     : "وضعیت Backend، اتصال OpenAI، پاسخ محلی و آمار بانک دانش آرتین آزما را از این بخش بررسی کنید."}
@@ -411,7 +411,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={() => loadStatus(false)}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-5 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)] disabled:opacity-50"
               >
                 <RefreshCw
                   size={18}
@@ -426,19 +426,19 @@ export default function AdminSettingsPage() {
         </div>
 
         {message && (
-          <div className="mb-6 flex items-start gap-3 rounded-[28px] border border-red-100 bg-red-50 p-5 text-red-700">
+          <div className="mb-6 flex items-start gap-3 rounded-[28px] border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] p-5 text-[var(--color-danger-text)]">
             <AlertCircle className="mt-1 shrink-0" size={20} />
             <span>{message}</span>
           </div>
         )}
 
-        <div className="mb-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-xl font-black text-slate-900">
+              <h2 className="text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Deep Health Check" : "بررسی عمیق سلامت سیستم"}
               </h2>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
+              <p className="mt-2 text-sm leading-7 text-[var(--text-muted)]">
                 {isEn
                   ? "Database, OpenAI, Qdrant, Google Drive and email readiness."
                   : "آمادگی دیتابیس، OpenAI، Qdrant، Google Drive و ایمیل."}
@@ -449,7 +449,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={() => loadDeepHealth(false)}
                 disabled={loadingDeepHealth}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-2.5 text-sm font-bold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] disabled:opacity-50"
               >
                 <RefreshCw size={16} className={loadingDeepHealth ? "animate-spin" : ""} />
                 {isEn ? "Refresh" : "بروزرسانی"}
@@ -562,13 +562,13 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-xl font-black text-slate-900">
+                <h2 className="text-xl font-black text-[var(--foreground)]">
                   {isEn ? "OpenAI Connection Test" : "تست اتصال OpenAI"}
                 </h2>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
+                <p className="mt-2 text-sm leading-7 text-[var(--text-muted)]">
                   {isEn ? "This test only runs when you press the button." : "این تست فقط وقتی اجرا می‌شود که روی دکمه بزنید."}
                 </p>
               </div>
@@ -592,20 +592,20 @@ export default function AdminSettingsPage() {
             </div>
 
             {status?.openai_error && (
-              <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-7 text-red-700">
+              <div className="mt-4 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] p-4 text-sm leading-7 text-[var(--color-danger-text)]">
                 {status.openai_error}
               </div>
             )}
 
-            <div className="mt-5 rounded-3xl bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+            <div className="mt-5 rounded-3xl bg-[var(--surface-soft)] p-5 text-sm leading-7 text-[var(--text-muted)]">
               {isEn
                 ? "When OpenAI is available, Artin searches the knowledge base and writes a fuller, more analytical final response with the AI model."
                 : "اگر اتصال OpenAI برقرار باشد، آرتین از بانک دانش جست‌وجو می‌کند و پاسخ نهایی را با مدل AI کامل‌تر و تحلیلی‌تر می‌نویسد."}
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-black text-slate-900">
+          <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-black text-[var(--foreground)]">
               {isEn ? "Knowledge Base Categories" : "دسته‌بندی‌های بانک دانش"}
             </h2>
 
@@ -614,55 +614,55 @@ export default function AdminSettingsPage() {
                 {status.knowledge_stats.categories.map((category) => (
                   <span
                     key={category}
-                    className="rounded-full bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700"
+                    className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300"
                   >
                     {getCategoryLabel(category, locale)}
                   </span>
                 ))}
               </div>
             ) : (
-              <div className="rounded-3xl bg-slate-50 p-6 text-center text-sm text-slate-500">
+              <div className="rounded-3xl bg-[var(--surface-soft)] p-6 text-center text-sm text-[var(--text-subtle)]">
                 {isEn ? "No categories have been registered yet." : "هنوز دسته‌بندی‌ای ثبت نشده است."}
               </div>
             )}
           </div>
         </div>
 
-        <div className="mt-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mt-6 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-700">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-soft)] text-[var(--text-muted)]">
               <Activity size={25} />
             </div>
 
             <div>
-              <h2 className="text-xl font-black text-slate-900">
+              <h2 className="text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Artin Response Modes" : "حالت‌های پاسخ‌دهی آرتین"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[var(--text-subtle)]">
                 {isEn ? "Artin uses AI or local fallback depending on connection status." : "آرتین بسته به وضعیت اتصال، از AI یا پاسخ محلی استفاده می‌کند."}
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-3xl bg-slate-50 p-5">
-              <div className="mb-2 flex items-center gap-2 font-black text-slate-900">
-                <CheckCircle2 size={18} className="text-emerald-700" />
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-5">
+              <div className="mb-2 flex items-center gap-2 font-black text-[var(--foreground)]">
+                <CheckCircle2 size={18} className="text-[var(--color-success-text)]" />
                 {isEn ? "AI mode" : "حالت AI"}
               </div>
-              <p className="text-sm leading-7 text-slate-600">
+              <p className="text-sm leading-7 text-[var(--text-muted)]">
                 {isEn
                   ? "When OpenAI is available, Artin searches the knowledge base and writes the final answer with deeper expert analysis."
                   : "وقتی OpenAI در دسترس باشد، آرتین از بانک دانش جست‌وجو می‌کند و پاسخ نهایی را با تحلیل تخصصی کامل‌تر می‌نویسد."}
               </p>
             </div>
 
-            <div className="rounded-3xl bg-slate-50 p-5">
-              <div className="mb-2 flex items-center gap-2 font-black text-slate-900">
-                <ShieldCheck size={18} className="text-blue-700" />
+            <div className="rounded-3xl bg-[var(--surface-soft)] p-5">
+              <div className="mb-2 flex items-center gap-2 font-black text-[var(--foreground)]">
+                <ShieldCheck size={18} className="text-[var(--color-info-text)]" />
                 {isEn ? "Local mode" : "حالت محلی"}
               </div>
-              <p className="text-sm leading-7 text-slate-600">
+              <p className="text-sm leading-7 text-[var(--text-muted)]">
                 {isEn
                   ? "When OpenAI is unavailable, Artin searches the local knowledge base and answers from the matched text."
                   : "وقتی OpenAI در دسترس نباشد، آرتین داخل بانک دانش محلی جست‌وجو می‌کند و بر اساس متن‌های پیدا شده پاسخ می‌دهد."}
@@ -670,23 +670,23 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         {/* ─── Google Drive Scheduled Sync ──────────────────────── */}
-        <div className="mt-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mt-6 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
               <Cloud size={25} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900">
+              <h2 className="text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Automatic Google Drive Sync" : "همزمان‌سازی خودکار Google Drive"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[var(--text-subtle)]">
                 {isEn ? "Sync the knowledge base with Google Drive on a schedule." : "بانک دانش را به صورت زمان‌بندی‌شده با Google Drive همزمان کنید."}
               </p>
             </div>
           </div>
 
           {!gdriveSchedule?.folder_id_configured && (
-            <div className="mb-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold text-amber-700">
+            <div className="mb-5 rounded-2xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] p-4 text-sm font-bold text-[var(--color-warning-text)]">
               {isEn
                 ? "GOOGLE_DRIVE_ROOT_FOLDER_ID is not configured. Set it in the .env file to enable this feature."
                 : "متغیر محیطی GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است. برای فعال‌کردن این قابلیت، آن را در فایل .env تنظیم کنید."}
@@ -696,7 +696,7 @@ export default function AdminSettingsPage() {
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">
+                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                   {isEn ? "Interval (hours)" : "فاصله زمانی (ساعت)"}
                 </label>
                 <input
@@ -705,10 +705,10 @@ export default function AdminSettingsPage() {
                   max="168"
                   value={gdriveIntervalInput}
                   onChange={(e) => setGdriveIntervalInput(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-blue-400 focus:outline-none"
+                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--foreground)] focus:border-blue-400 focus:outline-none"
                   placeholder={isEn ? "24" : "۲۴"}
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[var(--text-subtle)]">
                   {isEn ? "For example: 24 = once per day" : "مثلاً ۲۴ = هر روز یک‌بار"}
                 </p>
               </div>
@@ -726,7 +726,7 @@ export default function AdminSettingsPage() {
                 <button
                   onClick={() => saveGdriveSchedule(false)}
                   disabled={savingSchedule}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-white disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-bold text-[var(--text-muted)] transition hover:bg-[var(--surface)] disabled:opacity-50"
                 >
                   {isEn ? "Disable" : "غیرفعال"}
                 </button>
@@ -735,7 +735,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={runGdriveSyncNow}
                 disabled={syncingNow || gdriveSchedule?.sync_status === "running" || !gdriveSchedule?.folder_id_configured}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-3 text-sm font-bold text-[var(--color-success-text)] transition hover:bg-[var(--color-success-bg)] disabled:opacity-50"
               >
                 <Play size={16} />
                 {syncingNow || gdriveSchedule?.sync_status === "running"
@@ -744,16 +744,16 @@ export default function AdminSettingsPage() {
               </button>
 
               {gdriveMessage && (
-                <div className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-700">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-4 text-sm font-bold text-[var(--text-muted)]">
                   {gdriveMessage}
                 </div>
               )}
             </div>
 
             <div className="space-y-3">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <div className="text-xs font-bold text-slate-500 mb-1">{isEn ? "Schedule status" : "وضعیت زمان‌بندی"}</div>
-                <div className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${gdriveSchedule?.enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>
+              <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
+                <div className="text-xs font-bold text-[var(--text-subtle)] mb-1">{isEn ? "Schedule status" : "وضعیت زمان‌بندی"}</div>
+                <div className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${gdriveSchedule?.enabled ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" : "bg-[var(--border-soft)] text-[var(--text-muted)]"}`}>
                   {gdriveSchedule?.enabled
                     ? isEn
                       ? `Every ${gdriveSchedule.interval_hours} hours`
@@ -763,13 +763,13 @@ export default function AdminSettingsPage() {
               </div>
 
               {gdriveSchedule?.last_sync && (
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <div className="text-xs font-bold text-slate-500 mb-1">{isEn ? "Last sync" : "آخرین همزمان‌سازی"}</div>
-                  <div className="text-sm text-slate-700">
+                <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
+                  <div className="text-xs font-bold text-[var(--text-subtle)] mb-1">{isEn ? "Last sync" : "آخرین همزمان‌سازی"}</div>
+                  <div className="text-sm text-[var(--text-muted)]">
                     {new Intl.DateTimeFormat(isEn ? "en-US" : "fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(gdriveSchedule.last_sync))}
                   </div>
                   {gdriveSchedule.last_sync_result && (
-                    <div className="mt-1 text-xs text-slate-500">{gdriveSchedule.last_sync_result}</div>
+                    <div className="mt-1 text-xs text-[var(--text-subtle)]">{gdriveSchedule.last_sync_result}</div>
                   )}
                 </div>
               )}
@@ -778,16 +778,16 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* ─── Email Report Settings ────────────────────────────────────────── */}
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
               <Mail size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900">
+              <h2 className="text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Weekly Email Report" : "گزارش هفتگی ایمیل"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[var(--text-subtle)]">
                 {isEn ? "SMTP settings for automatic admin reports" : "تنظیمات SMTP برای ارسال خودکار گزارش به ادمین"}
               </p>
             </div>
@@ -795,7 +795,7 @@ export default function AdminSettingsPage() {
 
           {emailMessage && (
             <div className={`mb-5 flex items-center gap-2 rounded-2xl p-4 text-sm font-bold ${
-              emailMessageType === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+              emailMessageType === "success" ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
             }`}>
               {emailMessageType === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
               {emailMessage}
@@ -804,21 +804,21 @@ export default function AdminSettingsPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">SMTP Host</label>
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">SMTP Host</label>
               <input
                 value={emailSettings.smtp_host}
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_host: e.target.value }))}
                 placeholder="smtp.gmail.com"
                 dir="ltr"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">Port</label>
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">Port</label>
               <select
                 value={emailSettings.smtp_port}
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_port: Number(e.target.value) }))}
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
               >
                 <option value={587}>587 (STARTTLS)</option>
                 <option value={465}>465 (SSL)</option>
@@ -826,7 +826,7 @@ export default function AdminSettingsPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                 {isEn ? "SMTP username" : "نام کاربری SMTP"}
               </label>
               <input
@@ -834,11 +834,11 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_user: e.target.value }))}
                 placeholder="your@email.com"
                 dir="ltr"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                 {isEn ? "SMTP password" : "رمز عبور SMTP"}
               </label>
               <input
@@ -847,11 +847,11 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_pass: e.target.value }))}
                 placeholder={isEn ? "App password or password" : "App password یا رمز عبور"}
                 dir="ltr"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                 {isEn ? "Sender address" : "آدرس فرستنده"}
               </label>
               <input
@@ -859,11 +859,11 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, from_addr: e.target.value }))}
                 placeholder="artin@artinazma.ir"
                 dir="ltr"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                 {isEn ? "Recipient email (admin)" : "ایمیل گیرنده (ادمین)"}
               </label>
               <input
@@ -871,12 +871,12 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, to_addr: e.target.value }))}
                 placeholder="admin@artinazma.ir"
                 dir="ltr"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
               />
             </div>
           </div>
 
-          <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--text-muted)]">
             <input
               type="checkbox"
               checked={emailSettings.weekly_enabled}
@@ -887,7 +887,7 @@ export default function AdminSettingsPage() {
             </span>
           </label>
 
-          <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--color-info-bg)] px-4 py-3 text-sm text-[var(--color-info-text)]">
             <input
               type="checkbox"
               checked={emailSettings.request_alerts_enabled}
@@ -911,7 +911,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={sendWeeklyReport}
               disabled={sendingReport || !emailSettings.to_addr}
-              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-5 py-3 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)] disabled:opacity-50"
             >
               <Send size={16} />
               {sendingReport ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Send report now" : "ارسال گزارش الان")}
@@ -920,16 +920,16 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* ─── Telegram Settings ─────────────────────────────────────────────── */}
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
               <MessageCircle size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900">
+              <h2 className="text-xl font-black text-[var(--foreground)]">
                 {isEn ? "Telegram Notifications" : "اعلان‌های تلگرام"}
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[var(--text-subtle)]">
                 {isEn
                   ? "Receive new customer registrations and contact requests on Telegram."
                   : "ثبت‌نام مشتری جدید و درخواست‌های تماس را روی تلگرام دریافت کن"}
@@ -939,7 +939,7 @@ export default function AdminSettingsPage() {
 
           {tgMessage && (
             <div className={`mb-5 flex items-center gap-2 rounded-2xl p-4 text-sm font-bold ${
-              tgMessageType === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+              tgMessageType === "success" ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
             }`}>
               {tgMessageType === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
               {tgMessage}
@@ -947,7 +947,7 @@ export default function AdminSettingsPage() {
           )}
 
           {tgSettings.enabled && (
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[var(--color-success-bg)] px-4 py-2 text-sm font-bold text-[var(--color-success-text)]">
               <CheckCircle2 size={15} />
               {isEn ? "Telegram is active" : "تلگرام فعال است"}
             </div>
@@ -955,13 +955,13 @@ export default function AdminSettingsPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                 Bot Token
                 <a
                   href="https://t.me/BotFather"
                   target="_blank"
                   rel="noreferrer"
-                  className="mr-2 font-normal text-sky-600 hover:underline"
+                  className="mr-2 font-normal text-[var(--color-info-text)] hover:underline"
                 >
                   {isEn ? "(get it from @BotFather)" : "(از @BotFather بگیر)"}
                 </a>
@@ -971,13 +971,13 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setTgSettings((s) => ({ ...s, bot_token: e.target.value }))}
                 placeholder="123456789:AABBcc..."
                 dir="ltr"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-sky-500"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                 Chat ID
-                <span className="mr-2 font-normal text-slate-400">
+                <span className="mr-2 font-normal text-[var(--text-subtle)]">
                   {isEn ? "(group or channel ID)" : "(شناسه گروه یا کانال)"}
                 </span>
               </label>
@@ -986,14 +986,14 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setTgSettings((s) => ({ ...s, chat_id: e.target.value }))}
                 placeholder="-100123456789"
                 dir="ltr"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-sky-500"
               />
             </div>
           </div>
 
-          <p className="mt-3 rounded-2xl bg-slate-50 p-4 text-xs leading-7 text-slate-500">
+          <p className="mt-3 rounded-2xl bg-[var(--surface-soft)] p-4 text-xs leading-7 text-[var(--text-subtle)]">
             {isEn ? "To find the Chat ID, add the bot to the group, then use " : "برای پیداکردن Chat ID: ربات را به گروه اضافه کن، سپس از"}{" "}
-            <span dir="ltr" className="font-mono text-slate-700">
+            <span dir="ltr" className="font-mono text-[var(--text-muted)]">
               https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates
             </span>{" "}
             {isEn ? "and copy the " : "استفاده کن و عدد "}
@@ -1013,7 +1013,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={testTg}
               disabled={testingTg}
-              className="inline-flex items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-3 text-sm font-bold text-sky-700 transition hover:bg-sky-100 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-2xl border border-sky-200 bg-[var(--color-info-bg)] px-5 py-3 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-sky-100 disabled:opacity-50"
             >
               <Send size={16} />
               {testingTg ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Send test message" : "ارسال پیام آزمایشی")}
@@ -1040,19 +1040,19 @@ function StatusCard({
   tone: "emerald" | "blue" | "amber" | "purple" | "slate";
 }) {
   const toneClass = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    blue: "bg-blue-50 text-blue-700 border-blue-100",
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
-    purple: "bg-purple-50 text-purple-700 border-purple-100",
-    slate: "bg-slate-50 text-slate-700 border-slate-200",
+    emerald: "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]",
+    blue: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
+    amber: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]",
+    purple: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800",
+    slate: "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]",
   }[tone];
 
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-bold text-slate-500">{title}</div>
-          <div className="mt-3 text-2xl font-black text-slate-900">{value}</div>
+          <div className="text-sm font-bold text-[var(--text-subtle)]">{title}</div>
+          <div className="mt-3 text-2xl font-black text-[var(--foreground)]">{value}</div>
         </div>
 
         <div
@@ -1062,7 +1062,7 @@ function StatusCard({
         </div>
       </div>
 
-      <p className="mt-4 text-sm leading-7 text-slate-500">{description}</p>
+      <p className="mt-4 text-sm leading-7 text-[var(--text-subtle)]">{description}</p>
     </div>
   );
 }

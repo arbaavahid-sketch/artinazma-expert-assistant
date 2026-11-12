@@ -119,9 +119,9 @@ function getEmbeddingLabel(status?: KnowledgeFileDetail["embedding_status"], loc
 }
 
 function getEmbeddingBadgeClass(status?: KnowledgeFileDetail["embedding_status"]) {
-  if (status === "partial") return "bg-amber-50 text-amber-700";
-  if (status === "missing") return "bg-red-50 text-red-700";
-  return "bg-emerald-50 text-emerald-700";
+  if (status === "partial") return "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
+  if (status === "missing") return "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]";
+  return "bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
 }
 
 function formatScoreBreakdown(breakdown?: Record<string, unknown>) {
@@ -686,7 +686,7 @@ export default function KnowledgePage() {
                 {isEn ? "ArtinAzma Private Knowledge Base" : "بانک دانش اختصاصی آرتین آزما"}
               </h1>
             </div>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--text-muted)] dark:text-[var(--text-subtle)]">
               {isEn ? "Manage reference files, sync Google Drive, and review search quality." : "فایل‌های مرجع را مدیریت کنید، Google Drive را همگام کنید و کیفیت جست‌وجو را بررسی کنید."}
             </p>
           </div>
@@ -699,7 +699,7 @@ export default function KnowledgePage() {
             value={driveMaxFiles}
             onChange={(e) => setDriveMaxFiles(Number(e.target.value))}
             disabled={syncingDrive}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none disabled:opacity-50"
+            className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm outline-none disabled:opacity-50"
           >
             <option value={10}>{isEn ? "10 files" : "۱۰ فایل"}</option>
             <option value={20}>{isEn ? "20 files" : "۲۰ فایل"}</option>
@@ -713,7 +713,7 @@ export default function KnowledgePage() {
             <option value={10000}>{isEn ? "10000 files" : "۱۰۰۰۰ فایل"}</option>
           </select>
 
-          <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
+          <label className="inline-flex items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm">
             <input
               type="checkbox"
               checked={forceDriveResync}
@@ -745,7 +745,7 @@ export default function KnowledgePage() {
               a.click();
             }}
             disabled={!stats || stats.total_files === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-5 py-3 text-sm font-bold text-[var(--color-success-text)] shadow-sm transition hover:bg-[var(--color-success-bg)] disabled:opacity-40"
           >
             <Download size={18} />
             {isEn ? "Download CSV" : "دانلود CSV"}
@@ -753,7 +753,7 @@ export default function KnowledgePage() {
 
           <button
             onClick={loadKnowledgeStats}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-5 py-3 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)]"
           >
             <RefreshCw size={18} />
             {isEn ? "Refresh status" : "بروزرسانی وضعیت"}
@@ -761,57 +761,57 @@ export default function KnowledgePage() {
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">
+          <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] p-3 sm:p-4 shadow-sm">
+            <div className="text-sm font-bold text-[var(--text-subtle)]">
               {isEn ? "File count" : "تعداد فایل‌ها"}
             </div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums text-slate-900">
+            <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
               {stats?.total_files || 0}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-purple-100 bg-purple-50 p-5">
-            <div className="text-sm font-bold text-purple-700">
+          <div className="rounded-[28px] border border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 p-5">
+            <div className="text-sm font-bold text-purple-700 dark:text-purple-300">
               {isEn ? "Text chunks" : "تعداد بخش‌های متنی"}
             </div>
-            <div className="mt-2 text-3xl font-black text-purple-700">
+            <div className="mt-2 text-3xl font-black text-purple-700 dark:text-purple-300">
               {stats?.total_chunks || 0}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-blue-100 bg-blue-50 p-5">
-            <div className="text-sm font-bold text-blue-700">{isEn ? "Categories" : "دسته‌بندی‌ها"}</div>
-            <div className="mt-2 text-3xl font-black text-blue-700">
+          <div className="rounded-[28px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-5">
+            <div className="text-sm font-bold text-[var(--color-info-text)]">{isEn ? "Categories" : "دسته‌بندی‌ها"}</div>
+            <div className="mt-2 text-3xl font-black text-[var(--color-info-text)]">
               {stats?.categories?.length || 0}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-emerald-100 bg-emerald-50 p-5">
-            <div className="text-sm font-bold text-emerald-700">{isEn ? "Storage engine" : "موتور ذخیره"}</div>
-            <div className="mt-2 truncate text-2xl font-black text-emerald-700">
+          <div className="rounded-[28px] border border-[var(--color-success-border)] bg-[var(--color-success-bg)] p-5">
+            <div className="text-sm font-bold text-[var(--color-success-text)]">{isEn ? "Storage engine" : "موتور ذخیره"}</div>
+            <div className="mt-2 truncate text-2xl font-black text-[var(--color-success-text)]">
               {stats?.backend || "json"}
             </div>
-            <div className="mt-2 truncate text-xs font-bold text-emerald-600">
+            <div className="mt-2 truncate text-xs font-bold text-[var(--color-success-text)]">
               {stats?.embedding_model || "-"}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-bold text-slate-500">Vector store</div>
-            <div className="mt-2 text-2xl font-black text-slate-900">
+          <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-sm">
+            <div className="text-sm font-bold text-[var(--text-subtle)]">Vector store</div>
+            <div className="mt-2 text-2xl font-black text-[var(--foreground)]">
               {stats?.vector_store_exists ? `${stats.vector_store_size_mb ?? 0} MB` : (isEn ? "None" : "ندارد")}
             </div>
-            <div className="mt-2 text-xs font-bold text-slate-500">
+            <div className="mt-2 text-xs font-bold text-[var(--text-subtle)]">
               {formatDateTime(stats?.vector_store_updated_at, locale)}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-amber-100 bg-amber-50 p-5">
-            <div className="text-sm font-bold text-amber-700">{isEn ? "Last sync" : "آخرین sync"}</div>
-            <div className="mt-2 truncate text-sm font-black leading-7 text-amber-800">
+          <div className="rounded-[28px] border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] p-5">
+            <div className="text-sm font-bold text-[var(--color-warning-text)]">{isEn ? "Last sync" : "آخرین sync"}</div>
+            <div className="mt-2 truncate text-sm font-black leading-7 text-[var(--color-warning-text)]">
               {formatDateTime(stats?.last_sync, locale)}
             </div>
-            <div className="mt-1 truncate text-xs font-bold text-amber-700">
+            <div className="mt-1 truncate text-xs font-bold text-[var(--color-warning-text)]">
               {stats?.last_sync_result || "-"}
             </div>
           </div>
@@ -819,18 +819,18 @@ export default function KnowledgePage() {
 
         {/* Category coverage breakdown */}
         {stats?.category_breakdown && stats.category_breakdown.length > 0 && (
-          <div className="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 text-sm font-bold text-slate-700">
+          <div className="mb-6 rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-sm">
+            <div className="mb-4 text-sm font-bold text-[var(--text-muted)]">
               {isEn ? "Knowledge Coverage by Domain" : "پوشش دانش به تفکیک حوزه"}
             </div>
             <div className="space-y-2.5">
               {stats.category_breakdown.map((item) => (
                 <div key={item.category}>
                   <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700">{getCategoryLabel(item.category, locale)}</span>
-                    <span className="text-slate-500">{item.chunks} chunk — {item.percent}%</span>
+                    <span className="font-bold text-[var(--text-muted)]">{getCategoryLabel(item.category, locale)}</span>
+                    <span className="text-[var(--text-subtle)]">{item.chunks} chunk — {item.percent}%</span>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-soft)]">
                     <div
                       className="h-full rounded-full bg-blue-500 transition-all duration-500"
                       style={{ width: `${item.percent}%` }}
@@ -846,8 +846,8 @@ export default function KnowledgePage() {
           <div
             className={`mb-6 flex items-start gap-3 whitespace-pre-wrap rounded-[28px] p-5 leading-8 ${
               knowledgeResultType === "success"
-                ? "border border-emerald-100 bg-emerald-50 text-emerald-700"
-                : "border border-red-100 bg-red-50 text-red-700"
+                ? "border border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                : "border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
             }`}
           >
             {knowledgeResultType === "success" ? (
@@ -859,18 +859,18 @@ export default function KnowledgePage() {
           </div>
         )}
         {driveSyncMessage && (
-          <div className="mb-6 rounded-[28px] border border-blue-100 bg-blue-50 p-5 text-sm leading-8 text-blue-700">
+          <div className="mb-6 rounded-[28px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-5 text-sm leading-8 text-[var(--color-info-text)]">
             {driveSyncMessage}
           </div>
         )}
         {driveSyncResults.length > 0 && (
-          <div className="mb-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-black text-slate-900">
+                <h2 className="text-xl font-black text-[var(--foreground)]">
                   {isEn ? "Google Drive Sync Report" : "گزارش همگام‌سازی Google Drive"}
                 </h2>
-                <p className="mt-2 text-sm leading-7 text-slate-500">
+                <p className="mt-2 text-sm leading-7 text-[var(--text-subtle)]">
                   {isEn
                     ? "Added, unchanged, and skipped files from the latest sync."
                     : "فایل‌های اضافه‌شده، بدون تغییر و ردشده در آخرین همگام‌سازی."}
@@ -883,7 +883,7 @@ export default function KnowledgePage() {
                   setDriveSyncSummary(null);
                   setDriveSyncFilter("all");
                 }}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-white"
+                className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-2 text-sm font-bold text-[var(--text-muted)] hover:bg-[var(--surface)]"
               >
                 {isEn ? "Clear report" : "پاک کردن گزارش"}
               </button>
@@ -891,10 +891,10 @@ export default function KnowledgePage() {
 
             <div className="mb-5 grid gap-3 md:grid-cols-4">
               {[
-                ["all", isEn ? "All" : "کل", driveSyncResults.length, "bg-slate-50 text-slate-700 border-slate-200"],
-                ["added", isEn ? "Added" : "اضافه‌شده", driveStatusCounts.added || 0, "bg-emerald-50 text-emerald-700 border-emerald-100"],
-                ["unchanged", isEn ? "Unchanged" : "بدون تغییر", driveStatusCounts.unchanged || 0, "bg-amber-50 text-amber-700 border-amber-100"],
-                ["skipped", isEn ? "Skipped/errors" : "ردشده/خطا", driveStatusCounts.skipped || 0, "bg-red-50 text-red-700 border-red-100"],
+                ["all", isEn ? "All" : "کل", driveSyncResults.length, "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]"],
+                ["added", isEn ? "Added" : "اضافه‌شده", driveStatusCounts.added || 0, "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]"],
+                ["unchanged", isEn ? "Unchanged" : "بدون تغییر", driveStatusCounts.unchanged || 0, "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]"],
+                ["skipped", isEn ? "Skipped/errors" : "ردشده/خطا", driveStatusCounts.skipped || 0, "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] border-[var(--color-danger-border)]"],
               ].map(([status, label, count, classes]) => (
                 <button
                   key={String(status)}
@@ -910,8 +910,8 @@ export default function KnowledgePage() {
             </div>
 
             {skippedReasons.length > 0 && (
-              <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-black text-red-700">
+              <div className="mb-5 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-black text-[var(--color-danger-text)]">
                   <AlertCircle size={16} />
                   {isEn ? "Skip or error reasons" : "دلایل رد شدن یا خطا"}
                 </div>
@@ -919,7 +919,7 @@ export default function KnowledgePage() {
                   {skippedReasons.slice(0, 8).map(([reason, count]) => (
                     <span
                       key={reason}
-                      className="rounded-full bg-white px-3 py-1 text-xs font-bold text-red-700"
+                      className="rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-bold text-[var(--color-danger-text)]"
                     >
                       {reason}: {count}
                     </span>
@@ -928,10 +928,10 @@ export default function KnowledgePage() {
               </div>
             )}
 
-            <div className="max-h-[420px] overflow-y-auto rounded-3xl border border-slate-200">
+            <div className="max-h-[420px] overflow-y-auto rounded-3xl border border-[var(--border-soft)]">
               <table className="w-full border-collapse text-right text-sm">
-                <thead className="sticky top-0 bg-slate-50">
-                  <tr className="border-b border-slate-200 text-slate-600">
+                <thead className="sticky top-0 bg-[var(--surface-soft)]">
+                  <tr className="border-b border-[var(--border-soft)] text-[var(--text-muted)]">
                     <th className="p-4 font-bold">{isEn ? "Status" : "وضعیت"}</th>
                     <th className="p-4 font-bold">{isEn ? "File" : "فایل"}</th>
                     <th className="p-4 font-bold">{isEn ? "Category" : "دسته‌بندی"}</th>
@@ -944,16 +944,16 @@ export default function KnowledgePage() {
                   {filteredDriveSyncResults.map((item, index) => (
                     <tr
                       key={`${item.title}-${index}`}
-                      className="border-b border-slate-100 hover:bg-slate-50"
+                      className="border-b border-[var(--border-soft)] hover:bg-[var(--surface-soft)]"
                     >
                       <td className="p-4 align-top">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold ${
                             item.status === "unchanged"
-                              ? "bg-amber-50 text-amber-700"
+                              ? "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]"
                               : item.success
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-red-50 text-red-700"
+                                ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                                : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
                           }`}
                         >
                           {getDriveStatusLabel(item.status, item.success, locale)}
@@ -961,30 +961,30 @@ export default function KnowledgePage() {
                       </td>
 
                       <td className="p-4 align-top">
-                        <div className="font-bold text-slate-900">
+                        <div className="font-bold text-[var(--foreground)]">
                           {item.title || (isEn ? "Untitled" : "بدون عنوان")}
                         </div>
 
                         {item.file_name && (
-                          <div className="mt-1 break-all text-xs leading-6 text-slate-500">
+                          <div className="mt-1 break-all text-xs leading-6 text-[var(--text-subtle)]">
                             {item.file_name}
                           </div>
                         )}
                       </td>
 
                       <td className="p-4 align-top">
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                        <span className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)]">
                           {getCategoryLabel(item.category || "general", locale)}
                         </span>
                       </td>
 
                       <td className="p-4 align-top">
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                        <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-black text-[var(--text-muted)]">
                           {item.chunks_added || 0}
                         </span>
                       </td>
 
-                      <td className="p-4 align-top text-xs leading-6 text-slate-500">
+                      <td className="p-4 align-top text-xs leading-6 text-[var(--text-subtle)]">
                         {item.message ||
                           item.reason ||
                           item.mime_type ||
@@ -1000,23 +1000,23 @@ export default function KnowledgePage() {
         )}
         <div className="grid min-w-0 gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
           <aside className="min-w-0 space-y-6">
-            <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
                   <UploadCloud size={25} />
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Add File" : "افزودن فایل"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[var(--text-subtle)]">
                     {isEn ? "Import PDF, TXT, or MD files into the knowledge base." : "PDF، TXT یا MD را وارد بانک دانش کنید."}
                   </p>
                 </div>
               </div>
 
-              <label className="mb-2 block text-sm font-bold text-slate-700">
+              <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
                 {isEn ? "Choose file" : "انتخاب فایل"}
               </label>
 
@@ -1024,28 +1024,28 @@ export default function KnowledgePage() {
                 type="file"
                 accept=".pdf,.txt,.md"
                 onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
-                className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
               />
 
               {knowledgeFile && (
-                <div className="mt-3 rounded-2xl border border-purple-100 bg-purple-50 p-4 text-sm leading-7">
+                <div className="mt-3 rounded-2xl border border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 p-4 text-sm leading-7">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-bold text-slate-800">{knowledgeFile.name}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="truncate font-bold text-[var(--foreground)]">{knowledgeFile.name}</p>
+                      <p className="text-xs text-[var(--text-subtle)]">
                         {(knowledgeFile.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
-                    <div className="shrink-0 rounded-xl bg-purple-100 px-3 py-1 text-center">
-                      <p className="text-xs font-bold text-purple-700">{isEn ? "Estimated chunks" : "تخمین chunk"}</p>
-                      <p className="text-lg font-black text-purple-800">
+                    <div className="shrink-0 rounded-xl bg-purple-100 dark:bg-purple-900/40 px-3 py-1 text-center">
+                      <p className="text-xs font-bold text-purple-700 dark:text-purple-300">{isEn ? "Estimated chunks" : "تخمین chunk"}</p>
+                      <p className="text-lg font-black text-purple-800 dark:text-purple-300">
                         {Math.max(1, Math.ceil(
                           Math.max(0, knowledgeFile.size - 200) / (1200 - 200)
                         ))}
                       </p>
                     </div>
                   </div>
-                  <p className="mt-2 text-[11px] text-purple-600">
+                  <p className="mt-2 text-[11px] text-purple-600 dark:text-purple-300">
                     {isEn
                       ? "* Based on file size; the actual count is determined after text extraction."
                       : "* بر اساس اندازه فایل — تعداد واقعی پس از متن‌کشی تعیین می‌شود"}
@@ -1053,7 +1053,7 @@ export default function KnowledgePage() {
                 </div>
               )}
 
-              <label className="mb-2 mt-4 block text-sm font-bold text-slate-700">
+              <label className="mb-2 mt-4 block text-sm font-bold text-[var(--text-muted)]">
                 {isEn ? "File title" : "عنوان فایل"}
               </label>
 
@@ -1062,10 +1062,10 @@ export default function KnowledgePage() {
                 placeholder={isEn ? "Example: ASTM D1151 standard" : "مثلاً: استاندارد ASTM D1151"}
                 value={knowledgeTitle}
                 onChange={(e) => setKnowledgeTitle(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
               />
 
-              <label className="mb-2 mt-4 block text-sm font-bold text-slate-700">
+              <label className="mb-2 mt-4 block text-sm font-bold text-[var(--text-muted)]">
                 {isEn ? "Category" : "دسته‌بندی"}
               </label>
 
@@ -1075,7 +1075,7 @@ export default function KnowledgePage() {
                   setKnowledgeCategory(e.target.value);
                   setCategorySuggested(false);
                 }}
-                className="w-full rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
               >
                 {categoryOptions
                   .filter((item) => item.value !== "expert-faq")
@@ -1087,14 +1087,14 @@ export default function KnowledgePage() {
               </select>
 
               {categorySuggested && (
-                <p className="mt-2 text-xs text-purple-600">
+                <p className="mt-2 text-xs text-purple-600 dark:text-purple-300">
                   {isEn
                     ? "Category suggested from the file name. Change it if needed."
                     : "✨ دسته‌بندی بر اساس نام فایل پیشنهاد شد — در صورت نیاز تغییر دهید."}
                 </p>
               )}
 
-              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl bg-[var(--surface-soft)] p-4 text-sm leading-7 text-[var(--text-muted)]">
                 <input
                   type="checkbox"
                   checked={replaceExisting}
@@ -1119,16 +1119,16 @@ export default function KnowledgePage() {
               </button>
             </div>
 
-            <div className="rounded-[32px] border border-blue-100 bg-gradient-to-b from-blue-50 to-white p-6 shadow-sm">
+            <div className="rounded-[32px] border border-[var(--color-info-border)] bg-gradient-to-b from-[var(--color-info-bg)] to-[var(--surface)] p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
                   <TestTube2 size={22} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Semantic Search" : "جست‌وجوی معنایی (Semantic Search)"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[var(--text-subtle)]">
                     {isEn ? "Search the knowledge base with AI vector search." : "با AI vector search در بانک دانش جست‌وجو کن."}
                   </p>
                 </div>
@@ -1138,19 +1138,19 @@ export default function KnowledgePage() {
                 value={testQuery}
                 onChange={(e) => setTestQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) testKnowledgeSearch(); }}
-                className="h-24 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm leading-7 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-24 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm leading-7 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 placeholder={isEn ? "Example: ASTM D 1151 or sulfur analysis in LPG" : "مثلاً: ASTM D 1151 یا آنالیز سولفور در LPG"}
               />
 
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                  <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                     {isEn ? "Category filter" : "فیلتر دسته‌بندی"}
                   </label>
                   <select
                     value={searchCategory}
                     onChange={(e) => setSearchCategory(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none transition focus:border-blue-500"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2 text-xs outline-none transition focus:border-blue-500"
                   >
                     <option value="all">{isEn ? "All categories" : "همه دسته‌ها"}</option>
                     {(stats?.categories || []).map((cat) => (
@@ -1159,8 +1159,8 @@ export default function KnowledgePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                    {isEn ? "Results" : "تعداد نتایج"}: <span className="text-blue-700">{searchTopK}</span>
+                  <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
+                    {isEn ? "Results" : "تعداد نتایج"}: <span className="text-[var(--color-info-text)]">{searchTopK}</span>
                   </label>
                   <input
                     type="range" min={5} max={25} step={5}
@@ -1182,12 +1182,12 @@ export default function KnowledgePage() {
                   <><Search size={16} /> {isEn ? "Semantic search" : "جست‌وجوی معنایی"}</>
                 )}
               </button>
-              <p className="mt-2 text-center text-xs text-slate-400">
+              <p className="mt-2 text-center text-xs text-[var(--text-subtle)]">
                 {isEn ? "Ctrl+Enter for quick search" : "Ctrl+Enter برای جست‌وجوی سریع"}
               </p>
 
               {testMessage && (
-                <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm leading-7 text-amber-700">
+                <div className="mt-4 rounded-2xl bg-[var(--color-warning-bg)] p-4 text-sm leading-7 text-[var(--color-warning-text)]">
                   {testMessage}
                 </div>
               )}
@@ -1196,13 +1196,13 @@ export default function KnowledgePage() {
 
           <div className="min-w-0 space-y-6">
             {groupedTestResults.length > 0 && (
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-xl font-black text-slate-900">
+                    <h2 className="text-xl font-black text-[var(--foreground)]">
                       {isEn ? "Semantic Search Results" : "نتایج جست‌وجوی معنایی"}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-[var(--text-subtle)]">
                       {isEn
                         ? `${testResults.length} chunks from ${groupedTestResults.length} files, sorted by semantic similarity`
                         : `${testResults.length} chunk از ${groupedTestResults.length} فایل — مرتب‌شده بر اساس شباهت معنایی`}
@@ -1210,7 +1210,7 @@ export default function KnowledgePage() {
                   </div>
                   <button
                     onClick={() => { setTestResults([]); setTestMessage(""); }}
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                    className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-2 text-sm font-bold text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
                   >
                     {isEn ? "Clear" : "پاک کردن"}
                   </button>
@@ -1227,41 +1227,41 @@ export default function KnowledgePage() {
                     return (
                       <div
                         key={group.file_name}
-                        className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                        className="rounded-3xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-5"
                       >
                         {/* Header row */}
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700">
+                              <span className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-info-bg)] text-xs font-black text-[var(--color-info-text)]">
                                 {gi + 1}
                               </span>
-                              <span className="text-base font-black text-slate-900 leading-snug">
+                              <span className="text-base font-black text-[var(--foreground)] leading-snug">
                                 {group.title || (isEn ? "Untitled" : "بدون عنوان")}
                               </span>
                             </div>
-                            <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
+                            <div className="mt-1 flex flex-wrap gap-3 text-xs text-[var(--text-subtle)]">
                               <span className="break-all">{group.file_name}</span>
-                              <span className="rounded-full bg-blue-50 px-2 py-0.5 font-bold text-blue-700">
+                              <span className="rounded-full bg-[var(--color-info-bg)] px-2 py-0.5 font-bold text-[var(--color-info-text)]">
                                 {getCategoryLabel(group.category, locale)}
                               </span>
-                              <span className="font-bold text-slate-600">
+                              <span className="font-bold text-[var(--text-muted)]">
                                 {isEn ? `${group.chunks.length} chunks` : `${group.chunks.length} chunk`}
                               </span>
                             </div>
                           </div>
                           {/* Score badge */}
                           <div className="shrink-0 flex flex-col items-end gap-1">
-                            <span className="text-xs font-bold text-slate-500">
+                            <span className="text-xs font-bold text-[var(--text-subtle)]">
                               {isEn ? "Semantic similarity" : "شباهت معنایی"}
                             </span>
-                            <span className="text-lg font-black text-slate-800">
+                            <span className="text-lg font-black text-[var(--foreground)]">
                               {normalizedBestScore.toFixed(1)}{isEn ? "%" : "٪"}
                             </span>
                           </div>
                         </div>
                         {/* Score bar */}
-                        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[var(--border-soft)]">
                           <div
                             className={`h-full rounded-full transition-all ${scoreColor}`}
                             style={{ width: `${scorePct}%` }}
@@ -1272,20 +1272,20 @@ export default function KnowledgePage() {
                           {group.chunks.slice(0, 3).map((chunk, index) => (
                             <div
                               key={`${group.file_name}-${index}`}
-                              className="rounded-2xl bg-white p-4 text-sm leading-7 text-slate-700"
+                              className="rounded-2xl bg-[var(--surface)] p-4 text-sm leading-7 text-[var(--text-muted)]"
                             >
                               <div className="mb-2 flex items-center justify-between gap-2">
-                                <span className="text-xs font-bold text-slate-400">
+                                <span className="text-xs font-bold text-[var(--text-subtle)]">
                                   {isEn ? `Section ${index + 1}` : `بخش ${index + 1}`}
                                 </span>
-                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
+                                <span className="rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-xs font-bold text-[var(--text-subtle)]">
                                   {normalizeSearchScore(Number(chunk.score)).toFixed(1)}{isEn ? "%" : "٪"}
                                 </span>
                               </div>
                               {(chunk.score_reason || chunk.score_breakdown) && (
-                                <div className="mb-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-6 text-slate-500">
+                                <div className="mb-2 rounded-xl bg-[var(--surface-soft)] px-3 py-2 text-[11px] leading-6 text-[var(--text-subtle)]">
                                   {chunk.score_reason && (
-                                    <div className="font-bold text-slate-600">{chunk.score_reason}</div>
+                                    <div className="font-bold text-[var(--text-muted)]">{chunk.score_reason}</div>
                                   )}
                                   {formatScoreBreakdown(chunk.score_breakdown) && (
                                     <div>{formatScoreBreakdown(chunk.score_breakdown)}</div>
@@ -1298,7 +1298,7 @@ export default function KnowledgePage() {
                             </div>
                           ))}
                           {group.chunks.length > 3 && (
-                            <div className="text-center text-xs text-slate-400">
+                            <div className="text-center text-xs text-[var(--text-subtle)]">
                               {isEn
                                 ? `+${group.chunks.length - 3} more chunks in this file`
                                 : `+${group.chunks.length - 3} chunk دیگر در این فایل`}
@@ -1312,26 +1312,26 @@ export default function KnowledgePage() {
               </div>
             )}
 
-            <div className="min-w-0 rounded-[32px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="min-w-0 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-4 shadow-sm sm:p-6">
               <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div>
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700">
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--surface-soft)] px-4 py-2 text-sm font-bold text-[var(--text-muted)]">
                     <FolderOpen size={17} />
                     {isEn ? "Registered Files" : "فایل‌های ثبت‌شده"}
                   </div>
 
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Knowledge Base Files" : "فایل‌های بانک دانش"}
                   </h2>
 
-                  <p className="mt-2 text-sm leading-7 text-slate-600">
+                  <p className="mt-2 text-sm leading-7 text-[var(--text-muted)]">
                     {isEn
                       ? "Imported files, categories, and chunk counts are shown here."
                       : "فایل‌های واردشده، دسته‌بندی و تعداد chunkهای هر فایل در این بخش نمایش داده می‌شود."}
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                <div className="rounded-2xl bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--text-muted)]">
                   {isEn ? "Showing" : "نمایش"}:{" "}
                   <span className="font-bold">{filteredFiles.length}</span>{" "}
                   {isEn ? "of" : "از"}{" "}
@@ -1344,20 +1344,20 @@ export default function KnowledgePage() {
                 <div className="relative">
                   <Search
                     size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-subtle)]"
                   />
                   <input
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     placeholder={isEn ? "Search by file name, title, or category..." : "جست‌وجو بر اساس نام فایل، عنوان یا دسته‌بندی..."}
-                    className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-4 pr-11 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] py-4 pl-4 pr-11 text-sm outline-none transition focus:border-purple-600"
                   />
                 </div>
 
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="rounded-2xl border border-slate-300 bg-white p-4 text-sm outline-none transition focus:border-purple-600"
+                  className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
                 >
                   <option value="all">{isEn ? "All categories" : "همه دسته‌بندی‌ها"}</option>
                   {(stats?.categories || []).map((category) => (
@@ -1377,7 +1377,7 @@ export default function KnowledgePage() {
                       className={`rounded-full px-3 py-2 text-xs font-bold transition ${
                         selectedCategory === category
                           ? "bg-purple-700 text-white"
-                          : "bg-slate-50 text-slate-600 hover:bg-purple-50 hover:text-purple-700"
+                          : "bg-[var(--surface-soft)] text-[var(--text-muted)] hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300"
                       }`}
                     >
                       {getCategoryLabel(category, locale)}
@@ -1387,7 +1387,7 @@ export default function KnowledgePage() {
               )}
 
               {filteredFiles.length > 0 ? (
-                <div className="max-h-[720px] overflow-y-auto rounded-3xl border border-slate-200">
+                <div className="max-h-[720px] overflow-y-auto rounded-3xl border border-[var(--border-soft)]">
                   <div className="space-y-3 p-3 2xl:hidden">
                     {filteredFiles.map((item) => {
                       const categories = item.categories?.length
@@ -1397,17 +1397,17 @@ export default function KnowledgePage() {
                       return (
                         <div
                           key={item.file_name}
-                          className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                          className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 shadow-sm"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+                            <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
                               <FileText size={18} />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="break-words font-black leading-7 text-slate-900">
+                              <div className="break-words font-black leading-7 text-[var(--foreground)]">
                                 {item.title || item.file_name}
                               </div>
-                              <div className="mt-1 break-all text-xs leading-6 text-slate-500">
+                              <div className="mt-1 break-all text-xs leading-6 text-[var(--text-subtle)]">
                                 {item.file_name}
                               </div>
                             </div>
@@ -1415,12 +1415,12 @@ export default function KnowledgePage() {
 
                           <div className="mt-4 grid gap-3 text-xs sm:grid-cols-3">
                             <div>
-                              <div className="mb-1 font-bold text-slate-400">{isEn ? "Category" : "دسته‌بندی"}</div>
+                              <div className="mb-1 font-bold text-[var(--text-subtle)]">{isEn ? "Category" : "دسته‌بندی"}</div>
                               <div className="flex flex-wrap gap-2">
                                 {categories.map((category) => (
                                   <span
                                     key={category}
-                                    className="rounded-full bg-blue-50 px-3 py-1 font-bold text-blue-700"
+                                    className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 font-bold text-[var(--color-info-text)]"
                                   >
                                     {getCategoryLabel(category, locale)}
                                   </span>
@@ -1429,19 +1429,19 @@ export default function KnowledgePage() {
                             </div>
 
                             <div>
-                              <div className="mb-1 font-bold text-slate-400">Chunk</div>
-                              <span className="rounded-full bg-slate-100 px-3 py-1 font-black text-slate-700">
+                              <div className="mb-1 font-bold text-[var(--text-subtle)]">Chunk</div>
+                              <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 font-black text-[var(--text-muted)]">
                                 {item.chunks}
                               </span>
                             </div>
 
                             <div>
-                              <div className="mb-1 font-bold text-slate-400">Embedding</div>
+                              <div className="mb-1 font-bold text-[var(--text-subtle)]">Embedding</div>
                               <div className="space-y-1.5">
                                 <span className={`rounded-full px-3 py-1 font-black ${getEmbeddingBadgeClass(item.embedding_status)}`}>
                                   {getEmbeddingLabel(item.embedding_status, locale)}
                                 </span>
-                                <div className="font-bold text-slate-500">
+                                <div className="font-bold text-[var(--text-subtle)]">
                                   {item.embedded_chunks ?? item.chunks} / {item.chunks}
                                 </div>
                               </div>
@@ -1451,7 +1451,7 @@ export default function KnowledgePage() {
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
                               onClick={() => openPreview(item.file_name)}
-                              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
+                              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-4 py-2 text-xs font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)]"
                             >
                               <Eye size={15} />
                               {isEn ? "Preview" : "پیش‌نمایش"}
@@ -1459,7 +1459,7 @@ export default function KnowledgePage() {
                             <button
                               onClick={() => reindexKnowledgeFile(item.file_name)}
                               disabled={!item.source_exists || reindexingFile === item.file_name}
-                              className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
+                              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-4 py-2 text-xs font-bold text-[var(--color-warning-text)] transition hover:bg-[var(--color-warning-bg)] disabled:opacity-50"
                               title={
                                 !item.source_exists
                                   ? (isEn ? "Source file is missing from knowledge_files" : "فایل منبع در knowledge_files موجود نیست")
@@ -1477,7 +1477,7 @@ export default function KnowledgePage() {
                             <button
                               onClick={() => deleteKnowledgeFile(item.file_name)}
                               disabled={deletingFile === item.file_name}
-                              className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-2 text-xs font-bold text-[var(--color-danger-text)] transition hover:bg-[var(--color-danger-bg)] disabled:opacity-50"
                             >
                               <Trash2 size={15} />
                               {deletingFile === item.file_name
@@ -1493,8 +1493,8 @@ export default function KnowledgePage() {
                   <div className="hidden overflow-x-auto 2xl:block" tabIndex={0} role="region"
                     aria-label={isEn ? "Knowledge files table" : "جدول فایل‌های بانک دانش"}>
                   <table className="min-w-[980px] w-full border-collapse text-right text-sm">
-                    <thead className="sticky top-0 bg-slate-50">
-                      <tr className="border-b border-slate-200 text-slate-600">
+                    <thead className="sticky top-0 bg-[var(--surface-soft)]">
+                      <tr className="border-b border-[var(--border-soft)] text-[var(--text-muted)]">
                         <th className="p-4 font-bold">{isEn ? "File" : "فایل"}</th>
                         <th className="p-4 font-bold">{isEn ? "Category" : "دسته‌بندی"}</th>
                         <th className="p-4 font-bold">Chunk</th>
@@ -1513,19 +1513,19 @@ export default function KnowledgePage() {
                         return (
                           <tr
                             key={item.file_name}
-                            className="border-b border-slate-100 hover:bg-slate-50"
+                            className="border-b border-[var(--border-soft)] hover:bg-[var(--surface-soft)]"
                           >
                             <td className="p-4 align-top">
                               <div className="flex items-start gap-3">
-                                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+                                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
                                   <FileText size={18} />
                                 </div>
 
                                 <div className="min-w-0">
-                                  <div className="font-black text-slate-900">
+                                  <div className="font-black text-[var(--foreground)]">
                                     {item.title || item.file_name}
                                   </div>
-                                  <div className="mt-1 break-all text-xs leading-6 text-slate-500">
+                                  <div className="mt-1 break-all text-xs leading-6 text-[var(--text-subtle)]">
                                     {item.file_name}
                                   </div>
                                 </div>
@@ -1537,7 +1537,7 @@ export default function KnowledgePage() {
                                 {categories.map((category) => (
                                   <span
                                     key={category}
-                                    className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700"
+                                    className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)]"
                                   >
                                     {getCategoryLabel(category, locale)}
                                   </span>
@@ -1546,7 +1546,7 @@ export default function KnowledgePage() {
                             </td>
 
                             <td className="p-4 align-top">
-                              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                              <span className="rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-black text-[var(--text-muted)]">
                                 {item.chunks}
                               </span>
                             </td>
@@ -1556,7 +1556,7 @@ export default function KnowledgePage() {
                                 <span className={`rounded-full px-3 py-1 text-xs font-black ${getEmbeddingBadgeClass(item.embedding_status)}`}>
                                   {getEmbeddingLabel(item.embedding_status, locale)}
                                 </span>
-                                <div className="text-xs font-bold text-slate-500">
+                                <div className="text-xs font-bold text-[var(--text-subtle)]">
                                   {item.embedded_chunks ?? item.chunks} / {item.chunks}
                                 </div>
                               </div>
@@ -1567,14 +1567,14 @@ export default function KnowledgePage() {
                                 <span
                                   className={`rounded-full px-3 py-1 font-black ${
                                     item.source_exists
-                                      ? "bg-emerald-50 text-emerald-700"
-                                      : "bg-slate-100 text-slate-500"
+                                      ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
+                                      : "bg-[var(--surface-soft)] text-[var(--text-subtle)]"
                                   }`}
                                 >
                                   {item.source_exists ? (isEn ? "Exists" : "موجود") : (isEn ? "Vector only" : "فقط vector")}
                                 </span>
                                 {item.source_exists && (
-                                  <div className="text-slate-500">
+                                  <div className="text-[var(--text-subtle)]">
                                     {item.source_size_kb ?? 0} KB · {formatDateTime(item.source_updated_at, locale)}
                                   </div>
                                 )}
@@ -1585,7 +1585,7 @@ export default function KnowledgePage() {
                               <div className="flex flex-wrap gap-2">
                                 <button
                                   onClick={() => openPreview(item.file_name)}
-                                  className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
+                                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-4 py-2 text-xs font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)]"
                                 >
                                   <Eye size={15} />
                                   {isEn ? "Preview" : "پیش‌نمایش"}
@@ -1593,7 +1593,7 @@ export default function KnowledgePage() {
                                 <button
                                   onClick={() => reindexKnowledgeFile(item.file_name)}
                                   disabled={!item.source_exists || reindexingFile === item.file_name}
-                                  className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
+                                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-4 py-2 text-xs font-bold text-[var(--color-warning-text)] transition hover:bg-[var(--color-warning-bg)] disabled:opacity-50"
                                   title={
                                     !item.source_exists
                                       ? (isEn ? "Source file is missing from knowledge_files" : "فایل منبع در knowledge_files موجود نیست")
@@ -1613,7 +1613,7 @@ export default function KnowledgePage() {
                                     deleteKnowledgeFile(item.file_name)
                                   }
                                   disabled={deletingFile === item.file_name}
-                                  className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                                  className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-2 text-xs font-bold text-[var(--color-danger-text)] transition hover:bg-[var(--color-danger-bg)] disabled:opacity-50"
                                 >
                                   <Trash2 size={15} />
                                   {deletingFile === item.file_name
@@ -1630,7 +1630,7 @@ export default function KnowledgePage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-3xl bg-slate-50 p-10 text-center text-slate-500">
+                <div className="rounded-3xl bg-[var(--surface-soft)] p-10 text-center text-[var(--text-subtle)]">
                   {isEn ? "No files matched this filter." : "فایلی با این فیلتر پیدا نشد."}
                 </div>
               )}
@@ -1640,29 +1640,29 @@ export default function KnowledgePage() {
       </div>
 
       {/* ─── Audit Log Section ───────────────────────────────────────── */}
-      <div className="mt-6 rounded-[32px] border border-slate-200 bg-white shadow-sm">
+      <div className="mt-6 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
         <button
           onClick={() => setShowAuditLog((v) => !v)}
-          className="flex w-full items-center justify-between gap-4 px-6 py-5 text-right transition hover:bg-slate-50 rounded-[32px]"
+          className="flex w-full items-center justify-between gap-4 px-6 py-5 text-right transition hover:bg-[var(--surface-soft)] rounded-[32px]"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]">
               <ClipboardList size={20} />
             </div>
             <div>
-              <div className="text-base font-black text-slate-900">
+              <div className="text-base font-black text-[var(--foreground)]">
                 {isEn ? "Knowledge Base Activity History" : "تاریخچه عملیات بانک دانش"}
               </div>
-              <div className="text-sm text-slate-500">
+              <div className="text-sm text-[var(--text-subtle)]">
                 {isEn ? "Uploads, deletions, chunk edits, and Drive syncs" : "آپلود، حذف، ویرایش chunk، و همگام‌سازی Drive"}
               </div>
             </div>
           </div>
-          <span className="text-slate-400">{showAuditLog ? "▲" : "▼"}</span>
+          <span className="text-[var(--text-subtle)]">{showAuditLog ? "▲" : "▼"}</span>
         </button>
 
         {showAuditLog && (
-          <div className="border-t border-slate-100 px-6 pb-6 pt-5">
+          <div className="border-t border-[var(--border-soft)] px-6 pb-6 pt-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex gap-2">
                 {["all", "upload", "delete", "chunk_edit", "drive_sync"].map((f) => (
@@ -1672,7 +1672,7 @@ export default function KnowledgePage() {
                     className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
                       auditFilter === f
                         ? "bg-amber-600 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700"
+                        : "bg-[var(--surface-soft)] text-[var(--text-muted)] hover:bg-[var(--color-warning-bg)] hover:text-[var(--color-warning-text)]"
                     }`}
                   >
                     {f === "all"
@@ -1691,14 +1691,14 @@ export default function KnowledgePage() {
                 <button
                   onClick={() => loadAuditLog(auditFilter)}
                   disabled={auditLoading}
-                  className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-1.5 text-xs font-bold text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
                 >
                   <RefreshCw size={12} className={auditLoading ? "animate-spin" : ""} />
                   {isEn ? "Refresh" : "بروزرسانی"}
                 </button>
                 <button
                   onClick={clearAuditLog}
-                  className="inline-flex items-center gap-1.5 rounded-2xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100"
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-3 py-1.5 text-xs font-bold text-[var(--color-danger-text)] hover:bg-[var(--color-danger-bg)]"
                 >
                   <Trash2 size={12} />
                   {isEn ? "Clear" : "پاک کردن"}
@@ -1708,32 +1708,32 @@ export default function KnowledgePage() {
 
             {auditLoading ? (
               <div className="space-y-2">
-                {[1, 2, 3].map((i) => <div key={i} className="h-12 w-full animate-pulse rounded-2xl bg-slate-100" />)}
+                {[1, 2, 3].map((i) => <div key={i} className="h-12 w-full animate-pulse rounded-2xl bg-[var(--surface-soft)]" />)}
               </div>
             ) : auditLog.length === 0 ? (
-              <div className="rounded-3xl bg-slate-50 p-8 text-center text-sm text-slate-500">
+              <div className="rounded-3xl bg-[var(--surface-soft)] p-8 text-center text-sm text-[var(--text-subtle)]">
                 {isEn ? "No activity has been recorded yet." : "هنوز عملیاتی ثبت نشده است."}
               </div>
             ) : (
-              <div className="max-h-[500px] overflow-y-auto rounded-3xl border border-slate-200">
+              <div className="max-h-[500px] overflow-y-auto rounded-3xl border border-[var(--border-soft)]">
                 <table className="w-full border-collapse text-right text-sm">
-                  <thead className="sticky top-0 bg-slate-50">
-                    <tr className="border-b border-slate-200">
-                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "Action" : "عملیات"}</th>
-                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "File / title" : "فایل / عنوان"}</th>
-                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "Details" : "جزئیات"}</th>
-                      <th className="p-3 text-xs font-bold text-slate-600">{isEn ? "Time" : "زمان"}</th>
+                  <thead className="sticky top-0 bg-[var(--surface-soft)]">
+                    <tr className="border-b border-[var(--border-soft)]">
+                      <th className="p-3 text-xs font-bold text-[var(--text-muted)]">{isEn ? "Action" : "عملیات"}</th>
+                      <th className="p-3 text-xs font-bold text-[var(--text-muted)]">{isEn ? "File / title" : "فایل / عنوان"}</th>
+                      <th className="p-3 text-xs font-bold text-[var(--text-muted)]">{isEn ? "Details" : "جزئیات"}</th>
+                      <th className="p-3 text-xs font-bold text-[var(--text-muted)]">{isEn ? "Time" : "زمان"}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {auditLog.map((entry) => (
-                      <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <tr key={entry.id} className="border-b border-[var(--border-soft)] hover:bg-[var(--surface-soft)]">
                         <td className="p-3 align-top">
                           <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${
-                            entry.action === "upload" ? "bg-emerald-50 text-emerald-700" :
-                            entry.action === "delete" ? "bg-red-50 text-red-700" :
-                            entry.action === "chunk_edit" ? "bg-blue-50 text-blue-700" :
-                            "bg-purple-50 text-purple-700"
+                            entry.action === "upload" ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" :
+                            entry.action === "delete" ? "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]" :
+                            entry.action === "chunk_edit" ? "bg-[var(--color-info-bg)] text-[var(--color-info-text)]" :
+                            "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300"
                           }`}>
                             {entry.action === "upload" ? (isEn ? "Upload" : "آپلود") :
                              entry.action === "delete" ? (isEn ? "Delete" : "حذف") :
@@ -1741,18 +1741,18 @@ export default function KnowledgePage() {
                           </span>
                         </td>
                         <td className="p-3 align-top">
-                          <div className="font-bold text-slate-800">{entry.title || entry.file_name || "—"}</div>
+                          <div className="font-bold text-[var(--foreground)]">{entry.title || entry.file_name || "—"}</div>
                           {entry.file_name && entry.title && entry.file_name !== entry.title && (
-                            <div className="text-xs text-slate-400">{entry.file_name}</div>
+                            <div className="text-xs text-[var(--text-subtle)]">{entry.file_name}</div>
                           )}
                           {entry.category && (
                             <div className="mt-0.5">
-                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">{getCategoryLabel(entry.category, locale)}</span>
+                              <span className="rounded-full bg-[var(--color-info-bg)] px-2 py-0.5 text-xs font-bold text-[var(--color-info-text)]">{getCategoryLabel(entry.category, locale)}</span>
                             </div>
                           )}
                         </td>
-                        <td className="p-3 align-top text-xs text-slate-500">{entry.detail || "—"}</td>
-                        <td className="p-3 align-top text-xs text-slate-400 whitespace-nowrap">
+                        <td className="p-3 align-top text-xs text-[var(--text-subtle)]">{entry.detail || "—"}</td>
+                        <td className="p-3 align-top text-xs text-[var(--text-subtle)] whitespace-nowrap">
                           {entry.created_at
                             ? new Intl.DateTimeFormat(isEn ? "en-US" : "fa-IR", { dateStyle: "short", timeStyle: "short" }).format(new Date(entry.created_at + "Z"))
                             : "—"}
@@ -1776,16 +1776,16 @@ export default function KnowledgePage() {
             onClick={() => setPreviewFile(null)}
           />
           {/* Panel */}
-          <div className="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl md:max-w-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 p-6">
+          <div className="flex h-full w-full max-w-xl flex-col bg-[var(--surface)] shadow-2xl md:max-w-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-soft)] p-6">
               <div>
-                <div className="text-sm font-bold text-blue-700">
+                <div className="text-sm font-bold text-[var(--color-info-text)]">
                   {isEn ? "Knowledge Base Preview" : "پیش‌نمایش بانک دانش"}
                 </div>
-                <div className="mt-1 break-all text-base font-black text-slate-900">
+                <div className="mt-1 break-all text-base font-black text-[var(--foreground)]">
                   {previewFile}
                 </div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-xs text-[var(--text-subtle)]">
                   {isEn
                     ? `${previewChunks.length} chunks`
                     : `${previewChunks.length} بخش (chunk)`}
@@ -1793,7 +1793,7 @@ export default function KnowledgePage() {
               </div>
               <button
                 onClick={() => setPreviewFile(null)}
-                className="ml-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 hover:bg-slate-50"
+                className="ml-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--border-soft)] text-[var(--text-subtle)] hover:bg-[var(--surface-soft)]"
               >
                 <X size={18} />
               </button>
@@ -1807,13 +1807,13 @@ export default function KnowledgePage() {
                   ))}
                 </div>
               ) : previewChunks.length === 0 ? (
-                <div className="py-10 text-center text-sm text-slate-500">
+                <div className="py-10 text-center text-sm text-[var(--text-subtle)]">
                   {isEn ? "No content found." : "محتوایی یافت نشد."}
                 </div>
               ) : (
                 <>
                 {chunkSaveMsg && (
-                  <div className="mb-4 rounded-2xl bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700">
+                  <div className="mb-4 rounded-2xl bg-[var(--color-success-bg)] px-4 py-2 text-xs font-bold text-[var(--color-success-text)]">
                     {chunkSaveMsg}
                   </div>
                 )}
@@ -1821,15 +1821,15 @@ export default function KnowledgePage() {
                   {previewChunks.map((chunk) => (
                     <div
                       key={chunk.index}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4"
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">
+                          <span className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-black text-[var(--color-info-text)]">
                             #{chunk.index + 1}
                           </span>
                           {chunk.category && (
-                            <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                            <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
                               {getCategoryLabel(chunk.category, locale)}
                             </span>
                           )}
@@ -1837,7 +1837,7 @@ export default function KnowledgePage() {
                         {editingChunkIndex !== chunk.index ? (
                           <button
                             onClick={() => { setEditingChunkIndex(chunk.index); setEditingContent(chunk.content); }}
-                            className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-600 hover:border-blue-200 hover:text-blue-700 transition"
+                            className="flex items-center gap-1 rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-2 py-1 text-xs font-bold text-[var(--text-muted)] hover:border-[var(--color-info-border)] hover:text-[var(--color-info-text)] transition"
                           >
                             <Pencil size={12} /> {isEn ? "Edit" : "ویرایش"}
                           </button>
@@ -1852,7 +1852,7 @@ export default function KnowledgePage() {
                             </button>
                             <button
                               onClick={() => setEditingChunkIndex(null)}
-                              className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                              className="flex items-center gap-1 rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-2 py-1 text-xs font-bold text-[var(--text-muted)] hover:bg-[var(--surface-soft)] transition"
                             >
                               <X size={12} />
                             </button>
@@ -1864,13 +1864,13 @@ export default function KnowledgePage() {
                           value={editingContent}
                           onChange={(e) => setEditingContent(e.target.value)}
                           rows={8}
-                          className="w-full resize-y rounded-xl border border-blue-200 bg-white p-3 text-xs leading-7 text-slate-700 outline-none focus:border-blue-400"
+                          className="w-full resize-y rounded-xl border border-[var(--color-info-border)] bg-[var(--surface)] p-3 text-xs leading-7 text-[var(--text-muted)] outline-none focus:border-blue-400"
                         />
                       ) : (
-                        <p className="whitespace-pre-wrap break-words text-xs leading-7 text-slate-700">
+                        <p className="whitespace-pre-wrap break-words text-xs leading-7 text-[var(--text-muted)]">
                           {chunk.content}
                           {chunk.content.length >= 600 && (
-                            <span className="text-slate-400"> …</span>
+                            <span className="text-[var(--text-subtle)]"> …</span>
                           )}
                         </p>
                       )}

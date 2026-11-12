@@ -84,11 +84,11 @@ function getStatusLabel(status: string, isEn: boolean) {
 }
 
 function getStatusClass(status: string) {
-  if (status === "closed") return "border-slate-200 bg-slate-100 text-slate-700";
-  if (status === "sent") return "border-emerald-100 bg-emerald-50 text-emerald-700";
-  if (status === "pricing") return "border-purple-100 bg-purple-50 text-purple-700";
-  if (status === "reviewing") return "border-amber-100 bg-amber-50 text-amber-700";
-  return "border-blue-100 bg-blue-50 text-blue-700";
+  if (status === "closed") return "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)]";
+  if (status === "sent") return "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
+  if (status === "pricing") return "border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300";
+  if (status === "reviewing") return "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
+  return "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]";
 }
 
 function getPriorityLabel(priority: string, isEn: boolean) {
@@ -265,7 +265,7 @@ export default function CustomerRequestDetailPage() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
           <Link
             href="/customer-dashboard"
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-2.5 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)]"
           >
             <ArrowRight size={16} />
             {isEn ? "Back to dashboard" : "بازگشت به داشبورد"}
@@ -275,7 +275,7 @@ export default function CustomerRequestDetailPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-2.5 text-sm font-bold text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--surface-soft)]"
               >
                 <Printer size={16} />
                 {isEn ? "Print" : "چاپ"}
@@ -292,28 +292,28 @@ export default function CustomerRequestDetailPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-[32px] border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
-            <Loader2 className="mx-auto mb-3 animate-spin text-blue-700" size={28} />
+          <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-10 text-center text-[var(--text-subtle)] shadow-sm">
+            <Loader2 className="mx-auto mb-3 animate-spin text-[var(--color-info-text)]" size={28} />
             {isEn ? "Loading request..." : "در حال دریافت درخواست..."}
           </div>
         ) : error || !request ? (
-          <div className="rounded-[32px] border border-red-100 bg-white p-10 text-center text-red-700 shadow-sm">
+          <div className="rounded-[32px] border border-[var(--color-danger-border)] bg-[var(--surface)] p-10 text-center text-[var(--color-danger-text)] shadow-sm">
             {error || (isEn ? "Request not found." : "درخواست پیدا نشد.")}
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="overflow-hidden rounded-[36px] border border-slate-200 bg-white shadow-sm">
-              <div className="bg-gradient-to-l from-blue-50 via-white to-slate-50 p-8">
+            <div className="overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
+              <div className="bg-gradient-to-l from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
                       <FileText size={17} />
                       #{request.id}
                     </div>
-                    <h1 className="text-3xl font-black text-slate-900">
+                    <h1 className="text-3xl font-black text-[var(--foreground)]">
                       {request.subject || (isEn ? "Request details" : "جزئیات درخواست")}
                     </h1>
-                    <p className="mt-3 leading-8 text-slate-600">
+                    <p className="mt-3 leading-8 text-[var(--text-muted)]">
                       {request.message}
                     </p>
                   </div>
@@ -322,7 +322,7 @@ export default function CustomerRequestDetailPage() {
                     <span className={`rounded-full border px-4 py-2 text-sm font-black ${getStatusClass(request.status)}`}>
                       {getStatusLabel(request.status, isEn)}
                     </span>
-                    <span className="rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-black text-blue-700">
+                    <span className="rounded-full border border-[var(--color-info-border)] bg-[var(--surface)] px-4 py-2 text-sm font-black text-[var(--color-info-text)]">
                       {getPriorityLabel(request.priority, isEn)}
                     </span>
                   </div>
@@ -339,10 +339,10 @@ export default function CustomerRequestDetailPage() {
                 <InfoRow icon={<CalendarDays size={17} />} label={isEn ? "Follow-up" : "موعد پیگیری"} value={formatDate(request.follow_up_at, locale)} />
               </aside>
 
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
-                  <Clock3 size={20} className="text-blue-700" />
-                  <h2 className="text-xl font-black text-slate-900">
+                  <Clock3 size={20} className="text-[var(--color-info-text)]" />
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Request timeline" : "خط زمانی درخواست"}
                   </h2>
                 </div>
@@ -352,14 +352,14 @@ export default function CustomerRequestDetailPage() {
                     const item = localizeTimeline(rawItem, isEn);
                     return (
                       <div key={`${item.key}-${item.at}`} className="flex gap-3">
-                        <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                        <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                           <CheckCircle2 size={18} />
                         </div>
-                        <div className="min-w-0 flex-1 rounded-2xl bg-slate-50 p-4">
-                          <div className="font-black text-slate-900">{item.label}</div>
-                          <div className="mt-1 text-sm leading-7 text-slate-600">{item.description}</div>
+                        <div className="min-w-0 flex-1 rounded-2xl bg-[var(--surface-soft)] p-4">
+                          <div className="font-black text-[var(--foreground)]">{item.label}</div>
+                          <div className="mt-1 text-sm leading-7 text-[var(--text-muted)]">{item.description}</div>
                           {item.at && (
-                            <div className="mt-2 text-xs font-bold text-slate-400">
+                            <div className="mt-2 text-xs font-bold text-[var(--text-subtle)]">
                               {formatDate(item.at, locale)}
                             </div>
                           )}
@@ -372,10 +372,10 @@ export default function CustomerRequestDetailPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
-                  <Paperclip size={20} className="text-blue-700" />
-                  <h2 className="text-xl font-black text-slate-900">
+                  <Paperclip size={20} className="text-[var(--color-info-text)]" />
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Additional information" : "توضیحات تکمیلی"}
                   </h2>
                 </div>
@@ -383,38 +383,38 @@ export default function CustomerRequestDetailPage() {
                 {updates.length > 0 ? (
                   <div className="max-h-80 space-y-3 overflow-y-auto">
                     {updates.map((item) => (
-                      <div key={item.id} className="rounded-2xl bg-slate-50 p-4">
-                        <div className="text-sm leading-7 text-slate-700">{item.message}</div>
+                      <div key={item.id} className="rounded-2xl bg-[var(--surface-soft)] p-4">
+                        <div className="text-sm leading-7 text-[var(--text-muted)]">{item.message}</div>
                         {item.file_url && (
                           <a
                             href={apiUrl(item.file_url)}
                             target="_blank"
                             rel="noreferrer"
-                            className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50"
+                            className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[var(--surface)] px-3 py-2 text-xs font-bold text-[var(--color-info-text)] shadow-sm transition hover:bg-[var(--color-info-bg)]"
                           >
                             <Paperclip size={14} />
                             {item.file_name || (isEn ? "Attachment" : "فایل پیوست")}
                           </a>
                         )}
-                        <div className="mt-2 text-xs font-bold text-slate-400">
+                        <div className="mt-2 text-xs font-bold text-[var(--text-subtle)]">
                           {formatDate(item.created_at, locale)}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl bg-slate-50 p-5 text-center text-sm text-slate-500">
+                  <div className="rounded-2xl bg-[var(--surface-soft)] p-5 text-center text-sm text-[var(--text-subtle)]">
                     {isEn ? "No additional information has been submitted yet." : "هنوز توضیح تکمیلی برای این درخواست ثبت نشده است."}
                   </div>
                 )}
               </div>
 
-              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
                 <div className="mb-5">
-                  <h2 className="text-xl font-black text-slate-900">
+                  <h2 className="text-xl font-black text-[var(--foreground)]">
                     {isEn ? "Send an update" : "ارسال توضیح تکمیلی"}
                   </h2>
-                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                  <p className="mt-2 text-sm leading-7 text-[var(--text-subtle)]">
                     {isEn
                       ? "Add a note or attach a supporting file for the ArtinAzma team."
                       : "برای تیم آرتین آزما توضیح، تصویر، فایل تست یا مدرک تکمیلی ارسال کنید."}
@@ -422,7 +422,7 @@ export default function CustomerRequestDetailPage() {
                 </div>
 
                 {request.status === "closed" ? (
-                  <div className="rounded-2xl bg-slate-50 p-5 text-center text-sm font-bold text-slate-500">
+                  <div className="rounded-2xl bg-[var(--surface-soft)] p-5 text-center text-sm font-bold text-[var(--text-subtle)]">
                     {isEn ? "This request is closed." : "این درخواست بسته شده است."}
                   </div>
                 ) : (
@@ -431,13 +431,13 @@ export default function CustomerRequestDetailPage() {
                       value={updateMessage}
                       onChange={(event) => setUpdateMessage(event.target.value)}
                       rows={5}
-                      className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white"
+                      className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 text-sm leading-7 text-[var(--foreground)] outline-none transition focus:border-blue-400 focus:bg-[var(--surface)]"
                       placeholder={isEn ? "Write additional details..." : "توضیحات تکمیلی را بنویسید..."}
                     />
 
-                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm font-bold text-slate-600 transition hover:bg-white">
+                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-4 text-sm font-bold text-[var(--text-muted)] transition hover:bg-[var(--surface)]">
                       <span className="flex min-w-0 items-center gap-2">
-                        <Paperclip size={17} className="shrink-0 text-blue-700" />
+                        <Paperclip size={17} className="shrink-0 text-[var(--color-info-text)]" />
                         <span className="truncate">
                           {updateFile?.name || (isEn ? "Attach file" : "انتخاب فایل")}
                         </span>
@@ -459,7 +459,7 @@ export default function CustomerRequestDetailPage() {
                     </button>
 
                     {updateStatus && (
-                      <div className="rounded-2xl bg-blue-50 p-3 text-center text-sm font-bold text-blue-700">
+                      <div className="rounded-2xl bg-[var(--color-info-bg)] p-3 text-center text-sm font-bold text-[var(--color-info-text)]">
                         {updateStatus}
                       </div>
                     )}
@@ -484,12 +484,12 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500">
-        <span className="text-blue-700">{icon}</span>
+    <div className="rounded-3xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 shadow-sm">
+      <div className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--text-subtle)]">
+        <span className="text-[var(--color-info-text)]">{icon}</span>
         {label}
       </div>
-      <div className="break-words text-sm font-black text-slate-900">{value}</div>
+      <div className="break-words text-sm font-black text-[var(--foreground)]">{value}</div>
     </div>
   );
 }
