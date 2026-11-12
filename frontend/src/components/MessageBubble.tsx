@@ -98,7 +98,7 @@ function ArtinazmaResourceCards({
   }
 
   return (
-    <div className="mt-4 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-slate-50 p-3 shadow-sm">
+    <div className="mt-4 rounded-3xl border border-[var(--color-info-border)] bg-gradient-to-br from-[var(--color-info-bg)] via-white to-slate-50 p-3 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-black text-slate-900">
@@ -108,7 +108,7 @@ function ArtinazmaResourceCards({
             {isEn ? "Matched from the ArtinAzma website index" : "بر اساس جستجو در ایندکس سایت آرتین آزما"}
           </div>
         </div>
-        <span className="shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-black text-blue-700">
+        <span className="shrink-0 rounded-full bg-[var(--color-info-bg)] px-2.5 py-1 text-xs font-black text-[var(--color-info-text)]">
           {links?.length || images?.length || 0}
         </span>
       </div>
@@ -125,7 +125,7 @@ function ArtinazmaResourceCards({
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-md"
+                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-[var(--color-info-border)] hover:shadow-md"
               >
                 <div className="flex min-h-[132px]">
                   <div className="relative w-28 shrink-0 bg-slate-100 sm:w-32">
@@ -157,14 +157,14 @@ function ArtinazmaResourceCards({
                       )}
                     </div>
 
-                    <div className="line-clamp-2 text-sm font-black leading-6 text-slate-900 group-hover:text-blue-700">
+                    <div className="line-clamp-2 text-sm font-black leading-6 text-slate-900 group-hover:text-[var(--color-info-text)]">
                       {link.title}
                     </div>
                     <div className="mt-1 truncate text-xs font-semibold text-slate-400">
                       {hostname(link.url)}
                     </div>
 
-                    <div className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-black text-blue-700">
+                    <div className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-black text-[var(--color-info-text)]">
                       {isEn ? "Open page" : "مشاهده صفحه"}
                       <ExternalLink size={13} />
                     </div>
@@ -419,7 +419,7 @@ function MessageBubble({
         <div
           className={`min-w-0 shadow-sm ${
             isUser
-              ? "artin-user-message max-w-[760px] rounded-[20px] bg-blue-700 px-3.5 py-2.5 text-white sm:rounded-[26px] sm:px-5 sm:py-4"
+              ? "artin-user-message max-w-[760px] rounded-[20px] bg-[var(--brand-fill)] px-3.5 py-2.5 text-white sm:rounded-[26px] sm:px-5 sm:py-4"
               : "ai-message-card w-full"
           }`}
         >
@@ -514,7 +514,7 @@ function MessageBubble({
                           href={href}
                           target="_blank"
                           rel="noreferrer"
-                          className="not-prose my-1 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100 hover:text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                          className="not-prose my-1 flex items-center gap-2 rounded-xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-3 py-2 text-xs font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)] dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                           <span className="flex-1 truncate">{children || href}</span>
@@ -527,7 +527,7 @@ function MessageBubble({
                         href={href}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900"
+                        className="font-bold text-[var(--color-info-text)] underline underline-offset-4 hover:text-[var(--color-info-text)]"
                       >
                         {children}
                       </a>
@@ -597,7 +597,7 @@ function MessageBubble({
           {toolsEnabled && !isUser && !loading && onQuote && showQuoteCta(item) && (
             <button
               onClick={onQuote}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-gradient-to-l from-blue-50 to-emerald-50 px-4 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:border-blue-300 hover:from-blue-100 hover:to-emerald-100 sm:w-auto"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-gradient-to-l from-[var(--color-info-bg)] to-emerald-50 px-4 py-3 text-sm font-bold text-[var(--color-info-text)] shadow-sm transition hover:border-[var(--color-info-border)] hover:from-[var(--color-info-bg)] hover:to-emerald-100 sm:w-auto"
             >
               <ReceiptText size={17} aria-hidden="true" />
               {isEn ? "Request a price quote for this" : "استعلام قیمت / ثبت درخواست برای این مورد"}
@@ -676,7 +676,7 @@ function MessageBubble({
                   onClick={() => onSpeak(displayContent, index)}
                   className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${
                     isSpeaking
-                      ? "bg-indigo-50 text-indigo-600"
+                      ? "bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
                       : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                   }`}
                   aria-label={actionLabels.speak}

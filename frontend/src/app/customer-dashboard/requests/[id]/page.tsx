@@ -282,7 +282,7 @@ export default function CustomerRequestDetailPage() {
               </button>
               <button
                 onClick={downloadSummary}
-                className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)]"
               >
                 <Download size={16} />
                 {isEn ? "Download summary" : "دانلود خلاصه"}
@@ -431,7 +431,7 @@ export default function CustomerRequestDetailPage() {
                       value={updateMessage}
                       onChange={(event) => setUpdateMessage(event.target.value)}
                       rows={5}
-                      className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 text-sm leading-7 text-[var(--foreground)] outline-none transition focus:border-blue-400 focus:bg-[var(--surface)]"
+                      className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 text-sm leading-7 text-[var(--foreground)] outline-none transition focus:border-[var(--brand-accent)] focus:bg-[var(--surface)]"
                       placeholder={isEn ? "Write additional details..." : "توضیحات تکمیلی را بنویسید..."}
                     />
 
@@ -452,7 +452,7 @@ export default function CustomerRequestDetailPage() {
                     <button
                       onClick={submitUpdate}
                       disabled={sendingUpdate}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-4 text-sm font-black text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
                     >
                       {sendingUpdate ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
                       {sendingUpdate ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Submit update" : "ثبت توضیح تکمیلی")}

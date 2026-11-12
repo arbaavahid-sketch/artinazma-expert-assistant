@@ -619,7 +619,7 @@ export default function QuestionDetailPage() {
                 disabled={
                   addingToKnowledge || question.expert_status !== "approved"
                 }
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-4 font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
               >
                 <Database size={18} />
                 {addingToKnowledge ? (isEn ? "Adding..." : "در حال افزودن...") : (isEn ? "Add to knowledge base" : "افزودن به بانک دانش")}

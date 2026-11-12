@@ -61,21 +61,21 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
       ? "text-red-500"
       : options.variant === "warning"
       ? "text-amber-500"
-      : "text-blue-500";
+      : "text-[var(--color-info-text)]";
 
   const iconBg =
     options.variant === "danger"
       ? "bg-red-50"
       : options.variant === "warning"
       ? "bg-amber-50"
-      : "bg-blue-50";
+      : "bg-[var(--color-info-bg)]";
 
   const confirmBtnClass =
     options.variant === "danger"
       ? "bg-red-600 hover:bg-red-700 text-white"
       : options.variant === "warning"
       ? "bg-amber-500 hover:bg-amber-600 text-white"
-      : "bg-blue-600 hover:bg-blue-700 text-white";
+      : "bg-[var(--brand-fill)] hover:bg-[var(--brand-fill-hover)] text-white";
 
   return (
     <ConfirmContext.Provider value={{ confirm }}>

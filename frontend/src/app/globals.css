@@ -17,13 +17,17 @@
   --brand-emerald: #047857;
   --brand-slate: #64748b;
   /* Centralized brand accents — change these to re-skin the whole app. */
-  --brand-accent: var(--brand-blue);
+  --brand-teal: #0d625a;
+  --brand-accent: var(--brand-teal);
+  /* Solid fill for primary buttons; always paired with white text. */
+  --brand-fill: #0d625a;
+  --brand-fill-hover: #0a4f48;
   /* Secondary accent — emerald, for occasional variety beside the blue. */
   --brand-accent-2: var(--brand-emerald);
-  --brand-gradient: linear-gradient(135deg, #1d4ed8, #1e40af);
-  --brand-gradient-hover: linear-gradient(135deg, #1e40af, #1e3a8a);
-  --brand-gradient-accent: linear-gradient(180deg, #1d4ed8, #0891b2);
-  --brand-focus-ring: rgba(37, 99, 235, 0.13);
+  --brand-gradient: linear-gradient(135deg, #0f766e, #0d625a);
+  --brand-gradient-hover: linear-gradient(135deg, #0d625a, #0a4f48);
+  --brand-gradient-accent: linear-gradient(180deg, #0f766e, #0891b2);
+  --brand-focus-ring: rgba(13, 98, 90, 0.18);
   --surface: #ffffff;
   --surface-soft: #f1efe8;
   --border-soft: #dedbd1;
@@ -31,9 +35,10 @@
   --sidebar-bg: #efede6;
   --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.07);
   --shadow-card: 0 10px 28px rgba(15, 23, 42, 0.06);
-  --color-info-bg: #eff6ff;
-  --color-info-border: #bfdbfe;
-  --color-info-text: #1d4ed8;
+  /* Info shares the brand hue so tinted chips, links and kickers read as one family. */
+  --color-info-bg: #e8f3ef;
+  --color-info-border: #b7d9cd;
+  --color-info-text: #0d625a;
   --color-success-bg: #ecfdf5;
   --color-success-border: #a7f3d0;
   --color-success-text: #047857;
@@ -62,11 +67,13 @@
   --text-subtle: #8b949e;
   --brand-navy: #e2e8f0;
   /* Lift the accent a step brighter so it stays vivid on the dark surface. */
-  --brand-accent: #3b82f6;
+  --brand-accent: #82d3c5;
+  --brand-fill: #0f766e;
+  --brand-fill-hover: #14897c;
   --brand-accent-2: #34d399;
-  --brand-gradient: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  --brand-gradient-hover: linear-gradient(135deg, #2563eb, #1e40af);
-  --brand-gradient-accent: linear-gradient(180deg, #3b82f6, #22d3ee);
+  --brand-gradient: linear-gradient(135deg, #14897c, #0f766e);
+  --brand-gradient-hover: linear-gradient(135deg, #17998b, #14897c);
+  --brand-gradient-accent: linear-gradient(180deg, #2bb3a3, #22d3ee);
   --surface: #161b22;
   --surface-soft: #0d1117;
   /* Higher-contrast border so card edges don't disappear in the dark. */
@@ -74,9 +81,10 @@
   --sidebar-bg: #0d1117;
   --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.35);
   --shadow-card: 0 10px 28px rgba(0, 0, 0, 0.28);
-  --color-info-bg: #0c1a2e;
-  --color-info-border: #1d4ed8;
-  --color-info-text: #93c5fd;
+  --brand-focus-ring: rgba(130, 211, 197, 0.24);
+  --color-info-bg: #0e2622;
+  --color-info-border: #1f6b5c;
+  --color-info-text: #8fd9c9;
   --color-success-bg: #052e16;
   --color-success-border: #16a34a;
   --color-success-text: #86efac;
@@ -114,7 +122,7 @@ body {
 }
 
 button, input, textarea, select { font-family: inherit; }
-::selection { background: rgba(29, 78, 216, 0.16); color: var(--foreground); }
+::selection { background: var(--brand-focus-ring); color: var(--foreground); }
 .font-persian { font-family: var(--font-persian), var(--font-persian-fallback); }
 .font-english { font-family: var(--font-english); }
 
@@ -171,17 +179,17 @@ small, .text-caption { font-size: var(--font-size-caption); line-height: 1.7; }
 .ui-card { border: 1px solid var(--border-soft); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card); }
 .ui-input { width: 100%; border-radius: 14px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--foreground); padding: 0.62rem 0.8rem; font-size: 0.93rem; line-height: 1.7; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
 .ui-input:hover { border-color: #94a3b8; }
-.ui-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13); outline: none; }
+.ui-input:focus { border-color: var(--brand-accent); box-shadow: 0 0 0 4px var(--brand-focus-ring); outline: none; }
 .ui-select, .ui-textarea { border-radius: 14px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--foreground); font-size: 0.93rem; line-height: 1.75; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
 .ui-select { width: 100%; padding: 0.7rem 0.8rem; }
 .ui-textarea { width: 100%; padding: 0.7rem 0.8rem; }
 .ui-select:hover, .ui-textarea:hover { border-color: #94a3b8; }
-.ui-select:focus, .ui-textarea:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13); outline: none; }
+.ui-select:focus, .ui-textarea:focus { border-color: var(--brand-accent); box-shadow: 0 0 0 4px var(--brand-focus-ring); outline: none; }
 
 .ui-btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid transparent; padding: 0.55rem 0.95rem; font-size: 0.88rem; font-weight: 800; line-height: 1.2; }
-.ui-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16); }
+.ui-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--brand-focus-ring); }
 .ui-btn:disabled { cursor: not-allowed; opacity: 0.55; }
-.ui-btn-primary { background: var(--brand-gradient); color: #ffffff; box-shadow: 0 12px 24px rgba(29, 78, 216, 0.2); }
+.ui-btn-primary { background: var(--brand-gradient); color: #ffffff; box-shadow: 0 12px 24px rgba(13, 98, 90, 0.2); }
 .ui-btn-primary:hover { background: var(--brand-gradient-hover); }
 .ui-btn-ghost { border-color: var(--border-soft); background: var(--surface); color: var(--foreground); }
 .ui-btn-ghost:hover { background: var(--surface-soft); }
@@ -202,7 +210,7 @@ small, .text-caption { font-size: var(--font-size-caption); line-height: 1.7; }
 .animate-slideUp { animation: slideUpBanner 0.4s ease-out; }
 
 .chat-answer-en { font-family: var(--font-english); font-size: 18px; line-height: 1.9; }
-.ai-message-card { max-width: 900px; padding: 24px 28px; border-radius: 28px; background: linear-gradient(180deg, var(--surface), var(--surface-soft)); color: var(--foreground); border: 1px solid rgba(191, 219, 254, 0.35); box-shadow: var(--shadow-soft); }
+.ai-message-card { max-width: 900px; padding: 24px 28px; border-radius: 28px; background: linear-gradient(180deg, var(--surface), var(--surface-soft)); color: var(--foreground); border: 1px solid var(--color-info-border); box-shadow: var(--shadow-soft); }
 .ai-message-card::before { content: "آرتین"; display: inline-flex; margin-bottom: 12px; border-radius: 999px; background: var(--color-info-bg); color: var(--color-info-text); padding: 4px 12px; font-size: 12px; font-weight: 900; }
 .ai-markdown { font-size: 16px; line-height: 2.08; color: var(--foreground); letter-spacing: -0.005em; }
 .rtl-markdown { direction: rtl; text-align: right; unicode-bidi: plaintext; }

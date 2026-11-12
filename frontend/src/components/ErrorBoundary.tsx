@@ -75,7 +75,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             </button>
             <button
               onClick={() => window.location.reload()}
-              className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              className="flex-1 rounded-xl bg-[var(--brand-fill)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--brand-fill-hover)] transition-colors"
             >
               بازنشانی صفحه
             </button>

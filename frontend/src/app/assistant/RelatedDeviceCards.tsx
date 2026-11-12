@@ -57,7 +57,7 @@ export default function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[
                   {device.subtitle}
                 </div>
 
-                <span className="mt-2 inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                <span className="mt-2 inline-block rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)] dark:bg-teal-950 dark:text-teal-300">
                   {isEn ? "Suggested related device" : "دستگاه مرتبط پیشنهادی"}
                 </span>
               </div>

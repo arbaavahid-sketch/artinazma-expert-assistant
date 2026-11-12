@@ -90,7 +90,7 @@ export default function RootLayout({
       <head>
         {/* theme-color is declared first so the pre-paint script below can update
             it before the browser chrome renders. */}
-        <meta name="theme-color" content="#1d4ed8" />
+        <meta name="theme-color" content="#0d625a" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

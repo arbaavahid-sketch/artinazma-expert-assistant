@@ -1,10 +1,10 @@
 .start {
   --preview-paper: #fff;
-  --preview-ink: #152540;
-  --preview-muted: #485872;
-  --preview-line: #dce3f0;
-  --preview-accent: #2454a4;
-  --preview-halo: #dceaff;
+  --preview-ink: #16302c;
+  --preview-muted: #4a5f5b;
+  --preview-line: var(--border-soft);
+  --preview-accent: var(--brand-accent);
+  --preview-halo: #d9eee7;
   container-type: inline-size;
   max-inline-size: 59rem;
   margin-inline: auto;
@@ -12,12 +12,12 @@
 }
 
 :global(.dark) .start {
-  --preview-paper: #1a2233;
-  --preview-ink: #f2f6ff;
-  --preview-muted: #bac8dd;
-  --preview-line: #364259;
-  --preview-accent: #9dbdff;
-  --preview-halo: #253551;
+  --preview-paper: #1a2321;
+  --preview-ink: #eef7f4;
+  --preview-muted: #b9cbc6;
+  --preview-line: #343e3b;
+  --preview-accent: #8fd9c9;
+  --preview-halo: #22352f;
 }
 
 .workspaceLink a {
@@ -63,7 +63,7 @@
   border-radius: .95rem;
   background: var(--preview-paper);
   color: var(--preview-accent);
-  box-shadow: 0 7px 22px #122b5820;
+  box-shadow: 0 7px 22px #0b2f2a20;
 }
 
 .heroHeading h2 {
@@ -79,13 +79,13 @@
   border-color: var(--preview-line);
   border-radius: 1.25rem;
   background: var(--preview-paper);
-  box-shadow: 0 8px 30px #17305912;
+  box-shadow: 0 8px 30px #12302b12;
 }
 .composeArea :global(.chat-composer-box:focus-within) { border-color: var(--preview-accent); }
 .composeArea :global(.chat-composer-textarea::placeholder), .composeArea :global(.chat-composer-box) ~ p { color: var(--preview-muted); }
 .composeArea :global(.artin-composer-toolbar .chat-composer-icon-button) { inline-size: 2.75rem; block-size: 2.75rem; border-radius: .9rem; }
-.composeArea :global(.chat-composer-send-button:not(:disabled)) { background: #214e9a; }
-.composeArea :global(.chat-composer-send-button:disabled) { background: #526c92; }
+.composeArea :global(.chat-composer-send-button:not(:disabled)) { background: var(--brand-fill); }
+.composeArea :global(.chat-composer-send-button:disabled) { background: #6f8a85; }
 
 .topics { margin-block-start: clamp(1.15rem, 2.8cqi, 2rem); }
 .topics h3 { margin-block-end: .35rem; color: var(--preview-ink); font-size: 1rem; }
@@ -98,7 +98,7 @@
 }
 
 .topic {
-  --tone: #2e61a6;
+  --tone: #0d625a;
   --topic-ink: var(--preview-ink);
   --topic-detail: var(--preview-muted);
   --topic-paper: color-mix(in srgb, var(--tone) 7%, var(--preview-paper));
@@ -121,14 +121,14 @@
 }
 
 .topic[data-tone="equipment"] {
-  --tone: #b9e1ff;
+  --tone: #b5ecdf;
   --topic-ink: #fff;
-  --topic-detail: #d7e7ff;
-  --topic-paper: linear-gradient(116deg, #16366f, #234d96 58%, #194978);
-  --spot: #79c2ff48;
-  border-color: #3a62a4;
+  --topic-detail: #d9f1ea;
+  --topic-paper: linear-gradient(116deg, #0a3f3a, #0f6b61 58%, #0d5a63);
+  --spot: #7fe0cf48;
+  border-color: #1f7a6e;
 }
-.topic[data-tone="results"] { --tone: #137f78; }
+.topic[data-tone="results"] { --tone: #2e61a6; }
 .topic[data-tone="chemistry"] { --tone: #6949ad; }
 .topic[data-tone="comparison"] { --tone: #9a5b30; }
 .topic[data-tone="industry"] { --tone: #365d92; }
@@ -193,7 +193,7 @@
   inset-block-end: 0;
   inset-inline-end: 0;
   inline-size: min(48%, 17rem);
-  color: #a7d8ff;
+  color: #a8ecde;
   opacity: .75;
   mask-image: linear-gradient(90deg, black 65%, transparent);
 }

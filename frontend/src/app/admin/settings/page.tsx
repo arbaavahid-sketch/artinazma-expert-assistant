@@ -576,7 +576,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={() => loadStatus(true)}
                 disabled={checkingAi}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
               >
                 <Wifi size={18} />
                 {checkingAi ? (isEn ? "Testing..." : "در حال تست...") : (isEn ? "Test AI connection" : "تست اتصال AI")}
@@ -705,7 +705,7 @@ export default function AdminSettingsPage() {
                   max="168"
                   value={gdriveIntervalInput}
                   onChange={(e) => setGdriveIntervalInput(e.target.value)}
-                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--foreground)] focus:border-blue-400 focus:outline-none"
+                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--foreground)] focus:border-[var(--brand-accent)] focus:outline-none"
                   placeholder={isEn ? "24" : "۲۴"}
                 />
                 <p className="mt-1 text-xs text-[var(--text-subtle)]">
@@ -717,7 +717,7 @@ export default function AdminSettingsPage() {
                 <button
                   onClick={() => saveGdriveSchedule(true)}
                   disabled={savingSchedule || !gdriveSchedule?.folder_id_configured}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-4 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
                 >
                   <Clock size={16} />
                   {savingSchedule ? (isEn ? "Saving..." : "ذخیره...") : (isEn ? "Enable schedule" : "فعال‌کردن زمان‌بندی")}
@@ -810,7 +810,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_host: e.target.value }))}
                 placeholder="smtp.gmail.com"
                 dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               />
             </div>
             <div>
@@ -818,7 +818,7 @@ export default function AdminSettingsPage() {
               <select
                 value={emailSettings.smtp_port}
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_port: Number(e.target.value) }))}
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               >
                 <option value={587}>587 (STARTTLS)</option>
                 <option value={465}>465 (SSL)</option>
@@ -834,7 +834,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_user: e.target.value }))}
                 placeholder="your@email.com"
                 dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               />
             </div>
             <div>
@@ -847,7 +847,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_pass: e.target.value }))}
                 placeholder={isEn ? "App password or password" : "App password یا رمز عبور"}
                 dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               />
             </div>
             <div>
@@ -859,7 +859,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, from_addr: e.target.value }))}
                 placeholder="artin@artinazma.ir"
                 dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               />
             </div>
             <div>
@@ -871,7 +871,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setEmailSettings((s) => ({ ...s, to_addr: e.target.value }))}
                 placeholder="admin@artinazma.ir"
                 dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               />
             </div>
           </div>
@@ -902,7 +902,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={saveEmailSettings}
               disabled={savingEmail}
-              className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
             >
               <Save size={16} />
               {savingEmail ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save settings" : "ذخیره تنظیمات")}
@@ -971,7 +971,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setTgSettings((s) => ({ ...s, bot_token: e.target.value }))}
                 placeholder="123456789:AABBcc..."
                 dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               />
             </div>
             <div>
@@ -986,7 +986,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setTgSettings((s) => ({ ...s, chat_id: e.target.value }))}
                 placeholder="-100123456789"
                 dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
               />
             </div>
           </div>
@@ -1005,7 +1005,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={saveTgSettings}
               disabled={savingTg}
-              className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
             >
               <Save size={16} />
               {savingTg ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save settings" : "ذخیره تنظیمات")}
@@ -1013,7 +1013,7 @@ export default function AdminSettingsPage() {
             <button
               onClick={testTg}
               disabled={testingTg}
-              className="inline-flex items-center gap-2 rounded-2xl border border-sky-200 bg-[var(--color-info-bg)] px-5 py-3 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-sky-100 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-5 py-3 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)] disabled:opacity-50"
             >
               <Send size={16} />
               {testingTg ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Send test message" : "ارسال پیام آزمایشی")}

@@ -124,7 +124,7 @@ const REQUEST_WORKFLOW = [
     actionLabelEn: "Start review",
     badgeClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
     filterClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] hover:bg-[var(--color-info-bg)]",
-    activeClass: "bg-blue-600 text-white",
+    activeClass: "bg-[var(--brand-fill)] text-white",
     cardClass: "border-[var(--color-info-border)] bg-[var(--color-info-bg)]/40 hover:bg-[var(--color-info-bg)]",
   },
   {

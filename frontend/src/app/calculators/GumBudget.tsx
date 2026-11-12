@@ -821,7 +821,7 @@ export default function GumBudget({ en, parseNumber, onCalculated,initialProject
             </div>
           </div>}
         </div>
-        <button type="submit" className="ui-btn bg-blue-700 text-white">{en ? "Calculate budget" : "محاسبهٔ بودجه"}</button>
+        <button type="submit" className="ui-btn bg-[var(--brand-fill)] text-white">{en ? "Calculate budget" : "محاسبهٔ بودجه"}</button>
         <button type="button" disabled={rows.length>=100} className="ui-btn ui-btn-ghost disabled:opacity-40" onClick={() => { setRows([...rows, {...emptyRow(),...(template==='general'?{}:{target:-1,unit})}]); setSubmitted(false);setServerResult(null); }}>
           {en ? "+ Add component" : "+ افزودن مؤلفه"}
         </button>

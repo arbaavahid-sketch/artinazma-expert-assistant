@@ -1125,7 +1125,7 @@ ${cleanAnswer}`,
     return (
       <section className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
         <p>{isEn ? "Could not check your access. Please try again." : "بررسی دسترسی انجام نشد. لطفاً دوباره تلاش کنید."}</p>
-        <button onClick={() => window.location.reload()} className="rounded-xl bg-blue-600 px-4 py-2 text-white">
+        <button onClick={() => window.location.reload()} className="rounded-xl bg-[var(--brand-fill)] px-4 py-2 text-white">
           {isEn ? "Try again" : "تلاش دوباره"}
         </button>
       </section>
@@ -1175,7 +1175,7 @@ ${cleanAnswer}`,
     <AssistantRuntimeProvider runtime={runtime}>
     <ThreadPrimitive.Root asChild>
     <section
-      className={`artin-workspace relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-colors ${isDragOver ? "ring-2 ring-inset ring-blue-400 bg-blue-50/30" : ""}`}
+      className={`artin-workspace relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-colors ${isDragOver ? "ring-2 ring-inset ring-[var(--brand-focus-ring)] bg-[var(--color-info-bg)]/30" : ""}`}
       onDragOver={(event) => {
         event.preventDefault();
         if (customer && Array.from(event.dataTransfer.types).includes("Files")) setIsDragOver(true);
@@ -1270,7 +1270,7 @@ ${cleanAnswer}`,
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
-            {!customer&&<><Link href="/customer-login?next=/assistant" className="shrink-0 rounded-lg bg-blue-700 px-3 py-2 text-xs font-bold text-white">{isEn?"Sign in":"ورود به حساب"}</Link><Link href="/customer-register" className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">{isEn?"Register":"ثبت‌نام"}</Link></>}
+            {!customer&&<><Link href="/customer-login?next=/assistant" className="shrink-0 rounded-lg bg-[var(--brand-fill)] px-3 py-2 text-xs font-bold text-white">{isEn?"Sign in":"ورود به حساب"}</Link><Link href="/customer-register" className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">{isEn?"Register":"ثبت‌نام"}</Link></>}
             {/* Domain + mode — visible on desktop, hidden on mobile */}
             <select
               aria-label={isEn ? "Question domain" : "حوزهٔ پرسش"}
@@ -1311,7 +1311,7 @@ ${cleanAnswer}`,
               title={isEn ? "Chat settings" : "تنظیمات گفتگو"}
               className={`flex h-8 w-8 items-center justify-center rounded-xl border transition md:hidden ${
                 showMobileSettings
-                  ? "border-blue-300 bg-blue-50 text-blue-600"
+                  ? "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
                   : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
               }`}
             >
@@ -1341,7 +1341,7 @@ ${cleanAnswer}`,
                       </button>
                       <button
                         onClick={exportChatWord}
-                        className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                        className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
                       >
                         <span className="text-base">📝</span>
                         Word (.doc)
@@ -1462,7 +1462,7 @@ ${cleanAnswer}`,
                       />
                       {item.role === "assistant" && item.question_id &&
                         ["file-analysis", "image-analysis"].includes(item.detected_domain ?? "") && (
-                          <Link href={`/laboratory-imports?analysis=${item.question_id}`} className="mx-4 my-2 inline-flex rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">
+                          <Link href={`/laboratory-imports?analysis=${item.question_id}`} className="mx-4 my-2 inline-flex rounded-lg border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-4 py-3 text-sm font-bold text-[var(--color-info-text)]">
                             {isEn ? "Review file data and calculate" : "بررسی داده‌های این فایل و اجرای محاسبه"}
                           </Link>
                         )}
@@ -1495,7 +1495,7 @@ ${cleanAnswer}`,
                         setSuggestedQuestions([]);
                         sendMessage(q, q);
                       }}
-                      className="inline-flex min-h-20 w-full items-center justify-center gap-1.5 whitespace-normal rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-center text-sm font-bold leading-6 text-blue-700 transition hover:bg-blue-100"
+                      className="inline-flex min-h-20 w-full items-center justify-center gap-1.5 whitespace-normal rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-4 py-3 text-center text-sm font-bold leading-6 text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)]"
                     >
                       {q}
                     </button>
@@ -1524,20 +1524,20 @@ ${cleanAnswer}`,
                         alt={isEn ? "Artin" : "آرتین"}
                         className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 object-cover sm:h-9 sm:w-9"
                       />
-                      <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900">
+                      <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--brand-fill)] ring-2 ring-white dark:ring-slate-900">
                         <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white" />
                       </span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{isEn ? "Artin" : "آرتین"}</span>
+                      <span className="text-xs font-bold text-[var(--color-info-text)] dark:text-teal-300">{isEn ? "Artin" : "آرتین"}</span>
                       <span className="flex items-center gap-1.5">
                         <span className="text-sm font-persian text-slate-500 dark:text-slate-400">
                           {isEn ? "Typing" : "در حال تایپ"}
                         </span>
                         <span className="flex gap-1 pb-1">
-                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "0ms"}} />
-                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "200ms"}} />
-                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-blue-500" style={{animationDelay: "400ms"}} />
+                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-[var(--brand-fill)]" style={{animationDelay: "0ms"}} />
+                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-[var(--brand-fill)]" style={{animationDelay: "200ms"}} />
+                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-[var(--brand-fill)]" style={{animationDelay: "400ms"}} />
                         </span>
                       </span>
                     </div>

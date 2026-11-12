@@ -420,7 +420,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className={`absolute top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-blue-50 dark:hover:bg-slate-800 md:flex ${
+              className={`absolute top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-[var(--color-info-bg)] dark:hover:bg-slate-800 md:flex ${
                 isRtl ? "left-4" : "right-4"
               }`}
               title={sidebarCollapsed ? (isRtl ? "باز کردن منو" : "Open menu") : (isRtl ? "جمع کردن منو" : "Collapse menu")}
@@ -586,7 +586,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                           <div
                             className={`group flex items-center rounded-2xl transition ${
                               isActiveSession
-                                ? "bg-white text-blue-700 shadow-sm shadow-slate-200/70"
+                                ? "bg-white text-[var(--color-info-text)] shadow-sm shadow-slate-200/70"
                                 : "text-slate-600 hover:bg-white hover:text-slate-900"
                             }`}
                           >
@@ -620,7 +620,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                                     session.title || (isRtl ? "گفتگوی جدید" : "New conversation"),
                                   );
                                 }}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-blue-50 hover:text-blue-700"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
                                 aria-label={isRtl ? "تغییر نام گفتگو" : "Rename conversation"}
                               >
                                 <Pencil size={14} strokeWidth={2} />

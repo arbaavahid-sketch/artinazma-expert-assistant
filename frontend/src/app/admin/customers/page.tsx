@@ -274,7 +274,7 @@ function AdminCustomersContent() {
             </div>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-700 text-white shadow-sm">
+                <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-[var(--brand-fill)] text-white shadow-sm">
                   <Users size={28} strokeWidth={1.8} />
                 </div>
                 <div>
@@ -750,7 +750,7 @@ function AdminCustomersContent() {
                       setEmailBody("");
                       setEmailModal(true);
                     }}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-4 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)]"
                   >
                     <Send size={15} />
                     {isEn ? "Send email" : "ارسال ایمیل"}
@@ -873,7 +873,7 @@ function AdminCustomersContent() {
               <div className="flex gap-3 pt-2">
                 <a
                   href={`mailto:${selected.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 font-bold text-white transition hover:bg-blue-800"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 font-bold text-white transition hover:bg-[var(--brand-fill-hover)]"
                   onClick={() => setEmailModal(false)}
                 >
                   <Send size={16} />

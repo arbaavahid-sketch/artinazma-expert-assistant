@@ -231,7 +231,7 @@ export default function CustomerRequestPage() {
         <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,29%)] lg:items-start">
           <div className={`${styles.panel} min-w-0 p-4 sm:p-6`}>
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-lg shadow-blue-700/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-fill)] text-white shadow-lg shadow-teal-800/20">
                 <MessageSquareText size={24} strokeWidth={1.8} />
               </div>
               <div>
@@ -264,13 +264,13 @@ export default function CustomerRequestPage() {
             </fieldset>
 
             {activeSmartFields.length > 0 && (
-              <div className="mt-5 rounded-[24px] border border-blue-100 bg-blue-50/70 p-4">
+              <div className="mt-5 rounded-[24px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/70 p-4">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-black text-blue-900">
+                    <div className="text-sm font-black text-[var(--color-info-text)]">
                       {isEn ? "Smart quote details" : "اطلاعات هوشمند استعلام"}
                     </div>
-                    <div className="mt-1 text-xs font-bold text-blue-700/80">
+                    <div className="mt-1 text-xs font-bold text-[var(--color-info-text)]/80">
                       {isEn
                         ? "These fields help the expert prepare a faster and more accurate quote."
                         : "این اطلاعات به کارشناس کمک می‌کند استعلام دقیق‌تر و سریع‌تری آماده کند."}
@@ -279,7 +279,7 @@ export default function CustomerRequestPage() {
                   <button
                     type="button"
                     onClick={() => setQuoteDetails({})}
-                    className="rounded-xl bg-white px-3 py-2 text-xs font-black text-blue-700 shadow-sm transition hover:bg-blue-100"
+                    className="rounded-xl bg-white px-3 py-2 text-xs font-black text-[var(--color-info-text)] shadow-sm transition hover:bg-[var(--color-info-bg)]"
                   >
                     {isEn ? "Clear" : "پاک کردن"}
                   </button>
@@ -321,11 +321,11 @@ export default function CustomerRequestPage() {
             <label htmlFor="request-details" className="mb-2 mt-5 block text-sm font-bold">{isEn ? "Request details *" : "توضیحات درخواست *"}</label>
             <textarea id="request-details" value={message} onChange={(e) => setMessage(e.target.value)} className="ui-textarea h-40 rounded-2xl p-4 leading-8" placeholder={isEn ? "Enter sample type, application, issue, device model, measurement range, test file details, or any important technical information..." : "نوع نمونه، کاربرد، مشکل، مدل دستگاه، محدوده اندازه‌گیری، فایل تست یا هر اطلاعات فنی مهم را وارد کنید..."} />
 
-            <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-slate-600">
-              {isEn ? "Selected request type:" : "نوع درخواست انتخاب‌شده:"} <span className="font-black text-blue-700">{typeLabel(requestType)}</span>
+            <div className="mt-4 rounded-2xl bg-[var(--color-info-bg)] p-4 text-sm text-slate-600">
+              {isEn ? "Selected request type:" : "نوع درخواست انتخاب‌شده:"} <span className="font-black text-[var(--color-info-text)]">{typeLabel(requestType)}</span>
               <span className="mt-2 block">
                 {isEn ? "See how this information is handled in the " : "نحوه استفاده از این اطلاعات در "}
-                <Link href="/privacy" className="font-black text-blue-700 underline-offset-4 hover:underline">
+                <Link href="/privacy" className="font-black text-[var(--color-info-text)] underline-offset-4 hover:underline">
                   {isEn ? "Privacy Policy" : "سیاست حفظ حریم خصوصی"}
                 </Link>
                 {isEn ? "." : " توضیح داده شده است."}

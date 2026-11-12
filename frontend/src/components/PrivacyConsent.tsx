@@ -16,9 +16,9 @@ export default function PrivacyConsent({ checked, onChange, context }: PrivacyCo
   const id = `privacy-consent-${context}`;
 
   return (
-    <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm leading-7 text-slate-700">
+    <div className="mt-5 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/80 p-4 text-sm leading-7 text-slate-700">
       <div className="flex items-start gap-3">
-        <ShieldCheck size={20} className="mt-1 shrink-0 text-blue-700" />
+        <ShieldCheck size={20} className="mt-1 shrink-0 text-[var(--color-info-text)]" />
         <div>
           <p className="font-bold">
             {isEn
@@ -40,11 +40,11 @@ export default function PrivacyConsent({ checked, onChange, context }: PrivacyCo
               type="checkbox"
               checked={checked}
               onChange={(event) => onChange(event.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-700 accent-blue-700"
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--color-info-text)] accent-blue-700"
             />
             <span>
               {isEn ? "I have read and accept the " : "متن "}
-              <Link href="/privacy" className="text-blue-700 underline-offset-4 hover:underline">
+              <Link href="/privacy" className="text-[var(--color-info-text)] underline-offset-4 hover:underline">
                 {isEn ? "Privacy Policy" : "سیاست حفظ حریم خصوصی"}
               </Link>
               {isEn ? "." : " را مطالعه کرده‌ام و می‌پذیرم."}

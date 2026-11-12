@@ -150,7 +150,7 @@ export default function BackupPage() {
                 <button
                   onClick={createBackup}
                   disabled={creating}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
                 >
                   <HardDrive size={18} className={creating ? "animate-pulse" : ""} />
                   {creating

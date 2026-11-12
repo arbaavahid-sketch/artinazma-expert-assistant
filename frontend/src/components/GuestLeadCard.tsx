@@ -125,7 +125,7 @@ export default function GuestLeadCard({
   }
 
   return (
-    <div className="ui-card mt-3 rounded-[20px] border border-sky-200 bg-sky-50 p-5">
+    <div className="ui-card mt-3 rounded-[20px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-5">
       <div className="text-sm font-bold text-slate-900">
         {reason === "quota"
           ? isEn
@@ -176,7 +176,7 @@ export default function GuestLeadCard({
         type="button"
         onClick={submit}
         disabled={!canSend}
-        className="mt-4 w-full rounded-xl bg-sky-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-sky-800 disabled:opacity-40 sm:w-auto"
+        className="mt-4 w-full rounded-xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-40 sm:w-auto"
       >
         {sending
           ? isEn

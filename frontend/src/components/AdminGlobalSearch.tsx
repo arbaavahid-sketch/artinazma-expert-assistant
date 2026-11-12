@@ -192,7 +192,7 @@ export default function AdminGlobalSearch() {
                       <button
                         key={c.id}
                         onClick={() => navigate(`/admin/customers`)}
-                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-[var(--color-info-bg)] dark:hover:bg-blue-950"
+                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-[var(--color-info-bg)] dark:hover:bg-teal-950"
                       >
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-info-bg)] text-xs font-black text-[var(--color-info-text)]">
                           {c.full_name?.[0] || "?"}

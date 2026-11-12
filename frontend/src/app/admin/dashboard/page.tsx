@@ -667,7 +667,7 @@ export default function DashboardPage() {
                       <span className="rounded-full bg-[var(--surface)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-info-text)]">
                         {getDomainLabel(item.domain, locale)}
                       </span>
-                      <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-black text-white">
+                      <span className="rounded-full bg-[var(--brand-fill)] px-2.5 py-1 text-[11px] font-black text-white">
                         {isEn ? `${item.count} times` : `${item.count} بار`}
                       </span>
                     </div>
@@ -913,7 +913,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-soft)]">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
+                            className="h-full rounded-full bg-gradient-to-r from-teal-600 to-teal-400 transition-all duration-700"
                             style={{ width: `${Math.round((item.count / maxCount) * 100)}%` }}
                           />
                         </div>
@@ -971,10 +971,10 @@ export default function DashboardPage() {
                   {analyticsData.top_keywords.map((kw) => (
                     <span
                       key={kw.word}
-                      className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700"
+                      className="inline-flex items-center gap-1 rounded-full bg-[var(--color-info-bg)] px-2.5 py-1 text-xs font-bold text-[var(--color-info-text)]"
                     >
                       {kw.word}
-                      <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[11px] font-black text-indigo-600">
+                      <span className="rounded-full bg-[var(--color-info-bg)] px-1.5 py-0.5 text-[11px] font-black text-[var(--color-info-text)]">
                         {kw.count}
                       </span>
                     </span>

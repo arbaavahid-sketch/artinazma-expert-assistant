@@ -798,13 +798,13 @@ export default function CustomerDashboardPage() {
                                 if (e.key === "Enter") renameSession(session.id);
                                 if (e.key === "Escape") { setRenamingSessionId(null); setRenameValue(""); }
                               }}
-                              className="flex-1 rounded-xl border border-[var(--color-info-border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-bold text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-300"
+                              className="flex-1 rounded-xl border border-[var(--color-info-border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-bold text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-focus-ring)]"
                               maxLength={120}
                             />
                             <button
                               onClick={() => renameSession(session.id)}
                               disabled={savingRename}
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-50"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-fill)] text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
                             >
                               {savingRename ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                             </button>

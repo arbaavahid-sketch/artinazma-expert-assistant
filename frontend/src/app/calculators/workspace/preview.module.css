@@ -58,7 +58,7 @@
 .steps button { display:flex; width:100%; align-items:center; gap:10px; min-height:56px; padding:9px; border-radius:10px; margin-bottom:5px; font-size:12px; text-align:start; cursor:pointer; }
 .steps button[aria-current='step'] { background:var(--color-info-bg); color:var(--color-info-text); font-weight:700; }
 .stepNumber { display:grid; place-items:center; width:27px; height:27px; border:1px solid var(--border-soft); border-radius:8px; font-size:11px; }
-.steps [aria-current='step'] .stepNumber { background:#2460df; color:white; border-color:#2460df; }
+.steps [aria-current='step'] .stepNumber { background:var(--brand-accent); color:white; border-color:var(--brand-accent); }
 .currentDot { width:5px; height:5px; margin-inline-start:auto; background:currentColor; border-radius:50%; }
 .steps p { font-size:10px; line-height:2; opacity:.6; padding:14px 9px 0; border-top:1px solid var(--border-soft); margin-top:14px; }
 .formPanel, .materialPanel { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--lab-radius); padding:28px; min-width:0; }
@@ -79,7 +79,7 @@
 .formFooter { display:flex; justify-content:space-between; gap:12px; padding-top:22px; margin-top:26px; border-top:1px solid var(--border-soft); }
 .evidence { display:grid; gap:12px; }
 .evidence label { display:flex; align-items:flex-start; gap:12px; padding:16px; border:1px solid var(--border-soft); border-radius:12px; cursor:pointer; }
-.evidence input { width:17px; height:17px; margin-top:3px; accent-color:#2460df; }
+.evidence input { width:17px; height:17px; margin-top:3px; accent-color:var(--brand-accent); }
 .evidence strong, .budgetPlan strong { font-size:13px; display:block; }
 .evidence small, .budgetPlan small { display:block; font-size:11px; line-height:1.9; opacity:.65; margin-top:5px; }
 .tableFrame { border:1px solid var(--border-soft); border-radius:12px; overflow:hidden; margin-bottom:14px; }
@@ -146,7 +146,7 @@
 .addActions button { text-align:start; }
 .wideField { grid-column:1/-1; }
 .checkLine { display:flex; align-items:flex-start; gap:10px; margin-block:18px 10px; font-size:12px; line-height:1.9; }
-.checkLine input { flex-shrink:0; width:17px; height:17px; margin-top:4px; accent-color:#2460df; }
+.checkLine input { flex-shrink:0; width:17px; height:17px; margin-top:4px; accent-color:var(--brand-accent); }
 .referenceLink { font-size:11px; line-height:2; color:var(--color-info-text); text-decoration:underline; }
 .reportActions { margin-top:22px; border-top:1px solid var(--border-soft); padding-top:20px; }
 .reportActions p { margin-top:12px; }
@@ -213,7 +213,7 @@
 .workflowChoices legend { font-size:12px; font-weight:700; margin-bottom:12px; }
 .workflowChoices label { display:flex; align-items:flex-start; gap:12px; padding:14px; border:1px solid var(--border-soft); border-radius:12px; cursor:pointer; }
 .workflowChoices label:has(input:checked) { border-color:var(--color-info-border); background:var(--color-info-bg); }
-.workflowChoices input { flex-shrink:0; width:18px; height:18px; margin-top:3px; accent-color:#2460df; }
+.workflowChoices input { flex-shrink:0; width:18px; height:18px; margin-top:3px; accent-color:var(--brand-accent); }
 .workflowChoices strong { display:block; font-size:13px; line-height:1.9; }
 .workflowChoices small { display:block; font-size:11px; line-height:1.9; margin-top:5px; }
 
@@ -249,15 +249,15 @@
 .moleculeViewer { width:100%; min-width:0; text-align:start; }
 .moleculeCanvas { display:block; width:100%; height:360px; touch-action:none; cursor:grab; border-radius:12px; border:1px solid var(--border-soft); }
 .moleculeCanvas:active { cursor:grabbing; }
-.moleculeCanvas:focus-visible { outline:3px solid #2460df; outline-offset:2px; }
+.moleculeCanvas:focus-visible { outline:3px solid var(--brand-accent); outline-offset:2px; }
 .moleculeControls,.moleculeActions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-block:12px; }
 .moleculeControls label,.moleculeActions label { display:flex; align-items:center; gap:7px; font-size:12px; }
 .moleculeControls select,.moleculeActions select { padding:8px; border:1px solid var(--border-soft); border-radius:8px; background:var(--surface); }
-.moleculeControls input { accent-color:#2460df; }
+.moleculeControls input { accent-color:var(--brand-accent); }
 .moleculeIcon { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid var(--border-soft); border-radius:8px; background:var(--surface-soft); color:var(--foreground); cursor:pointer; }
 .moleculeIcon:hover { background:var(--color-info-bg); color:var(--color-info-text); }
 .moleculeIcon:disabled { opacity:.4; cursor:default; }
-.moleculeIcon:focus-visible { outline:3px solid #2460df; outline-offset:2px; }
+.moleculeIcon:focus-visible { outline:3px solid var(--brand-accent); outline-offset:2px; }
 .moleculeHelp,.moleculeFallback { padding:12px; font-size:12px; line-height:2; }
 .moleculeLegend { display:flex; flex-wrap:wrap; gap:14px; margin:12px; direction:ltr; }
 .moleculeLegend span { display:flex; align-items:center; gap:5px; font-size:12px; }
@@ -290,12 +290,12 @@
 .directorySwitch [aria-pressed=true],.directoryCategories [aria-pressed=true] { background:var(--color-info-bg); color:var(--color-info-text); font-weight:700; }
 .directoryCards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:16px; }
 .directoryCards > button { display:flex; flex-direction:column; text-align:start; gap:8px; border:1px solid var(--border-soft); border-radius:12px; padding:16px; background:var(--surface); cursor:pointer; min-width:0; }
-.directoryCards > button:hover { border-color:#2460df; background:var(--color-info-bg); }
+.directoryCards > button:hover { border-color:var(--brand-accent); background:var(--color-info-bg); }
 .directoryCards strong { font-size:14px; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.8; }
 .directoryCards small { display:block; font-size:11px; opacity:.7; overflow-wrap:anywhere; }
 .directoryCards > button > small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
 .directoryCards span { font-size:11px; color:var(--color-info-text); margin-top:auto; padding-top:8px; }
-.directoryCards > button:focus-visible { outline:3px solid #2460df; outline-offset:2px; }
+.directoryCards > button:focus-visible { outline:3px solid var(--brand-accent); outline-offset:2px; }
 @media(max-width:700px) { .directoryCards { grid-template-columns:repeat(2,minmax(0,1fr)); } .compoundViewer { width:100vw; max-width:100vw; height:100dvh; max-height:100dvh; border-radius:0; } .viewerContent { padding:12px; } }
 @media(max-width:420px) { .directoryCards { grid-template-columns:minmax(0,1fr); } }
 .catalogSidebar { min-width:0; position:sticky; top:16px; max-height:85vh; overflow:auto; border:1px solid var(--border-soft); border-radius:14px; padding:14px; background:var(--surface); }
@@ -329,7 +329,7 @@
 .compoundList:empty { display:none; }
 .compoundRow { display:grid; gap:8px; padding:18px; text-align:start; border-bottom:1px solid var(--border-soft); cursor:pointer; }
 .compoundRow:last-child { border:0; }
-.compoundRow[aria-pressed=true] { background:var(--color-info-bg); box-shadow:inset -3px 0 #2460df; }
+.compoundRow[aria-pressed=true] { background:var(--color-info-bg); box-shadow:inset -3px 0 var(--brand-accent); }
 .compoundRow:hover { background:var(--surface-soft); }
 .compoundRow strong { font-size:13px; overflow-wrap:anywhere; font-weight:650; }
 .compoundRow small { opacity:.65; font-size:11px; direction:ltr; }

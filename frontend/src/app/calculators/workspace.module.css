@@ -1,5 +1,5 @@
 .workspace {
-  --lab-accent: #2563eb;
+  --lab-accent: var(--brand-accent);
   --lab-ink: var(--foreground);
 }
 

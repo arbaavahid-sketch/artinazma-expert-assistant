@@ -26,7 +26,7 @@ export default function OfflinePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-[var(--color-info-bg)] p-4">
       <div className="text-center max-w-md mx-auto">
         <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
           <WifiOff className="w-10 h-10 text-gray-400" />
@@ -45,8 +45,8 @@ export default function OfflinePage() {
         ) : (
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl
-                       hover:bg-blue-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--brand-fill)] text-white rounded-xl
+                       hover:bg-[var(--brand-fill-hover)] transition-colors font-medium"
           >
             <RefreshCw className="w-4 h-4" />
             {t("offline.retry")}

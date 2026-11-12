@@ -1,11 +1,11 @@
 .page {
-  --work-ink: #152540;
-  --work-muted: #485872;
-  --work-line: #dce3f0;
+  --work-ink: #16302c;
+  --work-muted: #4a5f5b;
+  --work-line: var(--border-soft);
   --work-paper: #fff;
-  --work-accent: #2454a4;
-  --work-tint: #eef4ff;
-  --work-focus: #3475cf;
+  --work-accent: var(--brand-accent);
+  --work-tint: var(--color-info-bg);
+  --work-focus: #14897c;
   min-block-size: 100%;
   background: var(--background);
   color: var(--work-ink);
@@ -13,13 +13,13 @@
 }
 
 :global(.dark) .page {
-  --work-ink: #f2f6ff;
-  --work-muted: #b6c6df;
-  --work-line: #364259;
-  --work-paper: #1a2233;
-  --work-accent: #a9c8ff;
-  --work-tint: #222f47;
-  --work-focus: #a9c8ff;
+  --work-ink: #eef7f4;
+  --work-muted: #b3c9c3;
+  --work-line: #343e3b;
+  --work-paper: #1a2321;
+  --work-accent: #8fd9c9;
+  --work-tint: #1d302c;
+  --work-focus: #8fd9c9;
 }
 
 .page :focus-visible { outline: 2px solid var(--work-focus); outline-offset: 3px; }
@@ -91,11 +91,11 @@
 .tile p { font-size: .82rem; line-height: 1.8; color: var(--work-muted); }
 .featureTile {
   --work-ink: #fff;
-  --work-muted: #dce9ff;
-  --work-accent: #dce9ff;
+  --work-muted: #d9f1ea;
+  --work-accent: #d9f1ea;
   --work-tint: #ffffff1c;
   color: var(--work-ink);
-  background: radial-gradient(circle at 10% 0%, #3a6fba, transparent 58%), linear-gradient(130deg, #142d60, #204c92);
+  background: radial-gradient(circle at 10% 0%, #1c8a7c, transparent 58%), linear-gradient(130deg, #0a3f3a, #0f6b61);
 }
 .tileArrow { position: absolute; inset-block-start: 1rem; inset-inline-end: 1rem; color: var(--work-accent); }
 .tileArrow:dir(rtl) { transform: scaleX(-1); }

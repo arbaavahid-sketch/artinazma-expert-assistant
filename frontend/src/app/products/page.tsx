@@ -63,7 +63,7 @@ export default function ProductsPage() {
                   onClick={() => setCategory(cat.key)}
                   className={`min-h-10 rounded-lg px-3 py-2 text-start text-xs font-bold transition ${
                     category === cat.key
-                      ? "bg-blue-700 text-white"
+                      ? "bg-[var(--brand-fill)] text-white"
                       : `${styles.muted} hover:bg-[var(--work-tint)]`
                   }`}
                 >

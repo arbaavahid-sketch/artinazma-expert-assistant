@@ -146,7 +146,7 @@ export default function ChatComposer({
                 onClick={() => imageInputRef.current?.click()}
                 title={isEn ? "Send image (or Ctrl+V to paste)" : "ارسال عکس (یا Ctrl+V برای Paste)"}
                 aria-label={isEn ? "Attach an image" : "پیوست عکس"}
-                className="chat-composer-icon-button text-blue-500 hover:bg-blue-50 hover:text-blue-700"
+                className="chat-composer-icon-button text-[var(--color-info-text)] hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
               >
                 <ImagePlus size={18} aria-hidden="true" />
               </button>

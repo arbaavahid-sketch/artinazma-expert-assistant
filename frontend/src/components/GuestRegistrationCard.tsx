@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function GuestRegistrationCard({ isEn = false,appMode=false }: { isEn?: boolean;appMode?:boolean }) {
   return (
-    <div className="mx-auto mt-4 w-full max-w-xl rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
+    <div className="mx-auto mt-4 w-full max-w-xl rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-5 text-center">
       <p className="font-semibold text-slate-900">
         {appMode?(isEn?'Sign in to use the Artin app':'برای استفاده از اپ آرتین وارد حساب شوید'):isEn ? "Your 3 free questions have been used." : "۳ سؤال رایگان شما استفاده شده است."}
       </p>
@@ -11,10 +11,10 @@ export default function GuestRegistrationCard({ isEn = false,appMode=false }: { 
           : "برای ادامه گفتگو و استفاده از تحلیل فایل و عکس، ثبت‌نام را تکمیل کنید. پس از تأیید مدیر، همه امکانات بدون سقف روزانه در دسترس است."}
       </p>
       <div className="mt-4 flex justify-center gap-4">
-        <Link href="/customer-register" className="rounded-xl bg-blue-600 px-4 py-2 text-white">
+        <Link href="/customer-register" className="rounded-xl bg-[var(--brand-fill)] px-4 py-2 text-white">
           {isEn ? "Register" : "ثبت‌نام"}
         </Link>
-        <Link href="/customer-login?next=/assistant" className="px-4 py-2 text-blue-700">
+        <Link href="/customer-login?next=/assistant" className="px-4 py-2 text-[var(--color-info-text)]">
           {isEn ? "Sign in" : "ورود به حساب"}
         </Link>
       </div>

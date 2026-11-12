@@ -81,7 +81,7 @@ export default function PrivacyPage() {
           <p className="mt-2 text-xs text-slate-400">
             {isEn ? "Last updated: July 2026" : "آخرین به‌روزرسانی: تیر ۱۴۰۵"}
           </p>
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold leading-8 text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">
+          <div className="mt-5 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-4 text-sm font-bold leading-8 text-[var(--color-info-text)] dark:border-teal-800/50 dark:bg-teal-950/30 dark:text-teal-100">
             {isEn
               ? "Before you register, submit a request, enter a phone number, upload a file, use voice input, or enable notifications, please read this policy carefully."
               : "پیش از ثبت‌نام، ارسال درخواست، وارد کردن شماره تماس، آپلود فایل، استفاده از ورودی صوتی یا فعال‌سازی اعلان‌ها، لطفاً این سیاست را با دقت مطالعه کنید."}
@@ -97,10 +97,10 @@ export default function PrivacyPage() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3 text-sm font-bold">
-            <Link href="/customer-register" className="text-blue-700 transition hover:text-blue-900 dark:text-blue-300">
+            <Link href="/customer-register" className="text-[var(--color-info-text)] transition hover:text-[var(--color-info-text)] dark:text-teal-300">
               {isEn ? "Customer registration" : "ثبت‌نام مشتری"}
             </Link>
-            <Link href="/customer-request" className="text-blue-700 transition hover:text-blue-900 dark:text-blue-300">
+            <Link href="/customer-request" className="text-[var(--color-info-text)] transition hover:text-[var(--color-info-text)] dark:text-teal-300">
               {isEn ? "Submit request" : "ثبت درخواست"}
             </Link>
           </div>

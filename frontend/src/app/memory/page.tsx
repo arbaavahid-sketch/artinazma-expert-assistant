@@ -108,13 +108,13 @@ export default function MemoryPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 outline-none focus:border-blue-600"
+              className="flex-1 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 outline-none focus:border-[var(--brand-accent)]"
               placeholder={isEn ? "Example: sulfur, catalyst, baseline, mercury..." : "مثلاً: سولفور، کاتالیست، baseline، جیوه..."}
             />
 
             <button
               onClick={search}
-              className="rounded-2xl bg-blue-700 px-6 py-4 font-medium text-white"
+              className="rounded-2xl bg-[var(--brand-fill)] px-6 py-4 font-medium text-white"
             >
               {isEn ? "Search" : "جست‌وجو"}
             </button>

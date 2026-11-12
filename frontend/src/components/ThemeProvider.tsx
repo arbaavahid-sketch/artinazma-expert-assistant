@@ -34,7 +34,7 @@ export function useTheme() {
 }
 
 const THEME_COLORS: Record<Theme, string> = {
-  light: "#1d4ed8",
+  light: "#0d625a",
   dark: "#0d1117",
 };
 

@@ -67,7 +67,7 @@ export default function LiveStats() {
     answered: isEn ? "Answered questions" : "سوالات پاسخ‌داده‌شده",
   }), [isEn]);
   const [stats, setStats] = useState<Stat[]>([
-    { value: null, prefix: "", suffix: "", label: labels.online, color: "text-blue-700" },
+    { value: null, prefix: "", suffix: "", label: labels.online, color: "text-[var(--color-info-text)]" },
     { value: null, prefix: "", suffix: "%", label: labels.satisfaction, color: "text-emerald-700" },
     { value: null, prefix: "", suffix: "", label: labels.knowledge, color: "text-purple-700" },
     { value: null, prefix: "", suffix: "", label: labels.answered, color: "text-amber-700" },
@@ -91,7 +91,7 @@ export default function LiveStats() {
             prefix: "",
             suffix: "/7",
             label: labels.online,
-            color: "text-blue-700",
+            color: "text-[var(--color-info-text)]",
           },
           {
             value: questions?.satisfaction_pct ?? 95,
@@ -118,7 +118,7 @@ export default function LiveStats() {
       } catch {
         // fallback to static values
         setStats([
-          { value: 24,  prefix: "", suffix: "/7", label: labels.online,       color: "text-blue-700"    },
+          { value: 24,  prefix: "", suffix: "/7", label: labels.online,       color: "text-[var(--color-info-text)]"    },
           { value: 95,  prefix: "", suffix: "%",  label: labels.satisfaction, color: "text-emerald-700" },
           { value: 200, prefix: "+",suffix: "",   label: labels.knowledge,    color: "text-purple-700"  },
           { value: 0,   prefix: "", suffix: "",   label: labels.answered,     color: "text-amber-700"   },

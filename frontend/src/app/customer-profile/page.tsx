@@ -180,7 +180,7 @@ export default function CustomerProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-[var(--brand-fill)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -193,12 +193,12 @@ export default function CustomerProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <User className="w-6 h-6 text-blue-600" />
+            <User className="w-6 h-6 text-[var(--color-info-text)]" />
             {isEn ? "User Profile" : "پروفایل کاربری"}
           </h1>
           <button
             onClick={() => router.push("/customer-dashboard")}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-[var(--color-info-text)] transition-colors"
           >
             {isEn ? "Back" : "بازگشت"}
             <ArrowRight className="w-4 h-4" />
@@ -292,7 +292,7 @@ export default function CustomerProfilePage() {
         {/* Change Password Card */}
         <div className="ui-card rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
-            <Lock className="w-5 h-5 text-blue-600" />
+            <Lock className="w-5 h-5 text-[var(--color-info-text)]" />
             {isEn ? "Change Password" : "تغییر رمز عبور"}
           </h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
@@ -365,13 +365,13 @@ export default function CustomerProfilePage() {
         {isSupported && (
           <div className="ui-card rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
-              <Bell className="w-5 h-5 text-blue-600" />
+              <Bell className="w-5 h-5 text-[var(--color-info-text)]" />
               {isEn ? "Push Notifications" : "اعلان‌های Push"}
             </h2>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
                 {isSubscribed ? (
-                  <Bell className="w-5 h-5 text-blue-500" />
+                  <Bell className="w-5 h-5 text-[var(--color-info-text)]" />
                 ) : (
                   <BellOff className="w-5 h-5 text-gray-400" />
                 )}
@@ -390,7 +390,7 @@ export default function CustomerProfilePage() {
                 onClick={isSubscribed ? unsubscribe : subscribe}
                 disabled={pushLoading || permission === "denied"}
                 className={`relative h-7 w-14 shrink-0 overflow-hidden rounded-full transition-colors duration-300 disabled:opacity-50 ${
-                  isSubscribed ? "bg-blue-600" : "bg-gray-300"
+                  isSubscribed ? "bg-[var(--brand-fill)]" : "bg-gray-300"
                 }`}
               >
                 <span
@@ -411,7 +411,7 @@ export default function CustomerProfilePage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
               {darkMode ? (
-                <Moon className="w-5 h-5 text-indigo-400" />
+                <Moon className="w-5 h-5 text-[var(--color-info-text)]" />
               ) : (
                 <Sun className="w-5 h-5 text-amber-500" />
               )}
@@ -427,7 +427,7 @@ export default function CustomerProfilePage() {
             <button
               onClick={toggleTheme}
               className={`relative h-7 w-14 shrink-0 overflow-hidden rounded-full transition-colors duration-300 ${
-                darkMode ? "bg-indigo-600" : "bg-gray-300"
+                darkMode ? "bg-[var(--brand-fill)]" : "bg-gray-300"
               }`}
             >
               <span
@@ -442,7 +442,7 @@ export default function CustomerProfilePage() {
         {/* Language Settings Card */}
         <div className="ui-card rounded-2xl p-6">
           <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
-            <Languages className="w-5 h-5 text-blue-600" />
+            <Languages className="w-5 h-5 text-[var(--color-info-text)]" />
             {isEn ? "Language" : "زبان / Language"}
           </h2>
           <div className="flex items-center justify-between">
@@ -462,7 +462,7 @@ export default function CustomerProfilePage() {
                 onClick={() => setLocale("fa")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   locale === "fa"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-[var(--brand-fill)] text-white"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
               >
@@ -472,7 +472,7 @@ export default function CustomerProfilePage() {
                 onClick={() => setLocale("en")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   locale === "en"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-[var(--brand-fill)] text-white"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
               >

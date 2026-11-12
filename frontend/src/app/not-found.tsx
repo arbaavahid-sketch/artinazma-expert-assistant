@@ -16,7 +16,7 @@ export default function NotFound() {
       className="brand-shell-bg flex min-h-full flex-col items-center justify-center px-6 py-20 text-center"
       dir={dir}
     >
-      <div className="text-7xl font-black text-blue-600 dark:text-blue-400">404</div>
+      <div className="text-7xl font-black text-[var(--color-info-text)] dark:text-teal-300">404</div>
 
       <h1 className="mt-4 text-2xl font-black text-slate-900 dark:text-slate-100">
         {isEn ? "Page not found" : "صفحه پیدا نشد"}

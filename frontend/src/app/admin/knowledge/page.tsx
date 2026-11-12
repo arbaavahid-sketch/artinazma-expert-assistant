@@ -726,7 +726,7 @@ export default function KnowledgePage() {
           <button
             onClick={syncGoogleDrive}
             disabled={syncingDrive}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
           >
             <RefreshCw
               size={18}
@@ -832,7 +832,7 @@ export default function KnowledgePage() {
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-soft)]">
                     <div
-                      className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                      className="h-full rounded-full bg-[var(--brand-fill)] transition-all duration-500"
                       style={{ width: `${item.percent}%` }}
                     />
                   </div>
@@ -900,7 +900,7 @@ export default function KnowledgePage() {
                   key={String(status)}
                   onClick={() => setDriveSyncFilter(status as "all" | "added" | "unchanged" | "skipped")}
                   className={`rounded-2xl border p-4 text-right transition hover:shadow-sm ${classes} ${
-                    driveSyncFilter === status ? "ring-2 ring-offset-2 ring-blue-200" : ""
+                    driveSyncFilter === status ? "ring-2 ring-offset-2 ring-[var(--brand-focus-ring)]" : ""
                   }`}
                 >
                   <div className="text-xs font-bold">{label}</div>
@@ -1121,7 +1121,7 @@ export default function KnowledgePage() {
 
             <div className="rounded-[32px] border border-[var(--color-info-border)] bg-gradient-to-b from-[var(--color-info-bg)] to-[var(--surface)] p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-fill)] text-white shadow-sm">
                   <TestTube2 size={22} />
                 </div>
                 <div>
@@ -1138,7 +1138,7 @@ export default function KnowledgePage() {
                 value={testQuery}
                 onChange={(e) => setTestQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) testKnowledgeSearch(); }}
-                className="h-24 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm leading-7 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-24 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm leading-7 outline-none transition focus:border-[var(--brand-accent)] focus:ring-2 focus:ring-[var(--brand-focus-ring)]"
                 placeholder={isEn ? "Example: ASTM D 1151 or sulfur analysis in LPG" : "مثلاً: ASTM D 1151 یا آنالیز سولفور در LPG"}
               />
 
@@ -1150,7 +1150,7 @@ export default function KnowledgePage() {
                   <select
                     value={searchCategory}
                     onChange={(e) => setSearchCategory(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2 text-xs outline-none transition focus:border-blue-500"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2 text-xs outline-none transition focus:border-[var(--brand-accent)]"
                   >
                     <option value="all">{isEn ? "All categories" : "همه دسته‌ها"}</option>
                     {(stats?.categories || []).map((cat) => (
@@ -1174,7 +1174,7 @@ export default function KnowledgePage() {
               <button
                 onClick={testKnowledgeSearch}
                 disabled={testingSearch || !testQuery.trim()}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3.5 font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3.5 font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
               >
                 {testingSearch ? (
                   <><RefreshCw size={16} className="animate-spin" /> {isEn ? "Searching..." : "در حال جست‌وجو..."}</>
@@ -1221,7 +1221,7 @@ export default function KnowledgePage() {
                     const normalizedBestScore = normalizeSearchScore(group.bestScore);
                     const scoreColor =
                       normalizedBestScore >= 70 ? "bg-emerald-500" :
-                      normalizedBestScore >= 40 ? "bg-blue-500" :
+                      normalizedBestScore >= 40 ? "bg-[var(--brand-fill)]" :
                       normalizedBestScore >= 20 ? "bg-amber-500" : "bg-slate-400";
                     const scorePct = Math.min(100, Math.round(normalizedBestScore));
                     return (
@@ -1846,7 +1846,7 @@ export default function KnowledgePage() {
                             <button
                               onClick={() => saveChunk(chunk)}
                               disabled={savingChunk}
-                              className="flex items-center gap-1 rounded-xl bg-blue-700 px-2 py-1 text-xs font-bold text-white hover:bg-blue-800 transition disabled:opacity-50"
+                              className="flex items-center gap-1 rounded-xl bg-[var(--brand-fill)] px-2 py-1 text-xs font-bold text-white hover:bg-[var(--brand-fill-hover)] transition disabled:opacity-50"
                             >
                               <Save size={12} /> {savingChunk ? "..." : (isEn ? "Save" : "ذخیره")}
                             </button>
@@ -1864,7 +1864,7 @@ export default function KnowledgePage() {
                           value={editingContent}
                           onChange={(e) => setEditingContent(e.target.value)}
                           rows={8}
-                          className="w-full resize-y rounded-xl border border-[var(--color-info-border)] bg-[var(--surface)] p-3 text-xs leading-7 text-[var(--text-muted)] outline-none focus:border-blue-400"
+                          className="w-full resize-y rounded-xl border border-[var(--color-info-border)] bg-[var(--surface)] p-3 text-xs leading-7 text-[var(--text-muted)] outline-none focus:border-[var(--brand-accent)]"
                         />
                       ) : (
                         <p className="whitespace-pre-wrap break-words text-xs leading-7 text-[var(--text-muted)]">
