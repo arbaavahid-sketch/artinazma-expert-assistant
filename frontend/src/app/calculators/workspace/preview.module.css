@@ -16,7 +16,7 @@
 .preview, .status { font-size:11px; padding:6px 11px; border:1px solid var(--border-soft); border-radius:7px; color:var(--foreground); background:var(--surface); }
 .navigation { display:flex; gap:4px; padding:6px; background:var(--surface); border:1px solid var(--border-soft); border-radius:12px; margin-bottom:24px; overflow-x:auto; scrollbar-width:thin; }
 .navigation button, .navigation a { display:flex; align-items:center; justify-content:center; gap:8px; flex:1; white-space:nowrap; min-height:46px; border:0; border-bottom:2px solid transparent; border-radius:0; padding:10px 12px; font-size:12px; font-weight:600; color:var(--lab-muted); cursor:pointer; transition:background .15s,color .15s; }
-.navigation [aria-current='page'] { background:#17394c; color:#fff; border-bottom-color:transparent; border-radius:8px; font-weight:750; }
+.navigation [aria-current='page'] { background:var(--brand-fill); color:#fff; border-bottom-color:transparent; border-radius:8px; font-weight:750; }
 .navigation button:hover, .navigation a:hover { background:var(--surface-soft); color:var(--foreground); }
 .hero { position:relative; display:grid; grid-template-columns:1.1fr 1fr; align-items:center; gap:24px; overflow:hidden; border:1px solid #24465f; border-radius:20px; background:linear-gradient(115deg,#102b40,#173e56); padding:32px; color:#fff; }
 .heroCopy { position:relative; z-index:1; }

@@ -210,7 +210,7 @@ export default function CustomerLoginPage() {
             <div className="ui-card w-full max-w-md rounded-[32px] p-6 text-center shadow-sm">
               <div className="mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-[34px] bg-[var(--surface-soft)] p-3">
                 <img
-                  src="/images/artin-avatar.png"
+                  src="/images/artin-avatar.webp"
                   alt="Artin"
                   className="h-full w-full rounded-full object-cover"
                 />

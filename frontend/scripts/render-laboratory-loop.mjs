@@ -3,7 +3,7 @@
 import sharp from 'sharp';
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-const source=new URL('../public/images/laboratory-instrumentation-hero-v1.png',import.meta.url);
+const source=new URL('../design-sources/laboratory-instrumentation-hero-v1.png',import.meta.url);
 const output=new URL('../public/images/laboratory-instrumentation-loop-v3.webp',import.meta.url);
 const image=(await readFile(source)).toString('base64');
 const frames=[];

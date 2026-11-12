@@ -11,7 +11,7 @@
 - [ ] تعمیم الگوی `aria-label` به دکمه‌های آیکونی بقیه اپ: `AppNav`, `ArtinShell` (دکمه‌های سایدبار), `Toast` (بستن), `UploadModal`, `AdminGlobalSearch`
 - [ ] افزودن `aria-hidden="true"` به همه آیکون‌های تزئینی داخل دکمه‌های دارای label
 - [ ] افزودن skip-to-content link در `layout.tsx`
-- [ ] مهاجرت آواتارهای استاتیک (`/images/artin-avatar.png`) به `next/image` در customer-login، customer-register، ArtinShell (تصاویر داینامیک/blob دست‌نخورده بمانند)
+- [ ] مهاجرت آواتارهای استاتیک (`/images/artin-avatar.webp`) به `next/image` در customer-login، customer-register، ArtinShell (تصاویر داینامیک/blob دست‌نخورده بمانند)
 
 ## اولویت ۲ — شکستن فایل‌های غول‌پیکر (بیشترین تأثیر بر نگهداری)
 

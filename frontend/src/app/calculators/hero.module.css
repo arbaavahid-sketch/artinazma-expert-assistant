@@ -51,26 +51,26 @@
   display: block;
   border: 1px solid #a5f3fc55;
   border-radius: 8px;
-  background: #173863;
+  background: #12423d;
   padding: 4px 6px;
   color: #ecfeff;
   font: inherit;
   font-size: 10px;
   font-weight: 600;
   line-height: 1.3;
-  box-shadow: 0 3px 12px #071a38a0;
+  box-shadow: 0 3px 12px #04201da0;
   animation: orbit var(--duration) linear infinite reverse;
 }
 
-.core:hover, .label:hover { border-color: #a5f3fc; background: #28527a; }
+.core:hover, .label:hover { border-color: #a5f3fc; background: #1c5f57; }
 .core:focus-visible, .label:focus-visible { outline: 2px solid #a5f3fc; outline-offset: 3px; }
-.label[aria-pressed='true'] { border-color: #a5f3fc; background: #24546b; }
+.label[aria-pressed='true'] { border-color: #a5f3fc; background: #1f6a60; }
 .scene:hover .orbit, .scene:hover .label,
 .scene:focus-within .orbit, .scene:focus-within .label,
 .scene:active .orbit, .scene:active .label { animation-play-state: paused; }
 
 .inner .label {
-  background: #30386a;
+  background: #234a5c;
   animation-direction: normal;
 }
 

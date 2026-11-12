@@ -129,3 +129,18 @@
   .tileGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tileGrid > .featureTile { grid-column: span 2; }
 }
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--work-line);
+  border-radius: .8rem;
+  background: var(--surface-soft);
+  color: var(--work-ink);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.brandLink:hover { border-color: var(--work-focus); color: var(--work-accent); }

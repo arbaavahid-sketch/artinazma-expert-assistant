@@ -44,14 +44,14 @@ function StatCard({ stat, delay, numberLocale }: { stat: Stat; delay: number; nu
   }, [delay]);
 
   return (
-    <div className={`rounded-2xl border border-slate-100 bg-white/95 px-3 py-3 shadow-sm transition-all duration-500 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
-      <div className={`text-xl font-black ${stat.color}`}>
+    <div className={`rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-3 transition-all duration-500 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
+      <div className={`text-xl font-black tabular-nums ${stat.color}`}>
         {stat.value === null
           ? "—"
           : `${stat.prefix}${count.toLocaleString(numberLocale)}${stat.suffix}`
         }
       </div>
-      <div className="mt-0.5 text-[11px] font-bold text-slate-500">{stat.label}</div>
+      <div className="mt-0.5 text-[11px] font-bold text-[var(--text-subtle)]">{stat.label}</div>
     </div>
   );
 }
@@ -67,10 +67,10 @@ export default function LiveStats() {
     answered: isEn ? "Answered questions" : "سوالات پاسخ‌داده‌شده",
   }), [isEn]);
   const [stats, setStats] = useState<Stat[]>([
-    { value: null, prefix: "", suffix: "", label: labels.online, color: "text-[var(--color-info-text)]" },
-    { value: null, prefix: "", suffix: "%", label: labels.satisfaction, color: "text-emerald-700" },
-    { value: null, prefix: "", suffix: "", label: labels.knowledge, color: "text-purple-700" },
-    { value: null, prefix: "", suffix: "", label: labels.answered, color: "text-amber-700" },
+    { value: null, prefix: "", suffix: "", label: labels.online, color: "text-[var(--brand-accent)]" },
+    { value: null, prefix: "", suffix: "%", label: labels.satisfaction, color: "text-[var(--brand-accent)]" },
+    { value: null, prefix: "", suffix: "", label: labels.knowledge, color: "text-[var(--brand-accent)]" },
+    { value: null, prefix: "", suffix: "", label: labels.answered, color: "text-[var(--brand-accent)]" },
   ]);
 
   useEffect(() => {
@@ -91,37 +91,37 @@ export default function LiveStats() {
             prefix: "",
             suffix: "/7",
             label: labels.online,
-            color: "text-[var(--color-info-text)]",
+            color: "text-[var(--brand-accent)]",
           },
           {
             value: questions?.satisfaction_pct ?? 95,
             prefix: "",
             suffix: "%",
             label: labels.satisfaction,
-            color: "text-emerald-700",
+            color: "text-[var(--brand-accent)]",
           },
           {
             value: knowledge?.total_chunks ?? 200,
             prefix: "+",
             suffix: "",
             label: labels.knowledge,
-            color: "text-purple-700",
+            color: "text-[var(--brand-accent)]",
           },
           {
             value: questions?.total_questions ?? 0,
             prefix: "",
             suffix: "",
             label: labels.answered,
-            color: "text-amber-700",
+            color: "text-[var(--brand-accent)]",
           },
         ]);
       } catch {
         // fallback to static values
         setStats([
-          { value: 24,  prefix: "", suffix: "/7", label: labels.online,       color: "text-[var(--color-info-text)]"    },
-          { value: 95,  prefix: "", suffix: "%",  label: labels.satisfaction, color: "text-emerald-700" },
-          { value: 200, prefix: "+",suffix: "",   label: labels.knowledge,    color: "text-purple-700"  },
-          { value: 0,   prefix: "", suffix: "",   label: labels.answered,     color: "text-amber-700"   },
+          { value: 24,  prefix: "", suffix: "/7", label: labels.online,       color: "text-[var(--brand-accent)]"    },
+          { value: 95,  prefix: "", suffix: "%",  label: labels.satisfaction, color: "text-[var(--brand-accent)]" },
+          { value: 200, prefix: "+",suffix: "",   label: labels.knowledge,    color: "text-[var(--brand-accent)]"  },
+          { value: 0,   prefix: "", suffix: "",   label: labels.answered,     color: "text-[var(--brand-accent)]"   },
         ]);
       }
     }

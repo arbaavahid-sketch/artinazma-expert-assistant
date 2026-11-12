@@ -1,5 +1,5 @@
 // ArtinAzma PWA Service Worker v7
-const CACHE_VERSION = "artinazma-v7";
+const CACHE_VERSION = "artinazma-v8";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -13,7 +13,7 @@ const PRECACHE_URLS = [
   "/icons/pwa-maskable-512.png",
   "/icons/apple-touch-icon.png",
   "/images/artinazma-logo.png",
-  "/images/artin-avatar.png"
+  "/images/artin-avatar.webp"
 ];
 
 const DYNAMIC_CACHE_LIMIT = 50;

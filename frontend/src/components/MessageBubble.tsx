@@ -410,7 +410,7 @@ function MessageBubble({
       >
         {!isUser && (
           <img
-            src="/images/artin-avatar.png"
+            src="/images/artin-avatar.webp"
             alt={isEn ? "Artin" : "آرتین"}
             className="mt-1 hidden h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover p-1 shadow-sm sm:block"
           />

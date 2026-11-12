@@ -61,7 +61,7 @@ export default function Home() {
 
           <aside className={`${styles.panel} p-4`} aria-label={isEn ? "Artin activity" : "فعالیت آرتین"}>
             <div className="mb-3 flex items-center gap-3">
-              <Image src="/images/artin-avatar-hero.png" alt="" width={52} height={52} className="rounded-xl" />
+              <Image src="/images/artin-avatar.webp" alt="" width={52} height={52} className="rounded-xl" />
               <strong>{isEn ? "Artin at a glance" : "آرتین در یک نگاه"}</strong>
             </div>
             <LiveStats />
@@ -83,10 +83,10 @@ export default function Home() {
         </section>
 
         <section className={`${styles.panel} p-4`} aria-labelledby="home-brands">
-          <h2 id="home-brands" className="mb-2 text-sm">{isEn ? "ArtinAzma Mehr brands" : "برندهای آرتین آزما مهر"}</h2>
-          <div className="flex flex-wrap gap-x-4 gap-y-1" dir="ltr">
+          <h2 id="home-brands" className="mb-3 text-lg">{isEn ? "ArtinAzma Mehr brands" : "برندهای آرتین آزما مهر"}</h2>
+          <div className="flex flex-wrap gap-2" dir="ltr">
             {brands.map(({ name, href }) => (
-              <a key={name} href={href} target="_blank" rel="noopener noreferrer" className={`${styles.accent} inline-flex min-h-11 items-center text-xs font-semibold hover:underline`}>
+              <a key={name} href={href} target="_blank" rel="noopener noreferrer" className={`${styles.brandLink} artin-motion-action`}>
                 {name}
               </a>
             ))}

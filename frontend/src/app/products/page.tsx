@@ -122,7 +122,7 @@ export default function ProductsPage() {
                   <div className="flex items-center gap-2">
                     <Link
                       href={quoteHref}
-                      className="ui-btn ui-btn-primary flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 text-xs font-black"
+                      className="ui-btn ui-btn-primary flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl px-2.5 py-2.5 text-xs font-black"
                     >
                       <Send size={13} aria-hidden="true" />
                       {isEn ? "Request a quote" : "استعلام قیمت"}
@@ -131,7 +131,7 @@ export default function ProductsPage() {
                       href={product.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="ui-btn ui-btn-ghost flex shrink-0 items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 text-xs font-bold"
+                      className="ui-btn ui-btn-ghost flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl px-2.5 py-2.5 text-xs font-bold"
                     >
                       {isEn ? "View" : "مشاهده"}
                       <ExternalLink size={12} aria-hidden="true" />
