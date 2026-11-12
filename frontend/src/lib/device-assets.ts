@@ -22,7 +22,7 @@ export const deviceAssets: DeviceAsset[] = [
     id: "ra-915m",
     title: "RA-915M Mercury Analyzer",
     subtitle: "آنالایزر جیوه مناسب آب، خاک، گاز و نمونه‌های صنعتی",
-    image: "/images/devices/ra-915m.jpg",
+    image: "/product-images/ra-915m-mercury-measuring-device.jpg",
     productUrl: "https://artinazma.net/product/ra-915m-mercury-measuring-device/",
     imageSlug: "ra-915m-mercury-measuring-device",
     keywords: [
@@ -37,7 +37,7 @@ export const deviceAssets: DeviceAsset[] = [
     id: "mga-1000",
     title: "MGA-1000 Atomic Absorption Spectrometer",
     subtitle: "دستگاه جذب اتمی برای آنالیز فلزات و عناصر",
-    image: "/images/devices/mga-1000.jpg",
+    image: "/product-images/mga-1000-atomic-absorption-spectrometer.jpg",
     productUrl: "https://artinazma.net/product/mga-1000-atomic-absorption-spectrometer/",
     imageSlug: "mga-1000-atomic-absorption-spectrometer",
     keywords: [
@@ -58,7 +58,7 @@ export const deviceAssets: DeviceAsset[] = [
     id: "gc-analyzer",
     title: "GC / Chromatography Analyzer",
     subtitle: "سیستم کروماتوگرافی برای GC، FID، TCD و آنالیز ترکیبات",
-    image: "/images/devices/gc-analyzer.jpg",
+    image: "/product-images/gas-chromatograph.jpg",
     productUrl: "https://artinazma.net/product/gas-chromatograph/",
     imageSlug: "gas-chromatograph",
     keywords: [
@@ -78,7 +78,7 @@ export const deviceAssets: DeviceAsset[] = [
     id: "sulfur-analyzer",
     title: "Sulfur Analyzer",
     subtitle: "آنالایزر سولفور، گوگرد، H2S و مرکاپتان در سوخت و گاز",
-    image: "/images/devices/sulfur-analyzer.jpg",
+    image: "/product-images/sulfur-and-nitrogen-measuring-device-model-meta.jpg",
     productUrl: "https://artinazma.net/product/sulfur-and-nitrogen-measuring-device-model-meta/",
     imageSlug: "sulfur-and-nitrogen-measuring-device-model-meta",
     keywords: [
@@ -97,7 +97,7 @@ export const deviceAssets: DeviceAsset[] = [
     id: "catalyst-reactor",
     title: "Catalyst Test Reactor",
     subtitle: "سیستم تست کاتالیست، راکتور آزمایشگاهی و ارزیابی عملکرد",
-    image: "/images/devices/catalyst-reactor.jpg",
+    image: "/product-images/cr-35-reforming-catalyst.jpg",
     productUrl: "https://artinazma.net/process-catalysts/",
     imageSlug: "cr-35-reforming-catalyst",
     keywords: [
