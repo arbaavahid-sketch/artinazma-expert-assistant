@@ -529,6 +529,8 @@ ${cleanAnswer}`,
                 { ...finalAssistantMsg, content: visibleAccumulatedText },
               ]);
             } else if (event.type === "done") {
+              // The server may send a corrected full text (e.g. unsupported standard edition years removed).
+              if (typeof event.final_text === "string") accumulatedText = event.final_text;
               const finalContent = cleanAssistantOutput(accumulatedText);
               const relatedDevices = shouldShowRelatedDeviceCards(visibleMessage, domain)
                 ? findRelatedDevices(finalMessage, finalContent, 2)

@@ -232,6 +232,13 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
             err_msg = f"Server error: {type(exc).__name__}"
             await _send_safe(ws, {"type": "error", "request_id": request_id, "message": err_msg})
             full_answer = err_msg
+            final_text = None
+        else:
+            from edition_years import strip_unsupported_editions
+
+            cleaned = strip_unsupported_editions(full_answer, context)
+            final_text = cleaned if cleaned != full_answer else None
+            full_answer = cleaned
 
         question_id = None
         memory_id = None
@@ -262,6 +269,7 @@ async def _handle_chat_message(ws: WebSocket, msg: dict, customer_id: Optional[s
             "request_id": request_id,
             "question_id": question_id,
             "memory_id": memory_id,
+            **({"final_text": final_text} if final_text is not None else {}),
         })
 
     except Exception as e:

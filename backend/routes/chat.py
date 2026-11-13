@@ -40,6 +40,7 @@ from local_search_service import local_search_knowledge_base, build_local_answer
 from knowledge_service import search_knowledge_base
 from site_resource_service import find_artinazma_resources
 from catalog_retrieval import CATALOG_INSTRUCTIONS, find_catalog_docs, is_device_request, merge_catalog_docs
+from edition_years import strip_unsupported_editions
 from web_search_service import (
     search_web_sources,
     build_web_context,
@@ -761,6 +762,9 @@ def chat(request: Request, body: ChatRequest = Depends(authorize_chat)):
 
     # لینک رسمی ASTM را قطعی الحاق کن (به مدل تکیه نکن — گاهی نادیده می‌گیرد).
     answer = f"{answer}{astm_link_tail(body.message, answer)}"
+    # Edition years (D323-26) only stay when the sources or the answer's own links show them.
+    if answer_mode == "ai":
+        answer = strip_unsupported_editions(answer, p["context"])
 
     _response_time_ms = int((_time.monotonic() - _t0) * 1000)
     ai_response_duration.observe(_response_time_ms / 1000)
@@ -938,6 +942,15 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
                 full_answer += _astm_tail
                 yield f"data: {_json_local.dumps({'type': 'chunk', 'text': _astm_tail}, ensure_ascii=False)}\n\n"
 
+        # Edition years the sources do not show are removed from the whole answer.
+        # The chunks are already on screen, so the corrected text rides on "done"
+        # for the page to swap in; it is also what gets saved and cached.
+        final_text = None
+        if answer_mode == "ai":
+            _cleaned = strip_unsupported_editions(full_answer, context)
+            if _cleaned != full_answer:
+                full_answer = final_text = _cleaned
+
         question_id = None
         try:
             question_id = save_expert_question(
@@ -973,6 +986,8 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
             done = {"type": "done", "question_id": question_id, "memory_id": memory_id}
         except Exception:
             done = {"type": "done", "question_id": None, "memory_id": None}
+        if final_text is not None:
+            done["final_text"] = final_text
 
         if _use_cache and full_answer and "خطا" not in full_answer:
             _response_cache.set(body.message, detected_domain, {
