@@ -9,7 +9,7 @@ on:
 jobs:
   security:
     name: Security checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
   # ── Backend ───────────────────────────────────────────────────────────────────
   backend:
     name: Backend (lint + test)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -97,7 +97,7 @@ jobs:
   # ── Frontend ──────────────────────────────────────────────────────────────────
   frontend:
     name: Frontend (typecheck + lint + test + e2e + build)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -143,7 +143,7 @@ jobs:
   # ── Docker build check ────────────────────────────────────────────────────────
   docker:
     name: Docker compose smoke
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [security, backend, frontend]   # only build if checks pass
 
