@@ -108,7 +108,7 @@ const adminItemDefs: SidebarItemDef[] = [
 function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
   const Icon = collapsed ? PanelRightOpen : PanelRightClose;
 
-  return <Icon size={21} strokeWidth={1.8} className="text-slate-700 dark:text-slate-300" />;
+  return <Icon size={21} strokeWidth={1.8} className="text-slate-700 dark:text-[var(--text-muted)]" />;
 }
 
 function normalizeConversationSearch(value: string) {
@@ -404,7 +404,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
       <aside
         data-app-sidebar
         data-assistant-sidebar={pathname === "/assistant" ? "true" : undefined}
-        className={`absolute inset-y-0 z-40 flex-col border-[var(--border-soft)] bg-[var(--surface)] shadow-xl shadow-slate-950/10 transition-all duration-300 md:shadow-none ${
+        className={`absolute inset-y-0 z-40 flex-col border-[var(--border-soft)] bg-[var(--surface)] shadow-xl shadow-slate-950/10 transition-[width,transform,translate] duration-300 md:shadow-none ${
           isRtl ? "right-0 border-l" : "left-0 border-r"
         } ${
           sidebarCollapsed ? "w-[88px]" : "w-[260px]"
@@ -414,13 +414,13 @@ export default function ArtinShell({ children }: ArtinShellProps) {
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(false)}
-              className={`absolute top-4 flex h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-white text-xl text-slate-700 dark:bg-slate-900 dark:text-slate-100 md:hidden ${isRtl ? "left-4" : "right-4"}`}
+              className={`absolute top-4 flex h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-white text-xl text-slate-700 dark:bg-[var(--surface)] dark:text-[var(--foreground)] md:hidden ${isRtl ? "left-4" : "right-4"}`}
               aria-label={isRtl ? "بستن نوار کناری" : "Close sidebar"}
             ><span aria-hidden="true">×</span></button>
 
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className={`absolute top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-[var(--color-info-bg)] dark:hover:bg-slate-800 md:flex ${
+              className={`absolute top-4 hidden h-9 w-9 items-center justify-center rounded-xl border border-[--border-soft] bg-[--surface] shadow-sm transition hover:bg-[var(--color-info-bg)] dark:hover:bg-[var(--surface-raised)] md:flex ${
                 isRtl ? "left-4" : "right-4"
               }`}
               title={sidebarCollapsed ? (isRtl ? "باز کردن منو" : "Open menu") : (isRtl ? "جمع کردن منو" : "Collapse menu")}
@@ -441,7 +441,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                   </div>
 
                   <div className="mt-2 text-center">
-                    <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    <div className="text-sm font-bold text-slate-900 dark:text-[var(--foreground)]">
                       {isRtl ? "دستیار هوشمند آرتین آزما" : "ArtinAzma Intelligent Assistant"}
                     </div>
                   </div>
@@ -467,7 +467,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
           <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-2">
             {!sidebarCollapsed && (
-              <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+              <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-[var(--text-subtle)]">
 {t("nav.home") ? (locale === "fa" ? "بخش‌ها" : "Sections") : "بخش‌ها"}
               </div>
             )}
@@ -507,7 +507,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
             {!sidebarCollapsed && customer && customerSessions.length > 0 && (
               <div className="mt-6">
-                <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-[var(--text-subtle)]">
                   {locale === "fa" ? "تاریخچهٔ گفتگوها" : "Conversation history"}
                 </div>
 
@@ -689,7 +689,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                   </div>
                 )}
                 {!sidebarCollapsed && (
-                  <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <div className="mb-2 px-3 text-xs font-bold text-slate-500 dark:text-[var(--text-subtle)]">
 {locale === "fa" ? "مدیریت" : "Administration"}
                   </div>
                 )}
@@ -716,15 +716,15 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                             sidebarCollapsed ? "justify-center px-2" : ""
                           } ${
                             isActive
-                              ? "bg-[--surface] font-bold text-purple-700 shadow-sm shadow-slate-200/20"
-                              : "text-slate-700 dark:text-slate-300 hover:bg-[--surface]"
+                              ? "bg-[--surface] font-bold text-[var(--color-info-text)] shadow-sm shadow-slate-200/20"
+                              : "text-slate-700 dark:text-[var(--text-muted)] hover:bg-[--surface]"
                           }`}
                         >
                           <span
                             className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${
                               isActive
-                                ? "bg-purple-50 dark:bg-purple-950 text-purple-700"
-                                : "bg-[--surface] text-slate-500 dark:text-slate-400 group-hover:text-purple-700"
+                                ? "bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
+                                : "bg-[--surface] text-slate-500 dark:text-[var(--text-subtle)] group-hover:text-[var(--color-info-text)]"
                             }`}
                           >
                             <item.Icon size={19} strokeWidth={1.9} />
@@ -776,15 +776,15 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 onClick={cycleTheme}
                 aria-label={`${isRtl ? "تم" : "Theme"}: ${themeName}`}
                 title={`${isRtl ? "تم" : "Theme"}: ${themeName}`}
-                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-white dark:hover:bg-slate-800 ${
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-white dark:hover:bg-[var(--surface-raised)] ${
                   sidebarCollapsed ? "justify-center px-2" : "w-full"
                 }`}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-[var(--surface-raised)] text-slate-500 dark:text-[var(--text-subtle)] shadow-sm">
                   <ThemeIcon size={19} strokeWidth={1.9} />
                 </span>
                 {!sidebarCollapsed && (
-                  <span className="text-slate-700 dark:text-slate-300">{themeName}</span>
+                  <span className="text-slate-700 dark:text-[var(--text-muted)]">{themeName}</span>
                 )}
               </button>
             </div>
@@ -795,11 +795,11 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                   onClick={exitNativeApp}
                   aria-label={isRtl ? "خروج از برنامه" : "Exit app"}
                   title={isRtl ? "خروج از برنامه" : "Exit app"}
-                  className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${
+                  className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 dark:text-[var(--text-muted)] dark:hover:bg-[var(--surface-raised)] ${
                     sidebarCollapsed ? "justify-center px-2" : "w-full"
                   }`}
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-300">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 shadow-sm dark:bg-[var(--surface-raised)] dark:text-[var(--text-muted)]">
                     <Power size={19} strokeWidth={1.9} />
                   </span>
                   {!sidebarCollapsed && (
@@ -811,10 +811,10 @@ export default function ArtinShell({ children }: ArtinShellProps) {
 
             {!sidebarCollapsed && (
               <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 px-4 text-[11px] text-slate-400">
-                <Link href="/privacy" className="transition hover:text-slate-600 dark:hover:text-slate-300">
+                <Link href="/privacy" className="transition hover:text-slate-600 dark:hover:text-[var(--text-muted)]">
                   {isRtl ? "حریم خصوصی" : "Privacy"}
                 </Link>
-                <Link href="/terms" className="transition hover:text-slate-600 dark:hover:text-slate-300">
+                <Link href="/terms" className="transition hover:text-slate-600 dark:hover:text-[var(--text-muted)]">
                   {isRtl ? "شرایط استفاده" : "Terms"}
                 </Link>
               </div>
@@ -826,14 +826,14 @@ export default function ArtinShell({ children }: ArtinShellProps) {
       <div className="flex h-full flex-col md:flex-row">
 
         {/* Mobile topbar — part of layout flow, never overlaps page content */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-2 md:hidden dark:bg-slate-900 dark:border-slate-800">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-2 md:hidden dark:bg-[var(--surface)] dark:border-[var(--border-soft)]">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{isRtl ? "آرتین آزما" : "ArtinAzma"}</span>
+            <span className="text-xs font-semibold text-slate-400 dark:text-[var(--text-subtle)]">{isRtl ? "آرتین آزما" : "ArtinAzma"}</span>
             <ServerStatus />
           </div>
           <button
             onClick={() => setMobileSidebarOpen(true)}
-            className="artin-motion-action flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+            className="artin-motion-action flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm hover:bg-slate-50 dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)] dark:hover:bg-[var(--surface-raised-2)]"
             aria-label={isRtl ? "باز کردن منو" : "Open menu"}
           >
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

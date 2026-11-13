@@ -118,7 +118,7 @@ export default function AdminPage() {
 
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
                   <ShieldCheck size={17} />
                   {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
                 </div>
@@ -172,7 +172,7 @@ export default function AdminPage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                 <Sparkles size={24} />
               </div>
 
@@ -202,7 +202,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 p-6 text-purple-950 dark:text-purple-300">
+          <div className="rounded-[32px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-6 text-[var(--color-info-text)]">
             <h2 className="text-xl font-black">
               {isEn ? "Management Note" : "نکته مدیریتی"}
             </h2>
@@ -215,7 +215,7 @@ export default function AdminPage() {
 
             <Link
               href="/admin/knowledge"
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-purple-800"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)]"
             >
               {isEn ? "Manage knowledge base" : "مدیریت بانک دانش"}
               <ArrowLeft size={16} className={arrowClass} />

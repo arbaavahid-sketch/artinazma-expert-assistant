@@ -394,7 +394,7 @@ function MessageBubble({
   const actionButtonClass =
     "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:h-8 sm:w-8";
   const menuActionClass =
-    "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-slate-700";
+    "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 dark:text-[var(--foreground)] dark:hover:bg-[var(--surface-raised-2)]";
 
   return (
     <div
@@ -646,8 +646,8 @@ function MessageBubble({
                   </button>
                 </Tooltip>
                 {showFeedbackMenu && !feedbackValue && (
-                  <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800">
-                    <p className="mb-1.5 px-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]">
+                    <p className="mb-1.5 px-2 text-[11px] font-bold text-slate-500 dark:text-[var(--text-subtle)]">
                       {isEn ? "What was wrong?" : "چه مشکلی داشت؟"}
                     </p>
                     {FEEDBACK_REASONS[locale].map((reason) => (
@@ -657,7 +657,7 @@ function MessageBubble({
                           onFeedback(item.question_id, "down", reason);
                           setShowFeedbackMenu(false);
                         }}
-                        className="block w-full rounded-xl px-3 py-1.5 text-right text-xs text-slate-700 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-950 dark:hover:text-red-400"
+                        className="block w-full rounded-xl px-3 py-1.5 text-right text-xs text-slate-700 transition hover:bg-red-50 hover:text-red-600 dark:text-[var(--text-muted)] dark:hover:bg-red-950 dark:hover:text-red-400"
                       >
                         {reason}
                       </button>
@@ -704,7 +704,7 @@ function MessageBubble({
                 </Tooltip>
                 {showShareMenu && (
                   <div
-                    className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+                    className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]"
                     role="menu"
                   >
                     <button
@@ -760,7 +760,7 @@ function MessageBubble({
                 </Tooltip>
                 {showActionsMenu && (
                   <div
-                    className="absolute bottom-full left-0 z-50 mb-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+                    className="absolute bottom-full left-0 z-50 mb-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]"
                     role="menu"
                   >
                     <button

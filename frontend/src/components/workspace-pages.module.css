@@ -15,8 +15,8 @@
 :global(.dark) .page {
   --work-ink: #eef7f4;
   --work-muted: #b3c9c3;
-  --work-line: #343e3b;
-  --work-paper: #1a2321;
+  --work-line: var(--border-soft);
+  --work-paper: var(--surface);
   --work-accent: #8fd9c9;
   --work-tint: #1d302c;
   --work-focus: #8fd9c9;

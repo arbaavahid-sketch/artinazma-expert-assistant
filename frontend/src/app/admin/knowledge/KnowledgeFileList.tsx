@@ -141,14 +141,14 @@ export default function KnowledgeFileList({
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     placeholder={isEn ? "Search by file name, title, or category..." : "جست‌وجو بر اساس نام فایل، عنوان یا دسته‌بندی..."}
-                    className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] py-4 pl-4 pr-11 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] py-4 pl-4 pr-11 text-sm outline-none transition focus:border-[var(--color-info-border)]"
                   />
                 </div>
 
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
+                  className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-[var(--color-info-border)]"
                 >
                   <option value="all">{isEn ? "All categories" : "همه دسته‌بندی‌ها"}</option>
                   {(stats?.categories || []).map((category) => (
@@ -167,8 +167,8 @@ export default function KnowledgeFileList({
                       onClick={() => setSelectedCategory(category)}
                       className={`rounded-full px-3 py-2 text-xs font-bold transition ${
                         selectedCategory === category
-                          ? "bg-purple-700 text-white"
-                          : "bg-[var(--surface-soft)] text-[var(--text-muted)] hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300"
+                          ? "bg-[var(--brand-fill)] text-white"
+                          : "bg-[var(--surface-soft)] text-[var(--text-muted)] hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
                       }`}
                     >
                       {getCategoryLabel(category, locale)}
@@ -191,7 +191,7 @@ export default function KnowledgeFileList({
                           className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 shadow-sm"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
+                            <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                               <FileText size={18} />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -272,7 +272,7 @@ export default function KnowledgeFileList({
                           >
                             <td className="p-4 align-top">
                               <div className="flex items-start gap-3">
-                                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
+                                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                                   <FileText size={18} />
                                 </div>
 

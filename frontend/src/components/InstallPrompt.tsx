@@ -56,16 +56,16 @@ export default function InstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md animate-slideUp" dir={dir}>
-      <div className="flex items-center gap-3 rounded-[24px] border border-[var(--color-info-border)] bg-white/95 p-3 shadow-2xl shadow-slate-900/10 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+      <div className="flex items-center gap-3 rounded-[24px] border border-[var(--color-info-border)] bg-white/95 p-3 shadow-2xl shadow-slate-900/10 backdrop-blur dark:border-[var(--border-soft)] dark:bg-[var(--surface)]/95">
         <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[var(--brand-fill)] text-white shadow-lg shadow-teal-800/20">
           <img src="/icons/pwa-96.png" alt="" className="h-full w-full object-cover" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1.5 text-sm font-black text-slate-900 dark:text-slate-100">
+          <p className="flex items-center gap-1.5 text-sm font-black text-slate-900 dark:text-[var(--foreground)]">
             <Sparkles size={14} className="shrink-0 text-[var(--color-info-text)] dark:text-teal-300" />
             {isEn ? "Artin on your Home Screen" : "آرتین روی صفحهٔ اصلی"}
           </p>
-          <p className="mt-0.5 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-xs font-semibold leading-5 text-slate-500 dark:text-[var(--text-subtle)]">
             {isEn ? "Open faster from your home screen." : "دسترسی سریع‌تر از صفحه اصلی موبایل."}
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function InstallPrompt() {
         </button>}
         <button
           onClick={handleDismiss}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-[var(--surface-raised)]"
           aria-label={isEn ? "Close" : "بستن"}
         >
           <X className="w-4 h-4" />

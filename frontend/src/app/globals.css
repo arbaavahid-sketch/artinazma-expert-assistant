@@ -1,4 +1,10 @@
 @import "tailwindcss";
+
+/* Calmer weight scale: Tailwind font-black (900) renders as 800, so headings and
+   badges stop competing with each other. Vazir is a variable font, so 800 is exact. */
+@theme {
+  --font-weight-black: 800;
+}
 @font-face { font-family: Vazir; src: url("/fonts/Vazir-Variable.woff2") format("woff2"); font-style: normal; font-weight: 100 900; font-display: swap; }
 
 /* Enable class-based dark mode for Tailwind v4 */
@@ -33,6 +39,9 @@
   --border-soft: #dedbd1;
   /* Slightly cooler than the background so the sidebar reads as its own layer. */
   --sidebar-bg: #efede6;
+  /* Current page in the sidebar. */
+  --nav-active-bg: #dce9e2;
+  --nav-active-text: #14483e;
   --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.07);
   --shadow-card: 0 10px 28px rgba(15, 23, 42, 0.06);
   /* Info shares the brand hue so tinted chips, links and kickers read as one family. */
@@ -61,11 +70,13 @@
 
 /* ── Dark mode overrides ── */
 .dark {
-  --background: #0d1117;
-  --foreground: #e2e8f0;
-  --text-muted: #c2cbd6;
-  --text-subtle: #8b949e;
-  --brand-navy: #e2e8f0;
+  /* Neutral greys with a faint teal cast, so the dark theme shares the brand hue
+     instead of the previous blue-grey. */
+  --background: #0f1413;
+  --foreground: #e3ebe8;
+  --text-muted: #c3d0cc;
+  --text-subtle: #8fa29d;
+  --brand-navy: #e3ebe8;
   /* Lift the accent a step brighter so it stays vivid on the dark surface. */
   --brand-accent: #82d3c5;
   --brand-fill: #0f766e;
@@ -74,11 +85,16 @@
   --brand-gradient: linear-gradient(135deg, #14897c, #0f766e);
   --brand-gradient-hover: linear-gradient(135deg, #17998b, #14897c);
   --brand-gradient-accent: linear-gradient(180deg, #2bb3a3, #22d3ee);
-  --surface: #161b22;
-  --surface-soft: #0d1117;
+  --surface: #171e1c;
+  --surface-soft: #131917;
   /* Higher-contrast border so card edges don't disappear in the dark. */
-  --border-soft: #3d444d;
-  --sidebar-bg: #0d1117;
+  --border-soft: #33403c;
+  --sidebar-bg: #141a18;
+  --nav-active-bg: #263a34;
+  --nav-active-text: #bde9dd;
+  /* Steps above --surface for hovers, inputs and nested panels in dark mode. */
+  --surface-raised: #1f2826;
+  --surface-raised-2: #29342f;
   --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.35);
   --shadow-card: 0 10px 28px rgba(0, 0, 0, 0.28);
   --brand-focus-ring: rgba(130, 211, 197, 0.24);
@@ -178,12 +194,12 @@ small, .text-caption { font-size: var(--font-size-caption); line-height: 1.7; }
 
 .ui-card { border: 1px solid var(--border-soft); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card); }
 .ui-input { width: 100%; border-radius: 14px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--foreground); padding: 0.62rem 0.8rem; font-size: 0.93rem; line-height: 1.7; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
-.ui-input:hover { border-color: #94a3b8; }
+.ui-input:hover { border-color: var(--text-subtle); }
 .ui-input:focus { border-color: var(--brand-accent); box-shadow: 0 0 0 4px var(--brand-focus-ring); outline: none; }
 .ui-select, .ui-textarea { border-radius: 14px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--foreground); font-size: 0.93rem; line-height: 1.75; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
 .ui-select { width: 100%; padding: 0.7rem 0.8rem; }
 .ui-textarea { width: 100%; padding: 0.7rem 0.8rem; }
-.ui-select:hover, .ui-textarea:hover { border-color: #94a3b8; }
+.ui-select:hover, .ui-textarea:hover { border-color: var(--text-subtle); }
 .ui-select:focus, .ui-textarea:focus { border-color: var(--brand-accent); box-shadow: 0 0 0 4px var(--brand-focus-ring); outline: none; }
 
 .ui-btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid transparent; padding: 0.55rem 0.95rem; font-size: 0.88rem; font-weight: 800; line-height: 1.2; }
@@ -211,28 +227,28 @@ small, .text-caption { font-size: var(--font-size-caption); line-height: 1.7; }
 
 .chat-answer-en { font-family: var(--font-english); font-size: 18px; line-height: 1.9; }
 .ai-message-card { max-width: 900px; padding: 24px 28px; border-radius: 28px; background: linear-gradient(180deg, var(--surface), var(--surface-soft)); color: var(--foreground); border: 1px solid var(--color-info-border); box-shadow: var(--shadow-soft); }
-.ai-message-card::before { content: "آرتین"; display: inline-flex; margin-bottom: 12px; border-radius: 999px; background: var(--color-info-bg); color: var(--color-info-text); padding: 4px 12px; font-size: 12px; font-weight: 900; }
+.ai-message-card::before { content: "آرتین"; display: inline-flex; margin-bottom: 12px; border-radius: 999px; background: var(--color-info-bg); color: var(--color-info-text); padding: 4px 12px; font-size: 12px; font-weight: 700; }
 .ai-markdown { font-size: 16px; line-height: 2.08; color: var(--foreground); letter-spacing: -0.005em; }
 .rtl-markdown { direction: rtl; text-align: right; unicode-bidi: plaintext; }
 .ltr-markdown { direction: ltr; text-align: left; }
-.ai-md-title { margin: 4px 0 14px 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-soft); font-size: 21px; font-weight: 950; line-height: 1.55; color: var(--foreground); }
-.ai-md-section { margin: 18px 0 8px 0; font-size: 18px; font-weight: 950; line-height: 1.7; color: var(--foreground); }
+.ai-md-title { margin: 4px 0 14px 0; padding-bottom: 10px; border-bottom: 1px solid var(--border-soft); font-size: 21px; font-weight: 800; line-height: 1.55; color: var(--foreground); }
+.ai-md-section { margin: 18px 0 8px 0; font-size: 18px; font-weight: 800; line-height: 1.7; color: var(--foreground); }
 .ai-md-section::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 999px; background: var(--brand-accent-2); vertical-align: middle; }
 .ai-md-paragraph { margin: 0 0 9px 0; line-height: 2.05; }
 .ai-md-list { margin: 10px 0 16px 0; padding-right: 26px; padding-left: 0; }
 .ltr-markdown .ai-md-list { margin: 10px 0; line-height: 2.2; unicode-bidi: plaintext; }
 .ai-md-list-item { margin: 5px 0; line-height: 2; unicode-bidi: plaintext; }
-.ai-md-list-item::marker { color: var(--brand-accent); font-size: 1.15em; font-weight: 900; }
-.ai-md-strong { color: var(--foreground); font-weight: 950; unicode-bidi: isolate; }
+.ai-md-list-item::marker { color: var(--brand-accent); font-size: 1.15em; font-weight: 700; }
+.ai-md-strong { color: var(--foreground); font-weight: 700; unicode-bidi: isolate; }
 .ai-md-code { direction: ltr; display: inline-block; padding: 2px 7px; border-radius: 8px; background: var(--surface-soft); color: var(--foreground); font-family: Consolas, Monaco, monospace; font-size: 13px; border: 1px solid var(--border-soft); }
 .ai-md-table-wrap { width: 100%; overflow-x: auto; margin: 16px 0; border-radius: 18px; border: 1px solid var(--border-soft); direction: rtl; box-shadow: var(--shadow-card); }
 .ai-md-table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 14px; direction: rtl; }
 .ai-md-th, .ai-md-td { text-align: right; font-family: var(--font-persian); }
-.ai-md-th { background: var(--color-info-bg); color: var(--foreground); font-weight: 950; padding: 13px; border-bottom: 1px solid var(--border-soft); text-align: right; white-space: nowrap; unicode-bidi: plaintext; }
+.ai-md-th { background: var(--color-info-bg); color: var(--foreground); font-weight: 800; padding: 13px; border-bottom: 1px solid var(--border-soft); text-align: right; white-space: nowrap; unicode-bidi: plaintext; }
 .ai-md-td { padding: 13px; border-bottom: 1px solid var(--border-soft); color: var(--foreground); vertical-align: top; unicode-bidi: plaintext; }
 .ai-md-table tr:last-child .ai-md-td { border-bottom: none; }
 
-textarea::placeholder, input::placeholder { color: #94a3b8; }
+textarea::placeholder, input::placeholder { color: var(--text-subtle); }
 
 /* Artin AI workspace */
 .artin-analytics-card h2 { color: var(--foreground); }
@@ -247,37 +263,24 @@ textarea::placeholder, input::placeholder { color: #94a3b8; }
   [data-admin-horizontal="true"] [data-app-sidebar-spacer] { display: none; }
 }
 .artin-workspace {
-  --artin-canvas: #f7f5ef;
-  --artin-line: #e5e1d8;
-  --artin-accent: #0d625a;
+  --artin-canvas: var(--background);
+  --artin-line: var(--border-soft);
+  --artin-accent: var(--brand-accent);
   background: var(--artin-canvas);
   color: var(--foreground);
 }
-.dark .artin-workspace {
-  --artin-canvas: #151918;
-  --artin-line: #343e3b;
-  --artin-accent: #82d3c5;
-}
 .artin-workspace-header { background: var(--surface); border-color: var(--artin-line); }
 [data-app-sidebar] {
-  background: #efede6;
-  border-color: #dedbd1;
-}
-.dark [data-app-sidebar] {
-  background: #202523;
-  border-color: #343e3b;
+  background: var(--sidebar-bg);
+  border-color: var(--border-soft);
 }
 .artin-nav-item { color: var(--foreground); }
 .artin-nav-item:hover { background: var(--surface); }
 .artin-nav-item[aria-current="page"] {
-  background: #dce9e2;
-  color: #14483e;
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
 }
-.dark .artin-nav-item[aria-current="page"] {
-  background: #30423c;
-  color: #bde9dd;
-}
-.artin-nav-item:focus-visible { outline: 2px solid #3a8472; outline-offset: 2px; }
+.artin-nav-item:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: 2px; }
 .artin-workspace-label { color: var(--artin-accent); font-size: .75rem; font-weight: 700; }
 .artin-workspace .chat-composer-box {
   border: 1px solid var(--artin-line);

@@ -1334,7 +1334,7 @@ ${cleanAnswer}`,
                     <div className="absolute left-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 md:left-0 max-[400px]:left-auto max-[400px]:right-0">
                       <button
                         onClick={exportChat}
-                        className="flex w-full items-center gap-2.5 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-purple-50 hover:text-purple-700"
+                        className="flex w-full items-center gap-2.5 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
                       >
                         <span className="text-base">📄</span>
                         PDF (چاپ)
@@ -1517,21 +1517,21 @@ ${cleanAnswer}`,
 
               {loading && (
                 <div className="flex justify-start">
-                  <div className="flex max-w-[82%] flex-row-reverse items-center gap-2 rounded-2xl border border-[--border-soft] bg-[--surface] px-3.5 py-2.5 text-slate-600 shadow-sm dark:text-slate-300 sm:gap-3 sm:rounded-[28px] sm:px-5 sm:py-4">
+                  <div className="flex max-w-[82%] flex-row-reverse items-center gap-2 rounded-2xl border border-[--border-soft] bg-[--surface] px-3.5 py-2.5 text-slate-600 shadow-sm dark:text-[var(--text-muted)] sm:gap-3 sm:rounded-[28px] sm:px-5 sm:py-4">
                     <div className="relative shrink-0">
                       <img
                         src="/images/artin-avatar.webp"
                         alt={isEn ? "Artin" : "آرتین"}
                         className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 object-cover sm:h-9 sm:w-9"
                       />
-                      <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--brand-fill)] ring-2 ring-white dark:ring-slate-900">
+                      <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--brand-fill)] ring-2 ring-white dark:ring-[var(--surface)]">
                         <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white" />
                       </span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-xs font-bold text-[var(--color-info-text)] dark:text-teal-300">{isEn ? "Artin" : "آرتین"}</span>
                       <span className="flex items-center gap-1.5">
-                        <span className="text-sm font-persian text-slate-500 dark:text-slate-400">
+                        <span className="text-sm font-persian text-slate-500 dark:text-[var(--text-subtle)]">
                           {isEn ? "Typing" : "در حال تایپ"}
                         </span>
                         <span className="flex gap-1 pb-1">

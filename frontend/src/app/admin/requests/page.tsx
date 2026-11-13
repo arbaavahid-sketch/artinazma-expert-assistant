@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { adminUrl } from "@/lib/api";
-import { useI18n } from "@/lib/i18n";
+import { formatNumber, useI18n } from "@/lib/i18n";
 import {
   ArrowDownUp,
   CalendarDays,
@@ -293,14 +293,14 @@ export default function AdminRequestsPage() {
               {isEn ? "Total requests" : "کل درخواست‌ها"}
             </div>
             <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
-              {requests.length}
+              {formatNumber(requests.length, locale)}
             </div>
           </div>
 
           <div className="rounded-xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-3 sm:p-4">
             <div className="text-sm font-bold text-[var(--color-info-text)]">{isEn ? "New" : "جدید"}</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--color-info-text)]">
-              {statusCounts.new}
+              {formatNumber(statusCounts.new, locale)}
             </div>
           </div>
 
@@ -309,7 +309,7 @@ export default function AdminRequestsPage() {
               {isEn ? "Reviewing" : "در حال بررسی"}
             </div>
             <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--color-warning-text)]">
-              {statusCounts.reviewing}
+              {formatNumber(statusCounts.reviewing, locale)}
             </div>
           </div>
 
@@ -318,21 +318,21 @@ export default function AdminRequestsPage() {
               {isEn ? "Pricing" : "قیمت‌گذاری"}
             </div>
             <div className="mt-2 text-2xl font-semibold tabular-nums text-purple-700 dark:text-purple-300">
-              {statusCounts.pricing}
+              {formatNumber(statusCounts.pricing, locale)}
             </div>
           </div>
 
           <div className="rounded-xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] p-3 sm:p-4">
             <div className="text-sm font-bold text-[var(--color-success-text)]">{isEn ? "Sent" : "ارسال‌شده"}</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--color-success-text)]">
-              {statusCounts.sent}
+              {formatNumber(statusCounts.sent, locale)}
             </div>
           </div>
 
           <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3 sm:p-4">
             <div className="text-sm font-bold text-[var(--text-muted)]">{isEn ? "Closed" : "بسته‌شده"}</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums text-[var(--text-muted)]">
-              {statusCounts.closed}
+              {formatNumber(statusCounts.closed, locale)}
             </div>
           </div>
         </div>
@@ -347,7 +347,7 @@ export default function AdminRequestsPage() {
             <input
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] py-3.5 pl-4 pr-11 outline-none transition focus:border-purple-500 focus:bg-[var(--surface)]"
+              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] py-3.5 pl-4 pr-11 outline-none transition focus:border-[var(--color-info-border)] focus:bg-[var(--surface)]"
               placeholder={isEn ? "Search by name, company, phone, subject, or request text..." : "جستجو در نام، شرکت، شماره، موضوع یا متن درخواست..."}
             />
           </div>
@@ -461,7 +461,7 @@ export default function AdminRequestsPage() {
           <div className="mb-5 text-sm font-bold text-[var(--text-subtle)]">
             {isEn
               ? `Showing ${filteredRequests.length} of ${requests.length} requests`
-              : `نمایش ${filteredRequests.length} درخواست از ${requests.length} درخواست`}
+              : `نمایش ${formatNumber(filteredRequests.length, locale)} درخواست از ${formatNumber(requests.length, locale)} درخواست`}
           </div>
 
           {message && (

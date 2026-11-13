@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useToast } from "@/components/Toast";
 import { adminUrl } from "@/lib/api";
-import { useI18n } from "@/lib/i18n";
+import { formatNumber, useI18n } from "@/lib/i18n";
 import {
   FileQuestion,
   RefreshCw,
@@ -313,13 +313,13 @@ export default function QuestionsPage() {
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
+          <div className="bg-gradient-to-l from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
                   <FileQuestion size={17} />
                   {isEn ? "Artin Answer Quality" : "پایش کیفیت پاسخ‌های آرتین"}
                 </div>
@@ -381,7 +381,7 @@ export default function QuestionsPage() {
           <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-sm">
             <div className="text-sm font-bold text-[var(--text-subtle)]">{isEn ? "Total questions" : "کل سوالات"}</div>
             <div className="mt-2 text-3xl font-black text-[var(--foreground)]">
-              {globalStats?.total_questions ?? questions.length}
+              {formatNumber(globalStats?.total_questions ?? questions.length, locale)}
             </div>
           </div>
 
@@ -390,14 +390,14 @@ export default function QuestionsPage() {
               {isEn ? "Pending review" : "در انتظار بررسی"}
             </div>
             <div className="mt-2 text-3xl font-black text-[var(--text-muted)]">
-              {globalStats?.status_counts?.pending ?? pendingCount}
+              {formatNumber(globalStats?.status_counts?.pending ?? pendingCount, locale)}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-[var(--color-success-border)] bg-[var(--color-success-bg)] p-5">
             <div className="text-sm font-bold text-[var(--color-success-text)]">{isEn ? "Approved" : "تایید شده"}</div>
             <div className="mt-2 text-3xl font-black text-[var(--color-success-text)]">
-              {globalStats?.status_counts?.approved ?? approvedCount}
+              {formatNumber(globalStats?.status_counts?.approved ?? approvedCount, locale)}
             </div>
           </div>
 
@@ -406,7 +406,7 @@ export default function QuestionsPage() {
               {isEn ? "Needs edit" : "نیازمند اصلاح"}
             </div>
             <div className="mt-2 text-3xl font-black text-[var(--color-warning-text)]">
-              {globalStats?.status_counts?.needs_edit ?? needsEditCount}
+              {formatNumber(globalStats?.status_counts?.needs_edit ?? needsEditCount, locale)}
             </div>
           </div>
 
@@ -415,12 +415,12 @@ export default function QuestionsPage() {
             <div className="mt-2 flex items-center gap-3">
               <span className="flex items-center gap-1 text-lg font-black text-[var(--color-success-text)]">
                 <ThumbsUp size={16} />
-                {globalStats?.rating_counts?.up ?? upCount}
+                {formatNumber(globalStats?.rating_counts?.up ?? upCount, locale)}
               </span>
               <span className="text-[var(--text-subtle)]">|</span>
               <span className="flex items-center gap-1 text-lg font-black text-red-500">
                 <ThumbsDown size={16} />
-                {globalStats?.rating_counts?.down ?? downCount}
+                {formatNumber(globalStats?.rating_counts?.down ?? downCount, locale)}
               </span>
             </div>
           </div>
@@ -439,7 +439,7 @@ export default function QuestionsPage() {
                 <input
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] py-4 pl-4 pr-11 outline-none transition focus:border-purple-600"
+                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] py-4 pl-4 pr-11 outline-none transition focus:border-[var(--color-info-border)]"
                   placeholder={isEn ? "Search question text, domain, ID, or status..." : "جستجو در متن سوال، حوزه، شناسه یا وضعیت..."}
                 />
               </div>
@@ -448,14 +448,14 @@ export default function QuestionsPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`relative inline-flex items-center gap-2 rounded-2xl border px-5 py-3 text-sm font-bold transition ${
                   showFilters || activeFilterCount > 0
-                    ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300"
+                    ? "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
                     : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-soft)]"
                 }`}
               >
                 <Filter size={17} />
                 {isEn ? "Filters" : "فیلترها"}
                 {activeFilterCount > 0 && (
-                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[11px] font-black text-white">
+                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-fill)] text-[11px] font-black text-white">
                     {activeFilterCount}
                   </span>
                 )}
@@ -483,7 +483,7 @@ export default function QuestionsPage() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--color-info-border)]"
                   >
                     {statusOptions.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -501,7 +501,7 @@ export default function QuestionsPage() {
                   <select
                     value={domainFilter}
                     onChange={(e) => setDomainFilter(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--color-info-border)]"
                   >
                     {domainOptions.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -519,7 +519,7 @@ export default function QuestionsPage() {
                   <select
                     value={ratingFilter}
                     onChange={(e) => setRatingFilter(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                    className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--color-info-border)]"
                   >
                     {ratingOptions.map((item) => (
                       <option key={item.value} value={item.value}>
@@ -539,14 +539,14 @@ export default function QuestionsPage() {
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                      className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--color-info-border)]"
                       title={isEn ? "From date" : "از تاریخ"}
                     />
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
+                      className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--color-info-border)]"
                       title={isEn ? "To date" : "تا تاریخ"}
                     />
                   </div>
@@ -562,26 +562,26 @@ export default function QuestionsPage() {
             {/* Select-all checkbox */}
             <button
               onClick={toggleSelectAll}
-              className="flex items-center gap-2 text-sm font-bold text-[var(--text-subtle)] hover:text-purple-700 dark:hover:text-purple-300 transition"
+              className="flex items-center gap-2 text-sm font-bold text-[var(--text-subtle)] hover:text-[var(--color-info-text)] transition"
               title={pagedQuestions.every((q) => selectedIds.has(q.id)) ? (isEn ? "Deselect all" : "لغو انتخاب همه") : (isEn ? "Select this page" : "انتخاب همه صفحه")}
             >
               {pagedQuestions.length > 0 && pagedQuestions.every((q) => selectedIds.has(q.id)) ? (
-                <CheckSquare2 size={18} className="text-purple-600 dark:text-purple-300" />
+                <CheckSquare2 size={18} className="text-[var(--color-info-text)]" />
               ) : (
                 <Square size={18} />
               )}
-              {isEn ? `${filteredQuestions.length} questions` : `${filteredQuestions.length} سوال`}
+              {isEn ? `${formatNumber(filteredQuestions.length, locale)} questions` : `${formatNumber(filteredQuestions.length, locale)} سوال`}
             </button>
 
             {/* Bulk action toolbar */}
             {selectedIds.size > 0 && (
-              <div className="flex items-center gap-2 rounded-2xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 px-4 py-2">
-                <span className="text-xs font-black text-purple-700 dark:text-purple-300">
-                  {isEn ? `${selectedIds.size} selected` : `${selectedIds.size} انتخاب شده`}
+              <div className="flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-4 py-2">
+                <span className="text-xs font-black text-[var(--color-info-text)]">
+                  {isEn ? `${formatNumber(selectedIds.size, locale)} selected` : `${formatNumber(selectedIds.size, locale)} انتخاب شده`}
                 </span>
-                <span className="text-purple-200">|</span>
+                <span className="text-[var(--color-info-text)]">|</span>
                 {bulkProcessing ? (
-                  <Loader2 size={16} className="animate-spin text-purple-500 dark:text-purple-300" />
+                  <Loader2 size={16} className="animate-spin text-[var(--color-info-text)]" />
                 ) : (
                   <>
                     <button

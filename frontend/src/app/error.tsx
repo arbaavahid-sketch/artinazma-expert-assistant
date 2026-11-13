@@ -29,11 +29,11 @@ export default function Error({
       className="brand-shell-bg flex min-h-full flex-col items-center justify-center px-6 py-20 text-center"
       dir={dir}
     >
-      <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+      <h1 className="text-2xl font-black text-slate-900 dark:text-[var(--foreground)]">
         {isEn ? "Something went wrong" : "خطایی رخ داد"}
       </h1>
 
-      <p className="mt-3 max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">
+      <p className="mt-3 max-w-md text-sm leading-7 text-slate-500 dark:text-[var(--text-subtle)]">
         {isEn
           ? "An unexpected error occurred. You can try again, or go back to the home page."
           : "یک خطای غیرمنتظره رخ داد. می‌توانید دوباره تلاش کنید یا به صفحه‌ی اصلی برگردید."}

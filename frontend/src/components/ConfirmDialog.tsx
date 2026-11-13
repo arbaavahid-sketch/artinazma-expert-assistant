@@ -94,7 +94,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
           />
 
           {/* Panel */}
-          <div className="relative z-10 w-full max-w-sm overflow-hidden rounded-[28px] bg-white shadow-2xl dark:bg-slate-900">
+          <div className="relative z-10 w-full max-w-sm overflow-hidden rounded-[28px] bg-white shadow-2xl dark:bg-[var(--surface)]">
             <div className="p-6">
               {/* Icon */}
               <div
@@ -115,16 +115,16 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
               )}
 
               {/* Message */}
-              <p className="leading-7 text-slate-600 dark:text-slate-300">
+              <p className="leading-7 text-slate-600 dark:text-[var(--text-muted)]">
                 {options.message}
               </p>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+            <div className="flex gap-3 border-t border-slate-100 px-6 py-4 dark:border-[var(--border-soft)]">
               <button
                 onClick={handleCancel}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)] dark:text-[var(--foreground)] dark:hover:bg-[var(--surface-raised-2)]"
               >
                 <X size={15} />
                 {options.cancelLabel || (isEn ? "Cancel" : "انصراف")}

@@ -108,13 +108,13 @@ export default function AdminSettingsPage() {
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
+          <div className="bg-gradient-to-l from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
                   <Settings2 size={17} />
                   {isEn ? "Artin System Settings" : "تنظیمات سیستم آرتین"}
                 </div>
@@ -179,7 +179,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={() => loadDeepHealth(true)}
                 disabled={loadingDeepHealth}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
               >
                 <Play size={16} />
                 {isEn ? "External check" : "بررسی خارجی"}
@@ -336,7 +336,7 @@ export default function AdminSettingsPage() {
                 {status.knowledge_stats.categories.map((category) => (
                   <span
                     key={category}
-                    className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300"
+                    className="rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]"
                   >
                     {getCategoryLabel(category, locale)}
                   </span>
@@ -422,7 +422,7 @@ function StatusCard({
     emerald: "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]",
     blue: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
     amber: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]",
-    purple: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800",
+    purple: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
     slate: "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]",
   }[tone];
 

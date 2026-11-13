@@ -47,9 +47,9 @@ export default function QuestionRow({
   return (
                 <Link
                   href={`/admin/questions/${item.id}`}
-                  className={`group block rounded-[28px] border p-5 transition hover:border-purple-200 dark:hover:border-purple-800 hover:bg-[var(--surface)] hover:shadow-sm ${
+                  className={`group block rounded-[28px] border p-5 transition hover:border-[var(--color-info-border)] hover:bg-[var(--surface)] hover:shadow-sm ${
                     selected
-                      ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40"
+                      ? "border-[var(--color-info-border)] bg-[var(--color-info-bg)]"
                       : "border-[var(--border-soft)] bg-[var(--surface-soft)]"
                   }`}
                 >
@@ -60,7 +60,7 @@ export default function QuestionRow({
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSelect(item.id); }}
                     >
                       {selected ? (
-                        <CheckSquare2 size={18} className="text-purple-600 dark:text-purple-300" />
+                        <CheckSquare2 size={18} className="text-[var(--color-info-text)]" />
                       ) : (
                         <Square size={18} className="text-[var(--text-subtle)] group-hover:text-[var(--text-subtle)]" />
                       )}
@@ -79,7 +79,7 @@ export default function QuestionRow({
                           {getStatusLabel(item.expert_status, locale)}
                         </span>
 
-                        <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
+                        <span className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)]">
                           {getDomainLabel(item.detected_domain, locale)}
                         </span>
 
@@ -97,7 +97,7 @@ export default function QuestionRow({
                         )}
                       </div>
 
-                      <div className="line-clamp-2 text-base font-bold leading-8 text-[var(--foreground)] group-hover:text-purple-700 dark:group-hover:text-purple-300">
+                      <div className="line-clamp-2 text-base font-bold leading-8 text-[var(--foreground)] group-hover:text-[var(--color-info-text)]">
                         {item.question}
                       </div>
 
@@ -224,7 +224,7 @@ export default function QuestionRow({
                           </button>
                         </div>
                       )}
-                      <span className="text-xs text-purple-600 dark:text-purple-300 group-hover:underline">
+                      <span className="text-xs text-[var(--color-info-text)] group-hover:underline">
                         {isEn ? "View details ->" : "مشاهده جزئیات ←"}
                       </span>
                     </div>

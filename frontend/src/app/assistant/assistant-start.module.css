@@ -12,10 +12,10 @@
 }
 
 :global(.dark) .start {
-  --preview-paper: #1a2321;
+  --preview-paper: var(--surface);
   --preview-ink: #eef7f4;
   --preview-muted: #b9cbc6;
-  --preview-line: #343e3b;
+  --preview-line: var(--border-soft);
   --preview-accent: #8fd9c9;
   --preview-halo: #22352f;
 }

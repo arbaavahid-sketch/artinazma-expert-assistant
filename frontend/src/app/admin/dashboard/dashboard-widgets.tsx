@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight, Clock3, Star, ThumbsDown, ThumbsUp } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { formatNumber, useI18n } from "@/lib/i18n";
 import { getDomainLabel, type CacheStats, type DailyCount, type FeedbackStats, type QuestionDomain } from "./dashboard-types";
 
 // ─── CSV export helper ───────────────────────────────────────────────────────
@@ -94,8 +94,8 @@ export function DailyLineChart({
               onClick={() => onDaysChange(d)}
               className={`rounded-xl px-2.5 py-1.5 text-xs font-black transition ${
                 analyticsDays === d
-                  ? "bg-purple-600 text-white shadow-sm"
-                  : "border border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)] hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300"
+                  ? "bg-[var(--brand-fill)] text-white shadow-sm"
+                  : "border border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)] hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
               }`}
             >
               {isEn ? `${d} days` : `${d} روز`}
@@ -465,7 +465,7 @@ export function ResponseTimeWidget({ avgMs, totalAnswered, locale }: { avgMs: nu
       <div className="mb-4">
         <div className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--surface-soft)]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-blue-400 to-indigo-500 transition-all duration-700"
+            className="h-full rounded-full bg-gradient-to-r from-teal-300 via-teal-500 to-teal-700 transition-all duration-700"
             style={{ width: `${barPct}%` }}
           />
         </div>
@@ -514,7 +514,7 @@ export function DashboardCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-[var(--text-muted)] dark:text-[var(--text-subtle)]">{title}</div>
-          <div className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{value}</div>
+          <div className="mt-3 text-3xl font-semibold tabular-nums text-[var(--foreground)]">{formatNumber(value, locale)}</div>
         </div>
 
         <div
@@ -524,7 +524,7 @@ export function DashboardCard({
         </div>
       </div>
 
-      <div className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[var(--text-subtle)] transition group-hover:text-purple-700 dark:group-hover:text-purple-300">
+      <div className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[var(--text-subtle)] transition group-hover:text-[var(--color-info-text)]">
         {isEn ? "View details" : "مشاهده جزئیات"}
         <ArrowUpRight size={14} />
       </div>

@@ -82,6 +82,11 @@ export function useI18n() {
   return useContext(I18nContext);
 }
 
+/** Formats a count in the active language: Persian digits with a Persian separator, or English digits. */
+export function formatNumber(value: number | null | undefined, locale: Locale): string {
+  return new Intl.NumberFormat(locale === "en" ? "en-US" : "fa-IR").format(Number(value ?? 0));
+}
+
 export function useTranslation() {
   const { t, locale, dir } = useContext(I18nContext);
   return { t, locale, dir };

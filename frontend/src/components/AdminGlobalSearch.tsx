@@ -106,22 +106,22 @@ export default function AdminGlobalSearch() {
           setOpen(true);
           setTimeout(() => inputRef.current?.focus(), 50);
         }}
-        className="flex w-full items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-subtle)] shadow-sm transition hover:border-purple-200 dark:hover:border-purple-800 hover:bg-[var(--surface)] dark:border-slate-700 dark:bg-slate-800 dark:text-[var(--text-subtle)]"
+        className="flex w-full items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-subtle)] shadow-sm transition hover:border-[var(--color-info-border)] hover:bg-[var(--surface)] dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)] dark:text-[var(--text-subtle)]"
       >
         <Search size={15} />
         <span className="flex-1 text-right">{isEn ? "Search..." : "جستجو..."}</span>
-        <kbd className="hidden rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-subtle)] dark:border-slate-600 dark:bg-slate-700 sm:inline">
+        <kbd className="hidden rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-subtle)] dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised-2)] sm:inline">
           Ctrl K
         </kbd>
       </button>
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full z-[200] mt-2 w-80 overflow-hidden rounded-3xl border border-[var(--border-soft)] bg-[var(--surface)] shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+        <div className="absolute right-0 top-full z-[200] mt-2 w-80 overflow-hidden rounded-3xl border border-[var(--border-soft)] bg-[var(--surface)] shadow-2xl dark:border-[var(--border-soft)] dark:bg-[var(--surface)]">
           {/* Input */}
-          <div className="flex items-center gap-2 border-b border-[var(--border-soft)] px-4 py-3 dark:border-slate-700">
+          <div className="flex items-center gap-2 border-b border-[var(--border-soft)] px-4 py-3 dark:border-[var(--border-soft)]">
             {loading ? (
-              <Loader2 size={16} className="shrink-0 animate-spin text-purple-500 dark:text-purple-300" />
+              <Loader2 size={16} className="shrink-0 animate-spin text-[var(--color-info-text)]" />
             ) : (
               <Search size={16} className="shrink-0 text-[var(--text-subtle)]" />
             )}
@@ -131,7 +131,7 @@ export default function AdminGlobalSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={isEn ? "Search questions, customers, requests..." : "جستجو در سوالات، مشتریان، درخواست‌ها..."}
-              className="flex-1 bg-transparent text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--text-subtle)] dark:text-slate-100"
+              className="flex-1 bg-transparent text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--text-subtle)] dark:text-[var(--foreground)]"
               autoComplete="off"
             />
             {query && (
@@ -168,9 +168,9 @@ export default function AdminGlobalSearch() {
                       <button
                         key={q.id}
                         onClick={() => navigate(`/admin/questions/${q.id}`)}
-                        className="flex w-full items-start gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-purple-50 dark:hover:bg-purple-950"
+                        className="flex w-full items-start gap-3 rounded-2xl px-3 py-2.5 text-right transition hover:bg-[var(--color-info-bg)]"
                       >
-                        <span className="mt-0.5 shrink-0 rounded-lg bg-purple-100 dark:bg-purple-900/40 px-1.5 py-0.5 text-[10px] font-black text-purple-700 dark:text-purple-300">
+                        <span className="mt-0.5 shrink-0 rounded-lg bg-[var(--color-info-bg)] px-1.5 py-0.5 text-[10px] font-black text-[var(--color-info-text)]">
                           #{q.id}
                         </span>
                         <span className="line-clamp-2 text-xs text-[var(--text-muted)] dark:text-[var(--text-subtle)]">
@@ -198,7 +198,7 @@ export default function AdminGlobalSearch() {
                           {c.full_name?.[0] || "?"}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-bold text-[var(--foreground)] dark:text-slate-200">
+                          <p className="truncate text-xs font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">
                             {c.full_name}
                           </p>
                           <p className="truncate text-[10px] text-[var(--text-subtle)]">{c.email || c.company}</p>

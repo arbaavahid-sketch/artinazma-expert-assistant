@@ -216,7 +216,7 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
       <div className="border-b border-[var(--border-soft)] pb-4">
         <span className="mb-2 inline-flex rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-semibold text-[var(--color-info-text)]">{category}</span>
         <h2 className="text-xl font-extrabold sm:text-2xl">{title}</h2>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+        <p className="mt-1 text-sm text-slate-600 dark:text-[var(--text-muted)]">
           {en ? "Enter the values below to see the result and calculation."
             : "مقادیر را وارد کنید تا نتیجه و نحوهٔ محاسبه را ببینید."}
         </p>

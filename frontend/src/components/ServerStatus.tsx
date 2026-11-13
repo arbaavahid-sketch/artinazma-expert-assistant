@@ -67,7 +67,7 @@ export default function ServerStatus() {
     <button
       onClick={check}
       title={label}
-      className="group flex items-center gap-1.5 rounded-full px-2 py-1 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+      className="group flex items-center gap-1.5 rounded-full px-2 py-1 transition hover:bg-slate-100 dark:hover:bg-[var(--surface-raised)]"
     >
       <span
         className={`relative flex h-2 w-2 shrink-0`}
@@ -77,7 +77,7 @@ export default function ServerStatus() {
         )}
         <span className={`relative inline-flex h-2 w-2 rounded-full ${dot}`} />
       </span>
-      <span className="hidden text-[11px] font-bold text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300 sm:inline">
+      <span className="hidden text-[11px] font-bold text-slate-500 group-hover:text-slate-700 dark:text-[var(--text-subtle)] dark:group-hover:text-[var(--text-muted)] sm:inline">
         {status === "online" ? (isEn ? "Online" : "آنلاین") : status === "offline" ? (isEn ? "Offline" : "آفلاین") : "..."}
       </span>
     </button>

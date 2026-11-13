@@ -75,7 +75,7 @@ export default function PrivacyPage() {
     <section className="brand-shell-bg min-h-full px-5 py-6 md:px-8 md:py-10" dir={dir}>
       <div className="mx-auto max-w-3xl">
         <div className="ui-card rounded-[28px] p-6 md:p-9">
-          <h1 className="text-2xl font-black text-slate-900 md:text-3xl dark:text-slate-100">
+          <h1 className="text-2xl font-black text-slate-900 md:text-3xl dark:text-[var(--foreground)]">
             {isEn ? "Privacy Policy" : "سیاست حریم خصوصی"}
           </h1>
           <p className="mt-2 text-xs text-slate-400">
@@ -90,8 +90,8 @@ export default function PrivacyPage() {
           <div className="mt-6 space-y-6">
             {sections.map((s) => (
               <div key={s.title}>
-                <h2 className="text-base font-black text-slate-800 dark:text-slate-200">{s.title}</h2>
-                <p className="mt-2 text-sm leading-8 text-slate-600 dark:text-slate-400">{s.body}</p>
+                <h2 className="text-base font-black text-slate-800 dark:text-[var(--foreground)]">{s.title}</h2>
+                <p className="mt-2 text-sm leading-8 text-slate-600 dark:text-[var(--text-subtle)]">{s.body}</p>
               </div>
             ))}
           </div>

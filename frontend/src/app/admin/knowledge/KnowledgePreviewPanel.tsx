@@ -124,7 +124,7 @@ export default function KnowledgePreviewPanel({
                             #{chunk.index + 1}
                           </span>
                           {chunk.category && (
-                            <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
+                            <span className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)]">
                               {getCategoryLabel(chunk.category, locale)}
                             </span>
                           )}

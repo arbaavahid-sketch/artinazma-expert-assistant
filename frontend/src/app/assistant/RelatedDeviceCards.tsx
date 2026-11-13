@@ -33,10 +33,10 @@ export default function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[
         return (
           <div
             key={device.id}
-            className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+            className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm dark:border-[var(--border-soft)] dark:bg-[var(--surface)]"
           >
             <div className="flex gap-4 p-4">
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 dark:bg-[var(--surface-raised)]">
                 <img
                   src={imgSrc}
                   alt={device.title}
@@ -49,11 +49,11 @@ export default function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-black text-slate-900 dark:text-slate-100">
+                <div className="text-sm font-black text-slate-900 dark:text-[var(--foreground)]">
                   {device.title}
                 </div>
 
-                <div className="mt-1.5 text-xs leading-6 text-slate-500 dark:text-slate-400">
+                <div className="mt-1.5 text-xs leading-6 text-slate-500 dark:text-[var(--text-subtle)]">
                   {device.subtitle}
                 </div>
 
@@ -64,7 +64,7 @@ export default function RelatedDeviceCards({ devices }: { devices?: DeviceAsset[
             </div>
 
             {/* CTAها — تبدیل علاقه به لید درست در لحظه‌ی پیشنهاد دستگاه */}
-            <div className="flex items-center gap-2 border-t border-slate-100 p-3 dark:border-slate-800">
+            <div className="flex items-center gap-2 border-t border-slate-100 p-3 dark:border-[var(--border-soft)]">
               <Link
                 href={quoteHref}
                 className="ui-btn ui-btn-primary flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 text-xs font-black"

@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
               <LanguageSwitcher variant="purple" />
             </div>
 
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
               <ShieldCheck size={17} />
               {isEn ? "ArtinAzma Internal Panel" : "پنل داخلی آرتین آزما"}
             </div>
@@ -112,7 +112,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className={`ui-input rounded-2xl py-4 ${inputPadding} focus:border-purple-600 focus:shadow-[0_0_0_3px_rgba(147,51,234,0.18)]`}
+                  className={`ui-input rounded-2xl py-4 ${inputPadding} focus:border-[var(--color-info-border)] focus:shadow-[0_0_0_3px_rgba(147,51,234,0.18)]`}
                   placeholder={isEn ? "Enter password" : "رمز را وارد کنید"}
                   dir="ltr"
                 />
@@ -128,16 +128,16 @@ export default function AdminLoginPage() {
             <button
               onClick={login}
               disabled={loading}
-              className="ui-btn mt-6 inline-flex w-full gap-2 rounded-2xl bg-purple-700 px-5 py-4 text-white hover:bg-purple-800"
+              className="ui-btn mt-6 inline-flex w-full gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-4 text-white hover:bg-[var(--brand-fill-hover)]"
             >
               {loading ? (isEn ? "Signing in..." : "در حال ورود...") : (isEn ? "Enter admin panel" : "ورود به پنل ادمین")}
               <ArrowLeft size={18} className={isEn ? "rotate-180" : ""} />
             </button>
           </div>
 
-          <div className="flex items-center justify-center bg-gradient-to-b from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
+          <div className="flex items-center justify-center bg-gradient-to-b from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="ui-card w-full max-w-md rounded-[32px] p-6 shadow-sm">
-              <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[34px] bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
+              <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-[34px] bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                 <KeyRound size={42} strokeWidth={1.7} />
               </div>
 
@@ -153,17 +153,17 @@ export default function AdminLoginPage() {
 
               <div className="mt-5 grid gap-3 text-sm">
                 <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
-                  <LayoutDashboard size={18} className="text-purple-700 dark:text-purple-300" />
+                  <LayoutDashboard size={18} className="text-[var(--color-info-text)]" />
                   {isEn ? "Management dashboard" : "داشبورد مدیریتی"}
                 </div>
 
                 <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
-                  <Database size={18} className="text-purple-700 dark:text-purple-300" />
+                  <Database size={18} className="text-[var(--color-info-text)]" />
                   {isEn ? "Knowledge base management" : "مدیریت بانک دانش"}
                 </div>
 
                 <div className="flex items-center gap-2 rounded-2xl bg-[var(--surface-soft)] p-3 font-bold text-[var(--text-muted)]">
-                  <Sparkles size={18} className="text-purple-700 dark:text-purple-300" />
+                  <Sparkles size={18} className="text-[var(--color-info-text)]" />
                   {isEn ? "Artin answer quality monitoring" : "پایش کیفیت پاسخ‌های آرتین"}
                 </div>
               </div>

@@ -35,7 +35,7 @@ export function useTheme() {
 
 const THEME_COLORS: Record<Theme, string> = {
   light: "#0d625a",
-  dark: "#0d1117",
+  dark: "#0f1413",
 };
 
 function systemPrefersDark(): boolean {

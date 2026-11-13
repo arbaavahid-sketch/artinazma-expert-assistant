@@ -143,7 +143,7 @@ export default function KnowledgeAuditLog() {
                             entry.action === "upload" ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" :
                             entry.action === "delete" ? "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]" :
                             entry.action === "chunk_edit" ? "bg-[var(--color-info-bg)] text-[var(--color-info-text)]" :
-                            "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300"
+                            "bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
                           }`}>
                             {entry.action === "upload" ? (isEn ? "Upload" : "آپلود") :
                              entry.action === "delete" ? (isEn ? "Delete" : "حذف") :

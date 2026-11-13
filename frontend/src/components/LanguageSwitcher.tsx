@@ -10,7 +10,8 @@ type LanguageSwitcherProps = {
 
 const activeColorClass = {
   blue: "text-[var(--color-info-text)]",
-  purple: "text-purple-700 dark:text-purple-300",
+  // Admin pages pass "purple"; the admin now uses the shared brand colour too.
+  purple: "text-[var(--color-info-text)]",
 };
 
 function IranFlag() {

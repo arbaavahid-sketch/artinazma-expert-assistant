@@ -72,7 +72,7 @@ export default function RequestCard({
                           {getStatusLabel(item.status, locale)}
                         </span>
 
-                        <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
+                        <span className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)]">
                           {getTypeLabel(item.request_type, locale)}
                         </span>
 
@@ -176,7 +176,7 @@ export default function RequestCard({
                           <div className="flex items-start gap-2">
                             <UserRound
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
+                              className="mt-1 shrink-0 text-[var(--color-info-text)]"
                             />
                             <span>{item.full_name || "-"}</span>
                           </div>
@@ -184,7 +184,7 @@ export default function RequestCard({
                           <div className="flex items-start gap-2">
                             <Building2
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
+                              className="mt-1 shrink-0 text-[var(--color-info-text)]"
                             />
                             <span>{item.company || "-"}</span>
                           </div>
@@ -192,7 +192,7 @@ export default function RequestCard({
                           <div className="flex items-start gap-2">
                             <Phone
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
+                              className="mt-1 shrink-0 text-[var(--color-info-text)]"
                             />
                             <span>{item.phone || "-"}</span>
                           </div>
@@ -200,7 +200,7 @@ export default function RequestCard({
                           <div className="flex items-start gap-2">
                             <Mail
                               size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
+                              className="mt-1 shrink-0 text-[var(--color-info-text)]"
                             />
                             <span className="break-all">
                               {item.email || "-"}
@@ -211,7 +211,7 @@ export default function RequestCard({
 
                       <div className="rounded-2xl bg-[var(--surface)] p-4">
                         <div className="mb-3 flex items-center gap-2 text-sm font-black text-[var(--foreground)]">
-                          <Flag size={16} className="text-purple-700 dark:text-purple-300" />
+                          <Flag size={16} className="text-[var(--color-info-text)]" />
                           {isEn ? "Internal follow-up" : "پیگیری داخلی"}
                         </div>
 
@@ -221,7 +221,7 @@ export default function RequestCard({
                         <select
                           value={draft?.priority || normalizePriority(item.priority)}
                           onChange={(event) => onUpdateDraft(item.id, { priority: event.target.value })}
-                          className={`mb-3 w-full rounded-2xl border px-3 py-2 text-sm font-bold outline-none transition focus:border-purple-400 ${getPriorityMeta(draft?.priority || item.priority).selectClass}`}
+                          className={`mb-3 w-full rounded-2xl border px-3 py-2 text-sm font-bold outline-none transition focus:border-[var(--color-info-border)] ${getPriorityMeta(draft?.priority || item.priority).selectClass}`}
                         >
                           {REQUEST_PRIORITIES.map((priority) => (
                             <option key={priority.value} value={priority.value}>
@@ -237,7 +237,7 @@ export default function RequestCard({
                           value={draft?.internal_note ?? item.internal_note ?? ""}
                           onChange={(event) => onUpdateDraft(item.id, { internal_note: event.target.value })}
                           rows={4}
-                          className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3 text-sm leading-7 text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
+                          className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3 text-sm leading-7 text-[var(--text-muted)] outline-none transition focus:border-[var(--color-info-border)] focus:bg-[var(--surface)]"
                           placeholder={isEn ? "Example: contacted the customer; needs a GC proforma..." : "مثلا: با مشتری تماس گرفته شد، نیاز به پیش‌فاکتور GC دارد..."}
                         />
 
@@ -249,7 +249,7 @@ export default function RequestCard({
                             <input
                               value={draft?.assigned_to ?? item.assigned_to ?? ""}
                               onChange={(event) => onUpdateDraft(item.id, { assigned_to: event.target.value })}
-                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
+                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-[var(--color-info-border)] focus:bg-[var(--surface)]"
                               placeholder={isEn ? "Example: Sales team" : "مثلا: واحد فروش"}
                             />
                           </div>
@@ -262,7 +262,7 @@ export default function RequestCard({
                               type="date"
                               value={draft?.follow_up_at ?? item.follow_up_at ?? ""}
                               onChange={(event) => onUpdateDraft(item.id, { follow_up_at: event.target.value })}
-                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
+                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-[var(--color-info-border)] focus:bg-[var(--surface)]"
                             />
                           </div>
                         </div>
@@ -270,7 +270,7 @@ export default function RequestCard({
                         <button
                           onClick={() => onSaveCrm(item.id)}
                           disabled={saving}
-                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-700 disabled:opacity-50"
+                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
                         >
                           <Save size={15} />
                           {saving

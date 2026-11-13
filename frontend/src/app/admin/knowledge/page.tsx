@@ -484,11 +484,11 @@ export default function KnowledgePage() {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 p-5">
-            <div className="text-sm font-bold text-purple-700 dark:text-purple-300">
+          <div className="rounded-[28px] border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-5">
+            <div className="text-sm font-bold text-[var(--color-info-text)]">
               {isEn ? "Text chunks" : "تعداد بخش‌های متنی"}
             </div>
-            <div className="mt-2 text-3xl font-black text-purple-700 dark:text-purple-300">
+            <div className="mt-2 text-3xl font-black text-[var(--color-info-text)]">
               {stats?.total_chunks || 0}
             </div>
           </div>
@@ -716,7 +716,7 @@ export default function KnowledgePage() {
           <aside className="min-w-0 space-y-6">
             <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                   <UploadCloud size={25} />
                 </div>
 
@@ -738,11 +738,11 @@ export default function KnowledgePage() {
                 type="file"
                 accept=".pdf,.txt,.md"
                 onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-[var(--color-info-border)]"
               />
 
               {knowledgeFile && (
-                <div className="mt-3 rounded-2xl border border-purple-100 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 p-4 text-sm leading-7">
+                <div className="mt-3 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] p-4 text-sm leading-7">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate font-bold text-[var(--foreground)]">{knowledgeFile.name}</p>
@@ -750,16 +750,16 @@ export default function KnowledgePage() {
                         {(knowledgeFile.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
-                    <div className="shrink-0 rounded-xl bg-purple-100 dark:bg-purple-900/40 px-3 py-1 text-center">
-                      <p className="text-xs font-bold text-purple-700 dark:text-purple-300">{isEn ? "Estimated chunks" : "تخمین chunk"}</p>
-                      <p className="text-lg font-black text-purple-800 dark:text-purple-300">
+                    <div className="shrink-0 rounded-xl bg-[var(--color-info-bg)] px-3 py-1 text-center">
+                      <p className="text-xs font-bold text-[var(--color-info-text)]">{isEn ? "Estimated chunks" : "تخمین chunk"}</p>
+                      <p className="text-lg font-black text-[var(--color-info-text)]">
                         {Math.max(1, Math.ceil(
                           Math.max(0, knowledgeFile.size - 200) / (1200 - 200)
                         ))}
                       </p>
                     </div>
                   </div>
-                  <p className="mt-2 text-[11px] text-purple-600 dark:text-purple-300">
+                  <p className="mt-2 text-[11px] text-[var(--color-info-text)]">
                     {isEn
                       ? "* Based on file size; the actual count is determined after text extraction."
                       : "* بر اساس اندازه فایل — تعداد واقعی پس از متن‌کشی تعیین می‌شود"}
@@ -776,7 +776,7 @@ export default function KnowledgePage() {
                 placeholder={isEn ? "Example: ASTM D1151 standard" : "مثلاً: استاندارد ASTM D1151"}
                 value={knowledgeTitle}
                 onChange={(e) => setKnowledgeTitle(e.target.value)}
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-[var(--color-info-border)]"
               />
 
               <label className="mb-2 mt-4 block text-sm font-bold text-[var(--text-muted)]">
@@ -789,7 +789,7 @@ export default function KnowledgePage() {
                   setKnowledgeCategory(e.target.value);
                   setCategorySuggested(false);
                 }}
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 text-sm outline-none transition focus:border-[var(--color-info-border)]"
               >
                 {categoryOptions
                   .filter((item) => item.value !== "expert-faq")
@@ -801,7 +801,7 @@ export default function KnowledgePage() {
               </select>
 
               {categorySuggested && (
-                <p className="mt-2 text-xs text-purple-600 dark:text-purple-300">
+                <p className="mt-2 text-xs text-[var(--color-info-text)]">
                   {isEn
                     ? "Category suggested from the file name. Change it if needed."
                     : "✨ دسته‌بندی بر اساس نام فایل پیشنهاد شد — در صورت نیاز تغییر دهید."}
@@ -826,7 +826,7 @@ export default function KnowledgePage() {
               <button
                 onClick={uploadKnowledgeFile}
                 disabled={loading || !knowledgeFile}
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-4 font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-4 font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
               >
                 <UploadCloud size={18} />
                 {loading ? (isEn ? "Adding..." : "در حال افزودن...") : (isEn ? "Add to knowledge base" : "افزودن به بانک دانش")}

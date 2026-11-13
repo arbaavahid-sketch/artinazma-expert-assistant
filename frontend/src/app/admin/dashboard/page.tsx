@@ -153,7 +153,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-50 dark:bg-purple-950/40 px-4 py-2 text-sm font-bold text-purple-700 dark:text-purple-300">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--color-info-bg)] px-4 py-2 text-sm font-bold text-[var(--color-info-text)]">
                   <BarChart3 size={17} />
                   {isEn ? "ArtinAzma Management Dashboard" : "داشبورد مدیریتی آرتین آزما"}
                 </div>
@@ -170,19 +170,19 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 rounded-2xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 px-4 py-2">
-                  <span className="text-xs font-bold text-purple-700 dark:text-purple-300">{isEn ? "Management export:" : "خروجی مدیریتی:"}</span>
+                <div className="flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-4 py-2">
+                  <span className="text-xs font-bold text-[var(--color-info-text)]">{isEn ? "Management export:" : "خروجی مدیریتی:"}</span>
                   <a
                     href={adminUrl("/admin/report/export?period=week")}
                     download
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--surface)] px-3 py-1.5 text-xs font-bold text-purple-700 dark:text-purple-300 shadow-sm border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-info-text)] shadow-sm border border-[var(--color-info-border)] hover:bg-[var(--color-info-bg)] transition"
                   >
                     <Download size={13} /> {isEn ? "Weekly" : "هفتگی"}
                   </a>
                   <a
                     href={adminUrl(`/admin/report/export?period=month&month=${currentMonthParam}`)}
                     download
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--surface)] px-3 py-1.5 text-xs font-bold text-purple-700 dark:text-purple-300 shadow-sm border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-info-text)] shadow-sm border border-[var(--color-info-border)] hover:bg-[var(--color-info-bg)] transition"
                   >
                     <Download size={13} /> {isEn ? "Current month" : "ماه جاری"}
                   </a>
@@ -302,7 +302,7 @@ export default function DashboardPage() {
                   <div className="text-xs font-bold text-[var(--text-subtle)]">{isEn ? "Stale" : "معطل"}</div>
                 </div>
                 <div className="rounded-2xl bg-[var(--surface)] px-4 py-3">
-                  <div className="text-2xl font-black text-purple-700 dark:text-purple-300">
+                  <div className="text-2xl font-black text-[var(--color-info-text)]">
                     {requestStats.reminder_summary.unassigned_open}
                   </div>
                   <div className="text-xs font-bold text-[var(--text-subtle)]">{isEn ? "Unassigned" : "بدون مسئول"}</div>
@@ -539,7 +539,7 @@ export default function DashboardPage() {
                           {customer.company || customer.email}
                         </div>
                       </div>
-                      <span className="rounded-full bg-purple-100 dark:bg-purple-900/40 px-3 py-1 text-xs font-black text-purple-700 dark:text-purple-300">
+                      <span className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-black text-[var(--color-info-text)]">
                         {customer.score}
                       </span>
                     </div>
@@ -573,7 +573,7 @@ export default function DashboardPage() {
 
                   <Link
                     href="/admin/requests"
-                    className="inline-flex items-center gap-2 rounded-xl bg-purple-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-purple-800"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand-fill)] px-3 py-2 text-xs font-bold text-white transition hover:bg-[var(--brand-fill-hover)]"
                   >
                     {isEn ? "View" : "مشاهده"}
                     <ArrowUpRight size={16} />
@@ -591,7 +591,7 @@ export default function DashboardPage() {
                           {getStatusLabel(item.status, locale)}
                         </span>
 
-                        <span className="rounded-full bg-[var(--surface)] px-2.5 py-1 text-xs font-black text-purple-700 dark:text-purple-300">
+                        <span className="rounded-full bg-[var(--surface)] px-2.5 py-1 text-xs font-black text-[var(--color-info-text)]">
                           {item.count}
                         </span>
                       </div>
@@ -660,14 +660,14 @@ export default function DashboardPage() {
                     <Link
                       key={item.id}
                       href={`/admin/questions/${item.id}`}
-                      className="group block rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 transition hover:border-purple-200 dark:hover:border-purple-800 hover:bg-[var(--surface)] hover:shadow-sm"
+                      className="group block rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 transition hover:border-[var(--color-info-border)] hover:bg-[var(--surface)] hover:shadow-sm"
                     >
-                      <div className="line-clamp-2 text-sm font-bold leading-7 text-[var(--foreground)] group-hover:text-purple-700 dark:group-hover:text-purple-300">
+                      <div className="line-clamp-2 text-sm font-bold leading-7 text-[var(--foreground)] group-hover:text-[var(--color-info-text)]">
                         {item.question}
                       </div>
 
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-[var(--text-subtle)]">
-                        <span className="rounded-full bg-[var(--surface)] px-2.5 py-1 font-bold text-purple-700 dark:text-purple-300">
+                        <span className="rounded-full bg-[var(--surface)] px-2.5 py-1 font-bold text-[var(--color-info-text)]">
                           {getDomainLabel(item.detected_domain, locale)}
                         </span>
 
@@ -807,7 +807,7 @@ export default function DashboardPage() {
                   {knowledgeCategories.map((category) => (
                     <span
                       key={category}
-                      className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1.5 text-xs font-bold text-purple-700 dark:text-purple-300"
+                      className="rounded-full bg-[var(--color-info-bg)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-info-text)]"
                     >
                       {getCategoryLabel(category, locale)}
                     </span>
@@ -847,7 +847,7 @@ export default function DashboardPage() {
 
               <Link
                 href="/admin/knowledge"
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-fill)] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)]"
               >
                 {isEn ? "Manage knowledge base" : "مدیریت بانک دانش"}
                 <ArrowUpRight size={16} />

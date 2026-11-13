@@ -192,7 +192,7 @@ export default function CustomerProfilePage() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-800 dark:text-[var(--foreground)] flex items-center gap-2">
             <User className="w-6 h-6 text-[var(--color-info-text)]" />
             {isEn ? "User Profile" : "پروفایل کاربری"}
           </h1>
@@ -207,12 +207,12 @@ export default function CustomerProfilePage() {
 
         {/* Profile Info Card */}
         <div className="ui-card rounded-2xl p-6">
-          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
+          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-[var(--foreground)]">
             {isEn ? "Personal Information" : "اطلاعات شخصی"}
           </h2>
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 dark:text-[var(--text-muted)] mb-1">
                 <User className="w-4 h-4 inline ml-1" />
                 {isEn ? "Full name" : "نام و نام خانوادگی"}
               </label>
@@ -225,20 +225,20 @@ export default function CustomerProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 dark:text-[var(--text-muted)] mb-1">
                 <Mail className="w-4 h-4 inline ml-1" />
                 {isEn ? "Email" : "ایمیل"}
               </label>
               <input
                 type="email"
                 value={customer.email}
-                className="ui-input bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
+                className="ui-input bg-gray-50 dark:bg-[var(--surface)] cursor-not-allowed"
                 disabled
               />
               <p className="text-xs text-gray-400 mt-1">{isEn ? "Email cannot be changed." : "ایمیل قابل تغییر نیست."}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 dark:text-[var(--text-muted)] mb-1">
                 <Building2 className="w-4 h-4 inline ml-1" />
                 {isEn ? "Company / Organization" : "شرکت / سازمان"}
               </label>
@@ -251,7 +251,7 @@ export default function CustomerProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 dark:text-[var(--text-muted)] mb-1">
                 <Phone className="w-4 h-4 inline ml-1" />
                 {isEn ? "Phone number" : "شماره تماس"}
               </label>
@@ -291,13 +291,13 @@ export default function CustomerProfilePage() {
 
         {/* Change Password Card */}
         <div className="ui-card rounded-2xl p-6">
-          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-[var(--foreground)] flex items-center gap-2">
             <Lock className="w-5 h-5 text-[var(--color-info-text)]" />
             {isEn ? "Change Password" : "تغییر رمز عبور"}
           </h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 dark:text-[var(--text-muted)] mb-1">
                 {isEn ? "Current password" : "رمز عبور فعلی"}
               </label>
               <input
@@ -310,7 +310,7 @@ export default function CustomerProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 dark:text-[var(--text-muted)] mb-1">
                 {isEn ? "New password" : "رمز عبور جدید"}
               </label>
               <input
@@ -324,7 +324,7 @@ export default function CustomerProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 dark:text-[var(--text-muted)] mb-1">
                 {isEn ? "Confirm new password" : "تکرار رمز عبور جدید"}
               </label>
               <input
@@ -364,7 +364,7 @@ export default function CustomerProfilePage() {
         {/* Push Notification Card */}
         {isSupported && (
           <div className="ui-card rounded-2xl p-6">
-            <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-[var(--foreground)] flex items-center gap-2">
               <Bell className="w-5 h-5 text-[var(--color-info-text)]" />
               {isEn ? "Push Notifications" : "اعلان‌های Push"}
             </h2>
@@ -376,7 +376,7 @@ export default function CustomerProfilePage() {
                   <BellOff className="w-5 h-5 text-gray-400" />
                 )}
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-700 dark:text-gray-200">
+                  <p className="font-medium text-gray-700 dark:text-[var(--foreground)]">
                     {isSubscribed ? (isEn ? "Notifications enabled" : "اعلان‌ها فعال") : (isEn ? "Notifications disabled" : "اعلان‌ها غیرفعال")}
                   </p>
                   <p className="text-xs text-gray-400">
@@ -405,7 +405,7 @@ export default function CustomerProfilePage() {
 
         {/* Theme Settings Card */}
         <div className="ui-card rounded-2xl p-6">
-          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200">
+          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-[var(--foreground)]">
             {isEn ? "Appearance Settings" : "تنظیمات ظاهری"}
           </h2>
           <div className="flex items-center justify-between gap-4">
@@ -416,7 +416,7 @@ export default function CustomerProfilePage() {
                 <Sun className="w-5 h-5 text-amber-500" />
               )}
               <div className="min-w-0">
-                <p className="font-medium text-gray-700 dark:text-gray-200">
+                <p className="font-medium text-gray-700 dark:text-[var(--foreground)]">
                   {darkMode ? (isEn ? "Dark Mode" : "حالت تاریک") : (isEn ? "Light Mode" : "حالت روشن")}
                 </p>
                 <p className="text-xs text-gray-400">
@@ -441,15 +441,15 @@ export default function CustomerProfilePage() {
 
         {/* Language Settings Card */}
         <div className="ui-card rounded-2xl p-6">
-          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+          <h2 className="text-lg font-bold mb-4 text-gray-700 dark:text-[var(--foreground)] flex items-center gap-2">
             <Languages className="w-5 h-5 text-[var(--color-info-text)]" />
             {isEn ? "Language" : "زبان / Language"}
           </h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Languages className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <Languages className="w-5 h-5 text-gray-500 dark:text-[var(--text-subtle)]" />
               <div>
-                <p className="font-medium text-gray-700 dark:text-gray-200">
+                <p className="font-medium text-gray-700 dark:text-[var(--foreground)]">
                   {locale === "fa" ? "فارسی" : "English"}
                 </p>
                 <p className="text-xs text-gray-400">
@@ -463,7 +463,7 @@ export default function CustomerProfilePage() {
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   locale === "fa"
                     ? "bg-[var(--brand-fill)] text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    : "bg-gray-100 dark:bg-[var(--surface-raised)] text-gray-600 dark:text-[var(--text-muted)] hover:bg-gray-200 dark:hover:bg-[var(--surface-raised-2)]"
                 }`}
               >
                 فارسی
@@ -473,7 +473,7 @@ export default function CustomerProfilePage() {
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   locale === "en"
                     ? "bg-[var(--brand-fill)] text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    : "bg-gray-100 dark:bg-[var(--surface-raised)] text-gray-600 dark:text-[var(--text-muted)] hover:bg-gray-200 dark:hover:bg-[var(--surface-raised-2)]"
                 }`}
               >
                 English

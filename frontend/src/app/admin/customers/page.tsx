@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { adminUrl } from "@/lib/api";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { useI18n } from "@/lib/i18n";
+import { formatNumber, useI18n } from "@/lib/i18n";
 import {
   Users,
   Search,
@@ -168,7 +168,7 @@ function AdminCustomersContent() {
               <div className="flex gap-3">
                 <div className="rounded-2xl bg-[var(--color-info-bg)] px-5 py-3 text-center">
                   <div className="text-2xl font-black text-[var(--color-info-text)]">
-                    {total}
+                    {formatNumber(total, locale)}
                   </div>
                   <div className="mt-1 text-xs font-bold text-[var(--color-info-text)]">
                     {isEn ? "Total customers" : "کل مشتریان"}
@@ -176,7 +176,7 @@ function AdminCustomersContent() {
                 </div>
                 <div className="rounded-2xl bg-[var(--surface-soft)] px-5 py-3 text-center">
                   <div className="text-2xl font-black text-[var(--text-muted)]">
-                    {customers.reduce((s, c) => s + c.session_count, 0)}
+                    {formatNumber(customers.reduce((s, c) => s + c.session_count, 0), locale)}
                   </div>
                   <div className="mt-1 text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "Total sessions" : "کل جلسات"}
@@ -184,7 +184,7 @@ function AdminCustomersContent() {
                 </div>
                 <div className="rounded-2xl bg-[var(--surface-soft)] px-5 py-3 text-center">
                   <div className="text-2xl font-black text-[var(--text-muted)]">
-                    {customers.reduce((s, c) => s + c.message_count, 0)}
+                    {formatNumber(customers.reduce((s, c) => s + c.message_count, 0), locale)}
                   </div>
                   <div className="mt-1 text-xs font-bold text-[var(--text-subtle)]">
                     {isEn ? "Total messages" : "کل پیام‌ها"}

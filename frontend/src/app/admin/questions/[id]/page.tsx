@@ -270,7 +270,7 @@ export default function QuestionDetailPage() {
       <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
         <div className="mx-auto max-w-7xl rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-8 text-center shadow-sm">
           <RefreshCw
-            className="mx-auto mb-4 animate-spin text-purple-700 dark:text-purple-300"
+            className="mx-auto mb-4 animate-spin text-[var(--color-info-text)]"
             size={28}
           />
           <div className="font-bold text-[var(--text-muted)]">
@@ -288,7 +288,7 @@ export default function QuestionDetailPage() {
           {isEn ? "Question not found." : "سوال موردنظر پیدا نشد."}
           <Link
             href="/admin/questions"
-            className="mt-5 inline-flex rounded-2xl bg-purple-700 px-5 py-3 font-bold text-white"
+            className="mt-5 inline-flex rounded-2xl bg-[var(--brand-fill)] px-5 py-3 font-bold text-white"
           >
             {isEn ? "Back to questions" : "بازگشت به سوالات"}
           </Link>
@@ -303,7 +303,7 @@ export default function QuestionDetailPage() {
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm">
-          <div className="bg-gradient-to-l from-purple-50 dark:from-purple-950/40 via-[var(--surface)] to-[var(--surface-soft)] p-8">
+          <div className="bg-gradient-to-l from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-8">
             <div className="mb-6 flex justify-end">
               <LanguageSwitcher variant="purple" />
             </div>
@@ -330,7 +330,7 @@ export default function QuestionDetailPage() {
                     {getStatusLabel(question.expert_status, locale)}
                   </span>
 
-                  <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
+                  <span className="rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)]">
                     {getDomainLabel(question.detected_domain, locale)}
                   </span>
                 </div>
@@ -409,7 +409,7 @@ export default function QuestionDetailPage() {
 
             <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
                   <Database size={22} />
                 </div>
                 <div>
@@ -537,7 +537,7 @@ export default function QuestionDetailPage() {
               <select
                 value={expertStatus}
                 onChange={(e) => setExpertStatus(e.target.value)}
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 outline-none transition focus:border-purple-600"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 outline-none transition focus:border-[var(--color-info-border)]"
               >
                 <option value="pending">{isEn ? "Pending review" : "در انتظار بررسی"}</option>
                 <option value="approved">{isEn ? "Approved" : "تایید شده"}</option>
@@ -552,7 +552,7 @@ export default function QuestionDetailPage() {
               <textarea
                 value={reviewedAnswer}
                 onChange={(e) => setReviewedAnswer(e.target.value)}
-                className="h-72 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 leading-8 outline-none transition focus:border-purple-600"
+                className="h-72 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 leading-8 outline-none transition focus:border-[var(--color-info-border)]"
                 placeholder={isEn ? "Enter the final expert-approved answer here..." : "پاسخ نهایی و تاییدشده کارشناس را اینجا وارد کنید..."}
               />
 
@@ -567,14 +567,14 @@ export default function QuestionDetailPage() {
               <textarea
                 value={expertNote}
                 onChange={(e) => setExpertNote(e.target.value)}
-                className="h-28 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 leading-8 outline-none transition focus:border-purple-600"
+                className="h-28 w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-4 leading-8 outline-none transition focus:border-[var(--color-info-border)]"
                 placeholder={isEn ? "Example: The answer is good, but the device model should be clarified for the customer." : "مثلاً: پاسخ خوب است اما برای مشتری باید مدل دستگاه دقیق‌تر مشخص شود."}
               />
 
               <button
                 onClick={saveReview}
                 disabled={saving}
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-700 px-5 py-4 font-bold text-white transition hover:bg-purple-800 disabled:opacity-50"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-4 font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
               >
                 <Save size={18} />
                 {saving ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save review" : "ذخیره بررسی")}

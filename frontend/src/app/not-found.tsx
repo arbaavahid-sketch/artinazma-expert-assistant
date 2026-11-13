@@ -18,11 +18,11 @@ export default function NotFound() {
     >
       <div className="text-7xl font-black text-[var(--color-info-text)] dark:text-teal-300">404</div>
 
-      <h1 className="mt-4 text-2xl font-black text-slate-900 dark:text-slate-100">
+      <h1 className="mt-4 text-2xl font-black text-slate-900 dark:text-[var(--foreground)]">
         {isEn ? "Page not found" : "صفحه پیدا نشد"}
       </h1>
 
-      <p className="mt-3 max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">
+      <p className="mt-3 max-w-md text-sm leading-7 text-slate-500 dark:text-[var(--text-subtle)]">
         {isEn
           ? "The page you are looking for doesn't exist or has been moved."
           : "صفحه‌ای که دنبالش هستید وجود ندارد یا جابه‌جا شده است."}

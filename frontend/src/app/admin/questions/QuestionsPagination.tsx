@@ -1,6 +1,6 @@
 "use client";
 
-import { useI18n } from "@/lib/i18n";
+import { formatNumber, useI18n } from "@/lib/i18n";
 
 /** Page buttons with ellipses: always the first and last page, and two on each side of the current one. */
 export default function QuestionsPagination({
@@ -20,7 +20,7 @@ export default function QuestionsPagination({
               <button
                 onClick={() => onChange(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ›
               </button>
@@ -49,11 +49,11 @@ export default function QuestionsPagination({
                       onClick={() => onChange(p as number)}
                       className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-bold shadow-sm transition ${
                         currentPage === p
-                          ? "border-purple-300 dark:border-purple-800 bg-purple-600 text-white"
-                          : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300"
+                          ? "border-[var(--color-info-border)] bg-[var(--brand-fill)] text-white"
+                          : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
                       }`}
                     >
-                      {p}
+                      {formatNumber(p as number, locale)}
                     </button>
                   ),
                 )}
@@ -61,13 +61,13 @@ export default function QuestionsPagination({
               <button
                 onClick={() => onChange(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ‹
               </button>
 
               <span className="mr-2 text-sm text-[var(--text-subtle)]">
-                {isEn ? `Page ${currentPage} of ${totalPages}` : `صفحه ${currentPage} از ${totalPages}`}
+                {isEn ? `Page ${currentPage} of ${totalPages}` : `صفحه ${formatNumber(currentPage, locale)} از ${formatNumber(totalPages, locale)}`}
               </span>
             </div>
   );
