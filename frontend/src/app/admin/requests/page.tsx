@@ -2,264 +2,42 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { adminUrl, apiUrl } from "@/lib/api";
+import { adminUrl } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import {
   ArrowDownUp,
-  Building2,
   CalendarDays,
   CheckCircle2,
-  Clock3,
-  FileText,
   Inbox,
-  Mail,
-  Phone,
-  Save,
   Flag,
   RefreshCw,
   Search,
   UserRound,
-  PlayCircle,
-  XCircle,
 } from "lucide-react";
 
-type CustomerRequest = {
-  id: number;
-  full_name: string;
-  company: string;
-  phone: string;
-  email: string;
-  request_type: string;
-  subject: string;
-  message: string;
-  status: string;
-  priority: string;
-  internal_note: string;
-  assigned_to: string;
-  follow_up_at: string;
-  created_at: string;
-  updated_at: string | null;
-  updates?: CustomerRequestUpdate[];
-};
-
-type CustomerRequestUpdate = {
-  id: number;
-  message: string;
-  file_name: string;
-  file_url: string;
-  created_at: string;
-};
-
-const REQUEST_PRIORITIES = [
-  {
-    value: "low",
-    label: "کم",
-    labelEn: "Low",
-    badgeClass: "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]",
-    selectClass: "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)]",
-  },
-  {
-    value: "normal",
-    label: "عادی",
-    labelEn: "Normal",
-    badgeClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
-    selectClass: "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]",
-  },
-  {
-    value: "high",
-    label: "بالا",
-    labelEn: "High",
-    badgeClass: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]",
-    selectClass: "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]",
-  },
-  {
-    value: "urgent",
-    label: "فوری",
-    labelEn: "Urgent",
-    badgeClass: "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] border-[var(--color-danger-border)]",
-    selectClass: "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]",
-  },
-] as const;
-
-type RequestPriorityValue = (typeof REQUEST_PRIORITIES)[number]["value"];
-
-const PRIORITY_WEIGHT: Record<RequestPriorityValue, number> = {
-  low: 1,
-  normal: 2,
-  high: 3,
-  urgent: 4,
-};
-
-const FOLLOW_UP_FILTERS = [
-  { value: "all", label: "همه موعدها", labelEn: "All follow-ups" },
-  { value: "overdue", label: "عقب‌افتاده", labelEn: "Overdue" },
-  { value: "today", label: "امروز", labelEn: "Today" },
-  { value: "upcoming", label: "آینده", labelEn: "Upcoming" },
-  { value: "empty", label: "بدون موعد", labelEn: "No follow-up" },
-] as const;
-
-const ASSIGNMENT_FILTERS = [
-  { value: "all", label: "همه مسئول‌ها", labelEn: "All owners" },
-  { value: "assigned", label: "مسئول‌دار", labelEn: "Assigned" },
-  { value: "unassigned", label: "بدون مسئول", labelEn: "Unassigned" },
-] as const;
-
-const REQUEST_SORT_OPTIONS = [
-  { value: "follow_up_asc", label: "نزدیک‌ترین پیگیری", labelEn: "Nearest follow-up" },
-  { value: "priority_desc", label: "اولویت بالاتر", labelEn: "Highest priority" },
-  { value: "newest", label: "جدیدترین", labelEn: "Newest" },
-  { value: "oldest", label: "قدیمی‌ترین", labelEn: "Oldest" },
-] as const;
-
-type FollowUpFilterValue = (typeof FOLLOW_UP_FILTERS)[number]["value"];
-type AssignmentFilterValue = (typeof ASSIGNMENT_FILTERS)[number]["value"];
-type RequestSortValue = (typeof REQUEST_SORT_OPTIONS)[number]["value"];
-
-const REQUEST_WORKFLOW = [
-  {
-    value: "new",
-    label: "جدید",
-    labelEn: "New",
-    actionLabel: "شروع بررسی",
-    actionLabelEn: "Start review",
-    badgeClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] border-[var(--color-info-border)]",
-    filterClass: "bg-[var(--color-info-bg)] text-[var(--color-info-text)] hover:bg-[var(--color-info-bg)]",
-    activeClass: "bg-[var(--brand-fill)] text-white",
-    cardClass: "border-[var(--color-info-border)] bg-[var(--color-info-bg)]/40 hover:bg-[var(--color-info-bg)]",
-  },
-  {
-    value: "reviewing",
-    label: "در حال بررسی",
-    labelEn: "Reviewing",
-    actionLabel: "ارسال به قیمت‌گذاری",
-    actionLabelEn: "Send to pricing",
-    badgeClass: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]",
-    filterClass: "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] hover:bg-[var(--color-warning-bg)]",
-    activeClass: "bg-amber-500 text-white",
-    cardClass: "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)]/40 hover:bg-[var(--color-warning-bg)]",
-  },
-  {
-    value: "pricing",
-    label: "قیمت‌گذاری",
-    labelEn: "Pricing",
-    actionLabel: "ثبت ارسال پیشنهاد",
-    actionLabelEn: "Mark proposal sent",
-    badgeClass: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800",
-    filterClass: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40",
-    activeClass: "bg-purple-600 text-white",
-    cardClass: "border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40/30 hover:bg-purple-50 dark:hover:bg-purple-950/40",
-  },
-  {
-    value: "sent",
-    label: "ارسال‌شده",
-    labelEn: "Sent",
-    actionLabel: "بستن درخواست",
-    actionLabelEn: "Close request",
-    badgeClass: "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]",
-    filterClass: "bg-[var(--color-success-bg)] text-[var(--color-success-text)] hover:bg-[var(--color-success-bg)]",
-    activeClass: "bg-emerald-600 text-white",
-    cardClass: "border-[var(--color-success-border)] bg-[var(--color-success-bg)]/30 hover:bg-[var(--color-success-bg)]",
-  },
-  {
-    value: "closed",
-    label: "بسته‌شده",
-    labelEn: "Closed",
-    actionLabel: "بازگشایی",
-    actionLabelEn: "Reopen",
-    badgeClass: "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]",
-    filterClass: "bg-[var(--surface-soft)] text-[var(--text-subtle)] hover:bg-[var(--surface-soft)]",
-    activeClass: "bg-slate-500 text-white",
-    cardClass: "border-[var(--border-soft)] bg-[var(--surface-soft)] hover:bg-[var(--surface)]",
-  },
-] as const;
-
-type RequestStatusValue = (typeof REQUEST_WORKFLOW)[number]["value"];
-
-const NEXT_STATUS: Partial<Record<RequestStatusValue, RequestStatusValue>> = {
-  new: "reviewing",
-  reviewing: "pricing",
-  pricing: "sent",
-  sent: "closed",
-  closed: "new",
-};
-
-function normalizeStatus(status: string): RequestStatusValue {
-  if (status === "in_progress") return "reviewing";
-  if (status === "done") return "sent";
-  return REQUEST_WORKFLOW.some((item) => item.value === status)
-    ? (status as RequestStatusValue)
-    : "new";
-}
-
-function getStatusMeta(status: string) {
-  const normalized = normalizeStatus(status);
-  return REQUEST_WORKFLOW.find((item) => item.value === normalized) || REQUEST_WORKFLOW[0];
-}
-
-function getStatusLabel(status: string, locale: "fa" | "en" = "fa") {
-  const meta = getStatusMeta(status);
-  return locale === "en" ? meta.labelEn : meta.label;
-}
-
-function getStatusClass(status: string) {
-  return getStatusMeta(status).badgeClass;
-}
-
-function normalizePriority(priority?: string): RequestPriorityValue {
-  return REQUEST_PRIORITIES.some((item) => item.value === priority)
-    ? (priority as RequestPriorityValue)
-    : "normal";
-}
-
-function getPriorityMeta(priority?: string) {
-  const normalized = normalizePriority(priority);
-  return REQUEST_PRIORITIES.find((item) => item.value === normalized) || REQUEST_PRIORITIES[1];
-}
-
-function getTypeLabel(type: string, locale: "fa" | "en" = "fa") {
-  const labels: Record<string, { fa: string; en: string }> = {
-    equipment: { fa: "تجهیزات", en: "Equipment" },
-    chemical: { fa: "مواد شیمیایی / افزودنی‌ها", en: "Chemicals / Additives" },
-    catalyst: { fa: "کاتالیست / جاذب", en: "Catalyst / Adsorbent" },
-    "test-analysis": { fa: "تحلیل تست", en: "Test analysis" },
-    troubleshooting: { fa: "عیب‌یابی", en: "Troubleshooting" },
-    "price-inquiry": { fa: "استعلام قیمت", en: "Price inquiry" },
-  };
-  return labels[type]?.[locale] || (locale === "en" ? "Technical consultation" : "مشاوره فنی");
-}
-
-function formatDate(value?: string | null, locale: "fa" | "en" = "fa") {
-  if (!value) return locale === "en" ? "Unknown" : "نامشخص";
-
-  try {
-    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(value));
-  } catch {
-    return value;
-  }
-}
-
-function getDateDayKey(value?: string | null) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value.slice(0, 10);
-
-  return date.toISOString().slice(0, 10);
-}
-
-function getTodayDayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getFollowUpSortValue(value?: string | null) {
-  if (!value) return Number.MAX_SAFE_INTEGER;
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? Number.MAX_SAFE_INTEGER - 1 : date.getTime();
-}
+import RequestCard from "./RequestCard";
+import {
+  ASSIGNMENT_FILTERS,
+  FOLLOW_UP_FILTERS,
+  PRIORITY_WEIGHT,
+  REQUEST_PRIORITIES,
+  REQUEST_SORT_OPTIONS,
+  REQUEST_WORKFLOW,
+  getDateDayKey,
+  getPriorityMeta,
+  getStatusLabel,
+  getTypeLabel,
+  getFollowUpSortValue,
+  getTodayDayKey,
+  normalizePriority,
+  normalizeStatus,
+  type AssignmentFilterValue,
+  type CustomerRequest,
+  type FollowUpFilterValue,
+  type RequestPriorityValue,
+  type RequestStatusValue,
+  type RequestSortValue,
+} from "./requests-types";
 
 export default function AdminRequestsPage() {
   const { locale, dir } = useI18n();
@@ -699,293 +477,17 @@ export default function AdminRequestsPage() {
             </div>
           ) : filteredRequests.length > 0 ? (
             <div className="space-y-4">
-              {filteredRequests.map((item) => {
-                const statusMeta = getStatusMeta(item.status);
-                const normalizedStatus = normalizeStatus(item.status);
-                const nextStatus = NEXT_STATUS[normalizedStatus];
-
-                return (
-                <article
+              {filteredRequests.map((item) => (
+                <RequestCard
                   key={item.id}
-                  className={`rounded-[30px] border p-5 transition hover:shadow-md ${statusMeta.cardClass}`}
-                >
-                  <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-sm font-black text-[var(--text-muted)]">
-                          #{item.id}
-                        </span>
-
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(
-                            item.status,
-                          )}`}
-                        >
-                          {getStatusLabel(item.status, locale)}
-                        </span>
-
-                        <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
-                          {getTypeLabel(item.request_type, locale)}
-                        </span>
-
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${getPriorityMeta(item.priority).badgeClass}`}
-                        >
-                          <Flag size={13} />
-                          {isEn ? getPriorityMeta(item.priority).labelEn : getPriorityMeta(item.priority).label}
-                        </span>
-                      </div>
-
-                      <h2 className="mt-3 text-xl font-black text-[var(--foreground)]">
-                        {item.subject || (isEn ? "No subject" : "بدون موضوع")}
-                      </h2>
-
-                      <div className="mt-2 flex items-center gap-2 text-sm text-[var(--text-subtle)]">
-                        <Clock3 size={15} />
-                        {isEn ? "Created at" : "ثبت شده در"} {formatDate(item.created_at, locale)}
-                      </div>
-
-                      {(item.assigned_to || item.follow_up_at) && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-[var(--text-subtle)]">
-                          {item.assigned_to && (
-                            <span className="rounded-full bg-[var(--surface)] px-3 py-1">
-                              {isEn ? "Owner" : "مسئول"}: {item.assigned_to}
-                            </span>
-                          )}
-                          {item.follow_up_at && (
-                            <span className="rounded-full bg-[var(--surface)] px-3 py-1">
-                              {isEn ? "Follow-up" : "پیگیری"}: {formatDate(item.follow_up_at, locale)}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {nextStatus && (
-                        <button
-                          onClick={() => updateStatus(item.id, nextStatus)}
-                          className={`inline-flex items-center gap-1.5 rounded-2xl border px-4 py-2 text-sm font-bold transition ${statusMeta.badgeClass}`}
-                        >
-                          {normalizedStatus === "closed" ? (
-                            <RefreshCw size={15} />
-                          ) : normalizedStatus === "sent" ? (
-                            <XCircle size={15} />
-                          ) : normalizedStatus === "pricing" ? (
-                            <CheckCircle2 size={15} />
-                          ) : (
-                            <PlayCircle size={15} />
-                          )}
-                          {isEn ? statusMeta.actionLabelEn : statusMeta.actionLabel}
-                        </button>
-                      )}
-                      {false && item.status === "new" && (
-                        <button
-                          onClick={() => updateStatus(item.id, "in_progress")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--color-warning-bg)] px-4 py-2 text-sm font-bold text-[var(--color-warning-text)] transition hover:bg-[var(--color-warning-bg)] border border-[var(--color-warning-border)]"
-                        >
-                          <PlayCircle size={15} />
-                          {isEn ? "Start follow-up" : "شروع پیگیری"}
-                        </button>
-                      )}
-                      {false && item.status === "in_progress" && (
-                        <button
-                          onClick={() => updateStatus(item.id, "done")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--color-success-bg)] px-4 py-2 text-sm font-bold text-[var(--color-success-text)] transition hover:bg-[var(--color-success-bg)] border border-[var(--color-success-border)]"
-                        >
-                          <CheckCircle2 size={15} />
-                          {isEn ? "Done" : "انجام شد"}
-                        </button>
-                      )}
-                      {false && item.status !== "closed" && (
-                        <button
-                          onClick={() => updateStatus(item.id, "closed")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-subtle)] transition hover:bg-[var(--border-soft)]"
-                        >
-                          <XCircle size={15} />
-                          {isEn ? "Close" : "بستن"}
-                        </button>
-                      )}
-                      {false && item.status === "closed" && (
-                        <button
-                          onClick={() => updateStatus(item.id, "new")}
-                          className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--color-info-bg)] px-3 py-2 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)]"
-                        >
-                          {isEn ? "Reopen" : "بازگشایی"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-                    <div className="space-y-3">
-                      <div className="rounded-2xl bg-[var(--surface)] p-4">
-                        <div className="mb-3 text-sm font-black text-[var(--foreground)]">
-                          {isEn ? "Customer information" : "اطلاعات مشتری"}
-                        </div>
-
-                        <div className="space-y-3 text-sm leading-7 text-[var(--text-muted)]">
-                          <div className="flex items-start gap-2">
-                            <UserRound
-                              size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
-                            />
-                            <span>{item.full_name || "-"}</span>
-                          </div>
-
-                          <div className="flex items-start gap-2">
-                            <Building2
-                              size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
-                            />
-                            <span>{item.company || "-"}</span>
-                          </div>
-
-                          <div className="flex items-start gap-2">
-                            <Phone
-                              size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
-                            />
-                            <span>{item.phone || "-"}</span>
-                          </div>
-
-                          <div className="flex items-start gap-2">
-                            <Mail
-                              size={17}
-                              className="mt-1 shrink-0 text-purple-700 dark:text-purple-300"
-                            />
-                            <span className="break-all">
-                              {item.email || "-"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl bg-[var(--surface)] p-4">
-                        <div className="mb-3 flex items-center gap-2 text-sm font-black text-[var(--foreground)]">
-                          <Flag size={16} className="text-purple-700 dark:text-purple-300" />
-                          {isEn ? "Internal follow-up" : "پیگیری داخلی"}
-                        </div>
-
-                        <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
-                          {isEn ? "Priority" : "اولویت"}
-                        </label>
-                        <select
-                          value={crmDrafts[item.id]?.priority || normalizePriority(item.priority)}
-                          onChange={(event) => updateCrmDraft(item.id, { priority: event.target.value })}
-                          className={`mb-3 w-full rounded-2xl border px-3 py-2 text-sm font-bold outline-none transition focus:border-purple-400 ${getPriorityMeta(crmDrafts[item.id]?.priority || item.priority).selectClass}`}
-                        >
-                          {REQUEST_PRIORITIES.map((priority) => (
-                            <option key={priority.value} value={priority.value}>
-                              {isEn ? priority.labelEn : priority.label}
-                            </option>
-                          ))}
-                        </select>
-
-                        <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
-                          {isEn ? "Internal note" : "یادداشت داخلی"}
-                        </label>
-                        <textarea
-                          value={crmDrafts[item.id]?.internal_note ?? item.internal_note ?? ""}
-                          onChange={(event) => updateCrmDraft(item.id, { internal_note: event.target.value })}
-                          rows={4}
-                          className="w-full resize-none rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3 text-sm leading-7 text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
-                          placeholder={isEn ? "Example: contacted the customer; needs a GC proforma..." : "مثلا: با مشتری تماس گرفته شد، نیاز به پیش‌فاکتور GC دارد..."}
-                        />
-
-                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                          <div>
-                            <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
-                              {isEn ? "Owner" : "مسئول پیگیری"}
-                            </label>
-                            <input
-                              value={crmDrafts[item.id]?.assigned_to ?? item.assigned_to ?? ""}
-                              onChange={(event) => updateCrmDraft(item.id, { assigned_to: event.target.value })}
-                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
-                              placeholder={isEn ? "Example: Sales team" : "مثلا: واحد فروش"}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="mb-2 block text-xs font-bold text-[var(--text-subtle)]">
-                              {isEn ? "Next follow-up" : "پیگیری بعدی"}
-                            </label>
-                            <input
-                              type="date"
-                              value={crmDrafts[item.id]?.follow_up_at ?? item.follow_up_at ?? ""}
-                              onChange={(event) => updateCrmDraft(item.id, { follow_up_at: event.target.value })}
-                              className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-bold text-[var(--text-muted)] outline-none transition focus:border-purple-400 focus:bg-[var(--surface)]"
-                            />
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => saveCrmFields(item.id)}
-                          disabled={savingCrmId === item.id}
-                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-purple-700 disabled:opacity-50"
-                        >
-                          <Save size={15} />
-                          {savingCrmId === item.id
-                            ? (isEn ? "Saving..." : "در حال ذخیره...")
-                            : (isEn ? "Save follow-up" : "ذخیره پیگیری")}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl bg-[var(--surface)] p-4">
-                      <div className="mb-3 text-sm font-black text-[var(--foreground)]">
-                        {isEn ? "Request text" : "متن درخواست"}
-                      </div>
-
-                      <div className="whitespace-pre-wrap leading-8 text-[var(--text-muted)]">
-                        {item.message || "-"}
-                      </div>
-
-                      {!!item.updates?.length && (
-                        <div className="mt-4 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)]/60 p-4">
-                          <div className="mb-3 text-sm font-black text-[var(--color-info-text)]">
-                            {isEn ? "Customer follow-up notes" : "توضیحات تکمیلی مشتری"} ({item.updates.length})
-                          </div>
-
-                          <div className="max-h-64 space-y-2 overflow-y-auto">
-                            {item.updates.map((update) => (
-                              <div
-                                key={update.id}
-                                className="rounded-2xl bg-[var(--surface)] p-3 text-sm leading-7 text-[var(--text-muted)]"
-                              >
-                                <div className="whitespace-pre-wrap">
-                                  {update.message}
-                                </div>
-                                {update.file_url && (
-                                  <a
-                                    href={apiUrl(update.file_url)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[var(--surface-soft)] px-3 py-2 text-xs font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)]"
-                                  >
-                                    <FileText size={14} />
-                                    {update.file_name || (isEn ? "Attached file" : "فایل پیوست")}
-                                  </a>
-                                )}
-                                <div className="mt-2 text-xs font-bold text-[var(--text-subtle)]">
-                                  {formatDate(update.created_at, locale)}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {item.updated_at && (
-                        <div className="mt-4 rounded-2xl bg-[var(--surface-soft)] p-3 text-xs text-[var(--text-subtle)]">
-                          {isEn ? "Last updated" : "آخرین بروزرسانی"}: {formatDate(item.updated_at, locale)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </article>
-                );
-              })}
+                  item={item}
+                  draft={crmDrafts[item.id]}
+                  saving={savingCrmId === item.id}
+                  onUpdateStatus={updateStatus}
+                  onUpdateDraft={updateCrmDraft}
+                  onSaveCrm={saveCrmFields}
+                />
+              ))}
             </div>
           ) : (
             <div className="rounded-3xl bg-[var(--surface-soft)] p-10 text-center text-[var(--text-subtle)]">

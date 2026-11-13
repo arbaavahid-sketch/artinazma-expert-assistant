@@ -11,113 +11,26 @@ import {
   Bot,
   CheckCircle2,
   Database,
-  Mail,
-  MessageCircle,
   RefreshCw,
-  Save,
-  Send,
   Server,
   Settings2,
   ShieldCheck,
   Wifi,
-  Cloud,
   Play,
-  Clock,
 } from "lucide-react";
 
-type KnowledgeStats = {
-  total_chunks: number;
-  total_files: number;
-  files: string[];
-  categories: string[];
-};
-
-type SystemStatus = {
-  backend_status: string;
-  openai_configured: boolean;
-  openai_status: string;
-  openai_error: string;
-  local_fallback_enabled: boolean;
-  knowledge_stats: KnowledgeStats;
-};
-
-function getAiStatusLabel(status: string, locale: string) {
-  const isEn = locale === "en";
-  if (status === "connected") return isEn ? "Connected" : "متصل";
-  if (status === "failed") return isEn ? "Connection failed" : "خطا در اتصال";
-  if (status === "not_configured") return isEn ? "Not configured" : "تنظیم نشده";
-  if (status === "unknown") return isEn ? "Unknown" : "نامشخص";
-  return isEn ? "Not tested" : "تست نشده";
-}
-
-function getAiStatusClass(status: string) {
-  if (status === "connected") {
-    return "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
-  }
-
-  if (status === "failed") {
-    return "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]";
-  }
-
-  if (status === "not_configured") {
-    return "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
-  }
-
-  return "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)]";
-}
-
-function getCategoryLabel(category: string, locale: string) {
-  const isEn = locale === "en";
-  if (category === "general") return isEn ? "General" : "عمومی";
-  if (category === "catalyst") return isEn ? "Catalyst" : "کاتالیست";
-  if (category === "equipment") return isEn ? "Equipment" : "تجهیزات";
-  if (category === "chromatography") return isEn ? "Chromatography" : "کروماتوگرافی";
-  if (category === "mercury-analysis") return isEn ? "Mercury analysis" : "آنالیز جیوه";
-  if (category === "sulfur-analysis") return isEn ? "Sulfur analysis" : "آنالیز سولفور";
-  if (category === "troubleshooting") return isEn ? "Troubleshooting" : "عیب‌یابی";
-  if (category === "application-note") return isEn ? "Application note" : "اپلیکیشن نوت";
-  if (category === "ASTM Standards") return isEn ? "ASTM Standards" : "استانداردهای ASTM";
-  if (category === "expert-faq") return isEn ? "Approved FAQ" : "FAQ تاییدشده";
-  return category || (isEn ? "Uncategorized" : "بدون دسته‌بندی");
-}
-
-function getHealthTone(check?: DeepHealthCheck) {
-  if (!check) return "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-muted)]";
-  if (check.ok) return "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]";
-  if (check.status === "not_configured") return "border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]";
-  return "border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]";
-}
-
-function getHealthIcon(check?: DeepHealthCheck) {
-  if (!check) return <Clock size={16} />;
-  if (check.ok) return <CheckCircle2 size={16} />;
-  return <AlertCircle size={16} />;
-}
-
-type GDriveSchedule = {
-  interval_hours: number;
-  enabled: boolean;
-  last_sync: string;
-  last_sync_result: string;
-  folder_id_configured: boolean;
-  sync_status?: string;
-  sync_started_at?: string;
-  sync_finished_at?: string;
-};
-
-type DeepHealthCheck = {
-  ok: boolean;
-  status: string;
-  configured?: boolean;
-  enabled?: boolean;
-  error?: string;
-};
-
-type DeepHealth = {
-  ok: boolean;
-  response_ms: number;
-  checks: Record<string, DeepHealthCheck>;
-};
+import EmailReportCard from "./EmailReportCard";
+import GoogleDriveScheduleCard from "./GoogleDriveScheduleCard";
+import TelegramSettingsCard from "./TelegramSettingsCard";
+import {
+  getAiStatusClass,
+  getAiStatusLabel,
+  getCategoryLabel,
+  getHealthIcon,
+  getHealthTone,
+  type DeepHealth,
+  type SystemStatus,
+} from "./settings-types";
 
 export default function AdminSettingsPage() {
   const { locale, dir } = useI18n();
@@ -126,34 +39,12 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [checkingAi, setCheckingAi] = useState(false);
   const [message, setMessage] = useState("");
-  const [gdriveSchedule, setGdriveSchedule] = useState<GDriveSchedule | null>(null);
-  const [gdriveIntervalInput, setGdriveIntervalInput] = useState("24");
-  const [savingSchedule, setSavingSchedule] = useState(false);
-  const [syncingNow, setSyncingNow] = useState(false);
-  const [gdriveMessage, setGdriveMessage] = useState("");
   const [deepHealth, setDeepHealth] = useState<DeepHealth | null>(null);
   const [loadingDeepHealth, setLoadingDeepHealth] = useState(false);
 
   // Qdrant status
   type QdrantStatus = { enabled: boolean; backend: string; points_count?: number; vectors_count?: number; status?: string; error?: string };
   const [qdrantStatus, setQdrantStatus] = useState<QdrantStatus | null>(null);
-
-  // Email settings state
-  const [emailSettings, setEmailSettings] = useState({
-    smtp_host: "", smtp_port: 587, smtp_user: "", smtp_pass: "",
-    from_addr: "", to_addr: "", weekly_enabled: false, request_alerts_enabled: true,
-  });
-  const [savingEmail, setSavingEmail] = useState(false);
-  const [sendingReport, setSendingReport] = useState(false);
-  const [emailMessage, setEmailMessage] = useState("");
-  const [emailMessageType, setEmailMessageType] = useState<"success" | "error">("success");
-
-  // Telegram settings state
-  const [tgSettings, setTgSettings] = useState({ bot_token: "", chat_id: "", enabled: false });
-  const [savingTg, setSavingTg] = useState(false);
-  const [testingTg, setTestingTg] = useState(false);
-  const [tgMessage, setTgMessage] = useState("");
-  const [tgMessageType, setTgMessageType] = useState<"success" | "error">("success");
 
   async function loadStatus(checkAi = false) {
     if (checkAi) {
@@ -182,19 +73,6 @@ export default function AdminSettingsPage() {
     }
   }
 
-  async function loadGdriveSchedule() {
-    try {
-      const res = await fetch(adminUrl("/admin/gdrive-schedule"), { cache: "no-store" });
-      if (res.ok) {
-        const data: GDriveSchedule = await res.json();
-        setGdriveSchedule(data);
-        if (data.interval_hours > 0) {
-          setGdriveIntervalInput(String(data.interval_hours));
-        }
-      }
-    } catch { /* ignore */ }
-  }
-
   async function loadDeepHealth(checkExternal = false) {
     setLoadingDeepHealth(true);
     try {
@@ -209,102 +87,6 @@ export default function AdminSettingsPage() {
     }
   }
 
-  async function saveGdriveSchedule(enabled: boolean) {
-    setSavingSchedule(true);
-    setGdriveMessage("");
-    try {
-      const interval = enabled ? parseFloat(gdriveIntervalInput) || 24 : 0;
-      const res = await fetch(adminUrl("/admin/gdrive-schedule"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interval_hours: interval }),
-      });
-      const data = await res.json();
-      setGdriveMessage(data.message || (isEn ? "Saved." : "ذخیره شد."));
-      await loadGdriveSchedule();
-    } catch {
-      setGdriveMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
-    } finally {
-      setSavingSchedule(false);
-    }
-  }
-
-  async function runGdriveSyncNow() {
-    setSyncingNow(true);
-    setGdriveMessage("");
-
-    try {
-      const res = await fetch(
-        adminUrl("/admin/gdrive-sync-now"),
-        { method: "POST" },
-      );
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        setGdriveMessage(
-          data.message || (isEn ? "Background sync started." : "همگام‌سازی در پس‌زمینه آغاز شد."),
-        );
-      } else {
-        setGdriveMessage(
-          data.message || data.detail || (isEn ? "Sync failed." : "خطا در همگام‌سازی."),
-        );
-      }
-
-      await loadGdriveSchedule();
-    } catch {
-      setGdriveMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
-    } finally {
-      setSyncingNow(false);
-    }
-  }
-
-
-  async function loadEmailSettings() {
-    try {
-      const res = await fetch(adminUrl("/admin/email-settings"), { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setEmailSettings((prev) => ({ ...prev, ...data }));
-      }
-    } catch { /* ignore */ }
-  }
-
-  async function saveEmailSettings() {
-    setSavingEmail(true);
-    setEmailMessage("");
-    try {
-      const res = await fetch(adminUrl("/admin/email-settings"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(emailSettings),
-      });
-      const data = await res.json();
-      setEmailMessageType(data.success ? "success" : "error");
-      setEmailMessage(data.message || (isEn ? "Saved." : "ذخیره شد."));
-    } catch {
-      setEmailMessageType("error");
-      setEmailMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
-    } finally {
-      setSavingEmail(false);
-    }
-  }
-
-  async function sendWeeklyReport() {
-    setSendingReport(true);
-    setEmailMessage("");
-    try {
-      const res = await fetch(adminUrl("/admin/send-weekly-report"), { method: "POST" });
-      const data = await res.json();
-      setEmailMessageType(data.success ? "success" : "error");
-      setEmailMessage(data.message || (data.success ? (isEn ? "Sent." : "ارسال شد.") : (isEn ? "Send failed." : "خطا در ارسال.")));
-    } catch {
-      setEmailMessageType("error");
-      setEmailMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
-    } finally {
-      setSendingReport(false);
-    }
-  }
-
   async function loadQdrantStatus() {
     try {
       const res = await fetch(adminUrl("/admin/qdrant-status"), { cache: "no-store" });
@@ -314,73 +96,13 @@ export default function AdminSettingsPage() {
     }
   }
 
-  async function loadTgSettings() {
-    try {
-      const res = await fetch(adminUrl("/admin/telegram-settings"), { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setTgSettings(data);
-      }
-    } catch { /* ignore */ }
-  }
-
-  async function saveTgSettings() {
-    setSavingTg(true);
-    setTgMessage("");
-    try {
-      const res = await fetch(adminUrl("/admin/telegram-settings"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tgSettings),
-      });
-      const data = await res.json();
-      setTgMessageType(data.success ? "success" : "error");
-      setTgMessage(data.message || (isEn ? "Saved." : "ذخیره شد."));
-      await loadTgSettings();
-    } catch {
-      setTgMessageType("error");
-      setTgMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
-    } finally {
-      setSavingTg(false);
-    }
-  }
-
-  async function testTg() {
-    setTestingTg(true);
-    setTgMessage("");
-    try {
-      const res = await fetch(adminUrl("/admin/telegram-test"), { method: "POST" });
-      const data = await res.json();
-      setTgMessageType(data.success ? "success" : "error");
-      setTgMessage(data.message || (isEn ? "Message sent." : "پیام ارسال شد."));
-    } catch {
-      setTgMessageType("error");
-      setTgMessage(isEn ? "Failed to connect to the server." : "خطا در اتصال به سرور.");
-    } finally {
-      setTestingTg(false);
-    }
-  }
-
   useEffect(() => {
     loadStatus(false);
     loadDeepHealth(false);
-    loadGdriveSchedule();
-    loadEmailSettings();
     loadQdrantStatus();
-    loadTgSettings();
     // This is a one-time settings bootstrap; the loader functions are invoked by explicit refresh actions after mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (gdriveSchedule?.sync_status !== "running") return;
-
-    const timer = window.setInterval(() => {
-      void loadGdriveSchedule();
-    }, 3000);
-
-    return () => window.clearInterval(timer);
-  }, [gdriveSchedule?.sync_status]);
 
   return (
     <section className="min-h-full bg-[var(--background)] px-6 py-8" dir={dir}>
@@ -670,356 +392,13 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         {/* ─── Google Drive Scheduled Sync ──────────────────────── */}
-        <div className="mt-6 rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
-              <Cloud size={25} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-[var(--foreground)]">
-                {isEn ? "Automatic Google Drive Sync" : "همزمان‌سازی خودکار Google Drive"}
-              </h2>
-              <p className="mt-1 text-sm text-[var(--text-subtle)]">
-                {isEn ? "Sync the knowledge base with Google Drive on a schedule." : "بانک دانش را به صورت زمان‌بندی‌شده با Google Drive همزمان کنید."}
-              </p>
-            </div>
-          </div>
-
-          {!gdriveSchedule?.folder_id_configured && (
-            <div className="mb-5 rounded-2xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] p-4 text-sm font-bold text-[var(--color-warning-text)]">
-              {isEn
-                ? "GOOGLE_DRIVE_ROOT_FOLDER_ID is not configured. Set it in the .env file to enable this feature."
-                : "متغیر محیطی GOOGLE_DRIVE_ROOT_FOLDER_ID تنظیم نشده است. برای فعال‌کردن این قابلیت، آن را در فایل .env تنظیم کنید."}
-            </div>
-          )}
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-bold text-[var(--text-muted)]">
-                  {isEn ? "Interval (hours)" : "فاصله زمانی (ساعت)"}
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="168"
-                  value={gdriveIntervalInput}
-                  onChange={(e) => setGdriveIntervalInput(e.target.value)}
-                  className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--foreground)] focus:border-[var(--brand-accent)] focus:outline-none"
-                  placeholder={isEn ? "24" : "۲۴"}
-                />
-                <p className="mt-1 text-xs text-[var(--text-subtle)]">
-                  {isEn ? "For example: 24 = once per day" : "مثلاً ۲۴ = هر روز یک‌بار"}
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => saveGdriveSchedule(true)}
-                  disabled={savingSchedule || !gdriveSchedule?.folder_id_configured}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-4 py-3 text-sm font-bold text-white transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
-                >
-                  <Clock size={16} />
-                  {savingSchedule ? (isEn ? "Saving..." : "ذخیره...") : (isEn ? "Enable schedule" : "فعال‌کردن زمان‌بندی")}
-                </button>
-
-                <button
-                  onClick={() => saveGdriveSchedule(false)}
-                  disabled={savingSchedule}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-bold text-[var(--text-muted)] transition hover:bg-[var(--surface)] disabled:opacity-50"
-                >
-                  {isEn ? "Disable" : "غیرفعال"}
-                </button>
-              </div>
-
-              <button
-                onClick={runGdriveSyncNow}
-                disabled={syncingNow || gdriveSchedule?.sync_status === "running" || !gdriveSchedule?.folder_id_configured}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-3 text-sm font-bold text-[var(--color-success-text)] transition hover:bg-[var(--color-success-bg)] disabled:opacity-50"
-              >
-                <Play size={16} />
-                {syncingNow || gdriveSchedule?.sync_status === "running"
-                  ? (isEn ? "Syncing..." : "در حال همزمان‌سازی...")
-                  : (isEn ? "Sync now" : "همزمان‌سازی فوری")}
-              </button>
-
-              {gdriveMessage && (
-                <div className="rounded-2xl bg-[var(--surface-soft)] p-4 text-sm font-bold text-[var(--text-muted)]">
-                  {gdriveMessage}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
-                <div className="text-xs font-bold text-[var(--text-subtle)] mb-1">{isEn ? "Schedule status" : "وضعیت زمان‌بندی"}</div>
-                <div className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${gdriveSchedule?.enabled ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" : "bg-[var(--border-soft)] text-[var(--text-muted)]"}`}>
-                  {gdriveSchedule?.enabled
-                    ? isEn
-                      ? `Every ${gdriveSchedule.interval_hours} hours`
-                      : `هر ${gdriveSchedule.interval_hours} ساعت یک‌بار`
-                    : isEn ? "Inactive" : "غیرفعال"}
-                </div>
-              </div>
-
-              {gdriveSchedule?.last_sync && (
-                <div className="rounded-2xl bg-[var(--surface-soft)] p-4">
-                  <div className="text-xs font-bold text-[var(--text-subtle)] mb-1">{isEn ? "Last sync" : "آخرین همزمان‌سازی"}</div>
-                  <div className="text-sm text-[var(--text-muted)]">
-                    {new Intl.DateTimeFormat(isEn ? "en-US" : "fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(gdriveSchedule.last_sync))}
-                  </div>
-                  {gdriveSchedule.last_sync_result && (
-                    <div className="mt-1 text-xs text-[var(--text-subtle)]">{gdriveSchedule.last_sync_result}</div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <GoogleDriveScheduleCard />
 
         {/* ─── Email Report Settings ────────────────────────────────────────── */}
-        <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
-              <Mail size={22} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-[var(--foreground)]">
-                {isEn ? "Weekly Email Report" : "گزارش هفتگی ایمیل"}
-              </h2>
-              <p className="mt-1 text-sm text-[var(--text-subtle)]">
-                {isEn ? "SMTP settings for automatic admin reports" : "تنظیمات SMTP برای ارسال خودکار گزارش به ادمین"}
-              </p>
-            </div>
-          </div>
-
-          {emailMessage && (
-            <div className={`mb-5 flex items-center gap-2 rounded-2xl p-4 text-sm font-bold ${
-              emailMessageType === "success" ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
-            }`}>
-              {emailMessageType === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              {emailMessage}
-            </div>
-          )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">SMTP Host</label>
-              <input
-                value={emailSettings.smtp_host}
-                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_host: e.target.value }))}
-                placeholder="smtp.gmail.com"
-                dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">Port</label>
-              <select
-                value={emailSettings.smtp_port}
-                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_port: Number(e.target.value) }))}
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              >
-                <option value={587}>587 (STARTTLS)</option>
-                <option value={465}>465 (SSL)</option>
-                <option value={25}>25</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
-                {isEn ? "SMTP username" : "نام کاربری SMTP"}
-              </label>
-              <input
-                value={emailSettings.smtp_user}
-                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_user: e.target.value }))}
-                placeholder="your@email.com"
-                dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
-                {isEn ? "SMTP password" : "رمز عبور SMTP"}
-              </label>
-              <input
-                type="password"
-                value={emailSettings.smtp_pass}
-                onChange={(e) => setEmailSettings((s) => ({ ...s, smtp_pass: e.target.value }))}
-                placeholder={isEn ? "App password or password" : "App password یا رمز عبور"}
-                dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
-                {isEn ? "Sender address" : "آدرس فرستنده"}
-              </label>
-              <input
-                value={emailSettings.from_addr}
-                onChange={(e) => setEmailSettings((s) => ({ ...s, from_addr: e.target.value }))}
-                placeholder="artin@artinazma.ir"
-                dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
-                {isEn ? "Recipient email (admin)" : "ایمیل گیرنده (ادمین)"}
-              </label>
-              <input
-                value={emailSettings.to_addr}
-                onChange={(e) => setEmailSettings((s) => ({ ...s, to_addr: e.target.value }))}
-                placeholder="admin@artinazma.ir"
-                dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              />
-            </div>
-          </div>
-
-          <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--text-muted)]">
-            <input
-              type="checkbox"
-              checked={emailSettings.weekly_enabled}
-              onChange={(e) => setEmailSettings((s) => ({ ...s, weekly_enabled: e.target.checked }))}
-            />
-            <span className="font-bold">
-              {isEn ? "Send the report automatically once a week" : "ارسال خودکار گزارش هر هفته یک‌بار"}
-            </span>
-          </label>
-
-          <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--color-info-bg)] px-4 py-3 text-sm text-[var(--color-info-text)]">
-            <input
-              type="checkbox"
-              checked={emailSettings.request_alerts_enabled}
-              onChange={(e) => setEmailSettings((s) => ({ ...s, request_alerts_enabled: e.target.checked }))}
-            />
-            <span className="font-bold">
-              {isEn ? "Send instant admin email for new customer requests" : "ارسال ایمیل فوری به ادمین برای درخواست جدید مشتری"}
-            </span>
-          </label>
-
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              onClick={saveEmailSettings}
-              disabled={savingEmail}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
-            >
-              <Save size={16} />
-              {savingEmail ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save settings" : "ذخیره تنظیمات")}
-            </button>
-
-            <button
-              onClick={sendWeeklyReport}
-              disabled={sendingReport || !emailSettings.to_addr}
-              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-5 py-3 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)] disabled:opacity-50"
-            >
-              <Send size={16} />
-              {sendingReport ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Send report now" : "ارسال گزارش الان")}
-            </button>
-          </div>
-        </div>
+        <EmailReportCard />
 
         {/* ─── Telegram Settings ─────────────────────────────────────────────── */}
-        <div className="rounded-[32px] border border-[var(--border-soft)] bg-[var(--surface)] p-6 shadow-sm">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-info-bg)] text-[var(--color-info-text)]">
-              <MessageCircle size={22} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-[var(--foreground)]">
-                {isEn ? "Telegram Notifications" : "اعلان‌های تلگرام"}
-              </h2>
-              <p className="mt-1 text-sm text-[var(--text-subtle)]">
-                {isEn
-                  ? "Receive new customer registrations and contact requests on Telegram."
-                  : "ثبت‌نام مشتری جدید و درخواست‌های تماس را روی تلگرام دریافت کن"}
-              </p>
-            </div>
-          </div>
-
-          {tgMessage && (
-            <div className={`mb-5 flex items-center gap-2 rounded-2xl p-4 text-sm font-bold ${
-              tgMessageType === "success" ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]" : "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
-            }`}>
-              {tgMessageType === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              {tgMessage}
-            </div>
-          )}
-
-          {tgSettings.enabled && (
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[var(--color-success-bg)] px-4 py-2 text-sm font-bold text-[var(--color-success-text)]">
-              <CheckCircle2 size={15} />
-              {isEn ? "Telegram is active" : "تلگرام فعال است"}
-            </div>
-          )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
-                Bot Token
-                <a
-                  href="https://t.me/BotFather"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mr-2 font-normal text-[var(--color-info-text)] hover:underline"
-                >
-                  {isEn ? "(get it from @BotFather)" : "(از @BotFather بگیر)"}
-                </a>
-              </label>
-              <input
-                value={tgSettings.bot_token}
-                onChange={(e) => setTgSettings((s) => ({ ...s, bot_token: e.target.value }))}
-                placeholder="123456789:AABBcc..."
-                dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
-                Chat ID
-                <span className="mr-2 font-normal text-[var(--text-subtle)]">
-                  {isEn ? "(group or channel ID)" : "(شناسه گروه یا کانال)"}
-                </span>
-              </label>
-              <input
-                value={tgSettings.chat_id}
-                onChange={(e) => setTgSettings((s) => ({ ...s, chat_id: e.target.value }))}
-                placeholder="-100123456789"
-                dir="ltr"
-                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm outline-none transition focus:border-[var(--brand-accent)]"
-              />
-            </div>
-          </div>
-
-          <p className="mt-3 rounded-2xl bg-[var(--surface-soft)] p-4 text-xs leading-7 text-[var(--text-subtle)]">
-            {isEn ? "To find the Chat ID, add the bot to the group, then use " : "برای پیداکردن Chat ID: ربات را به گروه اضافه کن، سپس از"}{" "}
-            <span dir="ltr" className="font-mono text-[var(--text-muted)]">
-              https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates
-            </span>{" "}
-            {isEn ? "and copy the " : "استفاده کن و عدد "}
-            <span className="font-bold">chat.id</span>
-            {isEn ? " value." : " را کپی کن."}
-          </p>
-
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              onClick={saveTgSettings}
-              disabled={savingTg}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--brand-fill)] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-fill-hover)] disabled:opacity-50"
-            >
-              <Save size={16} />
-              {savingTg ? (isEn ? "Saving..." : "در حال ذخیره...") : (isEn ? "Save settings" : "ذخیره تنظیمات")}
-            </button>
-            <button
-              onClick={testTg}
-              disabled={testingTg}
-              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-5 py-3 text-sm font-bold text-[var(--color-info-text)] transition hover:bg-[var(--color-info-bg)] disabled:opacity-50"
-            >
-              <Send size={16} />
-              {testingTg ? (isEn ? "Sending..." : "در حال ارسال...") : (isEn ? "Send test message" : "ارسال پیام آزمایشی")}
-            </button>
-          </div>
-        </div>
+        <TelegramSettingsCard />
       </div>
     </div>
     </section>

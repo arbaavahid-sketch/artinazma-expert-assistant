@@ -3,15 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useToast } from "@/components/Toast";
-import Link from "next/link";
-import { adminUrl, apiUrl } from "@/lib/api";
+import { adminUrl } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import {
-  Clock3,
   FileQuestion,
   RefreshCw,
   Search,
-  ShieldCheck,
   Download,
   ThumbsUp,
   ThumbsDown,
@@ -25,142 +22,16 @@ import {
   CheckSquare2,
 } from "lucide-react";
 
-type QuestionItem = {
-  id: number;
-  question: string;
-  detected_domain: string;
-  metadata?: QuestionMetadata;
-  expert_status: string;
-  user_rating: string;
-  created_at: string;
-  updated_at: string | null;
-};
-
-type QuestionMetadata = {
-  question_intent?: string;
-  question_intent_label?: string;
-  search_mode?: string;
-  best_score?: number;
-  web_search_used?: boolean;
-  source_count?: number;
-  answer_mode?: string;
-  response_time_ms?: number;
-  // Asker identity (set at save time from /chat and /analyze-*).
-  user_id?: string;
-  customer_id?: number | null;
-  customer_name?: string;
-  customer_email?: string;
-  // Set for image/file analyses submitted from the assistant (analyze-image / analyze-file).
-  analysis_type?: "image" | "file";
-  image_url?: string;
-  image_type_label?: string;
-  file_url?: string;
-  file_name?: string;
-  test_type_label?: string;
-};
-
-const statusOptions = [
-  { value: "all", label: "همه وضعیت‌ها", labelEn: "All statuses" },
-  { value: "pending", label: "در انتظار بررسی", labelEn: "Pending review" },
-  { value: "approved", label: "تایید شده", labelEn: "Approved" },
-  { value: "needs_edit", label: "نیازمند اصلاح", labelEn: "Needs edit" },
-  { value: "rejected", label: "رد شده", labelEn: "Rejected" },
-];
-
-const domainOptions = [
-  { value: "all", label: "همه حوزه‌ها", labelEn: "All domains" },
-  { value: "general", label: "عمومی", labelEn: "General" },
-  { value: "catalyst", label: "کاتالیست", labelEn: "Catalyst" },
-  { value: "equipment", label: "تجهیزات", labelEn: "Equipment" },
-  { value: "chromatography", label: "کروماتوگرافی", labelEn: "Chromatography" },
-  { value: "mercury-analysis", label: "آنالیز جیوه", labelEn: "Mercury analysis" },
-  { value: "sulfur-analysis", label: "آنالیز سولفور", labelEn: "Sulfur analysis" },
-  { value: "troubleshooting", label: "عیب‌یابی", labelEn: "Troubleshooting" },
-  { value: "analysis", label: "آنالیز و تست", labelEn: "Analysis and testing" },
-  { value: "sales", label: "فروش", labelEn: "Sales" },
-  { value: "petroleum", label: "نفت و پتروشیمی", labelEn: "Petroleum" },
-  { value: "technical_general", label: "فنی عمومی", labelEn: "Technical general" },
-];
-
-const ratingOptions = [
-  { value: "all", label: "همه امتیازها", labelEn: "All ratings" },
-  { value: "up", label: "پسندیده شده", labelEn: "Liked" },
-  { value: "down", label: "نپسندیده شده", labelEn: "Disliked" },
-  { value: "unrated", label: "بدون امتیاز", labelEn: "Unrated" },
-];
-
-function getStatusLabel(status: string, locale: "fa" | "en" = "fa") {
-  if (status === "approved") return locale === "en" ? "Approved" : "تایید شده";
-  if (status === "needs_edit") return locale === "en" ? "Needs edit" : "نیازمند اصلاح";
-  if (status === "rejected") return locale === "en" ? "Rejected" : "رد شده";
-  return locale === "en" ? "Pending review" : "در انتظار بررسی";
-}
-
-function getStatusClass(status: string) {
-  if (status === "approved")
-    return "bg-[var(--color-success-bg)] text-[var(--color-success-text)] border-[var(--color-success-border)]";
-  if (status === "needs_edit")
-    return "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border-[var(--color-warning-border)]";
-  if (status === "rejected") return "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] border-[var(--color-danger-border)]";
-  return "bg-[var(--surface-soft)] text-[var(--text-muted)] border-[var(--border-soft)]";
-}
-
-function getDomainLabel(domain: string, locale: "fa" | "en" = "fa") {
-  const found = domainOptions.find((d) => d.value === domain);
-  if (found && found.value !== "all") return locale === "en" ? found.labelEn : found.label;
-  return domain || (locale === "en" ? "Auto detected" : "تشخیص خودکار");
-}
-
-function getAskerLabel(metadata?: QuestionMetadata, locale: "fa" | "en" = "fa") {
-  if (metadata?.customer_name) return metadata.customer_name;
-  if (metadata?.customer_email) return metadata.customer_email;
-  if (metadata?.customer_id) return locale === "en" ? `Customer #${metadata.customer_id}` : `مشتری #${metadata.customer_id}`;
-  const uid = metadata?.user_id || "";
-  if (uid.startsWith("customer_")) return locale === "en" ? `Customer #${uid.slice(9)}` : `مشتری #${uid.slice(9)}`;
-  if (!uid || uid === "anonymous") return locale === "en" ? "Guest" : "مهمان";
-  return uid.length > 14 ? `${uid.slice(0, 12)}…` : uid;
-}
-
-function getIntentLabel(metadata?: QuestionMetadata, locale: "fa" | "en" = "fa") {
-  const intent = metadata?.question_intent || "";
-  if (locale === "fa") return metadata?.question_intent_label || intent || "-";
-
-  const labels: Record<string, string> = {
-    sales: "Sales",
-    technical_general: "Technical general",
-    equipment_recommendation: "Equipment recommendation",
-    troubleshooting: "Troubleshooting",
-    lab_analysis: "Lab analysis",
-    product_info: "Product information",
-    price_inquiry: "Price inquiry",
-    customer_request: "Customer request",
-    general: "General",
-  };
-
-  return labels[intent] || intent.replace(/_/g, " ") || "-";
-}
-
-function formatDate(value?: string | null, locale: "fa" | "en" = "fa") {
-  if (!value) return locale === "en" ? "Unknown" : "نامشخص";
-  try {
-    return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fa-IR", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(value));
-  } catch {
-    return value;
-  }
-}
-
-function formatScore(value?: number) {
-  if (typeof value !== "number") return "-";
-  return value >= 10 ? value.toFixed(1) : value.toFixed(2);
-}
-
-function formatMs(value?: number) {
-  if (typeof value !== "number") return "-";
-  return value >= 1000 ? `${(value / 1000).toFixed(1)}s` : `${value}ms`;
-}
+import QuestionRow from "./QuestionRow";
+import QuestionsPagination from "./QuestionsPagination";
+import {
+  domainOptions,
+  getDomainLabel,
+  getStatusLabel,
+  ratingOptions,
+  statusOptions,
+  type QuestionItem,
+} from "./questions-types";
 
 export default function QuestionsPage() {
   const { locale, dir } = useI18n();
@@ -754,192 +625,14 @@ export default function QuestionsPage() {
           ) : filteredQuestions.length > 0 ? (
             <div className="space-y-3">
               {pagedQuestions.map((item) => (
-                <Link
+                <QuestionRow
                   key={item.id}
-                  href={`/admin/questions/${item.id}`}
-                  className={`group block rounded-[28px] border p-5 transition hover:border-purple-200 dark:hover:border-purple-800 hover:bg-[var(--surface)] hover:shadow-sm ${
-                    selectedIds.has(item.id)
-                      ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40"
-                      : "border-[var(--border-soft)] bg-[var(--surface-soft)]"
-                  }`}
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    {/* Row checkbox */}
-                    <div
-                      className="shrink-0 self-start pt-1 lg:self-center"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
-                    >
-                      {selectedIds.has(item.id) ? (
-                        <CheckSquare2 size={18} className="text-purple-600 dark:text-purple-300" />
-                      ) : (
-                        <Square size={18} className="text-[var(--text-subtle)] group-hover:text-[var(--text-subtle)]" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-3 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-sm font-black text-[var(--text-muted)]">
-                          #{item.id}
-                        </span>
-
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(
-                            item.expert_status,
-                          )}`}
-                        >
-                          {getStatusLabel(item.expert_status, locale)}
-                        </span>
-
-                        <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-3 py-1 text-xs font-bold text-purple-700 dark:text-purple-300">
-                          {getDomainLabel(item.detected_domain, locale)}
-                        </span>
-
-                        {item.user_rating === "up" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success-bg)] px-3 py-1 text-xs font-bold text-[var(--color-success-text)]">
-                            <ThumbsUp size={12} />
-                            {isEn ? "Liked" : "پسندیده شده"}
-                          </span>
-                        )}
-                        {item.user_rating === "down" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger-bg)] px-3 py-1 text-xs font-bold text-[var(--color-danger-text)]">
-                            <ThumbsDown size={12} />
-                            {isEn ? "Disliked" : "نپسندیده شده"}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="line-clamp-2 text-base font-bold leading-8 text-[var(--foreground)] group-hover:text-purple-700 dark:group-hover:text-purple-300">
-                        {item.question}
-                      </div>
-
-                      {item.metadata?.image_url && (
-                        <a
-                          href={apiUrl(item.metadata.image_url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-2 inline-block"
-                          title={isEn ? "Open image" : "مشاهده تصویر ارسالی مشتری"}
-                        >
-                          <img
-                            src={apiUrl(item.metadata.image_url)}
-                            alt={item.metadata.image_type_label || "تصویر"}
-                            loading="lazy"
-                            className="max-h-40 rounded-xl border border-[var(--border-soft)] object-contain"
-                          />
-                        </a>
-                      )}
-
-                      {item.metadata?.analysis_type === "file" && item.metadata?.file_url && (
-                        <a
-                          href={apiUrl(item.metadata.file_url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-1.5 text-xs font-bold text-[var(--text-muted)]"
-                        >
-                          📄 {item.metadata.file_name || (isEn ? "Attached file" : "فایل ارسالی")}
-                        </a>
-                      )}
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-bold">
-                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
-                          intent: {getIntentLabel(item.metadata, locale)}
-                        </span>
-                        <span
-                          className={`rounded-full border px-2.5 py-1 ${
-                            item.metadata?.customer_id || item.metadata?.user_id?.startsWith("customer_")
-                              ? "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
-                              : "border-[var(--border-soft)] bg-[var(--surface-soft)] text-[var(--text-subtle)]"
-                          }`}
-                          title={item.metadata?.customer_email || item.metadata?.user_id || ""}
-                        >
-                          {isEn ? "asker" : "پرسنده"}: {getAskerLabel(item.metadata, locale)}
-                        </span>
-                        <span className="rounded-full border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-2.5 py-1 text-[var(--color-info-text)]">
-                          search: {item.metadata?.search_mode || "-"}
-                        </span>
-                        <span className={`rounded-full border px-2.5 py-1 ${
-                          item.metadata?.web_search_used
-                            ? "border-[var(--color-success-border)] bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
-                            : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-subtle)]"
-                        }`}>
-                          web: {item.metadata?.web_search_used ? "on" : "off"}
-                        </span>
-                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
-                          sources: {item.metadata?.source_count ?? 0}
-                        </span>
-                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
-                          score: {formatScore(item.metadata?.best_score)}
-                        </span>
-                        <span className="rounded-full border border-[var(--border-soft)] bg-[var(--surface)] px-2.5 py-1 text-[var(--text-muted)]">
-                          time: {formatMs(item.metadata?.response_time_ms)}
-                        </span>
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[var(--text-subtle)]">
-                        <span className="inline-flex items-center gap-1">
-                          <Clock3 size={14} />
-                          {formatDate(item.created_at, locale)}
-                        </span>
-
-                        {item.updated_at && (
-                          <span className="inline-flex items-center gap-1">
-                            <ShieldCheck size={14} />
-                            {isEn ? "Updated" : "بروزرسانی"}: {formatDate(item.updated_at, locale)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      {reviewingId === item.id ? (
-                        <Loader2 size={18} className="animate-spin text-[var(--text-subtle)]" />
-                      ) : (
-                        <div className="flex gap-1.5" onClick={(e) => e.preventDefault()}>
-                          <button
-                            onClick={(e) => quickReview(e, item.id, "approved")}
-                            title={isEn ? "Approve" : "تایید"}
-                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                              item.expert_status === "approved"
-                                ? "bg-[var(--color-success-bg)] text-[var(--color-success-text)]"
-                                : "bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success-text)] border border-[var(--border-soft)]"
-                            }`}
-                          >
-                            <CheckCircle2 size={13} />
-                            {isEn ? "Approve" : "تایید"}
-                          </button>
-                          <button
-                            onClick={(e) => quickReview(e, item.id, "needs_edit")}
-                            title={isEn ? "Needs edit" : "نیازمند اصلاح"}
-                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                              item.expert_status === "needs_edit"
-                                ? "bg-[var(--color-warning-bg)] text-[var(--color-warning-text)]"
-                                : "bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--color-warning-bg)] hover:text-[var(--color-warning-text)] border border-[var(--border-soft)]"
-                            }`}
-                          >
-                            <AlertCircle size={13} />
-                            {isEn ? "Edit" : "اصلاح"}
-                          </button>
-                          <button
-                            onClick={(e) => quickReview(e, item.id, "rejected")}
-                            title={isEn ? "Reject" : "رد"}
-                            className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                              item.expert_status === "rejected"
-                                ? "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)]"
-                                : "bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--color-danger-bg)] hover:text-[var(--color-danger-text)] border border-[var(--border-soft)]"
-                            }`}
-                          >
-                            <XCircle size={13} />
-                            {isEn ? "Reject" : "رد"}
-                          </button>
-                        </div>
-                      )}
-                      <span className="text-xs text-purple-600 dark:text-purple-300 group-hover:underline">
-                        {isEn ? "View details ->" : "مشاهده جزئیات ←"}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                  item={item}
+                  selected={selectedIds.has(item.id)}
+                  reviewing={reviewingId === item.id}
+                  onToggleSelect={toggleSelect}
+                  onQuickReview={quickReview}
+                />
               ))}
             </div>
           ) : (
@@ -950,60 +643,7 @@ export default function QuestionsPage() {
 
           {/* Pagination */}
           {!loading && filteredQuestions.length > PAGE_SIZE && (
-            <div className="mt-6 flex items-center justify-center gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                ›
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(
-                  (p) =>
-                    p === 1 ||
-                    p === totalPages ||
-                    Math.abs(p - currentPage) <= 2,
-                )
-                .reduce<(number | "…")[]>((acc, p, idx, arr) => {
-                  if (idx > 0 && p - (arr[idx - 1] as number) > 1)
-                    acc.push("…");
-                  acc.push(p);
-                  return acc;
-                }, [])
-                .map((p, idx) =>
-                  p === "…" ? (
-                    <span key={`ellipsis-${idx}`} className="px-1 text-[var(--text-subtle)]">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setCurrentPage(p as number)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-bold shadow-sm transition ${
-                        currentPage === p
-                          ? "border-purple-300 dark:border-purple-800 bg-purple-600 text-white"
-                          : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] shadow-sm transition hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-700 dark:hover:text-purple-300 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                ‹
-              </button>
-
-              <span className="mr-2 text-sm text-[var(--text-subtle)]">
-                {isEn ? `Page ${currentPage} of ${totalPages}` : `صفحه ${currentPage} از ${totalPages}`}
-              </span>
-            </div>
+            <QuestionsPagination currentPage={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
           )}
         </div>
       </div>
