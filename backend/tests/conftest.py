@@ -18,30 +18,53 @@ os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-testing-only")
 os.environ["QDRANT_URL"] = ""
 os.environ["QDRANT_API_KEY"] = ""
 
+# Keep tests away from the developer's real data: never a configured Postgres,
+# and the SQLite database and log file live in a throwaway folder for this run.
+# Connections are opened from repositories.base.DB_PATH, so that is the one to
+# redirect (db_service.DB_PATH is kept in step for code that still reads it).
+_TEST_STORAGE = tempfile.mkdtemp(prefix="artin-tests-")
+os.environ["DATABASE_URL"] = ""
+os.environ["LOG_FILE"] = os.path.join(_TEST_STORAGE, "app.log")
 
-@pytest.fixture(scope="session")
+from pathlib import Path  # noqa: E402
+
+import repositories.base as _db_base  # noqa: E402
+import db_service as _db_service  # noqa: E402
+
+_TEST_DB_PATH = Path(_TEST_STORAGE) / "app.db"
+_db_base.DB_PATH = _TEST_DB_PATH
+_db_service.DB_PATH = _TEST_DB_PATH
+
+
+def _use_test_db():
+    _db_base.DB_PATH = _TEST_DB_PATH
+    _db_service.DB_PATH = _TEST_DB_PATH
+
+
+@pytest.fixture(scope="session", autouse=True)
 def test_db():
     """دیتابیس موقت برای تست‌ها."""
-    import db_service
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        db_path = f.name
+    _use_test_db()
+    _db_service.init_db()
+    yield _TEST_DB_PATH
 
-    original_path = db_service.DB_PATH
-    db_service.DB_PATH = db_path
-    db_service.init_db()
 
-    yield db_path
+def pytest_sessionfinish(session, exitstatus):
+    import logging
+    import shutil
 
-    db_service.DB_PATH = original_path
-    os.unlink(db_path)
+    for handler in logging.getLogger().handlers[:]:
+        if isinstance(handler, logging.FileHandler):
+            handler.close()
+            logging.getLogger().removeHandler(handler)
+    shutil.rmtree(_TEST_STORAGE, ignore_errors=True)
 
 
 @pytest.fixture
 def app_client(test_db):
     """TestClient برای FastAPI."""
-    import db_service
-    db_service.DB_PATH = test_db
-    db_service.init_db()
+    _use_test_db()
+    _db_service.init_db()
 
     from main import app
     from fastapi.testclient import TestClient
@@ -59,7 +82,7 @@ def admin_headers():
 def authenticated_client(app_client):
     """Approved test customer, using the actual login and JWT validation path."""
     from uuid import uuid4
-    import db_service
+    db_service = _db_service
     email = f"release-{uuid4().hex}@example.invalid"
     password = "Synthetic-release-test-password"
     result = db_service.create_customer("Release test", email, password)
