@@ -235,18 +235,21 @@ small, .text-caption { font-size: var(--font-size-caption); line-height: 1.7; }
 .ai-md-section { margin: 18px 0 8px 0; font-size: 18px; font-weight: 800; line-height: 1.7; color: var(--foreground); }
 .ai-md-section::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 999px; background: var(--brand-accent-2); vertical-align: middle; }
 .ai-md-paragraph { margin: 0 0 9px 0; line-height: 2.05; }
-.ai-md-list { margin: 10px 0 16px 0; padding-right: 26px; padding-left: 0; }
+.ai-md-list { list-style: disc; margin: 10px 0 16px 0; padding-right: 26px; padding-left: 0; }
 .ltr-markdown .ai-md-list { margin: 10px 0; line-height: 2.2; unicode-bidi: plaintext; }
 .ai-md-list-item { margin: 5px 0; line-height: 2; unicode-bidi: plaintext; }
 .ai-md-list-item::marker { color: var(--brand-accent); font-size: 1.15em; font-weight: 700; }
-.ai-md-strong { color: var(--foreground); font-weight: 700; unicode-bidi: isolate; }
+.ai-md-strong { color: var(--foreground); font-weight: 700; unicode-bidi: plaintext; }
 .ai-md-code { direction: ltr; display: inline-block; padding: 2px 7px; border-radius: 8px; background: var(--surface-soft); color: var(--foreground); font-family: Consolas, Monaco, monospace; font-size: 13px; border: 1px solid var(--border-soft); }
-.ai-md-table-wrap { width: 100%; overflow-x: auto; margin: 16px 0; border-radius: 18px; border: 1px solid var(--border-soft); direction: rtl; box-shadow: var(--shadow-card); }
+.ai-md-table-wrap { width: 100%; max-height: 32rem; overflow: auto; margin: 16px 0; border-radius: 18px; border: 1px solid var(--border-soft); direction: rtl; box-shadow: var(--shadow-card); }
 .ai-md-table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 14px; direction: rtl; }
 .ai-md-th, .ai-md-td { text-align: right; font-family: var(--font-persian); }
-.ai-md-th { background: var(--color-info-bg); color: var(--foreground); font-weight: 800; padding: 13px; border-bottom: 1px solid var(--border-soft); text-align: right; white-space: nowrap; unicode-bidi: plaintext; }
+.ai-md-th { position: sticky; top: 0; z-index: 1; background: var(--color-info-bg); color: var(--foreground); font-weight: 800; padding: 13px; border-bottom: 1px solid var(--border-soft); text-align: right; white-space: nowrap; unicode-bidi: plaintext; }
 .ai-md-td { padding: 13px; border-bottom: 1px solid var(--border-soft); color: var(--foreground); vertical-align: top; unicode-bidi: plaintext; }
 .ai-md-table tr:last-child .ai-md-td { border-bottom: none; }
+.ai-md-ordered { list-style: decimal; }
+/* Standard and test-method codes (ASTM D4294, ISO 20846…) as small left-to-right badges. */
+.ai-md-std { display: inline-block; margin-inline: 1px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--color-info-border); background: var(--color-info-bg); color: var(--color-info-text); font-size: .9em; font-weight: 700; line-height: 1.7; white-space: nowrap; unicode-bidi: isolate; }
 
 textarea::placeholder, input::placeholder { color: var(--text-subtle); }
 

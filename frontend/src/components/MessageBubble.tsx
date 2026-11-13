@@ -7,6 +7,7 @@ import { ActionBarPrimitive, ComposerPrimitive, useAuiState } from "@assistant-u
 
 import { useEffect, useRef, useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
+import { withStandardBadges } from "@/components/standard-codes";
 import remarkGfm from "remark-gfm";
 import {
   Check,
@@ -98,13 +99,13 @@ function ArtinazmaResourceCards({
   }
 
   return (
-    <div className="mt-4 rounded-3xl border border-[var(--color-info-border)] bg-gradient-to-br from-[var(--color-info-bg)] via-white to-slate-50 p-3 shadow-sm">
+    <div className="mt-4 rounded-3xl border border-[var(--color-info-border)] bg-gradient-to-br from-[var(--color-info-bg)] via-[var(--surface)] to-[var(--surface-soft)] p-3 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-sm font-black text-slate-900">
+          <div className="text-sm font-black text-[var(--foreground)]">
             {isEn ? "Related ArtinAzma products/pages" : "محصولات و صفحه‌های مرتبط آرتین آزما"}
           </div>
-          <div className="mt-0.5 text-xs font-semibold text-slate-500">
+          <div className="mt-0.5 text-xs font-semibold text-[var(--text-subtle)]">
             {isEn ? "Matched from the ArtinAzma website index" : "بر اساس جستجو در ایندکس سایت آرتین آزما"}
           </div>
         </div>
@@ -125,10 +126,10 @@ function ArtinazmaResourceCards({
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-[var(--color-info-border)] hover:shadow-md"
+                className="group overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] transition hover:border-[var(--color-info-border)] hover:shadow-md"
               >
                 <div className="flex min-h-[132px]">
-                  <div className="relative w-28 shrink-0 bg-slate-100 sm:w-32">
+                  <div className="relative w-28 shrink-0 bg-[var(--surface-soft)] sm:w-32">
                     {image?.url ? (
                       <img
                         src={image.url}
@@ -139,7 +140,7 @@ function ArtinazmaResourceCards({
                         }}
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-300">
+                      <div className="flex h-full w-full items-center justify-center text-[var(--text-subtle)]">
                         <ImageIcon size={28} strokeWidth={1.6} />
                       </div>
                     )}
@@ -147,20 +148,20 @@ function ArtinazmaResourceCards({
 
                   <div className="flex min-w-0 flex-1 flex-col p-3">
                     <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-600">
+                      <span className="rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-[11px] font-black text-[var(--text-muted)]">
                         {pageKind(link.url)}
                       </span>
                       {score !== null && (
-                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-700">
+                        <span className="rounded-full bg-[var(--color-success-bg)] px-2 py-0.5 text-[11px] font-black text-[var(--color-success-text)]">
                           {isEn ? "match" : "تطابق"} {score}
                         </span>
                       )}
                     </div>
 
-                    <div className="line-clamp-2 text-sm font-black leading-6 text-slate-900 group-hover:text-[var(--color-info-text)]">
+                    <div className="line-clamp-2 text-sm font-black leading-6 text-[var(--foreground)] group-hover:text-[var(--color-info-text)]">
                       {link.title}
                     </div>
-                    <div className="mt-1 truncate text-xs font-semibold text-slate-400">
+                    <div className="mt-1 truncate text-xs font-semibold text-[var(--text-subtle)]">
                       {hostname(link.url)}
                     </div>
 
@@ -182,9 +183,9 @@ function ArtinazmaResourceCards({
               href={image.page_url || image.url}
               target="_blank"
               rel="noreferrer"
-              className="block overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
+              className="block overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-[var(--surface)] shadow-sm transition hover:shadow-md"
             >
-              <div className="aspect-[4/3] bg-slate-100">
+              <div className="aspect-[4/3] bg-[var(--surface-soft)]">
                 <img
                   src={image.url}
                   alt={image.title}
@@ -194,7 +195,7 @@ function ArtinazmaResourceCards({
                   }}
                 />
               </div>
-              <div className="p-3 text-sm font-bold text-slate-800">
+              <div className="p-3 text-sm font-bold text-[var(--foreground)]">
                 {image.title}
               </div>
             </a>
@@ -392,9 +393,9 @@ function MessageBubble({
     copyShare: isEn ? "Copy text and link" : "کپی متن و لینک",
   };
   const actionButtonClass =
-    "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:h-8 sm:w-8";
+    "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-subtle)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--text-muted)] sm:h-8 sm:w-8";
   const menuActionClass =
-    "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:text-slate-950 dark:text-[var(--foreground)] dark:hover:bg-[var(--surface-raised-2)]";
+    "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-right text-xs font-bold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--foreground)] dark:text-[var(--foreground)] dark:hover:bg-[var(--surface-raised-2)]";
 
   return (
     <div
@@ -412,7 +413,7 @@ function MessageBubble({
           <img
             src="/images/artin-avatar.webp"
             alt={isEn ? "Artin" : "آرتین"}
-            className="mt-1 hidden h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover p-1 shadow-sm sm:block"
+            className="mt-0.5 hidden h-9 w-9 shrink-0 rounded-full border border-[var(--border-soft)] bg-[var(--surface)] object-cover p-0.5 sm:block"
           />
         )}
 
@@ -481,7 +482,7 @@ function MessageBubble({
                     <h3 className="ai-md-section">{children}</h3>
                   ),
                   p: ({ children }) => (
-                    <p className="ai-md-paragraph">{children}</p>
+                    <p className="ai-md-paragraph">{withStandardBadges(children)}</p>
                   ),
                   ul: ({ children }) => (
                     <ul className="ai-md-list">{children}</ul>
@@ -490,10 +491,10 @@ function MessageBubble({
                     <ol className="ai-md-list ai-md-ordered">{children}</ol>
                   ),
                   li: ({ children }) => (
-                    <li className="ai-md-list-item">{children}</li>
+                    <li className="ai-md-list-item">{withStandardBadges(children)}</li>
                   ),
                   strong: ({ children }) => (
-                    <strong className="ai-md-strong">{children}</strong>
+                    <strong className="ai-md-strong">{withStandardBadges(children)}</strong>
                   ),
                   pre: ({ children }) => (
                     <pre className="ai-md-pre" dir="ltr" tabIndex={0} aria-label={isEn ? "Code block" : "بلوک کد"}>
@@ -542,7 +543,7 @@ function MessageBubble({
                     <th className="ai-md-th">{children}</th>
                   ),
                   td: ({ children }) => (
-                    <td className="ai-md-td">{children}</td>
+                    <td className="ai-md-td">{withStandardBadges(children)}</td>
                   ),
                 }}
               >
@@ -553,7 +554,7 @@ function MessageBubble({
           {item.attachment && (
             <div
               className={`mt-4 rounded-3xl p-4 text-sm leading-7 ${
-                isUser ? "bg-white/15 text-white" : "bg-slate-50 text-slate-700"
+                isUser ? "bg-white/15 text-white" : "bg-[var(--surface-soft)] text-[var(--text-muted)]"
               }`}
             >
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -615,10 +616,10 @@ function MessageBubble({
                   disabled={!!feedbackValue}
                   className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${
                     feedbackValue === "up"
-                      ? "text-emerald-600 bg-emerald-50"
+                      ? "text-[var(--color-success-text)] bg-[var(--color-success-bg)]"
                       : feedbackValue === "down"
-                      ? "text-slate-300 cursor-default"
-                      : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
+                      ? "text-[var(--text-subtle)] cursor-default"
+                      : "text-[var(--text-subtle)] hover:bg-[var(--color-success-bg)] hover:text-[var(--color-success-text)]"
                   }`}
                 >
                   <ThumbsUp size={13} />
@@ -636,18 +637,18 @@ function MessageBubble({
                     disabled={!!feedbackValue}
                     className={`inline-flex h-7 w-7 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${
                       feedbackValue === "down"
-                        ? "text-red-500 bg-red-50"
+                        ? "text-red-500 bg-[var(--color-danger-bg)]"
                         : feedbackValue === "up"
-                        ? "text-slate-300 cursor-default"
-                        : "text-slate-400 hover:bg-red-50 hover:text-red-500"
+                        ? "text-[var(--text-subtle)] cursor-default"
+                        : "text-[var(--text-subtle)] hover:bg-[var(--color-danger-bg)] hover:text-red-500"
                     }`}
                   >
                     <ThumbsDown size={13} />
                   </button>
                 </Tooltip>
                 {showFeedbackMenu && !feedbackValue && (
-                  <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]">
-                    <p className="mb-1.5 px-2 text-[11px] font-bold text-slate-500 dark:text-[var(--text-subtle)]">
+                  <div className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]">
+                    <p className="mb-1.5 px-2 text-[11px] font-bold text-[var(--text-subtle)] dark:text-[var(--text-subtle)]">
                       {isEn ? "What was wrong?" : "چه مشکلی داشت؟"}
                     </p>
                     {FEEDBACK_REASONS[locale].map((reason) => (
@@ -657,14 +658,14 @@ function MessageBubble({
                           onFeedback(item.question_id, "down", reason);
                           setShowFeedbackMenu(false);
                         }}
-                        className="block w-full rounded-xl px-3 py-1.5 text-right text-xs text-slate-700 transition hover:bg-red-50 hover:text-red-600 dark:text-[var(--text-muted)] dark:hover:bg-red-950 dark:hover:text-red-400"
+                        className="block w-full rounded-xl px-3 py-1.5 text-right text-xs text-[var(--text-muted)] transition hover:bg-[var(--color-danger-bg)] hover:text-red-600 dark:text-[var(--text-muted)] dark:hover:bg-red-950 dark:hover:text-red-400"
                       >
                         {reason}
                       </button>
                     ))}
                     <button
                       onClick={() => setShowFeedbackMenu(false)}
-                      className="mt-1 block w-full rounded-xl px-3 py-1 text-center text-[11px] text-slate-400 hover:text-slate-600"
+                      className="mt-1 block w-full rounded-xl px-3 py-1 text-center text-[11px] text-[var(--text-subtle)] hover:text-[var(--text-muted)]"
                     >
                       {isEn ? "Cancel" : "انصراف"}
                     </button>
@@ -677,7 +678,7 @@ function MessageBubble({
                   className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition sm:h-8 sm:w-8 ${
                     isSpeaking
                       ? "bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                      : "text-[var(--text-subtle)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-muted)]"
                   }`}
                   aria-label={actionLabels.speak}
                   title={actionLabels.speak}
@@ -704,7 +705,7 @@ function MessageBubble({
                 </Tooltip>
                 {showShareMenu && (
                   <div
-                    className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]"
+                    className="absolute bottom-full left-0 z-50 mb-2 w-52 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]"
                     role="menu"
                   >
                     <button
@@ -760,7 +761,7 @@ function MessageBubble({
                 </Tooltip>
                 {showActionsMenu && (
                   <div
-                    className="absolute bottom-full left-0 z-50 mb-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]"
+                    className="absolute bottom-full left-0 z-50 mb-2 w-56 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] p-2 shadow-xl dark:border-[var(--border-soft)] dark:bg-[var(--surface-raised)]"
                     role="menu"
                   >
                     <button

@@ -586,8 +586,8 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                           <div
                             className={`group flex items-center rounded-2xl transition ${
                               isActiveSession
-                                ? "bg-white text-[var(--color-info-text)] shadow-sm shadow-slate-200/70"
-                                : "text-slate-600 hover:bg-white hover:text-slate-900"
+                                ? "bg-[var(--surface)] text-[var(--color-info-text)] shadow-sm"
+                                : "text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
                             }`}
                           >
                             <Link
@@ -776,7 +776,7 @@ export default function ArtinShell({ children }: ArtinShellProps) {
                 onClick={cycleTheme}
                 aria-label={`${isRtl ? "تم" : "Theme"}: ${themeName}`}
                 title={`${isRtl ? "تم" : "Theme"}: ${themeName}`}
-                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-white dark:hover:bg-[var(--surface-raised)] ${
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition hover:bg-[var(--surface)] dark:hover:bg-[var(--surface-raised)] ${
                   sidebarCollapsed ? "justify-center px-2" : "w-full"
                 }`}
               >

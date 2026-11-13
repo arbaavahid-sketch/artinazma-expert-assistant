@@ -153,7 +153,7 @@
 .ai-markdown {
   font-size: 15px !important;
   line-height: 1.78 !important;
-  color: #111827 !important;
+  color: var(--foreground) !important;
 }
 
 .rtl-markdown {
@@ -175,7 +175,7 @@
   font-size: 17px !important;
   font-weight: 700 !important;
   line-height: 1.5 !important;
-  color: #111827 !important;
+  color: var(--foreground) !important;
 }
 
 .ai-md-section {
@@ -183,7 +183,7 @@
   font-size: 15px !important;
   font-weight: 700 !important;
   line-height: 1.6 !important;
-  color: #111827 !important;
+  color: var(--foreground) !important;
 }
 
 .ai-md-section::before {
@@ -214,14 +214,14 @@
 }
 
 .ai-md-list-item::marker {
-  color: #6b7280 !important;
+  color: var(--brand-accent) !important;
   font-size: 1em !important;
 }
 
 /* Emphasis */
 .ai-md-strong {
   font-weight: 700 !important;
-  color: #111827 !important;
+  color: var(--foreground) !important;
 }
 
 /* Code */
@@ -250,8 +250,9 @@
   display: inline-block;
   padding: 1px 6px;
   border-radius: 6px;
-  background: #f3f4f6;
-  color: #1f2937;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  color: var(--foreground);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;
 }
@@ -262,32 +263,32 @@
   overflow-x: auto;
   margin: 14px 0;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-soft);
   direction: inherit;
 }
 
 .ai-md-table {
   width: 100%;
   border-collapse: collapse;
-  background: #ffffff;
+  background: var(--surface);
   font-size: 13.5px;
   direction: inherit;
 }
 
 .ai-md-th {
-  background: #f9fafb;
-  color: #374151;
+  background: var(--surface-soft);
+  color: var(--text-muted);
   font-weight: 700;
   padding: 10px 13px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-soft);
   text-align: start;
   white-space: nowrap;
 }
 
 .ai-md-td {
   padding: 10px 13px;
-  border-bottom: 1px solid #f3f4f6;
-  color: #4b5563;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-muted);
   vertical-align: top;
 }
 
@@ -300,7 +301,7 @@
   content: "▋";
   display: inline-block;
   margin-right: 1px;
-  color: #6b7280;
+  color: var(--text-subtle);
   animation: blink-cursor 0.9s step-end infinite;
 }
 

@@ -57,6 +57,7 @@ import DropOverlay from "@/app/assistant/DropOverlay";
 import ScrollToBottomButton from "@/app/assistant/ScrollToBottomButton";
 import ChatComposer from "@/app/assistant/ChatComposer";
 import AssistantStart from "@/app/assistant/AssistantStart";
+import WaitingIndicator from "@/app/assistant/WaitingIndicator";
 const LabChatLauncher = dynamic(() => import("@/app/calculators/workspace/LabAssistant"), { ssr: false });
 
 const imageAttachmentAdapter: AttachmentAdapter = {
@@ -1106,13 +1107,13 @@ ${cleanAnswer}`,
   }
   if (checkingCustomerLogin) {
     return (
-      <section className="flex h-full items-center justify-center bg-white px-6">
+      <section className="flex h-full items-center justify-center bg-[var(--surface)] px-6">
         <div className="ui-card rounded-[28px] p-8 text-center shadow-sm">
-          <div className="text-lg font-bold text-slate-900">
+          <div className="text-lg font-bold text-[var(--foreground)]">
             {isEn ? "Checking customer login..." : "در حال بررسی ورود مشتری..."}
           </div>
 
-          <div className="mt-3 text-sm text-slate-500">
+          <div className="mt-3 text-sm text-[var(--text-subtle)]">
             {isEn
               ? "You need to sign in to use Artin."
               : "برای استفاده از آرتین باید وارد حساب کاربری شوید."}
@@ -1188,7 +1189,7 @@ ${cleanAnswer}`,
         if (file) void stageImage(file);
       }}
     >
-      {searchParams.get('lab')==='1'&&<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-slate-100 px-3 py-2"><span className="text-xs text-slate-500">{isEn?'Attached laboratory project':'پروندهٔ منتقل‌شده از آزمایشگاه'}</span><ApprovedCustomerGate><LabChatLauncher en={isEn}/></ApprovedCustomerGate><Link className="text-xs underline" href="/assistant">{isEn?'Return to general chat':'بازگشت به چت عمومی'}</Link></div>}
+      {searchParams.get('lab')==='1'&&<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b border-[var(--border-soft)] px-3 py-2"><span className="text-xs text-[var(--text-subtle)]">{isEn?'Attached laboratory project':'پروندهٔ منتقل‌شده از آزمایشگاه'}</span><ApprovedCustomerGate><LabChatLauncher en={isEn}/></ApprovedCustomerGate><Link className="text-xs underline" href="/assistant">{isEn?'Return to general chat':'بازگشت به چت عمومی'}</Link></div>}
       <DropOverlay show={isDragOver} isEn={isEn} />
       <input
         ref={uploadInputRef}
@@ -1243,7 +1244,7 @@ ${cleanAnswer}`,
       )}
 
       {voiceState === "listening" && (
-        <div className="flex items-center justify-center gap-2 bg-red-50 py-2 text-sm font-medium text-red-600" dir={dir}>
+        <div className="flex items-center justify-center gap-2 bg-[var(--color-danger-bg)] py-2 text-sm font-medium text-red-600" dir={dir}>
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
@@ -1258,26 +1259,26 @@ ${cleanAnswer}`,
             <img
               src="/images/artin-avatar.webp"
               alt={isEn ? "Artin" : "آرتین"}
-              className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover shadow-sm sm:h-8 sm:w-8"
+              className="h-7 w-7 shrink-0 rounded-full border border-[var(--border-soft)] object-cover shadow-sm sm:h-8 sm:w-8"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
             />
             <span className="text-[14px] font-bold text-[var(--foreground)] sm:text-[15px]">{isEn ? "Artin AI" : "آرتین AI"}</span>
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 sm:text-[11px]">
+            <span className="rounded-full bg-[var(--color-success-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-success-text)] sm:text-[11px]">
               {isEn ? "Online" : "آنلاین"}
             </span>
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
-            {!customer&&<><Link href="/customer-login?next=/assistant" className="shrink-0 rounded-lg bg-[var(--brand-fill)] px-3 py-2 text-xs font-bold text-white">{isEn?"Sign in":"ورود به حساب"}</Link><Link href="/customer-register" className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">{isEn?"Register":"ثبت‌نام"}</Link></>}
+            {!customer&&<><Link href="/customer-login?next=/assistant" className="shrink-0 rounded-lg bg-[var(--brand-fill)] px-3 py-2 text-xs font-bold text-white">{isEn?"Sign in":"ورود به حساب"}</Link><Link href="/customer-register" className="shrink-0 rounded-lg border border-[var(--border-soft)] px-3 py-2 text-xs font-bold">{isEn?"Register":"ثبت‌نام"}</Link></>}
             {/* Domain + mode — visible on desktop, hidden on mobile */}
             <select
               aria-label={isEn ? "Question domain" : "حوزهٔ پرسش"}
               disabled={!customer}
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
-              className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
+              className="hidden rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-muted)] focus:outline-none md:block"
             >
               <option value="auto">{domainLabels.auto}</option>
               <option value="catalyst">{domainLabels.catalyst}</option>
@@ -1293,7 +1294,7 @@ ${cleanAnswer}`,
               disabled={!customer}
               value={responseMode}
               onChange={(e) => setResponseMode(e.target.value)}
-              className="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:outline-none md:block"
+              className="hidden rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-muted)] focus:outline-none md:block"
             >
               <option value="auto">{responseModeLabels.auto}</option>
               <option value="brief">{responseModeLabels.brief}</option>
@@ -1312,7 +1313,7 @@ ${cleanAnswer}`,
               className={`flex h-8 w-8 items-center justify-center rounded-xl border transition md:hidden ${
                 showMobileSettings
                   ? "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
-                  : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+                  : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--surface-soft)]"
               }`}
             >
               <SlidersHorizontal size={15} />
@@ -1322,7 +1323,7 @@ ${cleanAnswer}`,
                 <button
                   onClick={() => setShowExportMenu((v) => !v)}
                   title={isEn ? "Export chat" : "خروجی گفتگو"}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
                   aria-label={isEn ? "Download" : "دانلود"}
                 >
                   <Download size={13} />
@@ -1331,24 +1332,24 @@ ${cleanAnswer}`,
                 {showExportMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
-                    <div className="absolute left-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 md:left-0 max-[400px]:left-auto max-[400px]:right-0">
+                    <div className="absolute left-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] shadow-xl shadow-slate-200/60 md:left-0 max-[400px]:left-auto max-[400px]:right-0">
                       <button
                         onClick={exportChat}
-                        className="flex w-full items-center gap-2.5 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
+                        className="flex w-full items-center gap-2.5 px-4 py-3 text-right text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
                       >
                         <span className="text-base">📄</span>
                         PDF (چاپ)
                       </button>
                       <button
                         onClick={exportChatWord}
-                        className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
+                        className="flex w-full items-center gap-2.5 border-t border-[var(--border-soft)] px-4 py-3 text-right text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
                       >
                         <span className="text-base">📝</span>
                         Word (.doc)
                       </button>
                       <button
                         onClick={exportChatText}
-                        className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-right text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                        className="flex w-full items-center gap-2.5 border-t border-[var(--border-soft)] px-4 py-3 text-right text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)]"
                       >
                         <span className="text-base">📋</span>
                         متن ساده (.txt)
@@ -1360,7 +1361,7 @@ ${cleanAnswer}`,
             )}
             <button
               onClick={clearChat}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
               aria-label={isEn ? "New chat" : "گفتگوی جدید"}
             >
               <Plus size={13} />
@@ -1478,10 +1479,10 @@ ${cleanAnswer}`,
 
               {/* راهنمای نصب صدای TTS */}
               {ttsNote && (
-                <div className="mx-2 mt-1 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                <div className="mx-2 mt-1 flex items-start gap-2 rounded-xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-4 py-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
                   <Volume2 size={14} className="mt-0.5 shrink-0 text-amber-500" />
                   <span>{ttsNote}</span>
-                  <button onClick={() => setTtsNote("")} className="mr-auto shrink-0 text-amber-400 hover:text-amber-600">✕</button>
+                  <button onClick={() => setTtsNote("")} className="mr-auto shrink-0 text-amber-400 hover:text-[var(--color-warning-text)]">✕</button>
                 </div>
               )}
 
@@ -1515,35 +1516,7 @@ ${cleanAnswer}`,
                 </div>
               )}
 
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="flex max-w-[82%] flex-row-reverse items-center gap-2 rounded-2xl border border-[--border-soft] bg-[--surface] px-3.5 py-2.5 text-slate-600 shadow-sm dark:text-[var(--text-muted)] sm:gap-3 sm:rounded-[28px] sm:px-5 sm:py-4">
-                    <div className="relative shrink-0">
-                      <img
-                        src="/images/artin-avatar.webp"
-                        alt={isEn ? "Artin" : "آرتین"}
-                        className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 object-cover sm:h-9 sm:w-9"
-                      />
-                      <span className="absolute -bottom-0.5 -left-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--brand-fill)] ring-2 ring-white dark:ring-[var(--surface)]">
-                        <span className="h-1.5 w-1.5 animate-ping rounded-full bg-white" />
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-xs font-bold text-[var(--color-info-text)] dark:text-teal-300">{isEn ? "Artin" : "آرتین"}</span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-sm font-persian text-slate-500 dark:text-[var(--text-subtle)]">
-                          {isEn ? "Typing" : "در حال تایپ"}
-                        </span>
-                        <span className="flex gap-1 pb-1">
-                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-[var(--brand-fill)]" style={{animationDelay: "0ms"}} />
-                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-[var(--brand-fill)]" style={{animationDelay: "200ms"}} />
-                          <span className="h-1.5 w-1.5 animate-[typing_1.2s_ease-in-out_infinite] rounded-full bg-[var(--brand-fill)]" style={{animationDelay: "400ms"}} />
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {loading && <WaitingIndicator />}
 
               <div ref={messagesEndRef} />
             </div>
