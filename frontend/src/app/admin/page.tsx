@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ButtonLink } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 import {
   ArrowLeft,
@@ -133,13 +134,14 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <Link
+              <ButtonLink
+                variant="danger"
                 href="/admin-logout"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-5 py-3 text-sm font-bold text-[var(--color-danger-text)] transition hover:bg-[var(--color-danger-bg)]"
+                className="gap-2 rounded-2xl border border-[var(--color-danger-border)] px-5 py-3 text-sm"
               >
                 <LogOut size={18} />
                 {isEn ? "Log out" : "خروج از ادمین"}
-              </Link>
+              </ButtonLink>
             </div>
           </div>
         </header>
