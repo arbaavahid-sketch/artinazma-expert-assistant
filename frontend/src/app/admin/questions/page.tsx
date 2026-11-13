@@ -333,7 +333,7 @@ export default function QuestionsPage() {
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => downloadExport("csv")}
                   disabled={questions.length === 0 || exporting !== null}

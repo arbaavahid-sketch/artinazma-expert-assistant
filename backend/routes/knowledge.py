@@ -314,7 +314,7 @@ def list_backups(_=Depends(require_admin)):
         backups.append({
             "file_name": f.name,
             "size_kb": round(f.stat().st_size / 1024, 1),
-            "created_at": datetime.utcfromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+            "created_at": datetime.fromtimestamp(f.stat().st_mtime, timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         })
     return {"backups": backups}
 

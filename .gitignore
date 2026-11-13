@@ -287,3 +287,7 @@ backend/.venv-uncertainty/
 # Local review artifacts and source archive (not deployment inputs)
 output/
 frontend/src.zip
+
+# Presentation decks and their inspection dumps are kept locally, not in git.
+*.pptx
+*.pptx.inspect.ndjson

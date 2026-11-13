@@ -92,8 +92,8 @@ export default function MemoryPage() {
 
           <p className="mt-4 max-w-3xl leading-8 text-[var(--text-muted)]">
             {isEn
-              ? "This section shows answers you received from Artin in this browser. You can search through your previous questions and answers."
-              : "این بخش جواب‌هایی را نشان می‌دهد که با همین مرورگر از آرتین گرفته‌اید. می‌توانید بین سوالات و پاسخ‌های قبلی خودتان جست‌وجو کنید."}
+              ? "This section shows answers you received from Artin with your account. You can search through your previous questions and answers."
+              : "این بخش جواب‌هایی را نشان می‌دهد که با حساب کاربری خود از آرتین گرفته‌اید. می‌توانید بین سوالات و پاسخ‌های قبلی خودتان جست‌وجو کنید."}
           </p>
         </div>
 
