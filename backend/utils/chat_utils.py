@@ -115,6 +115,21 @@ def make_safe_filename(filename: str) -> str:
     return safe_name
 
 
+# English words of six letters or more that name a property or technique, not a
+# model, even when written capitalised ("Dropping Point", "Karl Fischer").
+_COMMON_TECHNICAL_WORDS = {
+    "dropping", "viscosity", "kinematic", "dynamic", "density", "distillation", "sulfur", "sulphur",
+    "fischer", "titration", "titrator", "analyzer", "analyser", "spectrophotometer", "chromatograph",
+    "chromatography", "conductivity", "turbidity", "moisture", "protein", "oxidation", "stability",
+    "corrosion", "mercury", "mercaptan", "carbon", "residue", "pressure", "freezing", "melting",
+    "softening", "penetration", "refractive", "octane", "cetane", "gravity", "content", "number",
+    "closed", "automatic", "manual", "portable", "benchtop", "online", "grease", "diesel", "gasoline",
+    "crude", "transformer", "breakdown", "voltage", "dielectric", "nitrogen", "chloride", "aniline",
+    "vapour", "smoke", "colour", "color", "water", "method", "standard", "sample", "testing",
+    "tester", "apparatus", "instrument", "device", "equipment", "analysis", "measurement",
+}
+
+
 def is_specific_product_or_model_question(message: str) -> bool:
     text = (message or "").lower()
     latin_tokens = re.findall(r"\b[A-Za-z][A-Za-z0-9\-]{1,}\b", message or "")
@@ -144,10 +159,15 @@ def is_specific_product_or_model_question(message: str) -> bool:
     if not any(keyword in text for keyword in model_keywords):
         return False
 
+    # A model name has a digit or hyphen (KAPLYA-20, DR6000) or is a capitalised
+    # brand-like word (Spectroscan). An ordinary lowercase English word such as
+    # "dropping" in "dropping point" is not one: treating it as a model sent the
+    # question down the exact-model path, which drops all knowledge-base context.
     has_model_like_token = any(
-        (re.search(r"\d", token) or "-" in token or len(token) >= 6)
+        (re.search(r"\d", token) or "-" in token
+         or (len(token) >= 6 and not token.islower() and token.lower() not in _COMMON_TECHNICAL_WORDS))
         and token.lower() not in known_technical_terms
-        for token in normalized_tokens
+        for token in latin_tokens
     )
 
     return has_model_like_token
