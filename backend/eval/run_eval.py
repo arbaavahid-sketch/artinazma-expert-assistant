@@ -105,9 +105,16 @@ def login(base_url: str) -> None:
 
     email, password = os.getenv("EVAL_EMAIL", ""), os.getenv("EVAL_PASSWORD", "")
     if not (email and password):
-        if urlparse(base_url).hostname not in ("127.0.0.1", "localhost", "::1"):
+        if urlparse(base_url).hostname in ("127.0.0.1", "localhost", "::1"):
+            email, password = _provision_local_eval_customer()
+        elif sys.stdin.isatty():
+            # A real site: the person running the eval signs in with an approved customer account.
+            import getpass
+
+            email = email or input("Eval customer email: ").strip()
+            password = password or getpass.getpass("Password (not shown): ")
+        else:
             raise SystemExit("EVAL_EMAIL and EVAL_PASSWORD are required for a non-local backend.")
-        email, password = _provision_local_eval_customer()
     resp = _session.post(f"{base_url.rstrip('/')}/customers/login",
                          json={"email": email, "password": password}, timeout=30)
     resp.raise_for_status()
