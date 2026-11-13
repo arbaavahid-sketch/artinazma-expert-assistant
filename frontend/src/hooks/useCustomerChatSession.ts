@@ -18,7 +18,7 @@ interface UseCustomerChatSessionOptions {
   customer: Customer | null;
   setCustomer: Dispatch<SetStateAction<Customer | null>>;
   activeSessionId: number | null;
-  setActiveSessionId: Dispatch<SetStateAction<number | null>>;
+  setActiveSessionId: (sessionId: number | null) => void;
   setMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   setLoadingSavedSession: Dispatch<SetStateAction<boolean>>;
 }

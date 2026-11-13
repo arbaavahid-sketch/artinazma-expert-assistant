@@ -1,7 +1,7 @@
 "use client";
 import { AssistantRuntimeProvider, MessagePrimitive, ThreadPrimitive, generateId, useExternalStoreRuntime } from "@assistant-ui/react";
 import type { CreateAppendMessage } from "@assistant-ui/react";
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -76,7 +76,15 @@ function AssistantPageInner() {
   const [feedbackStatus, setFeedbackStatus] = useState<Record<number, string>>({},);
   const [showTools, setShowTools] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+  const [activeSessionId, setActiveSessionIdState] = useState<number | null>(null);
+  // Kept in step with activeSessionId at call time (not after render), so the
+  // session_id URL effect can tell "the session we just created" from a real
+  // navigation to another session.
+  const activeSessionIdRef = useRef<number | null>(null);
+  const setActiveSessionId = useCallback((sessionId: number | null) => {
+    activeSessionIdRef.current = sessionId;
+    setActiveSessionIdState(sessionId);
+  }, []);
   const [loadingSavedSession, setLoadingSavedSession] = useState(false);
   const { handleUploadChange, dialogs: analysisDialogs } = useAnalysisUpload({
     signedIn: !!customer,
@@ -304,7 +312,11 @@ ${cleanAnswer}`,
         setGuestIdentified(!!access.identified);
         if (sessionIdParam && verifiedCustomer) {
           const sessionId = Number(sessionIdParam);
-          if (!Number.isNaN(sessionId)) loadSavedChatSession(verifiedCustomer.id, sessionId);
+          // Creating a session on the first message writes ?session_id= into the
+          // URL; reloading it here would overwrite the answer still being shown.
+          if (!Number.isNaN(sessionId) && sessionId !== activeSessionIdRef.current) {
+            loadSavedChatSession(verifiedCustomer.id, sessionId);
+          }
         }
       } catch {
         if (!cancelled) setAccessCheckFailed(true);
