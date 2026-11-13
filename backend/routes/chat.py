@@ -683,6 +683,16 @@ def _laboratory_answer(body: ChatRequest):
 
     if not is_solution_preparation(body.message) or is_followup_transform_request(body.message):
         return None
+    # Common questions (known reagent, concentration and volume) are answered
+    # directly in milliseconds; the model-based laboratory chat takes 30 s or more.
+    try:
+        from solution_quick import quick_solution_answer
+
+        quick = quick_solution_answer(body.message)
+        if quick:
+            return quick
+    except Exception:
+        logger.warning("Quick solution answer failed; trying the laboratory chat", exc_info=True)
     try:
         from laboratory_chat import ask_laboratory
 

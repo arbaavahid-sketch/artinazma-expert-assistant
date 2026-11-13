@@ -5,6 +5,8 @@ import laboratory_chat
 import routes.chat as chat_mod
 
 QUESTION = "آرتين جان ميخام محلول 0.02 نرمال اسيد سولفوريك تو يك ليتر بسازم. با استفاده از E200 بهم بگو"
+# Phosphoric acid normality depends on the reaction, so the fast path hands it to the laboratory model.
+MODEL_QUESTION = "محلول 0.1 نرمال اسید فسفریک در یک لیتر چطور بسازم؟"
 LAB_RESULT = {
     "answer": "برای ۱ لیتر محلول ۰٫۰۲ نرمال، ۰٫۵۵۵ میلی‌لیتر اسید ۹۶٪ لازم است.",
     "calculations": [{"id": "calc-1", "kind": "solution_preparation", "result": {"concentrate_volume_mL": 0.5552}}],
@@ -43,7 +45,7 @@ def _events(response):
 
 def test_chat_answers_solution_question_with_lab_tools(authenticated_client, monkeypatch):
     calls = _offline(monkeypatch)
-    data = authenticated_client.post("/chat", json={"message": QUESTION}).json()
+    data = authenticated_client.post("/chat", json={"message": MODEL_QUESTION}).json()
     assert calls == {"lab": 1, "general": 0}
     assert data["answer"].startswith(LAB_RESULT["answer"])
     assert data["answer_mode"] == "laboratory"
@@ -53,7 +55,7 @@ def test_chat_answers_solution_question_with_lab_tools(authenticated_client, mon
 
 def test_stream_answers_solution_question_with_lab_tools(authenticated_client, monkeypatch):
     calls = _offline(monkeypatch)
-    events = _events(authenticated_client.post("/chat/stream", json={"message": QUESTION}))
+    events = _events(authenticated_client.post("/chat/stream", json={"message": MODEL_QUESTION}))
     meta = events[0]
     assert meta["type"] == "meta" and meta["search_mode"] == "laboratory_calculation"
     assert meta["calculations"][0]["id"] == "calc-1"
@@ -71,10 +73,20 @@ def test_other_questions_keep_the_general_assistant(authenticated_client, monkey
 
 def test_lab_failure_or_no_calculation_falls_back(authenticated_client, monkeypatch):
     calls = _offline(monkeypatch, lab=RuntimeError("model unavailable"))
-    assert authenticated_client.post("/chat", json={"message": QUESTION}).json()["answer_mode"] == "ai"
+    assert authenticated_client.post("/chat", json={"message": MODEL_QUESTION}).json()["answer_mode"] == "ai"
     assert calls == {"lab": 1, "general": 1}
 
     calls = _offline(monkeypatch, lab={**LAB_RESULT, "calculations": []})
-    events = _events(authenticated_client.post("/chat/stream", json={"message": QUESTION}))
+    events = _events(authenticated_client.post("/chat/stream", json={"message": MODEL_QUESTION}))
     assert events[0]["search_mode"] != "laboratory_calculation"
     assert calls == {"lab": 1, "general": 1}
+
+
+def test_common_question_is_answered_without_the_model(authenticated_client, monkeypatch):
+    calls = _offline(monkeypatch)
+    events = _events(authenticated_client.post("/chat/stream", json={"message": QUESTION}))
+    assert calls == {"lab": 0, "general": 0}
+    assert events[0]["search_mode"] == "laboratory_calculation"
+    assert [c["kind"] for c in events[0]["calculations"]] == ["molar_mass", "solution_preparation"]
+    text = "".join(e["text"] for e in events if e["type"] == "chunk")
+    assert "0.555 mL" in text and "E200" in text and "96" in text
