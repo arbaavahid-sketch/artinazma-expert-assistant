@@ -795,7 +795,7 @@ def add_file_to_knowledge_base(
 def search_knowledge_base(
     query: str,
     top_k: int = 5,
-    category_filter: Optional[str] = None,
+    category_filter: Optional[str | tuple | list] = None,
 ) -> List[Dict[str, Any]]:
     import qdrant_service as _qs
 
@@ -821,7 +821,8 @@ def search_knowledge_base(
         return []
 
     if category_filter:
-        store = [item for item in store if item.get("category") == category_filter]
+        wanted = ({category_filter} if isinstance(category_filter, str) else set(category_filter))
+        store = [item for item in store if item.get("category") in wanted]
         if not store:
             return []
 
@@ -850,7 +851,7 @@ def search_knowledge_base(
                 "score_breakdown": {
                     "algorithm": "json_vector",
                     "vector_score": round(float(scores[idx]), 4),
-                    "category_filter": category_filter or "",
+                    "category_filter": ",".join(sorted(wanted)) if category_filter else "",
                 },
                 "score_reason": "vector similarity",
                 "title": item["title"],

@@ -371,16 +371,17 @@ def hybrid_search(
         category_filter: Optional category payload filter
         vector_weight:   Weight for vector scores vs keyword scores (0-1)
     """
-    from qdrant_client.models import Filter, FieldCondition, MatchValue, MatchText
+    from qdrant_client.models import Filter, FieldCondition, MatchAny, MatchValue, MatchText
 
     client = _get_client()
     fetch_k = top_k * 3   # fetch more candidates for re-ranking
 
     base_filter = None
     if category_filter:
-        base_filter = Filter(
-            must=[FieldCondition(key="category", match=MatchValue(value=category_filter))]
-        )
+        # One category, or any of several (e.g. the equipment and products catalogs).
+        match = (MatchAny(any=list(category_filter)) if isinstance(category_filter, (list, tuple, set))
+                 else MatchValue(value=category_filter))
+        base_filter = Filter(must=[FieldCondition(key="category", match=match)])
 
     # ── 1. Vector search ──────────────────────────────────────────────────────
     vector_hits = client.query_points(

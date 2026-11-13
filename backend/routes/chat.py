@@ -39,6 +39,7 @@ from astm_link_service import (
 from local_search_service import local_search_knowledge_base, build_local_answer
 from knowledge_service import search_knowledge_base
 from site_resource_service import find_artinazma_resources
+from catalog_retrieval import CATALOG_INSTRUCTIONS, find_catalog_docs, is_device_request, merge_catalog_docs
 from web_search_service import (
     search_web_sources,
     build_web_context,
@@ -170,6 +171,7 @@ def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
 
     _local_best = float(local_docs[0].get("score", 0) or 0) if local_docs else 0.0
     _vector_best = 0.0
+    _q_en = None
 
     # سؤال دارای کد ASTM هم از مسیر بازیابیِ ترکیبی می‌گذرد تا از متنِ کاملِ استانداردهای
     # آپلودشده در بانک دانش (Qdrant) استفاده کند، نه فقط عنوانِ یک‌خطیِ دیکشنری. لنگرِ
@@ -278,6 +280,23 @@ def _build_chat_pipeline(body: ChatRequest, client_ip: str = "") -> dict:
         related_docs = []
         best_score = 0.0
         search_mode = f"{search_mode}+ignored_weak_internal_context"
+
+    # ── Catalog slots for recommendation questions ──
+    # ASTM text dominates the knowledge base, so the brochures of the brands the
+    # company supplies are searched on their own and given reserved slots; otherwise
+    # "which device should I use" answers never name a model ArtinAzma sells.
+    # A question about one specific model keeps its exact-match guard instead.
+    _catalog_docs: list = []
+    if (
+        is_device_request(body.message)
+        and not is_transform_followup
+        and not (specific_model_question and not has_astm_code)
+    ):
+        with _stage(_timings, "catalog_search"):
+            _catalog_docs = find_catalog_docs(body.message, _q_en)
+        if _catalog_docs:
+            related_docs = merge_catalog_docs(related_docs, _catalog_docs)
+            search_mode = f"{search_mode}+catalog"
 
     # ── Site resource lookup ──
     resource_links: list = []
@@ -487,6 +506,8 @@ Laboratory answer contract:
 - ASTM D3227 guardrail: this is mercaptan sulfur in liquid hydrocarbons by potentiometric titration. If the user asks for the titrant/reagent preparation, do not describe it as a NaOH titrant. The expected practical answer is alcoholic silver nitrate (AgNO3) titrant: dissolve calculated AgNO3 in a small amount of DI water, commonly about 80 mL for a 1 L preparation, dilute to volume with propanol/isopropanol, store protected from light in an amber bottle, and standardize before use.
 """.strip()
 
+    if _catalog_docs:
+        style_instructions += "\n" + CATALOG_INSTRUCTIONS
     if question_intent == "product_or_device":
         style_instructions += (
             "\nقواعد محصول، دستگاه یا آزمون مشخص:\n"
