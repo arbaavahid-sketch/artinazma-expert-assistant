@@ -6,7 +6,7 @@ import routes.chat as chat_mod
 
 QUESTION = "آرتين جان ميخام محلول 0.02 نرمال اسيد سولفوريك تو يك ليتر بسازم. با استفاده از E200 بهم بگو"
 # Phosphoric acid normality depends on the reaction, so the fast path hands it to the laboratory model.
-MODEL_QUESTION = "محلول 0.1 نرمال اسید فسفریک در یک لیتر چطور بسازم؟"
+MODEL_QUESTION = "محلول 0.1 نرمال پتاسیم یدات در یک لیتر چطور بسازم؟"
 LAB_RESULT = {
     "answer": "برای ۱ لیتر محلول ۰٫۰۲ نرمال، ۰٫۵۵۵ میلی‌لیتر اسید ۹۶٪ لازم است.",
     "calculations": [{"id": "calc-1", "kind": "solution_preparation", "result": {"concentrate_volume_mL": 0.5552}}],
