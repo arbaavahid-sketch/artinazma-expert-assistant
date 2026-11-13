@@ -72,13 +72,62 @@ EVAL_DIR = Path(__file__).resolve().parent
 # ─────────────────────────────────────────────────────────────────────────────
 #  فراخوانی اپ
 # ─────────────────────────────────────────────────────────────────────────────
+LOCAL_EVAL_EMAIL = "eval-harness@example.invalid"
+_session = requests.Session()
+
+
+def _provision_local_eval_customer() -> tuple[str, str]:
+    """An approved eval customer in the local dev database, with a fresh random password.
+
+    Only for a backend on this machine reading backend/storage/app.db; any other
+    host needs EVAL_EMAIL and EVAL_PASSWORD for an account that already exists.
+    """
+    import secrets
+
+    os.chdir(_BACKEND_DIR)  # the repositories open storage/app.db relative to backend/
+    from repositories.base import get_connection
+    from repositories.customer_repo import create_customer, hash_password
+
+    password = secrets.token_urlsafe(24)
+    if not create_customer("Eval harness", LOCAL_EVAL_EMAIL, password)["success"]:
+        with get_connection() as conn:
+            conn.execute("UPDATE customers SET password_hash = ? WHERE email = ?",
+                         (hash_password(password), LOCAL_EVAL_EMAIL))
+    with get_connection() as conn:
+        conn.execute("UPDATE customers SET approval_status = 'approved', is_blocked = 0 WHERE email = ?",
+                     (LOCAL_EVAL_EMAIL,))
+    return LOCAL_EVAL_EMAIL, password
+
+
+def login(base_url: str) -> None:
+    """Sign in as a customer: /chat needs an account (guests get three questions)."""
+    from urllib.parse import urlparse
+
+    email, password = os.getenv("EVAL_EMAIL", ""), os.getenv("EVAL_PASSWORD", "")
+    if not (email and password):
+        if urlparse(base_url).hostname not in ("127.0.0.1", "localhost", "::1"):
+            raise SystemExit("EVAL_EMAIL and EVAL_PASSWORD are required for a non-local backend.")
+        email, password = _provision_local_eval_customer()
+    resp = _session.post(f"{base_url.rstrip('/')}/customers/login",
+                         json={"email": email, "password": password}, timeout=30)
+    resp.raise_for_status()
+    body = resp.json()
+    if not body.get("success"):
+        raise SystemExit(f"Eval login failed: {body.get('message')}")
+    _session.headers["Authorization"] = f"Bearer {body['access_token']}"
+
+
 def ask_app(base_url: str, question: str, timeout: float = 180.0) -> dict:
     """یک سؤال را به /chat می‌فرستد و پاسخ + متادیتای بازیابی را برمی‌گرداند."""
-    resp = requests.post(
-        f"{base_url.rstrip('/')}/chat",
-        json={"message": question, "user_id": "eval_harness"},
-        timeout=timeout,
-    )
+    for attempt in range(3):
+        resp = _session.post(
+            f"{base_url.rstrip('/')}/chat",
+            json={"message": question},
+            timeout=timeout,
+        )
+        if resp.status_code != 429:
+            break
+        time.sleep(30 * (attempt + 1))  # /chat allows 20 requests a minute per IP
     resp.raise_for_status()
     return resp.json()
 
@@ -218,6 +267,7 @@ def run(args) -> int:
     print(f"بک‌اند: {args.base_url}")
     print(f"مدل داور: {args.judge_model}")
     print(f"تعداد سؤال: {len(questions)}\n")
+    login(args.base_url)
 
     results = []
     for i, q in enumerate(questions, 1):
