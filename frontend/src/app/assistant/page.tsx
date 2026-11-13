@@ -1,6 +1,6 @@
 "use client";
 import { AssistantRuntimeProvider, MessagePrimitive, ThreadPrimitive, generateId, useExternalStoreRuntime } from "@assistant-ui/react";
-import type { AttachmentAdapter, CreateAppendMessage, ThreadMessageLike } from "@assistant-ui/react";
+import type { CreateAppendMessage } from "@assistant-ui/react";
 import { useEffect, useRef, useState, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,9 +14,6 @@ import { getOrCreateUserId } from "@/lib/user";
 import { getSavedCustomer } from "@/lib/customer";
 import { GUEST_FREE_QUESTIONS } from "@/lib/guest-gate";
 import {
-  Plus,
-  Download,
-  SlidersHorizontal,
   Volume2,
 } from "lucide-react";
 import { findRelatedDevices } from "@/lib/device-assets";
@@ -24,20 +21,15 @@ import {
   shouldShowRelatedDeviceCards,
   isNonEquipmentTurn,
   cleanAssistantOutput,
-  cleanMarkdownText,
   normalizeSuggestedQuestions,
-  testTypes,
-  imageTypes,
   getTestTypeLabel,
   getImageTypeLabel,
 } from "@/lib/chat-helpers";
 const MessageBubble = dynamic(() => import("@/components/MessageBubble"), { ssr: false });
 import GuestContactCard from "@/components/GuestContactCard";
 import GuestRegistrationCard from "@/components/GuestRegistrationCard";
-const UploadModal = dynamic(() => import("@/components/UploadModal"), { ssr: false });
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useTTS } from "@/hooks/useTTS";
-import { useExportChat } from "@/hooks/useExportChat";
 import { useScrollToBottom } from "@/hooks/useScrollToBottom";
 import { useCustomerChatSession } from "@/hooks/useCustomerChatSession";
 import StarterQuestions from "@/components/StarterQuestions";
@@ -60,87 +52,14 @@ import AssistantStart from "@/app/assistant/AssistantStart";
 import WaitingIndicator from "@/app/assistant/WaitingIndicator";
 const LabChatLauncher = dynamic(() => import("@/app/calculators/workspace/LabAssistant"), { ssr: false });
 
-const imageAttachmentAdapter: AttachmentAdapter = {
-  accept: "image/*",
-  async add({ file }) {
-    return {
-      id: generateId(),
-      type: "image",
-      name: file.name,
-      contentType: file.type,
-      file,
-      status: { type: "requires-action", reason: "composer-send" },
-    };
-  },
-  async send(attachment) {
-    // The existing analysis endpoint accepts the original File in FormData.
-    return { ...attachment, status: { type: "complete" }, content: [] };
-  },
-  async remove() {},
-};
-
-function convertChatMessage(item: ChatMessage): ThreadMessageLike {
-  return {
-    role: item.role,
-    content: [{ type: "text", text: item.role === "assistant" ? cleanMarkdownText(item.content) : item.content }],
-  };
-}
-
-type AnalysisResponse = Record<string, unknown> & {
-  ai_analysis?: string;
-  error?: string;
-  detail?: string;
-  file_name?: string;
-  file_url?: string;
-  file_type?: string;
-  test_type?: string;
-  test_type_label?: string;
-  image_type?: string;
-  image_type_label?: string;
-};
-
-async function readAnalysisResponse(res: Response): Promise<AnalysisResponse> {
-  let data: AnalysisResponse = {};
-
-  try {
-    data = await res.json();
-  } catch {
-    data = {};
-  }
-
-  if (!res.ok) {
-    const detail =
-      data.detail ||
-      data.error ||
-      (res.status >= 500
-        ? "Backend connection failed. Make sure the FastAPI server is running on port 8000."
-        : `HTTP ${res.status}`);
-    throw new Error(detail);
-  }
-
-  return data;
-}
-
-function formatAnalysisUploadError(error: unknown, kind: "file" | "image", isEn: boolean) {
-  const message = error instanceof Error ? error.message : "";
-  const looksLikeBackendDown =
-    !message ||
-    /failed to fetch|network error|econnrefused|econnreset|socket hang up|fetch failed|connection/i.test(message);
-
-  if (looksLikeBackendDown) {
-    return isEn
-      ? "Could not connect to the analysis server. Please make sure the backend is running on port 8000, then try again."
-      : "اتصال به سرور تحلیل برقرار نشد. لطفا مطمئن شوید بک‌اند روی پورت 8000 اجراست و دوباره امتحان کنید.";
-  }
-
-  const label = kind === "image"
-    ? isEn ? "image" : "عکس"
-    : isEn ? "file" : "فایل";
-
-  return isEn
-    ? `Upload or analysis failed for this ${label}: ${message}`
-    : `خطا در آپلود یا تحلیل ${label}: ${message}`;
-}
+import ChatHeader from "@/app/assistant/ChatHeader";
+import { useAnalysisUpload } from "@/app/assistant/useAnalysisUpload";
+import {
+  convertChatMessage,
+  formatAnalysisUploadError,
+  imageAttachmentAdapter,
+  readAnalysisResponse,
+} from "@/app/assistant/assistant-helpers";
 
 function AssistantPageInner() {
   const [appMode,setAppMode]=useState(false);
@@ -159,14 +78,13 @@ function AssistantPageInner() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [loadingSavedSession, setLoadingSavedSession] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [showFileOptions, setShowFileOptions] = useState(false);
-  const [chatTestType, setChatTestType] = useState("general");
-  const [chatUserNote, setChatUserNote] = useState("");
-  const [pendingImage, setPendingImage] = useState<File | null>(null);
-  const [showImageOptions, setShowImageOptions] = useState(false);
-  const [chatImageType, setChatImageType] = useState("general");
-  const [chatImageNote, setChatImageNote] = useState("");
+  const { handleUploadChange, dialogs: analysisDialogs } = useAnalysisUpload({
+    signedIn: !!customer,
+    loading,
+    isEn,
+    onRequireAccount: () => router.push("/customer-register"),
+    onAppend: appendAnalysis,
+  });
   const [checkingCustomerLogin, setCheckingCustomerLogin] = useState(true);
   const [accessCheckFailed, setAccessCheckFailed] = useState(false);
   const [guestUsed, setGuestUsed] = useState(0);
@@ -177,24 +95,6 @@ function AssistantPageInner() {
   const [isDragOver, setIsDragOver] = useState(false);
   const { speakingIndex, ttsNote, setTtsNote, speakMessage } = useTTS();
   const [canUndo, setCanUndo] = useState(false);
-  const { showExportMenu, setShowExportMenu, exportChat, exportChatWord, exportChatText } = useExportChat(messages);
-  const [showMobileSettings, setShowMobileSettings] = useState(false);
-  const domainLabels = {
-    auto: isEn ? "Auto detect" : "تشخیص خودکار",
-    catalyst: isEn ? "Catalyst" : "کاتالیست",
-    equipment: isEn ? "Equipment" : "تجهیزات",
-    chromatography: isEn ? "Chromatography" : "کروماتوگرافی",
-    "mercury-analysis": isEn ? "Mercury analysis" : "آنالیز جیوه",
-    "sulfur-analysis": isEn ? "Sulfur analysis" : "آنالیز سولفور",
-    troubleshooting: isEn ? "Troubleshooting" : "عیب‌یابی",
-    analysis: isEn ? "Analysis & testing" : "آنالیز و تست",
-  };
-  const responseModeLabels = {
-    auto: isEn ? "Smart answer" : "پاسخ هوشمند",
-    brief: isEn ? "Brief" : "خلاصه",
-    technical: isEn ? "Full technical" : "فنی کامل",
-    checklist: isEn ? "Checklist" : "چک‌لیست",
-  };
   const abortControllerRef = useRef<AbortController | null>(null);
   const abortIntentRef = useRef<"undo" | "stop" | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -616,6 +516,7 @@ ${cleanAnswer}`,
                 library_resources: event.library_resources as LibraryResources|undefined,
                 detected_domain: event.detected_domain as string,
                 question_intent: event.question_intent as string,
+                calculated: event.search_mode === "laboratory_calculation",
                 resource_links: (event.resource_links as ResourceLink[]) || [],
                 resource_images: (event.resource_images as ResourceImage[]) || [],
               };
@@ -650,6 +551,7 @@ ${cleanAnswer}`,
                   library_resources: finalAssistantMsg.library_resources,
                   detected_domain: finalAssistantMsg.detected_domain,
                   question_id: finalAssistantMsg.question_id,
+                  calculated: finalAssistantMsg.calculated,
                   resource_links: finalAssistantMsg.resource_links || [],
                   resource_images: finalAssistantMsg.resource_images || [],
                   relatedDevices,
@@ -995,29 +897,6 @@ ${cleanAnswer}`,
     }
   }
 
-  function handleUploadChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!customer) { router.push("/customer-register"); return; }
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    const fileName = file.name.toLowerCase();
-    const ext = fileName.split(".").pop() || "";
-
-    if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
-      setPendingImage(file);
-      setShowImageOptions(true);
-      setChatImageType("general");
-      setChatImageNote("");
-    } else {
-      setPendingFile(file);
-      setShowFileOptions(true);
-      setChatTestType("general");
-      setChatUserNote("");
-    }
-
-    e.target.value = "";
-  }
   function appendAnalysis(file: File, type: "image" | "document", analysisType: string, note: string) {
     runtime.thread.append({
       role: "user",
@@ -1033,35 +912,6 @@ ${cleanAnswer}`,
       }],
       metadata: { custom: { analysisType } },
     });
-  }
-
-  function confirmFileAnalysis() {
-    if (!pendingFile || loading) return;
-    setShowFileOptions(false);
-    appendAnalysis(pendingFile, "document", chatTestType, chatUserNote);
-    setPendingFile(null);
-  }
-
-  function cancelFileAnalysis() {
-    setShowFileOptions(false);
-    setPendingFile(null);
-    setChatUserNote("");
-    setChatTestType("general");
-  }
-
-  function confirmImageAnalysis() {
-    if (!pendingImage || loading) return;
-
-    setShowImageOptions(false);
-    appendAnalysis(pendingImage, "image", chatImageType, chatImageNote);
-    setPendingImage(null);
-  }
-
-  function cancelImageAnalysis() {
-    setShowImageOptions(false);
-    setPendingImage(null);
-    setChatImageNote("");
-    setChatImageType("general");
   }
 
   function handleToolClick(action: ToolAction) {
@@ -1198,50 +1048,7 @@ ${cleanAnswer}`,
         onChange={handleUploadChange}
         className="hidden"
       />
-      {showFileOptions && pendingFile && (
-        <UploadModal
-          title={isEn ? "File analysis settings" : "تنظیمات تحلیل فایل"}
-          fileName={pendingFile.name}
-          label={isEn ? "Test or report type" : "نوع تست یا گزارش"}
-          selectValue={chatTestType}
-          onSelectChange={setChatTestType}
-          options={testTypes}
-          noteValue={chatUserNote}
-          onNoteChange={setChatUserNote}
-          noteLabel={isEn ? "Optional note about the sample or test conditions" : "توضیح اختیاری درباره نمونه یا شرایط تست"}
-          placeholder={
-            isEn
-              ? "Example: The sample is LPG, the baseline fluctuates, the catalyst test was run at 350 C..."
-              : "مثلاً: نمونه LPG است، baseline نوسان دارد، تست کاتالیست در دمای 350 درجه انجام شده..."
-          }
-          confirmLabel={isEn ? "Start file analysis" : "شروع تحلیل فایل"}
-          onConfirm={confirmFileAnalysis}
-          onCancel={cancelFileAnalysis}
-        />
-      )}
-
-      {showImageOptions && pendingImage && (
-        <UploadModal
-          title={isEn ? "Image analysis settings" : "تنظیمات تحلیل عکس"}
-          fileName={pendingImage.name}
-          label={isEn ? "Image type" : "نوع تصویر"}
-          selectValue={chatImageType}
-          onSelectChange={setChatImageType}
-          options={imageTypes}
-          noteValue={chatImageNote}
-          onNoteChange={setChatImageNote}
-          noteLabel={isEn ? "Optional note about the image" : "توضیح اختیاری درباره تصویر"}
-          placeholder={
-            isEn
-              ? "Example: This image shows a GC instrument error or an LPG sample chromatogram..."
-              : "مثلاً: این عکس مربوط به ارور دستگاه GC است یا کروماتوگرام نمونه LPG است..."
-          }
-          confirmLabel={isEn ? "Start image analysis" : "شروع تحلیل عکس"}
-          onConfirm={confirmImageAnalysis}
-          onCancel={cancelImageAnalysis}
-          footer={isEn ? "Allowed image formats: JPG, PNG, WEBP" : "فرمت‌های مجاز تصویر: JPG, PNG, WEBP"}
-        />
-      )}
+      {analysisDialogs}
 
       {voiceState === "listening" && (
         <div className="flex items-center justify-center gap-2 bg-[var(--color-danger-bg)] py-2 text-sm font-medium text-red-600" dir={dir}>
@@ -1253,161 +1060,17 @@ ${cleanAnswer}`,
         </div>
       )}
 
-      <header className="artin-workspace-header shrink-0 border-b">
-        <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
-          <div className="flex items-center gap-2.5">
-            <img
-              src="/images/artin-avatar.webp"
-              alt={isEn ? "Artin" : "آرتین"}
-              className="h-7 w-7 shrink-0 rounded-full border border-[var(--border-soft)] object-cover shadow-sm sm:h-8 sm:w-8"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-            <span className="text-[14px] font-bold text-[var(--foreground)] sm:text-[15px]">{isEn ? "Artin AI" : "آرتین AI"}</span>
-            <span className="rounded-full bg-[var(--color-success-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-success-text)] sm:text-[11px]">
-              {isEn ? "Online" : "آنلاین"}
-            </span>
-          </div>
-
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
-            {!customer&&<><Link href="/customer-login?next=/assistant" className="shrink-0 rounded-lg bg-[var(--brand-fill)] px-3 py-2 text-xs font-bold text-white">{isEn?"Sign in":"ورود به حساب"}</Link><Link href="/customer-register" className="shrink-0 rounded-lg border border-[var(--border-soft)] px-3 py-2 text-xs font-bold">{isEn?"Register":"ثبت‌نام"}</Link></>}
-            {/* Domain + mode — visible on desktop, hidden on mobile */}
-            <select
-              aria-label={isEn ? "Question domain" : "حوزهٔ پرسش"}
-              disabled={!customer}
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              className="hidden rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-muted)] focus:outline-none md:block"
-            >
-              <option value="auto">{domainLabels.auto}</option>
-              <option value="catalyst">{domainLabels.catalyst}</option>
-              <option value="equipment">{domainLabels.equipment}</option>
-              <option value="chromatography">{domainLabels.chromatography}</option>
-              <option value="mercury-analysis">{domainLabels["mercury-analysis"]}</option>
-              <option value="sulfur-analysis">{domainLabels["sulfur-analysis"]}</option>
-              <option value="troubleshooting">{domainLabels.troubleshooting}</option>
-              <option value="analysis">{domainLabels.analysis}</option>
-            </select>
-            <select
-              aria-label={isEn ? "Response style" : "سبک پاسخ"}
-              disabled={!customer}
-              value={responseMode}
-              onChange={(e) => setResponseMode(e.target.value)}
-              className="hidden rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-muted)] focus:outline-none md:block"
-            >
-              <option value="auto">{responseModeLabels.auto}</option>
-              <option value="brief">{responseModeLabels.brief}</option>
-              <option value="technical">{responseModeLabels.technical}</option>
-              <option value="checklist">{responseModeLabels.checklist}</option>
-            </select>
-            {/* Mobile settings toggle — only on mobile */}
-            <button
-              type="button"
-              disabled={!customer}
-              onClick={() => setShowMobileSettings((v) => !v)}
-              aria-label={isEn ? "Chat settings" : "تنظیمات گفتگو"}
-              aria-expanded={showMobileSettings}
-              aria-controls={showMobileSettings ? "artin-mobile-chat-settings" : undefined}
-              title={isEn ? "Chat settings" : "تنظیمات گفتگو"}
-              className={`flex h-8 w-8 items-center justify-center rounded-xl border transition md:hidden ${
-                showMobileSettings
-                  ? "border-[var(--color-info-border)] bg-[var(--color-info-bg)] text-[var(--color-info-text)]"
-                  : "border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-subtle)] hover:bg-[var(--surface-soft)]"
-              }`}
-            >
-              <SlidersHorizontal size={15} />
-            </button>
-            {customer && messages.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowExportMenu((v) => !v)}
-                  title={isEn ? "Export chat" : "خروجی گفتگو"}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
-                  aria-label={isEn ? "Download" : "دانلود"}
-                >
-                  <Download size={13} />
-                  <span className="hidden sm:inline">{isEn ? "Download" : "دانلود"}</span>
-                </button>
-                {showExportMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
-                    <div className="absolute left-0 top-full z-50 mt-1.5 w-44 overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] shadow-xl shadow-slate-200/60 md:left-0 max-[400px]:left-auto max-[400px]:right-0">
-                      <button
-                        onClick={exportChat}
-                        className="flex w-full items-center gap-2.5 px-4 py-3 text-right text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
-                      >
-                        <span className="text-base">📄</span>
-                        PDF (چاپ)
-                      </button>
-                      <button
-                        onClick={exportChatWord}
-                        className="flex w-full items-center gap-2.5 border-t border-[var(--border-soft)] px-4 py-3 text-right text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--color-info-bg)] hover:text-[var(--color-info-text)]"
-                      >
-                        <span className="text-base">📝</span>
-                        Word (.doc)
-                      </button>
-                      <button
-                        onClick={exportChatText}
-                        className="flex w-full items-center gap-2.5 border-t border-[var(--border-soft)] px-4 py-3 text-right text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)]"
-                      >
-                        <span className="text-base">📋</span>
-                        متن ساده (.txt)
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-            <button
-              onClick={clearChat}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-soft)] sm:w-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
-              aria-label={isEn ? "New chat" : "گفتگوی جدید"}
-            >
-              <Plus size={13} />
-              <span className="hidden sm:inline">{isEn ? "New" : "جدید"}</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile settings panel — slides in below header on small screens */}
-      {showMobileSettings && (
-        <div id="artin-mobile-chat-settings" className="artin-motion-panel shrink-0 border-b border-[var(--border-soft)] bg-[var(--surface)] px-3 py-3 md:hidden" dir={dir}>
-          <div className="grid grid-cols-2 items-start gap-x-2 gap-y-1.5">
-            <label htmlFor="artin-mobile-domain" className="text-xs font-semibold">{isEn ? "Question domain" : "حوزهٔ پرسش"}</label>
-            <label htmlFor="artin-mobile-response-mode" className="text-xs font-semibold">{isEn ? "Response style" : "سبک پاسخ"}</label>
-            <select
-              id="artin-mobile-domain"
-              disabled={!customer}
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              className="min-h-10 min-w-0 rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-2 text-xs"
-            >
-              <option value="auto">{domainLabels.auto}</option>
-              <option value="catalyst">{domainLabels.catalyst}</option>
-              <option value="equipment">{domainLabels.equipment}</option>
-              <option value="chromatography">{domainLabels.chromatography}</option>
-              <option value="mercury-analysis">{domainLabels["mercury-analysis"]}</option>
-              <option value="sulfur-analysis">{domainLabels["sulfur-analysis"]}</option>
-              <option value="troubleshooting">{domainLabels.troubleshooting}</option>
-              <option value="analysis">{domainLabels.analysis}</option>
-            </select>
-            <select
-              id="artin-mobile-response-mode"
-              disabled={!customer}
-              value={responseMode}
-              onChange={(e) => setResponseMode(e.target.value)}
-              className="min-h-10 min-w-0 rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-2 text-xs"
-            >
-              <option value="auto">{responseModeLabels.auto}</option>
-              <option value="brief">{responseModeLabels.brief}</option>
-              <option value="technical">{responseModeLabels.technical}</option>
-              <option value="checklist">{responseModeLabels.checklist}</option>
-            </select>
-          </div>
-        </div>
-      )}
+      <ChatHeader
+        isEn={isEn}
+        dir={dir}
+        signedIn={!!customer}
+        messages={messages}
+        domain={domain}
+        onDomainChange={setDomain}
+        responseMode={responseMode}
+        onResponseModeChange={setResponseMode}
+        onNewChat={clearChat}
+      />
 
       <ThreadPrimitive.Viewport
         ref={scrollContainerRef}

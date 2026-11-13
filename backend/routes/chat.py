@@ -665,6 +665,35 @@ def _build_chat_metadata(p: dict, answer_mode: str | None = None, response_time_
     return metadata
 
 
+def _is_solution_question(message: str) -> bool:
+    from solution_prep import is_solution_preparation
+
+    return is_solution_preparation(message)
+
+
+def _laboratory_answer(body: ChatRequest):
+    """Answer "how do I make this solution" questions with the laboratory tools.
+
+    The amounts then come from deterministic calculations (element-library molar
+    mass, solution arithmetic), not from the language model. Returns None so the
+    general assistant answers instead when the question is something else or the
+    laboratory conversation fails.
+    """
+    from solution_prep import is_solution_preparation
+
+    if not is_solution_preparation(body.message) or is_followup_transform_request(body.message):
+        return None
+    try:
+        from laboratory_chat import ask_laboratory
+
+        result = ask_laboratory(body.message, body.history or [], None, None, body.customer_id, body.chemical_cid)
+    except Exception:
+        logger.warning("Laboratory answer failed; using the general assistant", exc_info=True)
+        return None
+    # Without at least one successful calculation the answer is not tool-backed.
+    return result if result.get("calculations") else None
+
+
 @router.post("/chat", tags=["Chat"], summary="Send message and get AI response")
 @limiter.limit("20/minute")
 def chat(request: Request, body: ChatRequest = Depends(authorize_chat)):
@@ -674,8 +703,14 @@ def chat(request: Request, body: ChatRequest = Depends(authorize_chat)):
     chat_requests_by_intent.labels(intent=p["question_intent"]).inc()
 
     _t0 = _time.monotonic()
+    laboratory = _laboratory_answer(body)
+    if laboratory:
+        p["search_mode"] = "laboratory_calculation"
     try:
-        answer = ask_expert_assistant(
+        if laboratory:
+            answer, answer_mode = laboratory["answer"], "laboratory"
+        else:
+            answer = ask_expert_assistant(
             message=body.message,
             context=p["context"],
             history=p["history"],
@@ -683,8 +718,8 @@ def chat(request: Request, body: ChatRequest = Depends(authorize_chat)):
             allow_web_search=p["allow_web_search"],
             customer_context=p["customer_context"],
             use_live_web=p.get("use_live_web", False),
-        )
-        answer_mode = "ai"
+            )
+            answer_mode = "ai"
     except Exception as e:
         import traceback
 
@@ -743,6 +778,7 @@ def chat(request: Request, body: ChatRequest = Depends(authorize_chat)):
         "response_mode": p["response_mode"],
         "answer_mode": answer_mode,
         "stage_timings_ms": p["stage_timings_ms"],
+        "calculations": laboratory["calculations"] if laboratory else [],
     }
 
 
@@ -754,7 +790,6 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
     detected_domain = p["detected_domain"]
     allow_company_reference = p["allow_company_reference"]
     is_transform_followup = p["is_transform_followup"]
-    search_mode = p["search_mode"]
     resource_links = p["resource_links"]
     resource_images = p["resource_images"]
     allow_web_search = p["allow_web_search"]
@@ -773,6 +808,7 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
         and not is_transform_followup
         and not p.get("library_resources")
         and not body.chemical_cid
+        and not _is_solution_question(body.message)
     )
     if _use_cache:
         _cached = _response_cache.get(body.message, detected_domain)
@@ -797,6 +833,9 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
             )
 
     def event_generator():
+        laboratory = _laboratory_answer(body)
+        if laboratory:
+            p["search_mode"] = "laboratory_calculation"
         meta = {
             "type": "meta",
             "detected_domain": detected_domain,
@@ -804,8 +843,9 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
             "library_resources": p.get("library_resources"),
             "resource_links": resource_links if allow_company_reference else [],
             "resource_images": resource_images if allow_company_reference else [],
-            "search_mode": search_mode,
-            "web_search_used": allow_web_search,
+            "search_mode": p["search_mode"],
+            "web_search_used": allow_web_search and not laboratory,
+            "calculations": laboratory["calculations"] if laboratory else [],
             "question_intent": question_intent,
             "question_intent_label": question_intent_label,
             "best_score": p["best_score"],
@@ -818,7 +858,14 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
         _stream_t0 = _time.monotonic()
         answer_mode = "ai"
         try:
-            for chunk in ask_expert_assistant_stream(
+            if laboratory:
+                answer_mode = "laboratory"
+                text = laboratory["answer"]
+                for i in range(0, len(text), 80):
+                    full_answer += text[i:i+80]
+                    chunk_payload = {"type": "chunk", "text": text[i:i + 80]}
+                    yield f"data: {_json_local.dumps(chunk_payload, ensure_ascii=False)}\n\n"
+            for chunk in ([] if laboratory else ask_expert_assistant_stream(
                 message=body.message,
                 context=context,
                 history=history,
@@ -826,7 +873,7 @@ def chat_stream(request: Request, body: ChatRequest = Depends(authorize_chat)):
                 allow_web_search=allow_web_search,
                 customer_context=_cust_ctx_stream,
                 use_live_web=p.get("use_live_web", False),
-            ):
+            )):
                 full_answer += chunk
                 payload = {"type": "chunk", "text": chunk}
                 yield f"data: {_json_local.dumps(payload, ensure_ascii=False)}\n\n"

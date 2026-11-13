@@ -131,6 +131,7 @@ export function useCustomerChatSession({
           library_resources: item.metadata?.library_resources,
           detected_domain: item.metadata?.detected_domain,
           question_id: item.metadata?.question_id,
+          calculated: item.metadata?.calculated === true,
           relatedDevices: item.metadata?.relatedDevices || [],
           resource_links: item.metadata?.resource_links || [],
           resource_images: item.metadata?.resource_images || [],

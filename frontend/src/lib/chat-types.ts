@@ -39,6 +39,8 @@ export type ChatMessage = {
   detected_domain?: string;
   question_id?: number;
   question_intent?: string;
+  /** Amounts were computed by the laboratory calculation tools, not written by the model. */
+  calculated?: boolean;
   relatedDevices?: DeviceAsset[];
   resource_links?: ResourceLink[];
   resource_images?: ResourceImage[];
@@ -70,6 +72,7 @@ export type SavedChatMessage = {
     sources?: Source[];
     detected_domain?: string;
     question_id?: number;
+    calculated?: boolean;
     relatedDevices?: DeviceAsset[];
     resource_links?: ResourceLink[];
     resource_images?: ResourceImage[];

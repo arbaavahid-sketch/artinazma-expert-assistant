@@ -9,7 +9,9 @@ import { useEffect, useRef, useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import { withStandardBadges } from "@/components/standard-codes";
 import remarkGfm from "remark-gfm";
+import Link from "next/link";
 import {
+  Calculator,
   Check,
   Copy,
   Pencil,
@@ -593,6 +595,16 @@ function MessageBubble({
               links={item.resource_links}
               images={item.resource_images}
             />
+          )}
+          {!isUser && item.calculated && (
+            <Link
+              href="/calculators"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-info-border)] bg-[var(--color-info-bg)] px-3 py-1 text-xs font-bold text-[var(--color-info-text)] transition hover:border-[var(--brand-accent)]"
+              title={isEn ? "Open the laboratory calculators" : "باز کردن محاسبات آزمایشگاهی"}
+            >
+              <Calculator size={13} aria-hidden="true" />
+              {isEn ? "Calculated with Artin lab calculators" : "محاسبه‌شده با ابزار محاسبات آرتین"}
+            </Link>
           )}
           {!isUser && <RelatedDeviceCards devices={item.relatedDevices} />}
           {toolsEnabled && !isUser && !loading && onQuote && showQuoteCta(item) && (
