@@ -77,6 +77,9 @@ docker-build:
 
 docker-up:
 	DOMAIN=$(DOMAIN) docker compose up -d
+	@# n8n (Telegram club automation) lives in /opt/n8n on this Docker network;
+	@# re-attach it after the stack is recreated. No-op where n8n is not installed.
+	@if [ -f /opt/n8n/docker-compose.yml ]; then docker compose -f /opt/n8n/docker-compose.yml up -d; fi
 
 docker-down:
 	docker compose down
