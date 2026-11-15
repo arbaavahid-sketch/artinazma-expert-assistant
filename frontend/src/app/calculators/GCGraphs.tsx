@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import FilePicker from "@/components/FilePicker";
 import { linearFit } from "./lab-tools";
 import type { GCGraphData } from "./gum-project";
 
@@ -95,8 +96,7 @@ export default function GCGraphs({ en, onCalibration, initialData, onDataChange 
           : "برازش کمترین مربعات بدون وزن، با فرض ناچیز بودن خطای غلظت استانداردها و واریانس ثابت پاسخ است. عدم‌قطعیت پاسخ نمونه جدا وارد می‌شود."}</p>
       </div>}
       {standards.trim() && !usable && <p role="alert">{en ? "Enter at least three finite pairs with a positive slope and distinct concentrations." : "حداقل سه جفت عدد معتبر با غلظت‌های متفاوت و شیب مثبت وارد کنید."}</p>}
-      <label className="block space-y-1"><span>{en ? "Chromatogram: time, signal (CSV/TXT, up to 10,000 points)" : "کروماتوگرام؛ زمان و سیگنال (CSV یا TXT، حداکثر ۱۰ هزار نقطه)"}</span>
-        <input type="file" accept=".csv,.txt,.tsv" className="ui-input" onChange={async event => {
+      <FilePicker en={en} label={en ? "Chromatogram: time, signal (CSV/TXT, up to 10,000 points)" : "کروماتوگرام؛ زمان و سیگنال (CSV یا TXT، حداکثر ۱۰ هزار نقطه)"} accept=".csv,.txt,.tsv" onChange={async event => {
           const file = event.target.files?.[0];
           if (!file) return;
           setFileError(""); setChromatogram("");
@@ -113,7 +113,6 @@ export default function GCGraphs({ en, onCalibration, initialData, onDataChange 
             onDataChange?.({ chromatogram: lines.join("\n") });
           } catch { setFileError(en ? "Could not read file." : "فایل خوانده نشد."); }
         }} />
-      </label>
       <p className="text-xs leading-6">{en ? "The first column is time and the second is signal in the source file's units. One optional header row is allowed. Peak identity and area integration are not inferred."
         : "ستون اول زمان و ستون دوم سیگنال در واحد فایل دستگاه است. یک سطر عنوان اختیاری پذیرفته می‌شود. این نمودار شناسایی ماده یا انتگرال‌گیری پیک انجام نمی‌دهد."}</p>
       {fileError && <p role="alert">{fileError}</p>}

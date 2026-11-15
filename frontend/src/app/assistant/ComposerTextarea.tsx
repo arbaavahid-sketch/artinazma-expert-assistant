@@ -34,6 +34,7 @@ export default function ComposerTextarea({
       enterKeyHint="send"
       className={className}
       placeholder={placeholder}
+      aria-label={isEn ? "Message to Artin" : "پیام به آرتین"}
       onKeyDown={(event) => {
         if (event.key === "Enter" && event.shiftKey && (event.ctrlKey || event.metaKey) &&
             !event.nativeEvent.isComposing && event.keyCode !== 229) {

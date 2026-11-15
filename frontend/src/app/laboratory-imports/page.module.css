@@ -129,15 +129,7 @@
 }
 .page .drop:hover, .page .drop:focus-within { border-color: var(--brand-accent); }
 .page .drop small { color: var(--text-muted); font-weight: 400; }
-.page .drop input {
-  width: min(100%, 26rem);
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
+.page .drop label { justify-content: center; color: var(--foreground); }
 .page .drop input::file-selector-button {
   margin-inline-end: 12px;
   padding: 8px 14px;

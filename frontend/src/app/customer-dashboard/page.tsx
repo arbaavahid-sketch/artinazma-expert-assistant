@@ -700,6 +700,7 @@ export default function CustomerDashboardPage() {
                     type="text"
                     value={sessionSearch}
                     onChange={(e) => setSessionSearch(e.target.value)}
+                    aria-label={isEn ? "Search conversations" : "جستجو در گفتگوها"}
                     placeholder={isEn ? "Search conversation titles and message text..." : "جستجو در عنوان و متن پیام‌های گفتگو..."}
                     className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)] outline-none"
                   />
@@ -865,6 +866,7 @@ export default function CustomerDashboardPage() {
                                 e.stopPropagation();
                                 exportSessionPDF(session);
                               }}
+                              aria-label={isEn ? "Export PDF" : "خروجی PDF"}
                               className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-subtle)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--color-info-text)]"
                             >
                               <Download size={15} />
