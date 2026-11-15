@@ -34,6 +34,7 @@ const { toolGroups, toolGroup } = load('tool-groups.ts');
 const { familyModels } = load('family-models.ts');
 const { methodProfile, profileCounts } = load('method-profiles.ts');
 const { formulaNotes } = load('formula-notes.ts');
+const { gumGuides, templateForModel } = load('gum-guides.ts');
 const { methodName } = load('method-names-en.ts');
 const { measurementRegistry, evaluateRegisteredModel } = load('registered-models.ts');
 const bank = require(path.join(catalogRoot, 'method-bank.json'));
@@ -66,7 +67,7 @@ const equations = Object.entries(measurementRegistry).map(([id, model]) => {
   return { id, inputCount: model.input_count, examplePresent: Boolean(model.example), exampleValid: Boolean(answer?.valid),
     finiteSensitivities: Boolean(answer?.sensitivities.every(Number.isFinite)),
     exampleResult: answer && Number.isFinite(answer.value) ? answer.value : null,
-    reference: model.reference ?? familyModels[id]?.reference ?? null,
+    reference: model.reference ?? familyModels[id]?.reference ?? gumGuides[templateForModel[id]]?.source?.url ?? null,
     sourceEdition: model.source_edition ?? familyModels[id]?.sourceEdition ?? null };
 });
 const methods = bank.map(item => {
@@ -84,7 +85,7 @@ const result = {
   categories: toolGroups.map((group, index) => ({ ...group, count: tools.filter(item => item.visible && item.category === index).length })),
   checks: { registryParity: JSON.stringify(measurementRegistry) === JSON.stringify(backendRegistry),
     nominalExamplesValid: equations.every(item => item.exampleValid && item.finiteSensitivities),
-    visibleToolFieldLabelsAligned: tools.filter(item => item.visible && item.id >= 3).every(item => item.fieldLabelsAligned),
+    visibleToolFieldLabelsAligned: tools.filter(item => item.visible && item.id >= builtin.length).every(item => item.fieldLabelsAligned),
     visibleToolsMissingBilingualExplanation: tools.filter(item => item.visible && !item.bilingualExplanation).map(item => item.en),
     equationsWithoutInlineReference: equations.filter(item => !item.reference).map(item => item.id),
     methodsMissingEnglishName: methods.filter(item => !item.en).map(item => item.id),

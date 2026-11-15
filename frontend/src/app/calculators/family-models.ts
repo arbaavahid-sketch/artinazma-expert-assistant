@@ -15,6 +15,7 @@ export const familyModels: Record<string, FamilyModel> = {
   ...extendedModels,
   ...supplementaryModels,
   volumetricTitration: {
+    reference: "https://www.eurachem.org/index.php/publications/guides/quam", sourceEdition: "Eurachem/CITAC QUAM titration model; the method sets z and the end point",
     example: [10, 1, .1, 1, 25],
     explanation: "مقدار تیترانت پس از کسر بلانک از حجم و غلظت به دست می‌آید. ضریب z نسبت مول آنالیت به مول تیترانت است، نه لزوماً ظرفیت اسیدی/قلیایی. آن را از واکنش موازنه‌شده بردارید. غلظت تیترانت از استانداردسازی و حجم‌ها از بورت و پیپت به دست می‌آیند.",
     fa: "تیتراسیون حجمی با بلانک", en: "Blank-corrected volumetric titration", formula: "C = (Vt − Vb) × Ct × z / Vs", unit: "mol/L",
@@ -26,6 +27,7 @@ export const familyModels: Record<string, FamilyModel> = {
       valid: t >= 0 && b >= 0 && c > 0 && z > 0 && s > 0 }),
   },
   relativeDensity: {
+    reference: "https://store.astm.org/standards/d4052", sourceEdition: "ASTM D4052 definition of relative density; state both temperatures",
     example: [850, 998.2],
     explanation: "نسبت چگالی نمونه در دمای Ts به چگالی مرجع در دمای Tr است. هر دو چگالی باید واحد یکسان داشته باشند. دماهای Ts و Tr را در شناسهٔ روش یا منبع داده ثبت کنید؛ این مدل تبدیل دما انجام نمی‌دهد.",
     fa: "چگالی نسبی از چگالی نمونه و مرجع", en: "Relative density from sample and reference densities", formula: "d = ρ_sample(Ts) / ρ_reference(Tr)", unit: "1",
@@ -34,6 +36,7 @@ export const familyModels: Record<string, FamilyModel> = {
     evaluate: ([a, b]) => ({ value: a / b, sensitivities: [1 / b, -a / b ** 2], valid: a > 0 && b > 0 }),
   },
   kinematicFromDynamic: {
+    reference: "https://store.astm.org/standards/d445", sourceEdition: "Inverse of the ASTM D445 dynamic-viscosity relation",
     example: [8.5, 850],
     explanation: "از رابطهٔ ν=η/ρ و تبدیل واحدها به mm²/s به دست می‌آید. دو ورودی باید در دمای یکسان باشند. گواهی دستگاه، عدم‌قطعیت دما و هم‌بستگی ناشی از اندازه‌گیری مشترک را بررسی کنید.",
     fa: "گرانروی کینماتیکی از دینامیکی و چگالی", en: "Kinematic viscosity from dynamic viscosity and density", formula: "ν = 1000 × η / ρ", unit: "mm²/s",
@@ -42,6 +45,7 @@ export const familyModels: Record<string, FamilyModel> = {
     evaluate: ([eta, rho]) => ({ value: 1000 * eta / rho, sensitivities: [1000 / rho, -1000 * eta / rho ** 2], valid: eta > 0 && rho > 0 }),
   },
   viscosity: {
+    reference: "https://store.astm.org/standards/d445", sourceEdition: "ASTM D445 calculation ν = C × t; verify laboratory edition",
     example: [.1, 100],
     explanation: "در محدوده‌ای که روش و گواهی ویسکومتر رابطهٔ ν=Ct را مجاز می‌دانند، ثابت کالیبراسیون در زمان عبور ضرب می‌شود. تصحیح انرژی جنبشی، دمای حمام و جریان نامناسب ممکن است به مدل کامل‌تری نیاز داشته باشند. این رابطه برای HTHS مناسب نیست.",
     fa: "گرانروی کینماتیکی از ثابت و زمان", en: "Kinematic viscosity from constant and time", formula: "ν = C × t", unit: "mm²/s",
@@ -49,6 +53,7 @@ export const familyModels: Record<string, FamilyModel> = {
     evaluate: ([c, t]) => ({ value: c * t, sensitivities: [t, c], valid: c > 0 && t > 0 }),
   },
   residue: {
+    reference: "https://www.eurachem.org/index.php/publications/guides/quam", sourceEdition: "Mass-balance definition modelled per Eurachem/CITAC QUAM; heating and drying conditions come from the test method",
     example: [.2, 10],
     explanation: "جرم خالص باقیمانده بر جرم نمونه تقسیم و به درصد تبدیل می‌شود. جرم خالص را پس از کسر ظرف و بلانک وارد کنید. کالیبراسیون ترازو، هم‌بستگی توزین‌ها، انتقال، خشک‌کردن و تکرارپذیری باید در عدم‌قطعیت ورودی‌ها پوشش داده شوند.",
     fa: "درصد جرمی باقیمانده", en: "Residue mass percentage", formula: "w = 100 × m_res / m_sample", unit: "% mass",
@@ -56,6 +61,7 @@ export const familyModels: Record<string, FamilyModel> = {
     evaluate: ([r, m]) => ({ value: 100 * r / m, sensitivities: [100 / m, -100 * r / m ** 2], valid: m > 0 && r >= 0 && r <= m }),
   },
   loss: {
+    reference: "https://www.eurachem.org/index.php/publications/guides/quam", sourceEdition: "Mass-balance definition modelled per Eurachem/CITAC QUAM; heating and drying conditions come from the test method",
     example: [10, 9],
     explanation: "اختلاف جرم اولیه و نهایی بر جرم اولیه تقسیم می‌شود. ظرف باید از هر دو جرم کسر شده باشد. چون جرم اولیه در صورت و مخرج مشترک است، ضریب حساسیت آن از مشتق رابطه محاسبه می‌شود؛ دو ورودی مستقل با نام جرم اولیه نسازید.",
     fa: "درصد افت جرم", en: "Mass loss percentage", formula: "w = 100 × (m_initial − m_final) / m_initial", unit: "% mass",
@@ -63,6 +69,7 @@ export const familyModels: Record<string, FamilyModel> = {
     evaluate: ([a, b]) => ({ value: 100 * (a - b) / a, sensitivities: [100 * b / a ** 2, -100 / a], valid: a > 0 && b >= 0 && b <= a }),
   },
   corrected: {
+    reference: "https://jcgm.bipm.org/vim/en/2.53.html", sourceEdition: "JCGM 200:2012 (VIM) 2.53 correction, applied as an addend",
     example: [25, -.2],
     explanation: "تصحیح با علامت به قرائت اضافه می‌شود. اگر گواهی فقط خطای دستگاه E را نوشته باشد، تصحیح معمولاً −E است؛ تعریف گواهی را بررسی کنید. مقدار تصحیح، عدم‌قطعیت تصحیح نیست. واحد نتیجه را مطابق دستگاه تعیین کنید و سهم دقت، رانش و محیط را دوباره نشمارید.",
     fa: "قرائت تصحیح‌شده", en: "Corrected reading", formula: "y = I + correction", unit: "",
@@ -70,6 +77,7 @@ export const familyModels: Record<string, FamilyModel> = {
     evaluate: ([a, b]) => ({ value: a + b, sensitivities: [1, 1], valid: true }),
   },
   diluted: {
+    reference: "https://www.eurachem.org/index.php/publications/guides/quam", sourceEdition: "Eurachem/CITAC QUAM measurement model with blank and dilution factor",
     example: [5, 1, 10],
     explanation: "ابتدا بلانک در همان واحد و مبنای غلظت از قرائت کسر می‌شود، سپس ضریب رقیق‌سازی اعمال می‌شود. D نسبت حجم نهایی به حجم برداشت است. اگر دستگاه بلانک یا رقیق‌سازی را قبلاً اعمال کرده، دوباره اعمال نکنید. بازیابی و اثر ماتریس در این رابطهٔ پایه نیستند.",
     fa: "غلظت پس از کسر بلانک و رقیق‌سازی", en: "Blank-corrected diluted concentration", formula: "C = (C_read − C_blank) × D", unit: "",
@@ -77,6 +85,7 @@ export const familyModels: Record<string, FamilyModel> = {
     evaluate: ([a, b, d]) => ({ value: (a - b) * d, sensitivities: [d, -d, a - b], valid: d >= 1 }),
   },
   dynamic: {
+    reference: "https://store.astm.org/standards/d445", sourceEdition: "ASTM D445 calculation η = ν × ρ × 10⁻³; verify laboratory edition",
     example: [10, 850],
     explanation: "رابطهٔ η=νρ پس از تبدیل واحدها به mPa·s است. چگالی و گرانروی کینماتیکی باید در دمای یکسان باشند. این تبدیل، روش اندازه‌گیری مستقیم گرانروی در نرخ برش مشخص را جایگزین نمی‌کند.",
     fa: "گرانروی دینامیکی از چگالی و گرانروی کینماتیکی", en: "Dynamic viscosity from density and kinematic viscosity", formula: "η = ν × ρ / 1000", unit: "mPa·s",

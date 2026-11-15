@@ -70,36 +70,9 @@
   "checks": {
     "registryParity": true,
     "nominalExamplesValid": true,
-    "visibleToolFieldLabelsAligned": false,
+    "visibleToolFieldLabelsAligned": true,
     "visibleToolsMissingBilingualExplanation": [],
-    "equationsWithoutInlineReference": [
-      "density",
-      "gcExtraction",
-      "viscosity",
-      "residue",
-      "loss",
-      "corrected",
-      "diluted",
-      "dynamic",
-      "kinematicFromDynamic",
-      "relativeDensity",
-      "volumetricTitration",
-      "indicationError",
-      "relativeError",
-      "inverseCalibration",
-      "moistureWet",
-      "moistureDry",
-      "spikeRecovery",
-      "massConcentrationTitration",
-      "forceArea",
-      "electricalResistance",
-      "porosity",
-      "linearExpansion",
-      "standardPreparation",
-      "naohStandardization",
-      "balance",
-      "typeA"
-    ],
+    "equationsWithoutInlineReference": [],
     "methodsMissingEnglishName": [],
     "numericMethodsWithoutBaseModel": [],
     "methodModelsAbsentFromRegistry": []
@@ -2896,7 +2869,7 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 1,
-      "reference": null,
+      "reference": "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty",
       "sourceEdition": null
     },
     {
@@ -2906,7 +2879,7 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 125,
-      "reference": null,
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
       "sourceEdition": null
     },
     {
@@ -2916,8 +2889,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 10,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://store.astm.org/standards/d445",
+      "sourceEdition": "ASTM D445 calculation ν = C × t; verify laboratory edition"
     },
     {
       "id": "residue",
@@ -2926,8 +2899,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 2,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Mass-balance definition modelled per Eurachem/CITAC QUAM; heating and drying conditions come from the test method"
     },
     {
       "id": "loss",
@@ -2936,8 +2909,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 10,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Mass-balance definition modelled per Eurachem/CITAC QUAM; heating and drying conditions come from the test method"
     },
     {
       "id": "corrected",
@@ -2946,8 +2919,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 24.8,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://jcgm.bipm.org/vim/en/2.53.html",
+      "sourceEdition": "JCGM 200:2012 (VIM) 2.53 correction, applied as an addend"
     },
     {
       "id": "diluted",
@@ -2956,8 +2929,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 40,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Eurachem/CITAC QUAM measurement model with blank and dilution factor"
     },
     {
       "id": "dynamic",
@@ -2966,8 +2939,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 8.5,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://store.astm.org/standards/d445",
+      "sourceEdition": "ASTM D445 calculation η = ν × ρ × 10⁻³; verify laboratory edition"
     },
     {
       "id": "kinematicFromDynamic",
@@ -2976,8 +2949,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 10,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://store.astm.org/standards/d445",
+      "sourceEdition": "Inverse of the ASTM D445 dynamic-viscosity relation"
     },
     {
       "id": "relativeDensity",
@@ -2986,8 +2959,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 0.851532758966139,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://store.astm.org/standards/d4052",
+      "sourceEdition": "ASTM D4052 definition of relative density; state both temperatures"
     },
     {
       "id": "volumetricTitration",
@@ -2996,8 +2969,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 0.036000000000000004,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Eurachem/CITAC QUAM titration model; the method sets z and the end point"
     },
     {
       "id": "acidBaseNumber",
@@ -3116,8 +3089,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 0.1999999999999993,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://jcgm.bipm.org/vim/en/2.16.html",
+      "sourceEdition": "JCGM 200:2012 (VIM) 2.16 measurement error"
     },
     {
       "id": "relativeError",
@@ -3126,8 +3099,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 1.9999999999999927,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://jcgm.bipm.org/vim/en/2.16.html",
+      "sourceEdition": "Relative form of JCGM 200:2012 (VIM) 2.16 measurement error"
     },
     {
       "id": "inverseCalibration",
@@ -3136,8 +3109,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 20,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Eurachem/CITAC QUAM, linear least-squares calibration"
     },
     {
       "id": "moistureWet",
@@ -3146,8 +3119,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 20,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Mass-balance definition modelled per Eurachem/CITAC QUAM; heating and drying conditions come from the test method"
     },
     {
       "id": "moistureDry",
@@ -3156,8 +3129,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 25,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Mass-balance definition modelled per Eurachem/CITAC QUAM; heating and drying conditions come from the test method"
     },
     {
       "id": "spikeRecovery",
@@ -3166,8 +3139,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 100,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/mv",
+      "sourceEdition": "Recovery as described in the Eurachem guide The Fitness for Purpose of Analytical Methods"
     },
     {
       "id": "massConcentrationTitration",
@@ -3176,8 +3149,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 198.1782,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
+      "sourceEdition": "Eurachem/CITAC QUAM titration model; molar mass and z come from the method"
     },
     {
       "id": "forceArea",
@@ -3186,8 +3159,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 100,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.bipm.org/en/publications/si-brochure",
+      "sourceEdition": "SI Brochure: pascal = N/m²; specimen area per the test method"
     },
     {
       "id": "electricalResistance",
@@ -3196,8 +3169,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 50,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://www.bipm.org/en/publications/si-brochure",
+      "sourceEdition": "SI Brochure: ohm = V/A"
     },
     {
       "id": "porosity",
@@ -3206,8 +3179,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 40,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://doi.org/10.1351/pac199466081739",
+      "sourceEdition": "IUPAC recommendations for the characterization of porous solids, Pure Appl. Chem. 66 (1994) 1739"
     },
     {
       "id": "linearExpansion",
@@ -3216,8 +3189,8 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 0.24,
-      "reference": null,
-      "sourceEdition": null
+      "reference": "https://store.astm.org/standards/e228",
+      "sourceEdition": "ASTM E228 mean coefficient of linear thermal expansion"
     },
     {
       "id": "standardPreparation",
@@ -3226,7 +3199,7 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 1002.69972,
-      "reference": null,
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
       "sourceEdition": null
     },
     {
@@ -3236,7 +3209,7 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 0.1021361597067907,
-      "reference": null,
+      "reference": "https://www.eurachem.org/index.php/publications/guides/quam",
       "sourceEdition": null
     },
     {
@@ -3246,7 +3219,7 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 50,
-      "reference": null,
+      "reference": "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-4-type-b-evaluation-standard-uncertainty",
       "sourceEdition": null
     },
     {
@@ -3256,7 +3229,7 @@
       "exampleValid": true,
       "finiteSensitivities": true,
       "exampleResult": 50,
-      "reference": null,
+      "reference": "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty",
       "sourceEdition": null
     },
     {

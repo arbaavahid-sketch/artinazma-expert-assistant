@@ -539,6 +539,7 @@ export default function GumBudget({ en, parseNumber, onCalculated,initialProject
         <h3 className="font-bold">{en ? "What does this method calculate?" : "این روش چه چیزی را حساب می‌کند؟"}</h3>
         <p>{en ? guide.purpose.en : guide.purpose.fa}</p>
         <p className="text-xs">{en ? "Guide section" : "بخش مرجع"} · <bdi>{guide.sections}</bdi></p>
+        {guide.source && <p className="text-xs">{en ? "Model source" : "مرجع مدل"} · <a className="underline underline-offset-4" href={guide.source.url} target="_blank" rel="noreferrer"><bdi dir="ltr">{guide.source.label}</bdi></a></p>}
         <div className="flex flex-wrap gap-3 text-xs font-semibold">
           <a className="underline underline-offset-4" href="https://www.eurachem.org/index.php/publications/guides/quam" target="_blank" rel="noreferrer">{en ? "QUAM and Persian translation" : "راهنمای QUAM و ترجمهٔ فارسی"}</a>
           <a className="underline underline-offset-4" href="https://www.eurachem.org/images/stories/Guides/quam/errata/QUAM_ERRATA_v2.pdf" target="_blank" rel="noreferrer">{en ? "Official corrections" : "اصلاحیهٔ رسمی"}</a>
@@ -856,6 +857,7 @@ export default function GumBudget({ en, parseNumber, onCalculated,initialProject
             [en?'Method':'آزمون',activeMethod?methodName(activeMethod,en):template],[en?'Standard edition':'ویرایش استاندارد',methodEdition||(en?'Not recorded':'ثبت نشده')],[en?'SOP / revision':'روش اجرایی و بازنگری',methodRevision||(en?'Not recorded':'ثبت نشده')],
             [en?'Scope':'دامنهٔ کاربرد',activeMethod?methodProfile(activeMethod,en).scope:(en?'Base measurement model; actual method scope must be reviewed':'مدل پایهٔ اندازه‌گیری؛ دامنهٔ کاربرد روش واقعی باید بررسی شود')],
             ...(family?.sourceEdition?[[en?'Equation/data version':'نسخهٔ مرجع رابطه/داده',family.sourceEdition],[en?'Equation reference':'مرجع رابطه',family.reference??'']]:[]),
+            ...(!family&&guide?.source?[[en?'Model source':'مرجع مدل',guide.source.label],[en?'Equation reference':'مرجع رابطه',guide.source.url]]:[]),
             ["Equation",model],["Result",y,"Unit",unit],["u_c",combined],["k",k],["U",expanded],
             ["Minimum",resultMinimum,"Maximum",resultMaximum],["Numeric limits comparison",limitMessage(limitStatus,en)],
             ["Engine",serverResult.engine,serverResult.engine_version],
@@ -882,6 +884,7 @@ export default function GumBudget({ en, parseNumber, onCalculated,initialProject
                 methodRevision || (en ? "SOP not recorded" : "روش اجرایی ثبت نشده")] : []),
               ...nominalInputs.map(input=>input.join("\t")),
               ...(family?.sourceEdition?[`${en?'Equation/data version':'نسخهٔ مرجع رابطه/داده'}: ${family.sourceEdition}`,family.reference??'']:[]),
+              ...(!family&&guide?.source?[`${en?'Model source':'مرجع مدل'}: ${guide.source.label}`,guide.source.url]:[]),
               ...(resultMinimum.trim()||resultMaximum.trim()?[`Limits (${unit}): min=${resultMinimum||"none"}; max=${resultMaximum||"none"}; ${limitMessage(limitStatus,en)}`,en?"Numeric comparison only; no uncertainty guard band.":"مقایسهٔ عددی؛ بدون اعمال حاشیهٔ عدم‌قطعیت."]:[]),
               report, `Engine: ${serverResult.engine} ${serverResult.engine_version}`, `u_c = ${format(combined)} ${unit}`,
               ...(serverResult.coverage_method==='welch-satterthwaite'?[`Coverage: Welch–Satterthwaite / Student t; p=${serverResult.coverage_probability}; ν_eff=${serverResult.effective_degrees_of_freedom??'∞'}; ν_t=${serverResult.coverage_t_degrees??'∞'}; k=${k}`,'NIST TN 1297 Appendix B; independent inputs; approximate normal/t coverage']:[]),

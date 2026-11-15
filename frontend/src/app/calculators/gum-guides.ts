@@ -1,7 +1,8 @@
 type Text = { fa: string; en: string };
-export type GumGuide = { purpose: Text; inputs: Text[]; sections: string };
+export type GumGuide = { purpose: Text; inputs: Text[]; sections: string; source?: { url: string; label: string } };
 export const gumGuides: Record<string, GumGuide> = {
   gcExtraction: {
+    source: { url: "https://www.eurachem.org/index.php/publications/guides/quam", label: "Eurachem/CITAC QUAM, Example A4 (GC with extraction, in-house validation)" },
     purpose: {
       fa: "این مدل برای کالیبراسیون خارجی خطی، استخراج یک نمونه و گزارش جرمی است. واحدهای ورودی از پیش مشخص‌اند و فرمول از رابطهٔ مقدار ماده در محلول استخراج و جرم نمونه ساخته شده است.",
       en: "This model uses linear external calibration, sample extraction and mass-based reporting. It combines extract concentration, extract volume and sample mass in fixed units.",
@@ -18,6 +19,7 @@ export const gumGuides: Record<string, GumGuide> = {
     ],
   },
   balance: {
+    source: { url: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-4-type-b-evaluation-standard-uncertainty", label: "NIST TN 1297 §4, Type B evaluation" },
     purpose: { fa: "برای یک توزین مستقیم یا میانگین توزین‌های مستقل، سهم‌های جرم را جمع می‌کنیم. اثرهای موجود در تکرارپذیری را دوباره به بودجه اضافه نکنید.", en: "Combine mass contributions for direct weighing or the mean of independent weighings. Avoid re-entering effects already included in repeatability." },
     sections: "§7.11, §8",
     inputs: [
@@ -29,6 +31,7 @@ export const gumGuides: Record<string, GumGuide> = {
     ],
   },
   density: {
+    source: { url: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty", label: "NIST TN 1297 Appendix A, law of propagation of uncertainty" },
     purpose: { fa: "چگالی از جرم همان نمونه تقسیم بر حجم آن محاسبه می‌شود. فرم ضریب حساسیت هر دو ورودی را از معادله استخراج می‌کند.", en: "Density is the mass divided by the volume of the same sample. The form calculates both sensitivity coefficients." },
     sections: "§5, §8.2",
     inputs: [
@@ -37,6 +40,7 @@ export const gumGuides: Record<string, GumGuide> = {
     ],
   },
   standard: {
+    source: { url: "https://www.eurachem.org/index.php/publications/guides/quam", label: "Eurachem/CITAC QUAM, Example A1" },
     purpose: { fa: "غلظت استاندارد از جرم، خلوص و حجم نهایی محاسبه می‌شود. اعداد نمونهٔ A1 تاریخی‌اند؛ برای نمونهٔ واقعی، دادهٔ گواهی و روش خود را وارد کنید.", en: "Calculate standard concentration from mass, purity and final volume. A1 values are historical reference data." },
     sections: "Example A1",
     inputs: [
@@ -48,6 +52,7 @@ export const gumGuides: Record<string, GumGuide> = {
     ],
   },
   titration: {
+    source: { url: "https://www.eurachem.org/index.php/publications/guides/quam", label: "Eurachem/CITAC QUAM, Example A2" },
     purpose: { fa: "این الگو برای تعیین غلظت NaOH با KHP و نسبت واکنش ۱ به ۱ است. در نمونهٔ A2، تکرارپذیری کل روش جدا لحاظ می‌شود.", en: "This model standardizes NaOH against KHP with 1:1 stoichiometry. A2 includes a separate whole-method repeatability contribution." },
     sections: "Example A2; Errata 2019 p.1",
     inputs: [
@@ -60,6 +65,7 @@ export const gumGuides: Record<string, GumGuide> = {
     ],
   },
   typeA: {
+    source: { url: "https://www.nist.gov/pml/nist-technical-note-1297/nist-tn-1297-appendix-law-propagation-uncertainty", label: "NIST TN 1297 · A.4" },
     purpose: { fa: "این روش عدم‌قطعیت میانگین تکرارهای مستقل را با s/√n به دست می‌آورد. مقدار s و تعداد داده‌های میانگین‌گرفته‌شده را وارد کنید.", en: "This method gives uncertainty of the mean of independent repeats as s/√n." },
     sections: "§7.11",
     inputs: [{ fa: "s را از خروجی انحراف معیار نمونه در ابزار آمار بردارید. n تعداد قرائت‌هایی است که نتیجهٔ گزارش میانگین آن‌هاست.", en: "Use sample standard deviation s. n is the number of readings averaged in the reported result." }],
@@ -75,4 +81,10 @@ export const gumGuides: Record<string, GumGuide> = {
       { fa: "از مطالعهٔ بازیابی، مادهٔ مرجع یا بایاس روش برآورد کنید و به واحد خروجی منتقل کنید.", en: "Estimate from recovery, reference-material or bias studies and propagate to the result unit." },
     ],
   },
+};
+
+/** Registered model id → built-in GUM template that uses it (mirrors workspace/lab-chat-bridge.ts). */
+export const templateForModel: Record<string, string> = {
+  density: "density", gcExtraction: "gcExtraction", standardPreparation: "standard",
+  naohStandardization: "titration", balance: "balance", typeA: "typeA",
 };
