@@ -43,6 +43,7 @@ const builtin = [
   { id: 0, fa: 'رقیق‌سازی محلول', en: 'Solution dilution', category: 0, note: 'dilution', example: [1, 0.1, 250], result: 25 },
   { id: 1, fa: 'آماده‌سازی محلول مولار', en: 'Molar solution preparation', category: 0, note: 'molarity', example: [0.1, 250, 58.44], result: 1.461 },
   { id: 2, fa: 'تبدیل واحد فشار', en: 'Pressure conversion', category: 1, note: 'pressure', example: [1.5], result: 150 },
+  { id: 3, fa: 'مبدل واحد', en: 'Unit converter', category: 1, note: 'unitConverter', example: [25], result: 77 },
 ];
 const tools = [
   ...builtin.map(item => ({ ...item, visible: true, bilingualExplanation: Boolean(formulaNotes[item.note]?.fa && formulaNotes[item.note]?.en), exampleCheck: 'covered-by-existing-UI-tests' })),
@@ -51,7 +52,7 @@ const tools = [
     const visible = !item.en.toLowerCase().includes('uncertainty') || item.en === 'General GUM uncertainty budget';
     const answer = item.calculate(item.example);
     return {
-      id: index + 3, fa: item.name, en: item.en, category: toolGroup(item.en, item.category), visible,
+      id: index + builtin.length, fa: item.name, en: item.en, category: toolGroup(item.en, item.category), visible,
       fields: { fa: item.fields, en: item.fieldsEn }, formula: item.formula, unit: item.unit,
       bilingualExplanation: Boolean(note?.fa && note?.en), fieldLabelsAligned: item.fields.length === item.fieldsEn.length,
       example: item.example, exampleResult: Number.isFinite(answer) ? answer : null,

@@ -15,9 +15,11 @@ import { quickToolId } from "./quick-tool-ids";
 import { DIGIT_OPTIONS, formatQuantity, isRounded } from "./quick-format";
 import { addQuickEntry, clearQuickHistory, setQuickDigits, useQuickDigits, useQuickHistory, type QuickEntry, type QuickSnapshot } from "./quick-store";
 import QuickPDFButton from "./QuickPDFButton";
+import { convertUnit, isQuantity, quantities, unitFactor, unitNames, type QuantityKey } from "./unit-conversions";
 
-const pressureUnits = { Pa: 1, kPa: 1000, MPa: 1000000, bar: 100000, atm: 101325, psi: 6894.757293168 };
-type PressureUnit = keyof typeof pressureUnits;
+const BUILT_IN = 4;
+const quantityKeys = Object.keys(quantities) as QuantityKey[];
+
 const controls = "ui-input min-h-12 tabular-nums";
 const categoryIcons = [Droplets, ArrowLeftRight, Activity, Gauge, Scale, Thermometer, ShieldCheck];
 const alternateUnits: Record<string, [string, number]> = {
@@ -52,7 +54,8 @@ export default function CalculatorsPage() {
   const catalog = [
     { name: "رقیق‌سازی محلول", en: "Solution dilution", category: 0, unit: "mL mol/L" },
     { name: "آماده‌سازی محلول مولار", en: "Molar solution preparation", category: 0, unit: "g mol/L" },
-    { name: "تبدیل واحد فشار", en: "Pressure conversion", category: 1, unit: Object.keys(pressureUnits).join(" ") },
+    { name: "تبدیل واحد فشار", en: "Pressure conversion", category: 1, unit: unitNames("pressure").join(" ") },
+    { name: "مبدل واحد", en: "Unit converter", category: 1, unit: quantityKeys.flatMap(key => [quantities[key].fa, quantities[key].en, ...unitNames(key)]).join(" ") },
     ...labTools,
   ].map(item=>({...item,id:quickToolId(item.en),category:toolGroup(item.en,item.category)}));
   const selected = catalog[tool];
@@ -151,22 +154,25 @@ export default function CalculatorsPage() {
 }
 
 function Calculator({ tool, toolId, initial, title, category, en, onCalculated }: { tool: number; toolId: string; initial?: QuickSnapshot; title: string; category: string; en: boolean; onCalculated: (entry?: QuickEntry) => void }) {
-  const extra = labTools[tool - 3];
+  const extra = labTools[tool - BUILT_IN];
+  const converter = tool === 3;
+  const [quantity, setQuantity] = useState<QuantityKey>(converter ? (isQuantity(initial?.quantity) ? initial.quantity : "temperature") : "pressure");
+  const unitOptions = unitNames(quantity);
   const ppm = extra?.en === "Mass concentration in ppm";
   const digits = useQuickDigits();
   const [ppmFromMass, setPpmFromMass] = useState(initial?.ppmFromMass ?? true);
   const [sampleUnit, setSampleUnit] = useState(initial?.sampleUnit === "kg" ? "kg" : "g");
   const [useAlternate, setUseAlternate] = useState<Record<number, boolean>>(initial?.alternate ?? {});
   const massMode = ppm && ppmFromMass;
-  const formulaNote = extra?.explanation ?? formulaNotes[massMode ? "ppmMass" : extra?.en ?? ["dilution", "molarity", "pressure"][tool]];
+  const formulaNote = extra?.explanation ?? formulaNotes[massMode ? "ppmMass" : extra?.en ?? ["dilution", "molarity", "pressure", "unitConverter"][tool]];
   const examples = massMode ? [5, sampleUnit === "g" ? 2000 : 2] :
-    extra?.example ?? (tool === 2 ? [1.5] : tool === 0 ? [1, 0.1, 250] : [0.1, 250, 58.44]);
+    extra?.example ?? (tool === 2 ? [1.5] : converter ? [25] : tool === 0 ? [1, 0.1, 250] : [0.1, 250, 58.44]);
   const exampleText = extra?.pairs
     ? examples.map((value, index) => index % 2 === 0 ? `${value} ${examples[index + 1]}` : "").filter(Boolean).join("\n")
     : examples.join("\n");
   const [values, setValues] = useState(() => extra?.series ? [initial?.values[0] ?? ""] : examples.map((_, index) => initial?.values[index] ?? ""));
-  const [from, setFrom] = useState<PressureUnit>(initial && initial.from in pressureUnits ? initial.from as PressureUnit : "bar");
-  const [to, setTo] = useState<PressureUnit>(initial && initial.to in pressureUnits ? initial.to as PressureUnit : "kPa");
+  const [from, setFrom] = useState(initial && unitOptions.includes(initial.from) ? initial.from : quantities[quantity].defaults[0]);
+  const [to, setTo] = useState(initial && unitOptions.includes(initial.to) ? initial.to : quantities[quantity].defaults[1]);
   // A reopened entry shows its result straight away; it is not counted or stored again.
   const [submitted, setSubmitted] = useState(Boolean(initial));
   const [copyStatus, setCopyStatus] = useState("");
@@ -180,10 +186,11 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
     setValues([rows.join("\n")]);
     setSubmitted(false);
   }
-  const pressure = tool === 2;
+  // "pressure" covers both converters: the pressure-only tool and the general unit converter.
+  const pressure = tool === 2 || converter;
   const dilution = tool === 0;
   const labels = massMode ? (en ? ["Analyte mass (mg)", "Total sample mass"] : ["جرم ماده (mg)", "جرم کل نمونه"])
-    : extra ? (en ? extra.fieldsEn : extra.fields) : pressure ? [en ? "Pressure" : "فشار"] : dilution
+    : extra ? (en ? extra.fieldsEn : extra.fields) : pressure ? [converter ? (en ? "Value" : "مقدار") : (en ? "Pressure" : "فشار")] : dilution
     ? en ? ["Stock concentration (mol/L)", "Target concentration (mol/L)", "Final volume (mL)"]
       : ["غلظت محلول مادر (mol/L)", "غلظت هدف (mol/L)", "حجم نهایی (mL)"]
     : en ? ["Target molarity (mol/L)", "Final volume (mL)", "Molar mass (g/mol)"]
@@ -192,11 +199,12 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
     const base = label.match(/\(([^()]+)\)$/)?.[1];
     return base && alternateUnits[base] ? { base, alternate: alternateUnits[base] } : null;
   });
-  const rawNumbers = (extra?.series ? values[0].trim().split(/\s+/) : values.slice(0, labels.length)).map(parseNumber);
+  const rawNumbers = extra?.text ? [extra.text(values[0] ?? "")]
+    : (extra?.series ? values[0].trim().split(/\s+/) : values.slice(0, labels.length)).map(parseNumber);
   const numbers = rawNumbers.map((value, index) => value * (useAlternate[index] ? units[index]?.alternate[1] ?? 1 : 1));
   const [a, b, c] = numbers;
   const sampleKg = sampleUnit === "g" ? b / 1000 : b;
-  const result = massMode ? a / sampleKg : extra ? extra.calculate(numbers) : pressure ? a * (pressureUnits[from] / pressureUnits[to]) : dilution ? (b / a) * c : a * (b / 1000) * c;
+  const result = massMode ? a / sampleKg : extra ? extra.calculate(numbers) : pressure ? convertUnit(a, quantity, from, to) : dilution ? (b / a) * c : a * (b / 1000) * c;
   const invalidPairRow = extra?.pairs ? values[0].trim().split(/\r?\n/).findIndex(line => {
     const pair = line.trim().split(/\s+/).map(parseNumber);
     return pair.length !== 2 || pair.some(value => !Number.isFinite(value));
@@ -220,10 +228,12 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
   // Results follow the chosen significant figures; inputs and counters are shown as entered.
   const format = (number: number) => formatQuantity(number, en, digits);
   const plain = (number: number) => formatQuantity(number, en, 12);
-  const formula = massMode ? "C (ppm w/w) = m (mg) / mₛ (kg)" : extra?.formula ?? (pressure ? "P₂ = P₁ × (Pa per source unit / Pa per target unit)"
+  const formula = massMode ? "C (ppm w/w) = m (mg) / mₛ (kg)" : extra?.formula ?? (converter ? (quantity === "temperature" ? "T (K) = T (°C) + 273.15\nT (°F) = T (°C) × 9 / 5 + 32" : `x₂ = x₁ × (${quantities[quantity].base} per source unit / ${quantities[quantity].base} per target unit)`)
+    : pressure ? "P₂ = P₁ × (Pa per source unit / Pa per target unit)"
     : dilution ? "V₁ = C₂ × V₂ / C₁" : "m = C × (V / 1000) × M");
   const thousand = plain(1000);
-  const substitution = ppm ? `${plain(a)} / ${massMode && sampleUnit === "g" ? `(${plain(b)} / ${thousand})` : plain(b)}` : extra ? "" : pressure ? `${plain(a)} × (${plain(pressureUnits[from])} / ${plain(pressureUnits[to])})`
+  const linear = unitFactor(quantity, from) !== null && unitFactor(quantity, to) !== null;
+  const substitution = ppm ? `${plain(a)} / ${massMode && sampleUnit === "g" ? `(${plain(b)} / ${thousand})` : plain(b)}` : extra ? "" : pressure ? (linear ? `${plain(a)} × (${plain(unitFactor(quantity, from)!)} / ${plain(unitFactor(quantity, to)!)})` : "")
     : dilution ? `${plain(b)} × ${plain(c)} / ${plain(a)}` : `${plain(a)} × (${plain(b)} / ${thousand}) × ${plain(c)}`;
   const fit = extra?.pairs && submitted && !error ? linearFit(numbers) : null;
   const stats = extra?.calculate === sampleDeviation && submitted && !error
@@ -256,7 +266,7 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
       return { label: unit && !pressure && !(massMode && index === 1) ? bare(label) : label, value: `${values[index]?.trim() ?? ""} ${unit}`.trim() };
     });
   if (pressure) inputRows.push({ label: en ? "To unit" : "واحد مقصد", value: to });
-  const snapshot: QuickSnapshot = { values, alternate: useAlternate, from, to, ppmFromMass, sampleUnit, unknowns };
+  const snapshot: QuickSnapshot = { values, alternate: useAlternate, from, to, ppmFromMass, sampleUnit, unknowns, ...(converter ? { quantity } : {}) };
   const summary = extra?.series
     ? `n = ${plain(extra.pairs ? numbers.length / 2 : numbers.length)}`
     : inputRows.map(row => `${row.label}: ${row.value}`).join(" · ");
@@ -339,9 +349,9 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
                 setSubmitted(false);
               }} />
           ) : (
-          <input dir="ltr" inputMode={pressure ? "text" : "decimal"} className={controls} value={values[index]}
+          <input dir="ltr" inputMode={pressure || extra?.text ? "text" : "decimal"} className={controls} value={values[index]}
             aria-invalid={submitted && Boolean(ppmFieldErrors[index])}
-            placeholder={`${en ? "e.g." : "مثلاً"} ${plain(examples[index] / (useAlternate[index] ? units[index]?.alternate[1] ?? 1 : 1))}`}
+            placeholder={`${en ? "e.g." : "مثلاً"} ${extra?.exampleText ?? plain(examples[index] / (useAlternate[index] ? units[index]?.alternate[1] ?? 1 : 1))}`}
             onChange={event => {
               setValues(values.map((value, position) => position === index ? event.target.value : value));
               setSubmitted(false);
@@ -386,17 +396,28 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
             }} />
         </label>
       )}
+      {converter && <label className="block space-y-1 text-sm font-semibold">
+        <span>{en ? "Quantity" : "کمیت"}</span>
+        <select className={controls} value={quantity} onChange={event => {
+          const next = event.target.value as QuantityKey;
+          setQuantity(next); setFrom(quantities[next].defaults[0]); setTo(quantities[next].defaults[1]);
+          setResultMinimum('');setResultMaximum('');
+          setSubmitted(false);
+        }}>
+          {quantityKeys.map(key => <option key={key} value={key}>{en ? quantities[key].en : quantities[key].fa}</option>)}
+        </select>
+      </label>}
       {pressure && (
         <div className="grid grid-cols-2 gap-3">
           {([from, to] as const).map((unit, index) => (
             <label key={index} className="space-y-1">
               <span>{index === 0 ? (en ? "From unit" : "واحد مبدأ") : (en ? "To unit" : "واحد مقصد")}</span>
               <select dir="ltr" className={controls} value={unit} onChange={event => {
-                (index === 0 ? setFrom : setTo)(event.target.value as PressureUnit);
+                (index === 0 ? setFrom : setTo)(event.target.value);
                 setResultMinimum('');setResultMaximum('');
                 setSubmitted(false);
               }}>
-                {Object.keys(pressureUnits).map(option => <option key={option}>{option}</option>)}
+                {unitOptions.map(option => <option key={option}>{option}</option>)}
               </select>
             </label>
           ))}
@@ -417,7 +438,7 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
         {en ? "Calculate" : "محاسبه"}
       </button>
       <button type="button" className="min-h-12 cursor-pointer rounded-xl border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 text-sm font-medium"
-        onClick={() => { setUseAlternate({}); setValues(extra?.series ? [exampleText] : examples.map(String)); setSubmitted(false); }}>
+        onClick={() => { setUseAlternate({}); setValues(extra?.series ? [exampleText] : extra?.exampleText ? [extra.exampleText] : examples.map(String)); setSubmitted(false); }}>
         {en ? "Load example" : "بارگذاری نمونه"}
       </button>
       </div>
@@ -439,7 +460,7 @@ function Calculator({ tool, toolId, initial, title, category, en, onCalculated }
         </select></label>}
         {submitted && !error ? (
         <div className={`${visual.result} space-y-3 border ${limitFailed?'border-[var(--color-danger-border)] bg-[var(--color-danger-bg)]':'border-[var(--color-success-border)] bg-[var(--color-success-bg)]'}`}>
-          <h3 className="font-semibold">{extra ? (en ? "Result" : "نتیجه") : pressure ? (en ? "Converted pressure" : "فشار تبدیل‌شده")
+          <h3 className="font-semibold">{extra ? (en ? "Result" : "نتیجه") : converter ? (en ? "Converted value" : "مقدار تبدیل‌شده") : pressure ? (en ? "Converted pressure" : "فشار تبدیل‌شده")
             : dilution ? (en ? "Stock solution volume" : "حجم محلول مادر") : (en ? "Required solute mass" : "جرم مادهٔ حل‌شونده")}</h3>
           {stats ? <ul className="space-y-2 text-sm font-bold">
             {statsText.map((line,index) => <li key={line} className={limitFailed&&index===({average:0,deviation:1,rsd:2})[comparisonTarget as 'average'|'deviation'|'rsd']?'text-[var(--color-danger-text)]':'text-[var(--color-success-text)]'}><bdi>{line}</bdi></li>)}

@@ -3,8 +3,8 @@
   "version": 1,
   "evidence": "Static catalog inspection and evaluation of existing nominal examples; not validation of every laboratory method.",
   "counts": {
-    "catalogEntries": 40,
-    "visibleTools": 34,
+    "catalogEntries": 52,
+    "visibleTools": 46,
     "hiddenLegacyEntries": 6,
     "methodBank": 98,
     "methodKinds": {
@@ -22,21 +22,21 @@
       "en": "Solutions & concentration",
       "helpFa": "تهیهٔ محلول، رقیق‌سازی و درصدها",
       "helpEn": "Preparation, dilution and percentages",
-      "count": 10
+      "count": 18
     },
     {
       "fa": "تبدیل واحد",
       "en": "Unit conversions",
       "helpFa": "فشار، دما، دبی و چگالی",
       "helpEn": "Pressure, temperature, flow and density",
-      "count": 6
+      "count": 7
     },
     {
       "fa": "آمار و کنترل کیفیت",
       "en": "Statistics & quality control",
       "helpFa": "RSD، بازیابی و کالیبراسیون",
       "helpEn": "RSD, recovery and calibration",
-      "count": 5
+      "count": 6
     },
     {
       "fa": "جریان و پمپ",
@@ -50,7 +50,7 @@
       "en": "Physical properties",
       "helpFa": "چگالی و گرانروی",
       "helpEn": "Density and viscosity",
-      "count": 2
+      "count": 4
     },
     {
       "fa": "حرارت و انرژی",
@@ -70,7 +70,7 @@
   "checks": {
     "registryParity": true,
     "nominalExamplesValid": true,
-    "visibleToolFieldLabelsAligned": true,
+    "visibleToolFieldLabelsAligned": false,
     "visibleToolsMissingBilingualExplanation": [],
     "equationsWithoutInlineReference": [
       "density",
@@ -153,6 +153,20 @@
     },
     {
       "id": 3,
+      "fa": "مبدل واحد",
+      "en": "Unit converter",
+      "category": 1,
+      "note": "unitConverter",
+      "example": [
+        25
+      ],
+      "result": 77,
+      "visible": true,
+      "bilingualExplanation": true,
+      "exampleCheck": "covered-by-existing-UI-tests"
+    },
+    {
+      "id": 4,
       "fa": "جرم توزین با لحاظ خلوص",
       "en": "Purity correction",
       "category": 0,
@@ -180,7 +194,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 4,
+      "id": 5,
       "fa": "درصد جرمی محلول",
       "en": "Mass percentage w/w",
       "category": 0,
@@ -208,7 +222,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 5,
+      "id": 6,
       "fa": "تبدیل غلظت جرمی ppm به mg/L",
       "en": "Mass ppm to mg/L",
       "category": 0,
@@ -236,7 +250,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 6,
+      "id": 7,
       "fa": "تبدیل دبی حجمی",
       "en": "Volumetric flow conversion",
       "category": 1,
@@ -261,7 +275,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 7,
+      "id": 8,
       "fa": "تبدیل دمای سلسیوس به کلوین",
       "en": "Celsius to Kelvin conversion",
       "category": 1,
@@ -286,7 +300,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 8,
+      "id": 9,
       "fa": "درصد بازیابی نمونهٔ افزوده",
       "en": "Spike recovery",
       "category": 2,
@@ -317,7 +331,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 9,
+      "id": 10,
       "fa": "غلظت از معادلهٔ کالیبراسیون",
       "en": "Linear calibration concentration",
       "category": 2,
@@ -348,7 +362,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 10,
+      "id": 11,
       "fa": "سرعت متوسط سیال در لوله",
       "en": "Pipe flow velocity",
       "category": 3,
@@ -376,7 +390,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 11,
+      "id": 12,
       "fa": "عدد رینولدز در لوله",
       "en": "Pipe Reynolds number",
       "category": 3,
@@ -410,7 +424,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 12,
+      "id": 13,
       "fa": "دبی جرمی از دبی حجمی",
       "en": "Mass flow from volumetric flow",
       "category": 3,
@@ -438,7 +452,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 13,
+      "id": 14,
       "fa": "رقیق‌سازی سریالی با نسبت ثابت",
       "en": "Serial dilution",
       "category": 0,
@@ -469,7 +483,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 14,
+      "id": 15,
       "fa": "جرم توزین برای محلول مولار با لحاظ خلوص",
       "en": "Molar solution with purity correction",
       "category": 0,
@@ -503,7 +517,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 15,
+      "id": 16,
       "fa": "درصد جرم به حجم",
       "en": "Mass per volume percentage w/v",
       "category": 0,
@@ -531,7 +545,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 16,
+      "id": 17,
       "fa": "درصد حجمی",
       "en": "Volume percentage v/v",
       "category": 0,
@@ -559,7 +573,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 17,
+      "id": 18,
       "fa": "غلظت بر حسب ppm جرمی",
       "en": "Mass concentration in ppm",
       "category": 0,
@@ -587,7 +601,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 18,
+      "id": 19,
       "fa": "محاسبهٔ چگالی",
       "en": "Density from mass and volume",
       "category": 4,
@@ -615,7 +629,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 19,
+      "id": 20,
       "fa": "دبی حجمی از دبی جرمی",
       "en": "Volumetric flow from mass flow",
       "category": 3,
@@ -643,7 +657,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 20,
+      "id": 21,
       "fa": "تبدیل دبی گاز با ضریب تراکم‌پذیری",
       "en": "Gas flow at reference conditions",
       "category": 3,
@@ -686,7 +700,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 21,
+      "id": 22,
       "fa": "ویسکوزیتهٔ سینماتیکی از دینامیکی",
       "en": "Dynamic to kinematic viscosity",
       "category": 4,
@@ -714,7 +728,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 22,
+      "id": 23,
       "fa": "افت فشار اصطکاکی لولهٔ پر",
       "en": "Darcy–Weisbach friction pressure drop",
       "category": 3,
@@ -751,7 +765,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 23,
+      "id": 24,
       "fa": "توان هیدرولیکی پمپ",
       "en": "Pump hydraulic power",
       "category": 3,
@@ -779,7 +793,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 24,
+      "id": 25,
       "fa": "میانگین، انحراف معیار نمونه و RSD",
       "en": "Mean, sample standard deviation and RSD",
       "category": 2,
@@ -806,7 +820,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 25,
+      "id": 26,
       "fa": "تبدیل کلوین به سلسیوس",
       "en": "Kelvin to Celsius conversion",
       "category": 1,
@@ -831,7 +845,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 26,
+      "id": 27,
       "fa": "تبدیل دبی مترمکعب بر ساعت به لیتر بر دقیقه",
       "en": "m³/h to L/min flow conversion",
       "category": 1,
@@ -856,7 +870,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 27,
+      "id": 28,
       "fa": "تبدیل چگالی گرم بر میلی‌لیتر به کیلوگرم بر مترمکعب",
       "en": "g/mL to kg/m³ density conversion",
       "category": 1,
@@ -881,7 +895,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 28,
+      "id": 29,
       "fa": "گرمای محسوس",
       "en": "Sensible heat energy",
       "category": 5,
@@ -912,7 +926,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 29,
+      "id": 30,
       "fa": "فشار هیدرواستاتیک",
       "en": "Hydrostatic pressure difference",
       "category": 3,
@@ -940,7 +954,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 30,
+      "id": 31,
       "fa": "برازش خط کالیبراسیون",
       "en": "Linear calibration regression R²",
       "category": 2,
@@ -970,7 +984,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 31,
+      "id": 32,
       "fa": "خطای نسبی اندازه‌گیری",
       "en": "Relative measurement error",
       "category": 2,
@@ -998,7 +1012,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 32,
+      "id": 33,
       "fa": "توان ورودی پمپ با لحاظ بازده",
       "en": "Pump input power with efficiency",
       "category": 3,
@@ -1026,7 +1040,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 33,
+      "id": 34,
       "fa": "عدم‌قطعیت استاندارد نوع A از تکرار اندازه‌گیری",
       "en": "Type A standard uncertainty of the mean",
       "category": 2,
@@ -1053,7 +1067,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 34,
+      "id": 35,
       "fa": "عدم‌قطعیت استاندارد ترکیبی",
       "en": "Combined standard uncertainty",
       "category": 2,
@@ -1084,7 +1098,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 35,
+      "id": 36,
       "fa": "عدم‌قطعیت گسترده",
       "en": "Expanded measurement uncertainty",
       "category": 2,
@@ -1118,7 +1132,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 36,
+      "id": 37,
       "fa": "بودجهٔ عدم‌قطعیت GC–FID با کالیبراسیون خارجی",
       "en": "GC–FID external calibration uncertainty budget",
       "category": 2,
@@ -1161,7 +1175,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 37,
+      "id": 38,
       "fa": "بودجهٔ عمومی عدم‌قطعیت GUM",
       "en": "General GUM uncertainty budget",
       "category": 6,
@@ -1188,7 +1202,7 @@
       "exampleCheck": "dedicated-form"
     },
     {
-      "id": 38,
+      "id": 39,
       "fa": "عدم‌قطعیت توزین با ترازو",
       "en": "Balance weighing uncertainty",
       "category": 2,
@@ -1234,7 +1248,7 @@
       "exampleCheck": "finite-output-only"
     },
     {
-      "id": 39,
+      "id": 40,
       "fa": "عدم‌قطعیت چگالی از جرم و حجم",
       "en": "Density uncertainty from mass and volume",
       "category": 2,
@@ -1267,6 +1281,335 @@
         2
       ],
       "exampleResult": 0.0008246211251235322,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 41,
+      "fa": "جرم توزین برای محلول نرمال",
+      "en": "Normal solution preparation",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "نرمالیتهٔ هدف (eq/L)",
+          "حجم نهایی (mL)",
+          "جرم مولی (g/mol)",
+          "اکی‌والان بر مول",
+          "خلوص جرمی (%)"
+        ],
+        "en": [
+          "Target normality (eq/L)",
+          "Final volume (mL)",
+          "Molar mass (g/mol)",
+          "Equivalents per mole",
+          "Mass purity (%)"
+        ]
+      },
+      "formula": "m = N × (V / 1000) × (M / z) × 100 / purity",
+      "unit": "g",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        0.1,
+        500,
+        105.99,
+        2,
+        99.5
+      ],
+      "exampleResult": 2.663065326633166,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 42,
+      "fa": "مولاریتهٔ محلول غلیظ تجاری",
+      "en": "Molarity of a concentrated reagent",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "درصد جرمی (% w/w)",
+          "چگالی (g/mL)",
+          "جرم مولی (g/mol)"
+        ],
+        "en": [
+          "Assay (% w/w)",
+          "Density (g/mL)",
+          "Molar mass (g/mol)"
+        ]
+      },
+      "formula": "C = 10 × ρ × w / M",
+      "unit": "mol/L",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        37,
+        1.19,
+        36.46
+      ],
+      "exampleResult": 12.076247942951177,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 43,
+      "fa": "حجم محلول غلیظ برای محلول مولار",
+      "en": "Concentrate volume for a molar solution",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "مولاریتهٔ هدف (mol/L)",
+          "حجم نهایی (mL)",
+          "جرم مولی (g/mol)",
+          "درصد جرمی محلول غلیظ (% w/w)",
+          "چگالی محلول غلیظ (g/mL)"
+        ],
+        "en": [
+          "Target molarity (mol/L)",
+          "Final volume (mL)",
+          "Molar mass (g/mol)",
+          "Concentrate assay (% w/w)",
+          "Concentrate density (g/mL)"
+        ]
+      },
+      "formula": "V₁ = C × V × M / (10 × ρ × w)",
+      "unit": "mL",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        0.1,
+        1000,
+        36.46,
+        37,
+        1.19
+      ],
+      "exampleResult": 8.2807176924824,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 44,
+      "fa": "جرم مولی از فرمول شیمیایی",
+      "en": "Molar mass from formula",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "فرمول شیمیایی"
+        ],
+        "en": [
+          "Chemical formula"
+        ]
+      },
+      "formula": "M = Σ nᵢ × Aᵢ",
+      "unit": "g/mol",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        98.072
+      ],
+      "exampleResult": 98.072,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 45,
+      "fa": "pH از غلظت یون هیدروژن",
+      "en": "pH from hydrogen ion concentration",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "غلظت یون هیدروژن (mol/L)"
+        ],
+        "en": [
+          "Hydrogen ion concentration (mol/L)"
+        ]
+      },
+      "formula": "pH = −log₁₀[H⁺]",
+      "unit": "pH",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        0.001
+      ],
+      "exampleResult": 3,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 46,
+      "fa": "غلظت یون هیدروژن از pH",
+      "en": "Hydrogen ion concentration from pH",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "pH"
+        ],
+        "en": [
+          "pH"
+        ]
+      },
+      "formula": "[H⁺] = 10^(−pH)",
+      "unit": "mol/L",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        3
+      ],
+      "exampleResult": 0.001,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 47,
+      "fa": "pH بافر (هندرسون–هاسلباخ)",
+      "en": "Buffer pH (Henderson–Hasselbalch)",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "pKa اسید",
+          "غلظت باز مزدوج",
+          "غلظت اسید در همان واحد"
+        ],
+        "en": [
+          "Acid pKa",
+          "Conjugate base concentration",
+          "Acid concentration in the same unit"
+        ]
+      },
+      "formula": "pH = pKa + log₁₀([A⁻] / [HA])",
+      "unit": "pH",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        4.76,
+        0.1,
+        0.1
+      ],
+      "exampleResult": 4.76,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 48,
+      "fa": "غلظت نمونه از تیتراسیون",
+      "en": "Analyte concentration from titration",
+      "category": 0,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "غلظت تیترانت (mol/L)",
+          "حجم مصرفی تیترانت (mL)",
+          "حجم نمونه (mL)",
+          "مول آنالیت به ازای هر مول تیترانت"
+        ],
+        "en": [
+          "Titrant concentration (mol/L)",
+          "Titrant volume used (mL)",
+          "Sample volume (mL)",
+          "Moles of analyte per mole of titrant"
+        ]
+      },
+      "formula": "Cₐ = Cₜ × Vₜ × r / Vₐ",
+      "unit": "mol/L",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        0.1,
+        12.5,
+        25,
+        0.5
+      ],
+      "exampleResult": 0.025,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 49,
+      "fa": "عدد اسیدی از تیتراسیون با KOH",
+      "en": "Acid number from KOH titration",
+      "category": 2,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "حجم تیترانت برای نمونه (mL)",
+          "حجم تیترانت برای شاهد (mL)",
+          "غلظت محلول KOH (mol/L)",
+          "جرم نمونه (g)"
+        ],
+        "en": [
+          "Titrant volume for sample (mL)",
+          "Titrant volume for blank (mL)",
+          "KOH solution concentration (mol/L)",
+          "Sample mass (g)"
+        ]
+      },
+      "formula": "AN = (A − B) × M × 56.106 / W",
+      "unit": "mg KOH/g",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        2.5,
+        0.1,
+        0.1,
+        5
+      ],
+      "exampleResult": 2.693088,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 50,
+      "fa": "درجهٔ API از چگالی نسبی",
+      "en": "API gravity from relative density",
+      "category": 4,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "چگالی نسبی در 60/60 °F"
+        ],
+        "en": [
+          "Relative density at 60/60 °F"
+        ]
+      },
+      "formula": "°API = 141.5 / SG − 131.5",
+      "unit": "°API",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        0.85
+      ],
+      "exampleResult": 34.970588235294116,
+      "exampleAccepted": true,
+      "exampleCheck": "finite-output-only"
+    },
+    {
+      "id": 51,
+      "fa": "چگالی نسبی از درجهٔ API",
+      "en": "Relative density from API gravity",
+      "category": 4,
+      "visible": true,
+      "fields": {
+        "fa": [
+          "درجهٔ API"
+        ],
+        "en": [
+          "API gravity"
+        ]
+      },
+      "formula": "SG = 141.5 / (°API + 131.5)",
+      "unit": "SG 60/60 °F",
+      "bilingualExplanation": true,
+      "fieldLabelsAligned": true,
+      "example": [
+        35
+      ],
+      "exampleResult": 0.8498498498498499,
       "exampleAccepted": true,
       "exampleCheck": "finite-output-only"
     }

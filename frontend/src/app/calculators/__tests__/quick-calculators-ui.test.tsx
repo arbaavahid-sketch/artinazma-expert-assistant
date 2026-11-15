@@ -91,3 +91,39 @@ it("sends the on-screen calculation to the PDF service", async () => {
   expect(mocks.save.mock.calls[0][1]).toBe("artin-quick-dilution-en.pdf");
   expect(await screen.findByText("The selected PDF was saved.")).toBeInTheDocument();
 });
+
+it("converts temperature with the general unit converter and reopens the chosen quantity", () => {
+  mocks.locale = "en";
+  render(<QuickCalculators />);
+  fireEvent.click(screen.getByRole("button", { name: /Unit converter/ }));
+  expect(screen.getByLabelText("Quantity")).toHaveValue("temperature");
+  fireEvent.change(screen.getByLabelText("Value"), { target: { value: "100" } });
+  fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+  expect(screen.getAllByText("212 °F").length).toBeGreaterThan(0);
+  expect(mocks.track).toHaveBeenCalledWith("quick-unit-converter", "success", "Unit converter");
+
+  fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "volume" } });
+  fireEvent.change(screen.getByLabelText("From unit"), { target: { value: "bbl" } });
+  fireEvent.change(screen.getByLabelText("To unit"), { target: { value: "L" } });
+  fireEvent.change(screen.getByLabelText("Value"), { target: { value: "1" } });
+  fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+  expect(screen.getByText("1 × (0.158987294928 / 0.001) ≈ 158.987 L")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: /Solution dilution/ }));
+  const recent = screen.getByText("Recent calculations").closest("details")!;
+  fireEvent.click(within(recent).getAllByRole("button", { name: /^Open Unit converter/ })[1]);
+  expect(screen.getByLabelText("Quantity")).toHaveValue("temperature");
+  expect(screen.getByLabelText("To unit")).toHaveValue("°F");
+});
+
+it("calculates molar mass from a typed formula", () => {
+  mocks.locale = "en";
+  render(<QuickCalculators />);
+  fireEvent.click(screen.getByRole("button", { name: /Molar mass from formula/ }));
+  fireEvent.change(screen.getByLabelText(/^Chemical formula/), { target: { value: "CuSO4.5H2O" } });
+  fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+  expect(screen.getAllByText("249.677 g/mol").length).toBeGreaterThan(0);
+  fireEvent.change(screen.getByLabelText(/^Chemical formula/), { target: { value: "cuso4" } });
+  fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+  expect(screen.getByRole("alert")).toHaveTextContent("Check the input values");
+});

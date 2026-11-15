@@ -10,6 +10,7 @@ export type QuickSnapshot = {
   ppmFromMass: boolean;
   sampleUnit: string;
   unknowns: string;
+  quantity?: string;
 };
 export type QuickEntry = { tool: string; at: string; output: string; inputs: string; state: QuickSnapshot };
 

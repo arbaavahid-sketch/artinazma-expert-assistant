@@ -1,3 +1,5 @@
+import { molarMass } from "./molar-mass";
+
 export type LabTool = {
   name: string;
   en: string;
@@ -11,6 +13,9 @@ export type LabTool = {
   unit: string;
   series?: boolean;
   pairs?: boolean;
+  /** Single free-text input (e.g. a chemical formula) turned into the number the tool works on. */
+  text?: (input: string) => number;
+  exampleText?: string;
   calculate: (values: number[]) => number;
   valid?: (values: number[]) => boolean;
 };
@@ -321,4 +326,71 @@ labTools.push(
       section: "NIST TN 1297 · A.3",
     },
   },
+);
+
+const KOH_MOLAR_MASS = 56.106;
+
+labTools.push(
+  { name: "جرم توزین برای محلول نرمال", en: "Normal solution preparation", category: 0,
+    fields: ["نرمالیتهٔ هدف (eq/L)", "حجم نهایی (mL)", "جرم مولی (g/mol)", "اکی‌والان بر مول", "خلوص جرمی (%)"],
+    fieldsEn: ["Target normality (eq/L)", "Final volume (mL)", "Molar mass (g/mol)", "Equivalents per mole", "Mass purity (%)"],
+    example: [0.1, 500, 105.99, 2, 99.5],
+    fieldHints: {
+      fa: ["", "", "", "تعداد H⁺، OH⁻ یا الکترون مبادله‌شده به ازای هر مول در همان واکنشی که محلول برایش ساخته می‌شود. برای Na₂CO₃ تا نقطهٔ پایانی دوم، ۲ است.", "از برچسب یا گواهی آنالیز همان بطری."],
+      en: ["", "", "", "H⁺, OH⁻ or electrons exchanged per mole in the reaction the solution is made for. For Na₂CO₃ to the second end point it is 2.", "From the label or certificate of analysis of that bottle."],
+    },
+    formula: "m = N × (V / 1000) × (M / z) × 100 / purity", unit: "g",
+    calculate: ([n, v, m, z, p]) => n * (v / 1000) * (m / z) * 100 / p,
+    valid: ([n, v, m, z, p]) => n > 0 && v > 0 && m > 0 && z > 0 && p > 0 && p <= 100 },
+  { name: "مولاریتهٔ محلول غلیظ تجاری", en: "Molarity of a concentrated reagent", category: 0,
+    fields: ["درصد جرمی (% w/w)", "چگالی (g/mL)", "جرم مولی (g/mol)"], fieldsEn: ["Assay (% w/w)", "Density (g/mL)", "Molar mass (g/mol)"],
+    example: [37, 1.19, 36.46],
+    formula: "C = 10 × ρ × w / M", unit: "mol/L",
+    calculate: ([w, r, m]) => 10 * r * w / m, valid: ([w, r, m]) => w > 0 && w <= 100 && r > 0 && m > 0 },
+  { name: "حجم محلول غلیظ برای محلول مولار", en: "Concentrate volume for a molar solution", category: 0,
+    fields: ["مولاریتهٔ هدف (mol/L)", "حجم نهایی (mL)", "جرم مولی (g/mol)", "درصد جرمی محلول غلیظ (% w/w)", "چگالی محلول غلیظ (g/mL)"],
+    fieldsEn: ["Target molarity (mol/L)", "Final volume (mL)", "Molar mass (g/mol)", "Concentrate assay (% w/w)", "Concentrate density (g/mL)"],
+    example: [0.1, 1000, 36.46, 37, 1.19],
+    formula: "V₁ = C × V × M / (10 × ρ × w)", unit: "mL",
+    calculate: ([c, v, m, w, r]) => c * v * m / (10 * r * w),
+    valid: ([c, v, m, w, r]) => c > 0 && v > 0 && m > 0 && w > 0 && w <= 100 && r > 0 && c < 10 * r * w / m },
+  { name: "جرم مولی از فرمول شیمیایی", en: "Molar mass from formula", category: 0,
+    fields: ["فرمول شیمیایی"], fieldsEn: ["Chemical formula"], example: [98.072], exampleText: "H2SO4",
+    fieldHints: {
+      fa: ["حروف بزرگ و کوچک مهم است: Co کبالت است و CO کربن مونوکسید. آب تبلور را با نقطه بنویسید، مثل CuSO4.5H2O. پرانتز مجاز است، مثل Ca(OH)2."],
+      en: ["Case matters: Co is cobalt, CO is carbon monoxide. Write water of crystallisation with a dot, e.g. CuSO4.5H2O. Parentheses are allowed, e.g. Ca(OH)2."],
+    },
+    formula: "M = Σ nᵢ × Aᵢ", unit: "g/mol", text: molarMass, calculate: ([m]) => m, valid: ([m]) => m > 0 },
+  { name: "pH از غلظت یون هیدروژن", en: "pH from hydrogen ion concentration", category: 0,
+    fields: ["غلظت یون هیدروژن (mol/L)"], fieldsEn: ["Hydrogen ion concentration (mol/L)"], example: [0.001],
+    formula: "pH = −log₁₀[H⁺]", unit: "pH", calculate: ([h]) => -Math.log10(h), valid: ([h]) => h > 0 },
+  { name: "غلظت یون هیدروژن از pH", en: "Hydrogen ion concentration from pH", category: 0,
+    fields: ["pH"], fieldsEn: ["pH"], example: [3],
+    formula: "[H⁺] = 10^(−pH)", unit: "mol/L", calculate: ([p]) => 10 ** -p, valid: ([p]) => p >= -2 && p <= 16 },
+  { name: "pH بافر (هندرسون–هاسلباخ)", en: "Buffer pH (Henderson–Hasselbalch)", category: 0,
+    fields: ["pKa اسید", "غلظت باز مزدوج", "غلظت اسید در همان واحد"], fieldsEn: ["Acid pKa", "Conjugate base concentration", "Acid concentration in the same unit"],
+    example: [4.76, 0.1, 0.1],
+    formula: "pH = pKa + log₁₀([A⁻] / [HA])", unit: "pH", calculate: ([k, b, a]) => k + Math.log10(b / a), valid: ([, b, a]) => b > 0 && a > 0 },
+  { name: "غلظت نمونه از تیتراسیون", en: "Analyte concentration from titration", category: 0,
+    fields: ["غلظت تیترانت (mol/L)", "حجم مصرفی تیترانت (mL)", "حجم نمونه (mL)", "مول آنالیت به ازای هر مول تیترانت"],
+    fieldsEn: ["Titrant concentration (mol/L)", "Titrant volume used (mL)", "Sample volume (mL)", "Moles of analyte per mole of titrant"],
+    example: [0.1, 12.5, 25, 0.5],
+    fieldHints: {
+      fa: ["", "حجم تا نقطهٔ پایانی، پس از کم کردن شاهد.", "", "از معادلهٔ موازنه‌شده. برای H₂SO₄ با NaOH برابر ۰٫۵ است، چون هر مول اسید دو مول باز مصرف می‌کند."],
+      en: ["", "Volume to the end point, after subtracting the blank.", "", "From the balanced equation. For H₂SO₄ with NaOH it is 0.5, because each mole of acid consumes two moles of base."],
+    },
+    formula: "Cₐ = Cₜ × Vₜ × r / Vₐ", unit: "mol/L",
+    calculate: ([c, vt, va, r]) => c * vt * r / va, valid: ([c, vt, va, r]) => c > 0 && vt >= 0 && va > 0 && r > 0 },
+  { name: "عدد اسیدی از تیتراسیون با KOH", en: "Acid number from KOH titration", category: 2,
+    fields: ["حجم تیترانت برای نمونه (mL)", "حجم تیترانت برای شاهد (mL)", "غلظت محلول KOH (mol/L)", "جرم نمونه (g)"],
+    fieldsEn: ["Titrant volume for sample (mL)", "Titrant volume for blank (mL)", "KOH solution concentration (mol/L)", "Sample mass (g)"],
+    example: [2.5, 0.1, 0.1, 5],
+    formula: "AN = (A − B) × M × 56.106 / W", unit: "mg KOH/g",
+    calculate: ([a, b, m, w]) => (a - b) * m * KOH_MOLAR_MASS / w, valid: ([a, b, m, w]) => b >= 0 && a >= b && m > 0 && w > 0 },
+  { name: "درجهٔ API از چگالی نسبی", en: "API gravity from relative density", category: 4,
+    fields: ["چگالی نسبی در 60/60 °F"], fieldsEn: ["Relative density at 60/60 °F"], example: [0.85],
+    formula: "°API = 141.5 / SG − 131.5", unit: "°API", calculate: ([s]) => 141.5 / s - 131.5, valid: ([s]) => s > 0 },
+  { name: "چگالی نسبی از درجهٔ API", en: "Relative density from API gravity", category: 4,
+    fields: ["درجهٔ API"], fieldsEn: ["API gravity"], example: [35],
+    formula: "SG = 141.5 / (°API + 131.5)", unit: "SG 60/60 °F", calculate: ([a]) => 141.5 / (a + 131.5), valid: ([a]) => a > -131.5 },
 );

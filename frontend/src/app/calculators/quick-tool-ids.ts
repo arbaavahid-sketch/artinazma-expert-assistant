@@ -46,9 +46,21 @@ const ids: Record<string, string> = {
   "General GUM uncertainty budget": "gum-budget",
   "Balance weighing uncertainty": "balance-uncertainty",
   "Density uncertainty from mass and volume": "density-uncertainty",
+  "Unit converter": "unit-converter",
+  "Normal solution preparation": "normal-solution",
+  "Molarity of a concentrated reagent": "concentrate-molarity",
+  "Concentrate volume for a molar solution": "concentrate-volume",
+  "Molar mass from formula": "molar-mass",
+  "pH from hydrogen ion concentration": "ph-from-h",
+  "Hydrogen ion concentration from pH": "h-from-ph",
+  "Buffer pH (Henderson–Hasselbalch)": "buffer-ph",
+  "Analyte concentration from titration": "titration",
+  "Acid number from KOH titration": "acid-number",
+  "API gravity from relative density": "api-from-sg",
+  "Relative density from API gravity": "sg-from-api",
 };
 
-export const builtInQuickTools = ["Solution dilution", "Molar solution preparation", "Pressure conversion"] as const;
+export const builtInQuickTools = ["Solution dilution", "Molar solution preparation", "Pressure conversion", "Unit converter"] as const;
 
 export function quickToolId(englishName: string): string {
   const id = ids[englishName];

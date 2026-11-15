@@ -135,4 +135,52 @@ export const formulaNotes: Record<string, { fa: string; en: string }> = {
     fa: "بازده η نسبت توان هیدرولیکی Phyd به توان ورودی Pin است. چون بازده به درصد وارد می‌شود، توان هیدرولیکی را بر η/100 تقسیم می‌کنیم.",
     en: "Efficiency η is the ratio of hydraulic power Phyd to input power Pin. Since efficiency is entered as a percent, divide hydraulic power by η/100.",
   },
+  unitConverter: {
+    fa: "هر واحد با یک ضریب ثابت به واحد پایهٔ SI همان کمیت تبدیل می‌شود. مقدار ابتدا به واحد پایه می‌رود و سپس بر ضریب واحد مقصد تقسیم می‌شود. دما استثناست: چون صفر مقیاس‌ها یکی نیست، تبدیل از راه کلوین انجام می‌شود. گالن و بشکه واحدهای آمریکایی‌اند، کالری ترموشیمیایی و Btu جدول بین‌المللی است.",
+    en: "Each unit has a fixed factor to the SI base unit of its quantity. The value is taken to the base unit and then divided by the target unit's factor. Temperature is the exception: the scales have different zero points, so it is converted through kelvin. Gallon and barrel are US units, the calorie is thermochemical and the Btu is the International Table value.",
+  },
+  "Normal solution preparation": {
+    fa: "نرمالیته تعداد اکی‌والان بر لیتر است. N × V تعداد اکی‌والان لازم را می‌دهد. جرم هر اکی‌والان برابر M / z است که z تعداد اکی‌والان در هر مول در واکنش مورد نظر است. تقسیم بر خلوص، جرم واقعی برای توزین را می‌دهد. z به واکنش بستگی دارد و برای یک ماده همیشه ثابت نیست.",
+    en: "Normality is equivalents per litre. N × V gives the equivalents needed. One equivalent weighs M / z, where z is the number of equivalents per mole in the intended reaction. Dividing by purity gives the mass to weigh. z depends on the reaction and is not always the same for one substance.",
+  },
+  "Molarity of a concentrated reagent": {
+    fa: "یک لیتر محلول غلیظ ۱۰۰۰ × ρ گرم جرم دارد. کسر w / 100 آن مادهٔ خالص است. تقسیم بر جرم مولی، مول در لیتر را می‌دهد. ضریب ۱۰ حاصل ۱۰۰۰ / ۱۰۰ است. درصد و چگالی را از برچسب همان بطری بردارید.",
+    en: "One litre of concentrate weighs 1000 × ρ grams, of which the fraction w / 100 is pure substance. Dividing by molar mass gives moles per litre. The factor 10 is 1000 / 100. Take assay and density from the label of the bottle in use.",
+  },
+  "Concentrate volume for a molar solution": {
+    fa: "مول لازم برابر C × V است. مولاریتهٔ محلول غلیظ 10 × ρ × w / M است. حجم لازم از تقسیم مول لازم بر این مولاریته به دست می‌آید. این حجم را به حلال اضافه کنید و به حجم نهایی برسانید. برای اسیدها همیشه اسید را به آب اضافه کنید.",
+    en: "The moles needed are C × V. The concentrate's molarity is 10 × ρ × w / M. Dividing one by the other gives the volume to measure. Add it to solvent and bring to the final volume. With acids, always add acid to water.",
+  },
+  "Molar mass from formula": {
+    fa: "جرم مولی مجموع وزن اتمی استاندارد هر عنصر ضرب در تعداد آن در فرمول است. وزن‌های اتمی از کتابخانهٔ عناصر همین برنامه می‌آیند. آب تبلور در جرم مولی حساب می‌شود.",
+    en: "Molar mass is the sum of each element's standard atomic weight times its count in the formula. Atomic weights come from this app's element library. Water of crystallisation is included.",
+  },
+  "pH from hydrogen ion concentration": {
+    fa: "pH منفی لگاریتم پایهٔ ۱۰ فعالیت یون هیدروژن است. این ابزار غلظت را به‌جای فعالیت می‌گذارد که برای محلول‌های رقیق تقریب خوبی است. در محلول‌های غلیظ یا با قدرت یونی بالا، pH اندازه‌گیری‌شده با این عدد فرق دارد.",
+    en: "pH is the negative base-10 logarithm of hydrogen ion activity. This tool uses concentration in place of activity, a good approximation for dilute solutions. In concentrated or high ionic strength solutions the measured pH differs from this value.",
+  },
+  "Hydrogen ion concentration from pH": {
+    fa: "از تعریف pH = −log₁₀[H⁺] نتیجه می‌شود [H⁺] = 10^(−pH). غلظت به‌جای فعالیت به کار رفته است، پس نتیجه برای محلول‌های رقیق معتبرتر است.",
+    en: "From the definition pH = −log₁₀[H⁺] it follows that [H⁺] = 10^(−pH). Concentration stands in for activity, so the result is most reliable for dilute solutions.",
+  },
+  "Buffer pH (Henderson–Hasselbalch)": {
+    fa: "از ثابت تفکیک اسید Ka = [H⁺][A⁻] / [HA] با لگاریتم‌گیری، pH = pKa + log₁₀([A⁻] / [HA]) به دست می‌آید. نسبت غلظت‌ها مهم است، پس هر دو باید در یک واحد باشند. رابطه وقتی دقیق‌تر است که نسبت بین ۰٫۱ و ۱۰ باشد و محلول خیلی رقیق نباشد. pKa به دما بستگی دارد.",
+    en: "Taking logarithms of the acid dissociation constant Ka = [H⁺][A⁻] / [HA] gives pH = pKa + log₁₀([A⁻] / [HA]). Only the ratio matters, so both concentrations must use the same unit. The relation works best for ratios between 0.1 and 10 in solutions that are not very dilute. pKa depends on temperature.",
+  },
+  "Analyte concentration from titration": {
+    fa: "در نقطهٔ هم‌ارزی، مول تیترانت مصرف‌شده Cₜ × Vₜ است. ضرب در نسبت استوکیومتری r مول آنالیت را می‌دهد و تقسیم بر حجم نمونه، غلظت آن را. چون هر دو حجم به میلی‌لیتر است، تبدیل واحد لازم نیست.",
+    en: "At the equivalence point the titrant consumed is Cₜ × Vₜ moles. Multiplying by the stoichiometric ratio r gives moles of analyte, and dividing by the sample volume gives its concentration. Both volumes are in millilitres, so no unit conversion is needed.",
+  },
+  "Acid number from KOH titration": {
+    fa: "A − B حجم خالص تیترانت پس از کم کردن شاهد است. ضرب در غلظت M میلی‌مول KOH را می‌دهد و ضرب در ۵۶٫۱۰۶ (جرم مولی KOH) آن را به میلی‌گرم تبدیل می‌کند. تقسیم بر جرم نمونه، نتیجه را به mg KOH/g می‌دهد. نقطهٔ پایانی، حلال و مقدار نمونه را روش آزمون تعیین می‌کند.",
+    en: "A − B is the net titrant volume after the blank. Multiplying by concentration M gives millimoles of KOH, and by 56.106 (the molar mass of KOH) gives milligrams. Dividing by sample mass gives mg KOH/g. The end point, solvent and sample size are set by the test method.",
+  },
+  "API gravity from relative density": {
+    fa: "درجهٔ API مقیاسی قراردادی برای چگالی فراورده‌های نفتی است که از چگالی نسبی در ۶۰ درجهٔ فارنهایت نسبت به آب در همان دما تعریف می‌شود. آب ۱۰ درجهٔ API دارد و مایع سبک‌تر عدد بزرگ‌تری می‌گیرد. چگالی اندازه‌گیری‌شده در دمای دیگر باید اول به ۶۰ درجهٔ فارنهایت تصحیح شود.",
+    en: "API gravity is a conventional scale for petroleum liquids, defined from relative density at 60 °F against water at the same temperature. Water is 10 °API and lighter liquids have higher values. A density measured at another temperature must first be corrected to 60 °F.",
+  },
+  "Relative density from API gravity": {
+    fa: "این رابطه وارون تعریف درجهٔ API است. نتیجه چگالی نسبی در ۶۰ درجهٔ فارنهایت نسبت به آب در همان دماست و واحد ندارد.",
+    en: "This is the definition of API gravity inverted. The result is relative density at 60 °F against water at the same temperature and has no unit.",
+  },
 };
