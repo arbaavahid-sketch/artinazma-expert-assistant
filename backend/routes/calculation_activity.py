@@ -12,7 +12,7 @@ router = APIRouter(tags=['Calculation usage'])
 class ClientEvent(BaseModel):
     model_config = ConfigDict(extra='forbid')
     event_id: str = Field(pattern=r'^[a-f0-9-]{32,36}$')
-    tool: str = Field(pattern=r'^(?:quick-[0-9]{1,2}|precision|intermediate|calibration|bias|control|decision|top-down|solution|commercial-solution|dilution-plan|stock-preparation)$')
+    tool: str = Field(pattern=r'^(?:quick-[0-9]{1,2}|quick-[a-z0-9]+(?:-[a-z0-9]+){0,7}|precision|intermediate|calibration|bias|control|decision|top-down|solution|commercial-solution|dilution-plan|stock-preparation)$')
     title: str = Field(default='', max_length=120)
     status: Literal['success', 'error']
 

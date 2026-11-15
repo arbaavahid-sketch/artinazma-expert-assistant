@@ -1,5 +1,5 @@
 import {apiUrl,backendFetch} from './api';
-type Tool='precision'|'intermediate'|'calibration'|'bias'|'control'|'decision'|'top-down'|'solution'|'commercial-solution'|'dilution-plan'|'stock-preparation'|`quick-${number}`;
+type Tool='precision'|'intermediate'|'calibration'|'bias'|'control'|'decision'|'top-down'|'solution'|'commercial-solution'|'dilution-plan'|'stock-preparation'|`quick-${string}`;
 let queue:Promise<void>=Promise.resolve(),ready=false,initializing:Promise<boolean>|null=null;
 export function prepareCalculationActivity():Promise<boolean>{
  if(ready)return Promise.resolve(true);

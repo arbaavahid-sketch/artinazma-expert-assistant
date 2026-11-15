@@ -31,7 +31,7 @@ def test_every_calculation_entry_rejects_unapproved_access_before_execution(clie
     calculate=Mock(side_effect=AssertionError('Numerical engine must not run'))
     monkeypatch.setattr(numerical,'calculate_budget',calculate)
     monkeypatch.setattr(chat,'ask_laboratory',calculate)
-    for path,payload in [('/uncertainty/budget',{'measured':1,'coverage':2,'components':[{'name':'x','value':.1}]}),('/uncertainty/mc-study',{}),('/uncertainty/physical-report.pdf',{}),('/chat/laboratory',{'message':'calculate','customer_id':7}),('/calculation-activity',{'event_id':'a'*32,'tool':'quick-0','status':'success'})]:
+    for path,payload in [('/uncertainty/budget',{'measured':1,'coverage':2,'components':[{'name':'x','value':.1}]}),('/uncertainty/mc-study',{}),('/uncertainty/physical-report.pdf',{}),('/chat/laboratory',{'message':'calculate','customer_id':7}),('/calculation-activity',{'event_id':'a'*32,'tool':'quick-0','status':'success'}),('/uncertainty/quick-report.pdf',{})]:
         result=client.post(path,json=payload)
         assert result.status_code in (401,403),(kind,path,result.text)
     assert client.get('/customers/access').status_code in (401,403)

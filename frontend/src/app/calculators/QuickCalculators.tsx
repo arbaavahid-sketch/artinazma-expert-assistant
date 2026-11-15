@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {trackCalculation} from "@/lib/calculation-activity";
-import { Activity, ArrowLeftRight, Calculator as CalculatorIcon, Check, ChevronDown, Copy, Droplets, Gauge, LayoutGrid, Scale, Search, ShieldCheck, Thermometer, X } from "lucide-react";
+import { Activity, ArrowLeftRight, Calculator as CalculatorIcon, Check, ChevronDown, Copy, Droplets, Gauge, History, LayoutGrid, RotateCcw, Scale, Search, ShieldCheck, Thermometer, Trash2, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { labTools, linearFit, mean, sampleDeviation } from "./lab-tools";
 import visual from './workspace.module.css';
@@ -11,6 +11,10 @@ import GumBudget from "./GumBudget";
 import ResultLimits from "./ResultLimits";
 import {compareLimits,limitMessage,outsideLimits} from "./result-limits";
 import {toolGroups,toolGroup,normalizedToolSearch} from './tool-groups';
+import { quickToolId } from "./quick-tool-ids";
+import { DIGIT_OPTIONS, formatQuantity, isRounded } from "./quick-format";
+import { addQuickEntry, clearQuickHistory, setQuickDigits, useQuickDigits, useQuickHistory, type QuickEntry, type QuickSnapshot } from "./quick-store";
+import QuickPDFButton from "./QuickPDFButton";
 
 const pressureUnits = { Pa: 1, kPa: 1000, MPa: 1000000, bar: 100000, atm: 101325, psi: 6894.757293168 };
 type PressureUnit = keyof typeof pressureUnits;
@@ -38,14 +42,19 @@ export default function CalculatorsPage() {
   const [category, setCategory] = useState(-1);
   const [libraryOpen,setLibraryOpen]=useState(false);
   const [, setCalculationRevision] = useState(0);
-  const onCalculated = () => setCalculationRevision(revision => revision + 1);
+  const [restore, setRestore] = useState<{ entry: QuickEntry; nonce: number } | null>(null);
+  const history = useQuickHistory();
+  const onCalculated = (entry?: QuickEntry) => {
+    if (entry) addQuickEntry(entry);
+    setCalculationRevision(revision => revision + 1);
+  };
   const categories = toolGroups.map(group=>en?group.en:group.fa);
   const catalog = [
     { name: "رقیق‌سازی محلول", en: "Solution dilution", category: 0, unit: "mL mol/L" },
     { name: "آماده‌سازی محلول مولار", en: "Molar solution preparation", category: 0, unit: "g mol/L" },
     { name: "تبدیل واحد فشار", en: "Pressure conversion", category: 1, unit: Object.keys(pressureUnits).join(" ") },
     ...labTools,
-  ].map(item=>({...item,category:toolGroup(item.en,item.category)}));
+  ].map(item=>({...item,id:quickToolId(item.en),category:toolGroup(item.en,item.category)}));
   const selected = catalog[tool];
   const gumName = "General GUM uncertainty budget";
   const listed = catalog.map((item, index) => ({ item, index })).filter(({ item }) =>
@@ -88,7 +97,7 @@ export default function CalculatorsPage() {
         {visible.filter(({item})=>item.category===groupIndex).map(({ item, index }) => {
           const Icon = categoryIcons[item.category];
           return (
-            <button key={index} type="button" aria-pressed={tool === index} onClick={() => {setTool(index);setLibraryOpen(false);}}
+            <button key={index} type="button" aria-pressed={tool === index} onClick={() => {setTool(index);setRestore(null);setLibraryOpen(false);}}
               className="flex min-h-14 w-full cursor-pointer items-center gap-2.5 rounded-xl border border-transparent px-2 py-2 text-start text-sm font-medium transition-colors hover:bg-[var(--surface-soft)] aria-pressed:border-[var(--color-info-border)] aria-pressed:bg-[var(--color-info-bg)] aria-pressed:text-[var(--color-info-text)]">
               <span className={visual.toolIcon}><Icon size={17} strokeWidth={1.8} aria-hidden="true" /></span>
               <span className="grow leading-6">{toolLabel(item)}</span>
@@ -102,19 +111,52 @@ export default function CalculatorsPage() {
       <section aria-label={en?'Calculator workspace':'محیط ابزار انتخاب‌شده'} className="min-w-0 rounded-2xl">
       {selected.en === "General GUM uncertainty budget"
         ? <GumBudget en={en} parseNumber={parseNumber} onCalculated={onCalculated} />
-        : <Calculator key={tool} tool={tool} title={en ? selected.en : selected.name} category={categories[selected.category]} en={en} onCalculated={onCalculated} />}
+        : <Calculator key={`${tool}-${restore?.nonce ?? 0}`} tool={tool} toolId={selected.id} initial={restore?.entry.tool === selected.id ? restore.entry.state : undefined}
+            title={en ? selected.en : selected.name} category={categories[selected.category]} en={en} onCalculated={onCalculated} />}
+      {history.length > 0 && <details className="ui-card mt-5 p-4 sm:p-5">
+        <summary className="flex cursor-pointer items-center gap-2 text-sm font-bold">
+          <History size={17} className="text-[var(--color-info-text)]" aria-hidden="true" />
+          {en ? "Recent calculations" : "محاسبات اخیر"}
+          <span className="rounded-lg bg-[var(--surface-soft)] px-2 py-0.5 text-xs font-medium tabular-nums">{new Intl.NumberFormat(locale).format(history.length)}</span>
+        </summary>
+        <p className="mt-3 text-xs leading-6 opacity-75">{en ? "Kept on this device only. Open an entry to bring back its inputs." : "فقط روی همین دستگاه نگه‌داری می‌شود. با باز کردن هر مورد، ورودی‌هایش برمی‌گردد."}</p>
+        <ul className="mt-3 space-y-2">
+          {history.map((entry, position) => {
+            const index = catalog.findIndex(item => item.id === entry.tool);
+            if (index < 0) return null;
+            return <li key={`${entry.tool}-${entry.at}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[var(--border-soft)] p-3 text-sm">
+              <div className="min-w-0 grow">
+                <p className="font-semibold">{toolLabel(catalog[index])}</p>
+                <p className="font-bold tabular-nums text-[var(--color-success-text)]"><bdi dir="ltr">{entry.output}</bdi></p>
+                <p className="truncate text-xs opacity-75"><bdi>{entry.inputs}</bdi></p>
+              </div>
+              <time dateTime={entry.at} className="text-xs tabular-nums opacity-70">{new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }).format(new Date(entry.at))}</time>
+              <button type="button" className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border-soft)] px-2.5 text-xs font-semibold hover:bg-[var(--surface-soft)]"
+                aria-label={`${en ? "Open" : "باز کردن"} ${toolLabel(catalog[index])} ${position + 1}`}
+                onClick={() => { setTool(index); setRestore(previous => ({ entry, nonce: (previous?.nonce ?? 0) + 1 })); }}>
+                <RotateCcw size={14} aria-hidden="true" />{en ? "Open" : "باز کردن"}
+              </button>
+            </li>;
+          })}
+        </ul>
+        <button type="button" className="mt-3 inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-[var(--color-danger-text)] hover:bg-[var(--color-danger-bg)]"
+          onClick={() => { clearQuickHistory(); setRestore(null); }}>
+          <Trash2 size={14} aria-hidden="true" />{en ? "Clear history" : "پاک کردن تاریخچه"}
+        </button>
+      </details>}
       </section>
       </div>
     </div>
   );
 }
 
-function Calculator({ tool, title, category, en, onCalculated }: { tool: number; title: string; category: string; en: boolean; onCalculated: () => void }) {
+function Calculator({ tool, toolId, initial, title, category, en, onCalculated }: { tool: number; toolId: string; initial?: QuickSnapshot; title: string; category: string; en: boolean; onCalculated: (entry?: QuickEntry) => void }) {
   const extra = labTools[tool - 3];
   const ppm = extra?.en === "Mass concentration in ppm";
-  const [ppmFromMass, setPpmFromMass] = useState(true);
-  const [sampleUnit, setSampleUnit] = useState("g");
-  const [useAlternate, setUseAlternate] = useState<Record<number, boolean>>({});
+  const digits = useQuickDigits();
+  const [ppmFromMass, setPpmFromMass] = useState(initial?.ppmFromMass ?? true);
+  const [sampleUnit, setSampleUnit] = useState(initial?.sampleUnit === "kg" ? "kg" : "g");
+  const [useAlternate, setUseAlternate] = useState<Record<number, boolean>>(initial?.alternate ?? {});
   const massMode = ppm && ppmFromMass;
   const formulaNote = extra?.explanation ?? formulaNotes[massMode ? "ppmMass" : extra?.en ?? ["dilution", "molarity", "pressure"][tool]];
   const examples = massMode ? [5, sampleUnit === "g" ? 2000 : 2] :
@@ -122,12 +164,13 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
   const exampleText = extra?.pairs
     ? examples.map((value, index) => index % 2 === 0 ? `${value} ${examples[index + 1]}` : "").filter(Boolean).join("\n")
     : examples.join("\n");
-  const [values, setValues] = useState(() => extra?.series ? [""] : examples.map(() => ""));
-  const [from, setFrom] = useState<PressureUnit>("bar");
-  const [to, setTo] = useState<PressureUnit>("kPa");
-  const [submitted, setSubmitted] = useState(false);
+  const [values, setValues] = useState(() => extra?.series ? [initial?.values[0] ?? ""] : examples.map((_, index) => initial?.values[index] ?? ""));
+  const [from, setFrom] = useState<PressureUnit>(initial && initial.from in pressureUnits ? initial.from as PressureUnit : "bar");
+  const [to, setTo] = useState<PressureUnit>(initial && initial.to in pressureUnits ? initial.to as PressureUnit : "kPa");
+  // A reopened entry shows its result straight away; it is not counted or stored again.
+  const [submitted, setSubmitted] = useState(Boolean(initial));
   const [copyStatus, setCopyStatus] = useState("");
-  const [unknowns, setUnknowns] = useState("");
+  const [unknowns, setUnknowns] = useState(initial?.unknowns ?? "");
   const [pasteStandards, setPasteStandards] = useState(false);
   const [resultMinimum,setResultMinimum]=useState("");
   const [resultMaximum,setResultMaximum]=useState("");
@@ -174,14 +217,14 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
     : dilution && b > a ? (en ? "The target concentration cannot exceed the stock concentration." : "غلظت هدف برای رقیق‌سازی نمی‌تواند بیشتر از غلظت محلول مادر باشد.")
     : !Number.isFinite(result) || (!extra && !pressure && result === 0) ? (en ? "The result is outside the supported numeric range." : "نتیجه خارج از محدودهٔ عددی قابل محاسبه است.")
     : "");
-  const format = (number: number) => new Intl.NumberFormat(en ? "en" : "fa", {
-    maximumSignificantDigits: 8,
-    notation: number !== 0 && (Math.abs(number) < 0.0001 || Math.abs(number) >= 1e9) ? "scientific" : "standard",
-  }).format(number);
+  // Results follow the chosen significant figures; inputs and counters are shown as entered.
+  const format = (number: number) => formatQuantity(number, en, digits);
+  const plain = (number: number) => formatQuantity(number, en, 12);
   const formula = massMode ? "C (ppm w/w) = m (mg) / mₛ (kg)" : extra?.formula ?? (pressure ? "P₂ = P₁ × (Pa per source unit / Pa per target unit)"
     : dilution ? "V₁ = C₂ × V₂ / C₁" : "m = C × (V / 1000) × M");
-  const substitution = ppm ? `${a} / ${massMode && sampleUnit === "g" ? `(${b} / 1000)` : b}` : extra ? "" : pressure ? `${a} × (${pressureUnits[from]} / ${pressureUnits[to]})`
-    : dilution ? `${b} × ${c} / ${a}` : `${a} × (${b} / 1000) × ${c}`;
+  const thousand = plain(1000);
+  const substitution = ppm ? `${plain(a)} / ${massMode && sampleUnit === "g" ? `(${plain(b)} / ${thousand})` : plain(b)}` : extra ? "" : pressure ? `${plain(a)} × (${plain(pressureUnits[from])} / ${plain(pressureUnits[to])})`
+    : dilution ? `${plain(b)} × ${plain(c)} / ${plain(a)}` : `${plain(a)} × (${plain(b)} / ${thousand}) × ${plain(c)}`;
   const fit = extra?.pairs && submitted && !error ? linearFit(numbers) : null;
   const stats = extra?.calculate === sampleDeviation && submitted && !error
     ? { average: mean(numbers), deviation: sampleDeviation(numbers) } : null;
@@ -198,13 +241,25 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
     ? `a = ${format(fit.slope)} · b = ${format(fit.intercept)} · R² = ${Number.isFinite(fit.r2) ? format(fit.r2) : "—"}`
     : `${format(result)} ${extra?.unit ?? (pressure ? to : dilution ? "mL" : "g")}`.trim();
   const conversions = units.flatMap((unit, index) => unit && useAlternate[index]
-    ? [`${format(rawNumbers[index])} ${unit.alternate[0]} = ${format(numbers[index])} ${unit.base}`] : []);
+    ? [`${plain(rawNumbers[index])} ${unit.alternate[0]} = ${plain(numbers[index])} ${unit.base}`] : []);
   const statsText = stats ? [
     `${en ? "Mean" : "میانگین"} = ${format(stats.average)}`,
     `${en ? "Sample SD" : "انحراف معیار نمونه"} = ${format(stats.deviation)}`,
     `RSD = ${stats.average === 0 ? "—" : `${format(100 * stats.deviation / Math.abs(stats.average))}%`}`,
   ] : [];
-  const calculation = stats ? statsText.join("\n") : substitution ? `${substitution} ≈ ${output}` : output;
+  const calculation = stats ? statsText.join("\n") : substitution ? `${substitution} ${isRounded(result, digits) ? "≈" : "="} ${output}` : output;
+  const bare = (label: string) => label.replace(/\s*\([^()]+\)$/, "");
+  const inputRows = extra?.series
+    ? [{ label: bare(labels[0]), value: values[0].trim().split(/\r?\n/).map(line => line.trim()).filter(Boolean).join(extra.pairs ? "; " : ", ").slice(0, 1500) }]
+    : labels.map((label, index) => {
+      const unit = pressure ? from : massMode && index === 1 ? sampleUnit : units[index] ? (useAlternate[index] ? units[index]!.alternate[0] : units[index]!.base) : "";
+      return { label: unit && !pressure && !(massMode && index === 1) ? bare(label) : label, value: `${values[index]?.trim() ?? ""} ${unit}`.trim() };
+    });
+  if (pressure) inputRows.push({ label: en ? "To unit" : "واحد مقصد", value: to });
+  const snapshot: QuickSnapshot = { values, alternate: useAlternate, from, to, ppmFromMass, sampleUnit, unknowns };
+  const summary = extra?.series
+    ? `n = ${plain(extra.pairs ? numbers.length / 2 : numbers.length)}`
+    : inputRows.map(row => `${row.label}: ${row.value}`).join(" · ");
   const comparisonValue=stats?(comparisonTarget==='rsd'?(stats.average===0?NaN:100*stats.deviation/Math.abs(stats.average)):comparisonTarget==='deviation'?stats.deviation:stats.average):fit?fit.r2:result;
   const comparisonUnit=extra?.calculate===sampleDeviation?(comparisonTarget==='rsd'?'%':en?'data unit':'واحد داده‌ها'):extra?.pairs?'R²':extra?.unit??(pressure?to:dilution?'mL':'g');
   const limitStatus=compareLimits(submitted&&!error?comparisonValue:NaN,resultMinimum,resultMaximum,parseNumber);
@@ -212,7 +267,7 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
 
   return (
     <form className="ui-card space-y-5 p-5 sm:p-7"
-      onSubmit={event => { event.preventDefault(); setSubmitted(true); setCopyStatus(""); trackCalculation(`quick-${tool}`,error?'error':'success',title); if (!error) onCalculated(); }}>
+      onSubmit={event => { event.preventDefault(); setSubmitted(true); setCopyStatus(""); trackCalculation(`quick-${toolId}`,error?'error':'success',title); if (!error) onCalculated({ tool: toolId, at: new Date().toISOString(), output, inputs: summary.slice(0, 400), state: snapshot }); }}>
       <div className="border-b border-[var(--border-soft)] pb-4">
         <span className="mb-2 inline-flex rounded-full bg-[var(--color-info-bg)] px-3 py-1 text-xs font-semibold text-[var(--color-info-text)]">{category}</span>
         <h2 className="text-xl font-extrabold sm:text-2xl">{title}</h2>
@@ -254,10 +309,10 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
               const cells = row.split(/\s/);
               return (
                 <div key={rowIndex} className="contents">
-                  <span className="text-center tabular-nums opacity-65">{format(rowIndex + 1)}</span>
+                  <span className="text-center tabular-nums opacity-65">{plain(rowIndex + 1)}</span>
                   {[0, 1].map(column => (
                     <input key={column} dir="ltr" inputMode="decimal" className="ui-input h-10 min-w-0 text-center tabular-nums [padding:0.25rem]"
-                      aria-label={`${column === 0 ? (en ? "Concentration" : "غلظت") : (en ? "Response" : "پاسخ دستگاه")} ${format(rowIndex + 1)}`}
+                      aria-label={`${column === 0 ? (en ? "Concentration" : "غلظت") : (en ? "Response" : "پاسخ دستگاه")} ${plain(rowIndex + 1)}`}
                       value={cells[column] ?? ""} onChange={event => {
                         const pair = [cells[0] ?? "", cells[1] ?? ""];
                         pair[column] = event.target.value.trim();
@@ -286,7 +341,7 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
           ) : (
           <input dir="ltr" inputMode={pressure ? "text" : "decimal"} className={controls} value={values[index]}
             aria-invalid={submitted && Boolean(ppmFieldErrors[index])}
-            placeholder={`${en ? "e.g." : "مثلاً"} ${format(examples[index] / (useAlternate[index] ? units[index]?.alternate[1] ?? 1 : 1))}`}
+            placeholder={`${en ? "e.g." : "مثلاً"} ${plain(examples[index] / (useAlternate[index] ? units[index]?.alternate[1] ?? 1 : 1))}`}
             onChange={event => {
               setValues(values.map((value, position) => position === index ? event.target.value : value));
               setSubmitted(false);
@@ -372,6 +427,12 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
         <div className="flex items-center gap-2 text-sm font-bold">
           <CalculatorIcon size={17} className="text-[var(--color-info-text)]" aria-hidden="true" />
           {en ? "Calculation output" : "خروجی محاسبه"}
+          <label className="ms-auto flex items-center gap-2 text-xs font-medium">
+            <span>{en ? "Significant figures" : "ارقام بامعنا"}</span>
+            <select className="ui-input h-9 w-auto min-w-14 tabular-nums [padding-block:0]" value={digits} onChange={event => setQuickDigits(Number(event.target.value))}>
+              {DIGIT_OPTIONS.map(option => <option key={option} value={option}>{new Intl.NumberFormat(en ? "en" : "fa").format(option)}</option>)}
+            </select>
+          </label>
         </div>
         {extra?.calculate===sampleDeviation&&<label className="block text-sm"><span>{en?'Compare limits against':'مقایسهٔ حدود با'}</span><select className={controls} value={comparisonTarget} onChange={event=>{setComparisonTarget(event.target.value);setResultMinimum('');setResultMaximum('');}}>
           <option value="average">{en?'Mean':'میانگین'}</option><option value="deviation">{en?'Sample standard deviation':'انحراف معیار نمونه'}</option><option value="rsd">RSD (%)</option>
@@ -398,7 +459,7 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
                 </tr></thead>
                 <tbody>{samples.map((sample, index) => (
                   <tr key={index} className="border-b border-[var(--border-soft)]">
-                    <td className="p-2">{format(index + 1)}</td>
+                    <td className="p-2">{plain(index + 1)}</td>
                     {[sample.response, sample.factor, sample.concentration, sample.corrected].map((value, column) =>
                       <td className="p-2 tabular-nums" key={column}><bdi>{sample.valid ? format(value) : "—"}</bdi></td>)}
                     <td className="p-2">{!sample.valid ? (en ? "Invalid" : "نامعتبر") : sample.extrapolated
@@ -414,6 +475,7 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
             : "این حجم از محلول مادر را بردارید و با حلال به حجم نهایی برسانید."}</p>}
           {!extra && !dilution && !pressure && <p>{en ? "Calculated for pure solute. Use the molar mass of the chemical form being weighed."
             : "محاسبه برای مادهٔ خالص است. جرم مولی را بر اساس شکل شیمیایی ماده‌ای که توزین می‌کنید وارد کنید."}</p>}
+          <div className="flex flex-wrap gap-2">
           <button type="button" className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] px-3 text-sm font-medium" onClick={async () => {
             try {
               const rows = samples.map((sample, index) => sample.valid
@@ -427,6 +489,16 @@ function Calculator({ tool, title, category, en, onCalculated }: { tool: number;
               setCopyStatus(en ? "Select the result to copy it manually." : "نتیجه را انتخاب و دستی کپی کنید.");
             }
           }}><Copy size={15} aria-hidden="true" />{en ? "Copy result" : "کپی نتیجه"}</button>
+          <QuickPDFButton en={en} payload={{
+            locale: en ? "en" : "fa", tool: toolId, title, category, formula, inputs: inputRows.filter(row => row.label && row.value),
+            results: [output, ...(stats ? statsText : substitution ? [calculation] : []), ...conversions,
+              ...samples.map((sample, index) => sample.valid
+                ? `#${index + 1}: ${format(sample.response)} → ${format(sample.concentration)} × ${format(sample.factor)} = ${format(sample.corrected)}${sample.extrapolated ? " (extrapolation)" : ""}`
+                : `#${index + 1}: invalid`),
+              ...(limitFailed || limitStatus === "within" ? [`${resultMinimum || "—"} … ${resultMaximum || "—"} ${comparisonUnit}: ${limitMessage(limitStatus, en)}`] : [])].filter(Boolean).slice(0, 60),
+            note: dilution ? (en ? "Use this volume of stock solution and bring it to the final volume with solvent." : "این حجم از محلول مادر را بردارید و با حلال به حجم نهایی برسانید.") : "",
+          }} />
+          </div>
           {copyStatus && <p role="status">{copyStatus}</p>}
         </div>
         ) : <p className="rounded-xl border border-dashed border-[var(--border-soft)] p-4 text-sm leading-6 opacity-75">

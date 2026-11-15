@@ -1,6 +1,7 @@
 from calculation_activity import CalculationActivityRoute
 from dilution_pdf_service import DilutionReport, build_dilution_pdf
 from commercial_pdf_service import CommercialReport, build_commercial_pdf
+from quick_pdf_service import QuickReport, build_quick_pdf
 from nominal_solution_pdf_service import NominalSolutionReport, build_nominal_solution_pdf
 from solution_label_pdf_service import SolutionLabelReport, build_solution_label_pdf
 from solution_pdf_service import SolutionReport, build_solution_pdf
@@ -53,6 +54,18 @@ def nominal_solution_pdf(request: Request, payload: NominalSolutionReport):
         raise HTTPException(status_code=422, detail=str(error)) from error
     except (RuntimeError, OSError):
         logging.getLogger(__name__).exception('Nominal solution PDF unavailable')
+        raise HTTPException(status_code=503, detail='PDF export unavailable') from None
+
+
+@router.post('/quick-report.pdf')
+@limiter.limit('10/minute')
+def quick_pdf(request: Request, payload: QuickReport):
+    try:
+        return Response(build_quick_pdf(payload), media_type='application/pdf', headers={
+            'Content-Disposition': f'attachment; filename="artin-quick-{payload.tool}-{payload.locale}.pdf"',
+            'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'})
+    except (RuntimeError, OSError):
+        logging.getLogger(__name__).exception('Quick calculation PDF unavailable')
         raise HTTPException(status_code=503, detail='PDF export unavailable') from None
 
 
