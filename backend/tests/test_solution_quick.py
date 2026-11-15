@@ -141,3 +141,34 @@ def test_liquid_peroxide_molar_uses_typical_grade():
     r = quick_solution_answer("make 1 L of 0.1 M hydrogen peroxide")
     prep = r["calculations"][1]["result"]
     assert prep["purity_percent"] == 30 and prep["assay_source"] == "typical_example"
+
+
+def test_every_listed_name_resolves_to_its_own_substance():
+    # The first matching name wins, so a name that contains another substance's
+    # name (e.g. "فرو آمونیوم سولفات" and "آمونیوم سولفات") must come first.
+    from solution_prep import molar_mass_from_formula
+    from solution_quick import SUBSTANCES
+
+    for fa_names, en_names, formula, *_ in SUBSTANCES:
+        assert molar_mass_from_formula(formula)["molar_mass"] > 0
+        for name in fa_names:
+            assert parse_solution_request(f"محلول 0.1 مولار {name} یک لیتر بسازم")["substance"][2] == formula, name
+        for name in en_names:
+            assert parse_solution_request(f"make 1 L of 0.1 M {name} solution")["substance"][2] == formula, name
+
+
+@pytest.mark.parametrize("message, formula, grams", [
+    # 0.1 N × 1 L × 167.0 / 6 for the bromide–bromate titrant
+    ("make 1 L of 0.1 N potassium bromate", "KBrO3", 0.1 * 167.0 / 6),
+    ("محلول ۰٫۱ نرمال سیتریک اسید ۵۰۰ میلی‌لیتر بسازم", "C6H8O7·H2O", 0.1 * 0.5 * 210.138 / 3),
+    ("make 250 mL of 0.1 M ammonium sulfate", "(NH4)2SO4", 0.1 * 0.25 * 132.134),
+    ("چطور محلول ۰٫۰۵ مولار کلرید کلسیم یک لیتر تهیه کنم", "CaCl2·2H2O", 0.05 * 147.008),
+])
+def test_new_substances_are_answered_without_the_model(message, formula, grams):
+    r = quick_solution_answer(message)
+    assert r["calculations"][0]["inputs"]["formula"] == formula
+    assert r["calculations"][1]["result"]["weigh_mass_g"] == pytest.approx(grams, rel=1e-4)
+
+
+def test_reaction_dependent_normality_of_a_new_salt_goes_to_the_model():
+    assert quick_solution_answer("make 1 L of 0.1 N sodium nitrite") is None

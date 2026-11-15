@@ -1,3 +1,4 @@
+import os
 import re
 import json as _json_local
 import logging
@@ -693,6 +694,15 @@ def _is_solution_question(message: str) -> bool:
     return is_solution_preparation(message)
 
 
+def _env_seconds(name: str, default: float) -> float:
+    """A positive number of seconds from the environment, or the default."""
+    try:
+        value = float(os.getenv(name, ""))
+    except ValueError:
+        return default
+    return value if 0 < value <= 600 else default
+
+
 def _laboratory_answer(body: ChatRequest):
     """Answer "how do I make this solution" questions with the laboratory tools.
 
@@ -718,7 +728,11 @@ def _laboratory_answer(body: ChatRequest):
     try:
         from laboratory_chat import ask_laboratory
 
-        result = ask_laboratory(body.message, body.history or [], None, None, body.customer_id, body.chemical_cid)
+        # The user is waiting on a chat reply here, so give up sooner than the
+        # workspace assistant does; the general assistant answers instead.
+        result = ask_laboratory(body.message, body.history or [], None, None, body.customer_id, body.chemical_cid,
+                                time_budget=_env_seconds("LAB_CHAT_TIME_BUDGET", 60),
+                                call_timeout=_env_seconds("LAB_CHAT_CALL_TIMEOUT", 30))
     except Exception:
         logger.warning("Laboratory answer failed; using the general assistant", exc_info=True)
         return None

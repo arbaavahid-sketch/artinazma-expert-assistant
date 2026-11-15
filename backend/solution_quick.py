@@ -67,6 +67,12 @@ SUBSTANCES = (
      "(NH4)2Fe(SO4)2·6H2O", "(NH₄)₂Fe(SO₄)₂·6H₂O", 1, "solid"),
     (("آهن سولفات", "سولفات آهن", "فرو سولفات", "سولفات فرو"), ("ferrous sulfate", "iron(ii) sulfate", "feso4"),
      "FeSO4·7H2O", "FeSO₄·7H₂O", 1, "solid"),
+    (("پتاسیم برمات", "برمات پتاسیم"), ("potassium bromate", "kbro3"), "KBrO3", "KBrO₃", 6, "solid"),
+    (("اسید سولفامیک", "سولفامیک اسید", "آمیدوسولفونیک اسید"), ("sulfamic acid", "sulphamic acid", "amidosulfonic acid"),
+     "H3NSO3", "H₃NSO₃", 1, "solid"),
+    # All three protons are titrated to the phenolphthalein end point.
+    (("اسید سیتریک", "سیتریک اسید", "جوهر لیمو"), ("citric acid",), "C6H8O7·H2O", "C₆H₈O₇·H₂O", 3, "solid"),
+    (("اسید تارتاریک", "تارتاریک اسید"), ("tartaric acid",), "C4H6O6", "C₄H₆O₆", 2, "solid"),
     # Neutral salts (normality not meaningful without a reaction)
     (("سدیم سولفات", "سولفات سدیم"), ("sodium sulfate", "na2so4"), "Na2SO4", "Na₂SO₄", None, "solid"),
     (("مس سولفات", "سولفات مس", "کات کبود"), ("copper sulfate", "copper(ii) sulfate", "cupric sulfate", "cuso4"),
@@ -79,6 +85,34 @@ SUBSTANCES = (
     (("پتاسیم کلرید", "کلرید پتاسیم"), ("potassium chloride", "kcl"), "KCl", "KCl", None, "solid"),
     (("پتاسیم نیترات", "نیترات پتاسیم"), ("potassium nitrate", "kno3"), "KNO3", "KNO₃", None, "solid"),
     (("سدیم استات", "استات سدیم"), ("sodium acetate",), "CH3COONa·3H2O", "CH₃COONa·3H₂O", None, "solid"),
+    # After Mohr's salt: "فرو آمونیوم سولفات" contains "آمونیوم سولفات".
+    (("آمونیوم سولفات", "سولفات آمونیوم"), ("ammonium sulfate", "ammonium sulphate"), "(NH4)2SO4", "(NH₄)₂SO₄", None, "solid"),
+    (("آمونیوم نیترات", "نیترات آمونیوم"), ("ammonium nitrate", "nh4no3"), "NH4NO3", "NH₄NO₃", None, "solid"),
+    (("آمونیوم مولیبدات", "مولیبدات آمونیوم"), ("ammonium molybdate",), "(NH4)6Mo7O24·4H2O", "(NH₄)₆Mo₇O₂₄·4H₂O", None, "solid"),
+    (("پتاسیم سولفات", "سولفات پتاسیم"), ("potassium sulfate", "potassium sulphate", "k2so4"), "K2SO4", "K₂SO₄", None, "solid"),
+    (("پتاسیم برمید", "برمید پتاسیم"), ("potassium bromide", "kbr"), "KBr", "KBr", None, "solid"),
+    # After dichromate: "دی کرومات پتاسیم" contains "کرومات پتاسیم".
+    (("پتاسیم کرومات", "کرومات پتاسیم"), ("potassium chromate", "k2cro4"), "K2CrO4", "K₂CrO₄", None, "solid"),
+    (("پتاسیم فری سیانید", "فری سیانید پتاسیم", "پتاسیم فریسیانید"), ("potassium ferricyanide",),
+     "K3[Fe(CN)6]", "K₃[Fe(CN)₆]", None, "solid"),
+    (("پتاسیم دی هیدروژن فسفات", "پتاسیم دیهیدروژن فسفات", "مونو پتاسیم فسفات"),
+     ("potassium dihydrogen phosphate", "monopotassium phosphate", "kh2po4"), "KH2PO4", "KH₂PO₄", None, "solid"),
+    (("دی سدیم هیدروژن فسفات", "سدیم هیدروژن فسفات", "دی سدیم فسفات"),
+     ("disodium hydrogen phosphate", "disodium phosphate", "na2hpo4"), "Na2HPO4", "Na₂HPO₄", None, "solid"),
+    (("سدیم نیترات", "نیترات سدیم"), ("sodium nitrate", "nano3"), "NaNO3", "NaNO₃", None, "solid"),
+    # Equivalent factor differs between diazotization and permanganometry.
+    (("سدیم نیتریت", "نیتریت سدیم"), ("sodium nitrite", "nano2"), "NaNO2", "NaNO₂", None, "solid"),
+    (("سدیم سولفیت", "سولفیت سدیم"), ("sodium sulfite", "sodium sulphite", "na2so3"), "Na2SO3", "Na₂SO₃", None, "solid"),
+    (("سدیم فلوئورید", "فلوئورید سدیم", "سدیم فلورید"), ("sodium fluoride", "naf"), "NaF", "NaF", None, "solid"),
+    (("کلسیم کلرید", "کلرید کلسیم"), ("calcium chloride", "cacl2"), "CaCl2·2H2O", "CaCl₂·2H₂O", None, "solid"),
+    (("کلسیم نیترات", "نیترات کلسیم"), ("calcium nitrate",), "Ca(NO3)2·4H2O", "Ca(NO₃)₂·4H₂O", None, "solid"),
+    (("فریک کلرید", "آهن کلرید", "کلرید آهن", "کلرید فریک"), ("ferric chloride", "iron(iii) chloride", "fecl3"),
+     "FeCl3·6H2O", "FeCl₃·6H₂O", None, "solid"),
+    (("منگنز سولفات", "سولفات منگنز"), ("manganese sulfate", "manganese(ii) sulfate", "mnso4"), "MnSO4·H2O", "MnSO₄·H₂O", None, "solid"),
+    (("نیکل سولفات", "سولفات نیکل"), ("nickel sulfate", "nickel(ii) sulfate", "niso4"), "NiSO4·6H2O", "NiSO₄·6H₂O", None, "solid"),
+    (("استات روی", "روی استات", "زینک استات"), ("zinc acetate",), "Zn(CH3COO)2·2H2O", "Zn(CH₃COO)₂·2H₂O", None, "solid"),
+    (("هیدروکسیل آمین هیدروکلرید", "هیدروکسیلامین هیدروکلرید"), ("hydroxylamine hydrochloride",), "NH2OH·HCl", "NH₂OH·HCl", None, "solid"),
+    (("لیتیم کلرید", "کلرید لیتیم"), ("lithium chloride", "licl"), "LiCl", "LiCl", None, "solid"),
 )
 
 # Basis of the equivalent factor where it is not an acid–base one: (Persian, English).
@@ -92,6 +126,7 @@ EQ_BASIS = {
     "AgNO3": ("تیتراسیون رسوبی، Ag⁺", "precipitation titration, Ag⁺"),
     "KSCN": ("تیتراسیون رسوبی، SCN⁻", "precipitation titration, SCN⁻"),
     "NH4SCN": ("تیتراسیون رسوبی، SCN⁻", "precipitation titration, SCN⁻"),
+    "KBrO3": ("اکسایش–کاهش: BrO₃⁻ → Br⁻", "redox: BrO₃⁻ → Br⁻"),
 }
 
 # Substances whose normality depends on the reaction: every usual reading is
@@ -140,6 +175,18 @@ NOTES = {
                    "Dissolve in water with a little sulfuric acid to slow oxidation; the solution is not stable."),
     "H2O2": ("در ظرف تیره و خنک نگه دارید و غلظت را با پرمنگنات تعیین کنید؛ محلول به‌مرور تجزیه می‌شود.",
              "Keep cold and dark and standardize against permanganate; the solution decomposes with time."),
+    "KBrO3": ("پتاسیم برمات استاندارد اولیه است (پیش از توزین در حدود ۱۵۰ °C خشک کنید). اکسیدکنندهٔ قوی و سرطان‌زاست؛ با دستکش کار کنید.",
+              "A primary standard (dry at about 150 °C before weighing). It is a strong oxidizer and a carcinogen: wear gloves."),
+    "K2CrO4": ("ترکیبات کروم شش‌ظرفیتی سرطان‌زا هستند؛ با دستکش کار کنید و پسماند را جدا جمع کنید.",
+               "Hexavalent chromium is carcinogenic: wear gloves and collect the waste separately."),
+    "NaF": ("سمی است و شیشه را به‌مرور خورده می‌کند؛ در ظرف پلی‌اتیلنی نگه دارید.",
+            "Toxic, and attacks glass over time: store in a polyethylene bottle."),
+    "NaNO2": ("سمی و اکسیدکننده است؛ محلول را تازه تهیه کنید و پیش از مصرف استاندارد کنید.",
+              "Toxic and an oxidizer: prepare fresh and standardize before use."),
+    "Na2SO3": ("محلول با اکسیژن هوا به سولفات تبدیل می‌شود؛ تازه تهیه کنید و از آب جوشانده و سردشده استفاده کنید.",
+               "The solution is oxidized to sulfate by air: prepare fresh with boiled and cooled water."),
+    "FeCl3·6H2O": ("در آب حاوی کمی اسید کلریدریک حل کنید تا آبکافت نشود و رسوب ندهد.",
+                   "Dissolve in water containing a little hydrochloric acid to prevent hydrolysis and precipitation."),
     "HClO4": ("اسید پرکلریک غلیظ اکسیدکنندهٔ قوی است؛ از تماس با مواد آلی دور نگه دارید و در هود مخصوص کار کنید.",
               "Concentrated perchloric acid is a strong oxidizer: keep it away from organic material and use a suitable fume hood."),
 }

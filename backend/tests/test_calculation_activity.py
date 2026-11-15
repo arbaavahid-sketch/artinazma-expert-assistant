@@ -89,9 +89,9 @@ def test_file_and_chat_calculations_are_recorded_without_counting_reference_chat
     selection={'table_id':'x','rows':[1,2,3],'mode':'statistics','mappings':[{'input':0,'column':'c0','unit':'g'}],'unit':'g','review_confirmed':True,'review_note':'Synthetic reviewed source'}
     assert client.post('/laboratory/imports/'+'b'*32+'/confirm',json=selection).status_code==200
     import routes.laboratory_chat as chat
-    monkeypatch.setattr(chat,'ask_laboratory',lambda *args:{'answer':'Synthetic','calculations':[{'kind':'dilution','result':{'aliquot_volume':25},'unit':'mL'}]})
+    monkeypatch.setattr(chat,'ask_laboratory',lambda *args,**kwargs:{'answer':'Synthetic','calculations':[{'kind':'dilution','result':{'aliquot_volume':25},'unit':'mL'}]})
     assert client.post('/chat/laboratory',json={'message':'Synthetic dilution'}).status_code==200
-    monkeypatch.setattr(chat,'ask_laboratory',lambda *args:{'answer':'Reference only','calculations':[]})
+    monkeypatch.setattr(chat,'ask_laboratory',lambda *args,**kwargs:{'answer':'Reference only','calculations':[]})
     assert client.post('/chat/laboratory',json={'message':'Reference only'}).status_code==200
     rows=client.get('/admin/calculation-activity',headers=admin()).json()['items']
     assert len(rows)==2 and {r['source'] for r in rows}=={'file_import','laboratory_chat'}

@@ -274,7 +274,9 @@ def finite_values(value, maximum):
     return value
 
 
-def ask_laboratory(message, history, snapshot=None, transport=None, customer_id=None, chemical_cid=None):
+def ask_laboratory(message, history, snapshot=None, transport=None, customer_id=None, chemical_cid=None,
+                   time_budget=120, call_timeout=45):
+    """time_budget bounds the whole tool conversation and call_timeout each model round, in seconds."""
     from ai_service import MODEL, OPENAI_API_URL, _session
     if not message.strip() or len(message) > 10000 or len(history) > 30:
         raise ValueError('Invalid laboratory conversation size')
@@ -290,14 +292,14 @@ def ask_laboratory(message, history, snapshot=None, transport=None, customer_id=
     if library_context:
         inputs.append({'role': 'user', 'content': library_context})
     inputs.append({'role': 'user', 'content': message})
-    deadline, calls = time.monotonic()+120, 0
+    deadline, calls = time.monotonic()+time_budget, 0
     def send(payload):
         remaining = deadline-time.monotonic()
         if remaining <= 0:
             raise RuntimeError('Laboratory conversation timed out')
         response = _session.post(f'{OPENAI_API_URL}/responses', headers={
             'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY", "")}', 'Content-Type': 'application/json'},
-            json=payload, timeout=min(45, remaining))
+            json=payload, timeout=min(call_timeout, remaining))
         response.raise_for_status()
         return response.json()
     for _ in range(6):

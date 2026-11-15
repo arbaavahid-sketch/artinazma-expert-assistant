@@ -90,3 +90,40 @@ def test_common_question_is_answered_without_the_model(authenticated_client, mon
     assert [c["kind"] for c in events[0]["calculations"]] == ["molar_mass", "solution_preparation"]
     text = "".join(e["text"] for e in events if e["type"] == "chunk")
     assert "0.555 mL" in text and "E200" in text and "96" in text
+
+
+def test_chat_gives_the_lab_model_a_shorter_time_budget(authenticated_client, monkeypatch):
+    seen = {}
+
+    def fake_lab(*args, **kwargs):
+        seen.update(kwargs)
+        return LAB_RESULT
+
+    _offline(monkeypatch)
+    monkeypatch.setattr(laboratory_chat, "ask_laboratory", fake_lab)
+    authenticated_client.post("/chat", json={"message": MODEL_QUESTION})
+    assert (seen["time_budget"], seen["call_timeout"]) == (60, 30)
+
+    monkeypatch.setenv("LAB_CHAT_TIME_BUDGET", "90")
+    monkeypatch.setenv("LAB_CHAT_CALL_TIMEOUT", "not a number")
+    authenticated_client.post("/chat", json={"message": MODEL_QUESTION})
+    assert (seen["time_budget"], seen["call_timeout"]) == (90, 30)
+
+
+def test_lab_model_rounds_use_the_given_timeouts(monkeypatch):
+    import ai_service
+
+    timeouts = []
+
+    class Reply:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"status": "completed", "output": [{"type": "message", "content": [{"type": "output_text", "text": "ok"}]}]}
+
+    monkeypatch.setattr(ai_service._session, "post", lambda *a, **k: timeouts.append(k["timeout"]) or Reply())
+    monkeypatch.setattr("library_chat.library_chat_context", lambda *a: ("", []))
+    laboratory_chat.ask_laboratory("hello", [], time_budget=60, call_timeout=30)
+    laboratory_chat.ask_laboratory("hello", [], time_budget=5, call_timeout=30)
+    assert timeouts[0] == 30 and 0 < timeouts[1] <= 5
